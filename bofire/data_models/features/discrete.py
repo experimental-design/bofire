@@ -5,12 +5,13 @@ import pandas as pd
 from pydantic import Field, field_validator
 from pydantic.fields import FieldInfo
 
+from bofire.data_models.features._descriptors import DescriptorsMixin
 from bofire.data_models.features.feature import TTransform
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.types import DiscreteVals
 
 
-class DiscreteInput(NumericalInput):
+class DiscreteInput(NumericalInput, DescriptorsMixin):
     """Feature with discretized ordinal values allowed in the optimization.
 
     Attributes:
@@ -24,6 +25,9 @@ class DiscreteInput(NumericalInput):
 
     values: DiscreteVals
     rtol: float = 1e-7
+
+    def descriptor_levels(self) -> List:
+        return [str(v) for v in self.values]
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(description=...))`` with allowed values.

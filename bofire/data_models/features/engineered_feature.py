@@ -1,13 +1,13 @@
+import warnings
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
 
 from pydantic import Field, PositiveFloat, PositiveInt, model_validator
 
-from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
+from bofire.data_models.descriptors.api import AnyDescriptorSource
+from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.features.feature import Feature
-from bofire.data_models.features.molecular import ContinuousMolecularInput
-from bofire.data_models.molfeatures.api import AnyMolFeatures
-from bofire.data_models.types import Bounds, Descriptors, FeatureKeys, OneFeatureKeys
+from bofire.data_models.types import Bounds, FeatureKeys, OneFeatureKeys
 
 
 if TYPE_CHECKING:
@@ -82,95 +82,110 @@ class MeanFeature(EngineeredFeature):
 
 
 class WeightedSumFeature(EngineeredFeature):
-    """Weighted sum feature, which computes the sum over the specified
-    descriptors weighted by the involved feature values.
+    """Amount-weighted blend of descriptors over the specified component features.
+
+    For each descriptor ``d`` the output is ``Σᵢ amountᵢ · rowᵢ,d`` where ``amountᵢ``
+    is the value of component feature ``i`` (optionally normalized by ``Σᵢ amountᵢ``).
+    The ``source`` decides how each component's descriptor row is produced (static
+    columns / molecular generator / composite).
 
     Args:
-        features: The features to be used to compute the weighted sum.
-        descriptors: The descriptors to be used to compute the weighted sum.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
+        features: The component features to blend.
+        source: The descriptor source (read from each component's descriptors).
+        normalize: If True, divide by the sum of amounts (weighted mean).
+        keep_features: Whether to keep the original features in surrogate creation.
     """
 
     type: Literal["WeightedSumFeature"] = "WeightedSumFeature"
-    descriptors: Descriptors
     order_id: ClassVar[int] = 2
+    source: AnyDescriptorSource
+    normalize: bool = False
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_legacy_descriptors(cls, data):
+        # legacy shape: descriptors=[names] (static) and no source
+        if isinstance(data, dict) and "source" not in data and "descriptors" in data:
+            warnings.warn(
+                "`descriptors=` on WeightedSumFeature is deprecated; use "
+                "`source=StaticSource(columns=...)` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            data["source"] = {
+                "type": "StaticSource",
+                "columns": data.pop("descriptors"),
+            }
+        return data
 
     @property
     def n_transformed_inputs(self) -> int:
-        return len(self.descriptors)
+        declared = self.source.declared_names()
+        return len(declared) if declared is not None else 0
 
     def validate_features(self, inputs: "Inputs"):
         super().validate_features(inputs)
         for feature_key in self.features:
-            feature = inputs.get_by_key(feature_key)
-            if not isinstance(feature, ContinuousDescriptorInput):
-                raise ValueError(
-                    f"Feature '{feature_key}' is not a ContinuousDescriptorInput",
-                )
-            if len(set(self.descriptors) - set(feature.descriptors)) > 0:
-                raise ValueError(
-                    f"Not all descriptors {self.descriptors} are present in feature '{feature_key}'",
-                )
+            self.source.check(inputs.get_by_key(feature_key))
 
 
 class WeightedMeanFeature(WeightedSumFeature):
-    """Weighted mean feature, which computes the mean over the specified
-    descriptors weighted by the involved feature values.
-
-    Args:
-        features: The features to be used to compute the weighted mean.
-        descriptors: The descriptors to be used to compute the weighted mean.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
-    """
+    """Deprecated. Use :class:`WeightedSumFeature` with ``normalize=True``."""
 
     type: Literal["WeightedMeanFeature"] = "WeightedMeanFeature"
     order_id: ClassVar[int] = 6
 
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_mean(cls, data):
+        if isinstance(data, dict):
+            warnings.warn(
+                "`WeightedMeanFeature` is deprecated, use "
+                "`WeightedSumFeature(normalize=True)` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            data.setdefault("normalize", True)
+        return data
 
-class MolecularWeightedSumFeature(EngineeredFeature):
-    """Molecular weighted sum feature, which computes the sum over the specified
-    molecular descriptors weighted by the involved feature values.
 
-    Args:
-        features: The molecular features to be used to compute the weighted sum.
-        molfeatures: The molecular feature descriptor specification.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
-    """
+class MolecularWeightedSumFeature(WeightedSumFeature):
+    """Deprecated. Use :class:`WeightedSumFeature` with a ``GeneratedSource``."""
 
     type: Literal["MolecularWeightedSumFeature"] = "MolecularWeightedSumFeature"
-    molfeatures: AnyMolFeatures
     order_id: ClassVar[int] = 3
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return len(self.molfeatures.get_descriptor_names())
-
-    def validate_features(self, inputs: "Inputs"):
-        super().validate_features(inputs)
-        for feature_key in self.features:
-            feature = inputs.get_by_key(feature_key)
-            if not isinstance(feature, ContinuousMolecularInput):
-                raise ValueError(
-                    f"Feature '{feature_key}' is not a ContinuousMolecularInput",
-                )
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_molecular(cls, data):
+        if isinstance(data, dict) and "source" not in data and "molfeatures" in data:
+            warnings.warn(
+                "`MolecularWeightedSumFeature` is deprecated, use "
+                "`WeightedSumFeature(source=GeneratedSource(generator=...))`.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            data["source"] = {
+                "type": "GeneratedSource",
+                "structure": "smiles",
+                "generator": data.pop("molfeatures"),
+            }
+        return data
 
 
 class MolecularWeightedMeanFeature(MolecularWeightedSumFeature):
-    """Molecular weighted mean feature, which computes the mean over the specified
-    molecular descriptors weighted by the involved feature values.
-
-    Args:
-        features: The molecular features to be used to compute the weighted mean.
-        molfeatures: The molecular feature descriptor specification.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
-    """
+    """Deprecated. Use :class:`WeightedSumFeature` with a ``GeneratedSource`` and
+    ``normalize=True``."""
 
     type: Literal["MolecularWeightedMeanFeature"] = "MolecularWeightedMeanFeature"
     order_id: ClassVar[int] = 7
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_mean(cls, data):
+        if isinstance(data, dict):
+            data.setdefault("normalize", True)
+        return data
 
 
 class ProductFeature(EngineeredFeature):

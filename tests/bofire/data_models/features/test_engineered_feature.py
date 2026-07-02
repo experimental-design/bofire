@@ -44,7 +44,7 @@ def test_weighted_sum_feature_validation():
         ]
     )
     with pytest.raises(
-        ValueError, match="Feature 'feat2' is not a ContinuousDescriptorInput"
+        ValueError, match="feat2: descriptor columns .* are not available"
     ):
         weighted_sum_feature.validate_features(inputs)
 
@@ -64,7 +64,9 @@ def test_weighted_sum_feature_validation():
             ),
         ]
     )
-    with pytest.raises(ValueError, match="Not all descriptors"):
+    with pytest.raises(
+        ValueError, match="feat2: descriptor columns .* are not available"
+    ):
         weighted_sum_feature.validate_features(inputs)
 
 
@@ -84,7 +86,7 @@ def test_weighted_mean_feature_validation():
         ]
     )
     with pytest.raises(
-        ValueError, match="Feature 'feat2' is not a ContinuousDescriptorInput"
+        ValueError, match="feat2: descriptor columns .* are not available"
     ):
         weighted_mean_feature.validate_features(inputs)
 
@@ -104,7 +106,9 @@ def test_weighted_mean_feature_validation():
             ),
         ]
     )
-    with pytest.raises(ValueError, match="Not all descriptors"):
+    with pytest.raises(
+        ValueError, match="feat2: descriptor columns .* are not available"
+    ):
         weighted_mean_feature.validate_features(inputs)
 
 
@@ -121,7 +125,7 @@ def test_molecular_weighted_sum_feature_validation():
         ]
     )
     with pytest.raises(
-        ValueError, match="Feature 'm2' is not a ContinuousMolecularInput"
+        ValueError, match="m2: structure column 'smiles' is not present"
     ):
         mol_feature.validate_features(inputs)
 
@@ -147,7 +151,7 @@ def test_molecular_weighted_mean_feature_validation():
         ]
     )
     with pytest.raises(
-        ValueError, match="Feature 'm2' is not a ContinuousMolecularInput"
+        ValueError, match="m2: structure column 'smiles' is not present"
     ):
         mol_feature.validate_features(inputs)
 

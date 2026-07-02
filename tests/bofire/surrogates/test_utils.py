@@ -11,10 +11,10 @@ from botorch.models.transforms.input import (
     NumericToCategoricalEncoding,
 )
 
+from bofire.data_models.descriptors.api import GeneratedSource
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
-    MolecularEncoding,
     OneHotEncoding,
     OrdinalEncoding,
 )
@@ -234,8 +234,10 @@ def test_get_scaler_with_experiments():
         (
             NormalizeScaler(),
             {
-                "x_mol": MolecularEncoding(
-                    generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                "x_mol": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                    )
                 ),
             },
             Normalize,
@@ -244,8 +246,10 @@ def test_get_scaler_with_experiments():
         (
             NormalizeScaler(),
             {
-                "x_mol": MolecularEncoding(
-                    generator=Fingerprints(n_bits=2, filter_descriptors=False)
+                "x_mol": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=Fingerprints(n_bits=2, filter_descriptors=False)
+                    )
                 ),
             },
             Normalize,
@@ -254,8 +258,10 @@ def test_get_scaler_with_experiments():
         (
             StandardizeScaler(),
             {
-                "x_mol": MolecularEncoding(
-                    generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                "x_mol": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                    )
                 ),
             },
             InputStandardize,
@@ -264,10 +270,12 @@ def test_get_scaler_with_experiments():
         (
             StandardizeScaler(),
             {
-                "x_mol": MolecularEncoding(
-                    generator=Fragments(
-                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                        filter_descriptors=False,
+                "x_mol": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=Fragments(
+                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                            filter_descriptors=False,
+                        )
                     )
                 ),
             },
@@ -277,8 +285,10 @@ def test_get_scaler_with_experiments():
         (
             None,
             {
-                "x_mol": MolecularEncoding(
-                    generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                "x_mol": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                    )
                 ),
             },
             type(None),
@@ -287,7 +297,9 @@ def test_get_scaler_with_experiments():
         (
             None,
             {
-                "x_mol": MolecularEncoding(generator=FingerprintsFragments(n_bits=32)),
+                "x_mol": DescriptorEncoding(
+                    source=GeneratedSource(generator=FingerprintsFragments(n_bits=32))
+                ),
             },
             type(None),
             None,
@@ -429,16 +441,8 @@ def test_get_scaler_feature_specific():
             {
                 "x2": OneHotEncoding(),
                 "x3": OneHotEncoding(),
-                "x4": MolecularEncoding(generator=Fingerprints(n_bits=2)),
-            },
-            ["x1"],
-        ),
-        (
-            {
-                "x2": OneHotEncoding(),
-                "x3": OneHotEncoding(),
-                "x4": MolecularEncoding(
-                    generator=Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"])
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(generator=Fingerprints(n_bits=2))
                 ),
             },
             ["x1"],
@@ -447,8 +451,24 @@ def test_get_scaler_feature_specific():
             {
                 "x2": OneHotEncoding(),
                 "x3": OneHotEncoding(),
-                "x4": MolecularEncoding(
-                    generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=Fragments(
+                            fragments=["fr_unbrch_alkane", "fr_thiocyan"]
+                        )
+                    )
+                ),
+            },
+            ["x1"],
+        ),
+        (
+            {
+                "x2": OneHotEncoding(),
+                "x3": OneHotEncoding(),
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                    )
                 ),
             },
             ["x1", "x4"],
@@ -457,16 +477,8 @@ def test_get_scaler_feature_specific():
             {
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
-                "x4": MolecularEncoding(generator=Fingerprints(n_bits=2)),
-            },
-            ["x1", "x3"],
-        ),
-        (
-            {
-                "x2": OneHotEncoding(),
-                "x3": DescriptorEncoding(),
-                "x4": MolecularEncoding(
-                    generator=Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"])
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(generator=Fingerprints(n_bits=2))
                 ),
             },
             ["x1", "x3"],
@@ -475,9 +487,11 @@ def test_get_scaler_feature_specific():
             {
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
-                "x4": MolecularEncoding(
-                    generator=FingerprintsFragments(
-                        fragments=["fr_unbrch_alkane", "fr_thiocyan"], n_bits=32
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=Fragments(
+                            fragments=["fr_unbrch_alkane", "fr_thiocyan"]
+                        )
                     )
                 ),
             },
@@ -487,8 +501,24 @@ def test_get_scaler_feature_specific():
             {
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
-                "x4": MolecularEncoding(
-                    generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=FingerprintsFragments(
+                            fragments=["fr_unbrch_alkane", "fr_thiocyan"], n_bits=32
+                        )
+                    )
+                ),
+            },
+            ["x1", "x3"],
+        ),
+        (
+            {
+                "x2": OneHotEncoding(),
+                "x3": DescriptorEncoding(),
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                    )
                 ),
             },
             ["x1", "x3", "x4"],
@@ -497,12 +527,14 @@ def test_get_scaler_feature_specific():
             {
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
-                "x4": MolecularEncoding(
-                    generator=CompositeMolFeatures(
-                        features=[
-                            MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
-                            Fingerprints(n_bits=128),
-                        ]
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=CompositeMolFeatures(
+                            features=[
+                                MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                                Fingerprints(n_bits=128),
+                            ]
+                        )
                     )
                 ),
             },

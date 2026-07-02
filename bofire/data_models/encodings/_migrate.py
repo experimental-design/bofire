@@ -9,8 +9,9 @@ molecular features. These are migrated to the encoder objects on load, with a si
 import warnings
 from typing import Any, Dict
 
+from bofire.data_models.descriptors.generated import GeneratedSource
+from bofire.data_models.descriptors.static import StaticSource
 from bofire.data_models.encodings.descriptors import DescriptorEncoding
-from bofire.data_models.encodings.molecular import MolecularEncoding
 from bofire.data_models.encodings.onehot import OneHotEncoding
 from bofire.data_models.encodings.ordinal import OrdinalEncoding
 from bofire.data_models.molfeatures.molfeatures import MolFeatures
@@ -24,6 +25,17 @@ _MOLFEATURE_TYPES = {
 }
 
 
+def _generated_dict(structure: str, generator: dict) -> dict:
+    return {
+        "type": "DescriptorEncoding",
+        "source": {
+            "type": "GeneratedSource",
+            "structure": structure,
+            "generator": generator,
+        },
+    }
+
+
 def _migrate_value(value: Any) -> Any:
     """Return the encoder-object form of a legacy value, or the value unchanged.
 
@@ -34,14 +46,23 @@ def _migrate_value(value: Any) -> Any:
         "ONE_HOT": OneHotEncoding,
         "DUMMY": lambda: OneHotEncoding(drop_first=True),
         "ORDINAL": OrdinalEncoding,
-        "DESCRIPTOR": DescriptorEncoding,
+        "DESCRIPTOR": lambda: DescriptorEncoding(source=StaticSource()),
     }
     if isinstance(value, str) and value in legacy:
         return legacy[value]()
     if isinstance(value, MolFeatures):
-        return MolecularEncoding(generator=value)
-    if isinstance(value, dict) and value.get("type") in _MOLFEATURE_TYPES:
-        return {"type": "MolecularEncoding", "generator": value}
+        return DescriptorEncoding(source=GeneratedSource(generator=value))
+    if isinstance(value, dict):
+        t = value.get("type")
+        if t in _MOLFEATURE_TYPES:  # bare molfeature dict
+            return _generated_dict("smiles", value)
+        if t == "MolecularEncoding":  # pre-source molecular encoding
+            return _generated_dict(value.get("structure", "smiles"), value["generator"])
+        if t == "DescriptorEncoding" and "columns" in value and "source" not in value:
+            return {
+                "type": "DescriptorEncoding",
+                "source": {"type": "StaticSource", "columns": value["columns"]},
+            }
     return value
 
 
@@ -61,8 +82,8 @@ def migrate_legacy_encodings(specs: Dict[str, Any]) -> Dict[str, Any]:
     if changed:
         warnings.warn(
             "Legacy categorical encoding values (enum strings / bare molecular "
-            "features) are deprecated; use the encoding objects (OneHotEncoding / "
-            "OrdinalEncoding / DescriptorEncoding / MolecularEncoding) instead.",
+            "features / MolecularEncoding) are deprecated; use OneHotEncoding / "
+            "OrdinalEncoding / DescriptorEncoding(source=...) instead.",
             DeprecationWarning,
             stacklevel=3,
         )

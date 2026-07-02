@@ -25,12 +25,9 @@ from bofire.surrogates.engineered_features import (
     map_clone_feature,
     map_interpolate_feature,
     map_mean_feature,
-    map_molecular_weighted_mean_feature,
-    map_molecular_weighted_sum_feature,
     map_product_feature,
     map_sum_feature,
-    map_weighted_mean_feature,
-    map_weighted_sum_feature,
+    map_weighted_feature,
 )
 from bofire.utils.torch_tools import tkwargs
 
@@ -174,7 +171,7 @@ def test_map_weighted_sum_feature():
 
     assert aggregation.n_transformed_inputs == 2
 
-    aggregator = map_weighted_sum_feature(
+    aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
 
@@ -223,7 +220,7 @@ def test_map_weighted_mean_feature():
 
     assert aggregation.n_transformed_inputs == 2
 
-    aggregator = map_weighted_mean_feature(
+    aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
 
@@ -261,7 +258,7 @@ def test_map_weighted_mean_feature_zero_weight_sum():
         features=["x1", "x2"],
         descriptors=["d1", "d2"],
     )
-    aggregator = map_weighted_mean_feature(
+    aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
 
@@ -300,7 +297,7 @@ def test_map_molecular_weighted_sum_feature():
 
     assert aggregation.n_transformed_inputs == 2
 
-    aggregator = map_molecular_weighted_sum_feature(
+    aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
 
@@ -597,7 +594,7 @@ def test_map_molecular_weighted_mean_feature():
         molfeatures=molfeatures,
     )
 
-    aggregator = map_molecular_weighted_mean_feature(
+    aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
 

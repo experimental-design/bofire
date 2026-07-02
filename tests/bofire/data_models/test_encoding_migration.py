@@ -8,10 +8,10 @@ as encoder objects.
 
 import pytest
 
+from bofire.data_models.descriptors.api import GeneratedSource, StaticSource
 from bofire.data_models.encodings._migrate import migrate_legacy_encodings
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
-    MolecularEncoding,
     OneHotEncoding,
     OrdinalEncoding,
 )
@@ -34,13 +34,54 @@ def test_migrate_legacy_string_values(legacy, expected_type, drop_first):
     assert isinstance(enc, expected_type)
     if expected_type is OneHotEncoding:
         assert enc.drop_first is drop_first
+    if expected_type is DescriptorEncoding:
+        # "DESCRIPTOR" maps to the static-column source.
+        assert isinstance(enc.source, StaticSource)
 
 
 def test_migrate_bare_molfeature():
     with pytest.warns(DeprecationWarning):
         migrated = migrate_legacy_encodings({"x": Fingerprints(n_bits=32)})
-    assert isinstance(migrated["x"], MolecularEncoding)
-    assert isinstance(migrated["x"].generator, Fingerprints)
+    enc = migrated["x"]
+    assert isinstance(enc, DescriptorEncoding)
+    assert isinstance(enc.source, GeneratedSource)
+    assert isinstance(enc.source.generator, Fingerprints)
+
+
+def test_migrate_legacy_molecular_encoding_dict():
+    """An old serialized ``MolecularEncoding`` dict maps to ``DescriptorEncoding``."""
+    from pydantic import TypeAdapter
+
+    from bofire.data_models.encodings.api import AnyCategoricalEncoding
+
+    legacy = {
+        "type": "MolecularEncoding",
+        "structure": "smiles",
+        "generator": Fingerprints(n_bits=32).model_dump(),
+    }
+    with pytest.warns(DeprecationWarning):
+        migrated = migrate_legacy_encodings({"x": legacy})
+    # dict-shaped legacy values migrate to a dict; pydantic constructs the object.
+    enc = TypeAdapter(AnyCategoricalEncoding).validate_python(migrated["x"])
+    assert isinstance(enc, DescriptorEncoding)
+    assert isinstance(enc.source, GeneratedSource)
+    assert enc.source.structure == "smiles"
+    assert isinstance(enc.source.generator, Fingerprints)
+
+
+def test_migrate_legacy_descriptor_columns_dict():
+    """An old ``DescriptorEncoding`` dict with ``columns`` maps to a static source."""
+    from pydantic import TypeAdapter
+
+    from bofire.data_models.encodings.api import AnyCategoricalEncoding
+
+    legacy = {"type": "DescriptorEncoding", "columns": ["d1", "d2"]}
+    with pytest.warns(DeprecationWarning):
+        migrated = migrate_legacy_encodings({"x": legacy})
+    enc = TypeAdapter(AnyCategoricalEncoding).validate_python(migrated["x"])
+    assert isinstance(enc, DescriptorEncoding)
+    assert isinstance(enc.source, StaticSource)
+    assert enc.source.columns == ["d1", "d2"]
 
 
 def test_migrate_passthrough_objects_no_warning():

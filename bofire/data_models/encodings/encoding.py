@@ -50,3 +50,12 @@ class CategoricalEncoding(BaseModel):
         If ``values`` is None the optimization bounds (over allowed categories)
         are returned, else the full bounds over all categories.
         """
+
+    def validate_for_feature(self, feature: "CategoricalInput") -> None:
+        """Validate this encoder instance is applicable to ``feature``.
+
+        The type-level check (``valid_transform_types``) only ensures the encoder
+        *class* is allowed; this instance-level hook rejects encoders whose concrete
+        configuration cannot produce columns for the feature (e.g. a static
+        descriptor source on a feature that only carries a structure column).
+        """

@@ -1,7 +1,8 @@
 import bofire.data_models.surrogates.api as models
+from bofire.data_models.descriptors.api import GeneratedSource
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.encodings.api import (
-    MolecularEncoding,
+    DescriptorEncoding,
     OneHotEncoding,
     OrdinalEncoding,
 )
@@ -750,8 +751,10 @@ specs.add_valid(
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
         "input_preprocessing_specs": {"mol1": OrdinalEncoding().model_dump()},
         "categorical_encodings": {
-            "mol1": MolecularEncoding(
-                generator=Fingerprints(n_bits=32, bond_radius=3),
+            "mol1": DescriptorEncoding(
+                source=GeneratedSource(
+                    generator=Fingerprints(n_bits=32, bond_radius=3),
+                ),
             ).model_dump(),
         },
         "dump": None,

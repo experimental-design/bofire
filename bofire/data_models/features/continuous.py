@@ -6,13 +6,14 @@ import pandas as pd
 from pydantic import Field, PositiveFloat, model_validator
 from pydantic.fields import FieldInfo
 
+from bofire.data_models.features._descriptors import DescriptorsMixin
 from bofire.data_models.features.feature import Output, TTransform
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.objectives.api import AnyObjective, MaximizeObjective
 from bofire.data_models.types import Bounds
 
 
-class ContinuousInput(NumericalInput):
+class ContinuousInput(NumericalInput, DescriptorsMixin):
     """Base class for all continuous input features.
 
     Attributes:
@@ -31,6 +32,11 @@ class ContinuousInput(NumericalInput):
     order_id: ClassVar[int] = 1
 
     bounds: Bounds
+
+    def descriptor_levels(self) -> List:
+        # a continuous feature is a single component -> one descriptor row.
+        return [self.key]
+
     local_relative_bounds: Optional[
         Annotated[List[PositiveFloat], Field(min_length=2, max_length=2)]
     ] = None

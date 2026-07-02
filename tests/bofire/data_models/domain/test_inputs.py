@@ -8,10 +8,10 @@ import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
+from bofire.data_models.descriptors.api import GeneratedSource
 from bofire.data_models.domain.api import Features, Inputs, Outputs
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
-    MolecularEncoding,
     OneHotEncoding,
     OrdinalEncoding,
 )
@@ -426,33 +426,47 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
 @pytest.mark.parametrize(
     "specs",
     [
-        ({"x4": MolecularEncoding(generator=Fingerprints())}),
-        ({"x4": MolecularEncoding(generator=Fragments())}),
-        ({"x4": MolecularEncoding(generator=FingerprintsFragments())}),
+        ({"x4": DescriptorEncoding(source=GeneratedSource(generator=Fingerprints()))}),
+        ({"x4": DescriptorEncoding(source=GeneratedSource(generator=Fragments()))}),
         (
             {
-                "x4": MolecularEncoding(
-                    generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(generator=FingerprintsFragments())
+                )
+            }
+        ),
+        (
+            {
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+                    )
                 )
             }
         ),
         (
             {
                 "x2": OneHotEncoding(),
-                "x4": MolecularEncoding(generator=Fingerprints()),
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(generator=Fingerprints())
+                ),
             }
         ),
         (
             {
                 "x3": DescriptorEncoding(),
-                "x4": MolecularEncoding(generator=Fingerprints()),
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(generator=Fingerprints())
+                ),
             }
         ),
         (
             {
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
-                "x4": MolecularEncoding(generator=Fingerprints()),
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(generator=Fingerprints())
+                ),
             }
         ),
     ],
@@ -481,8 +495,10 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         (
             {
                 "x2": OneHotEncoding(),
-                "x4": MolecularEncoding(
-                    generator=Fingerprints(n_bits=2048, filter_descriptors=False)
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=Fingerprints(n_bits=2048, filter_descriptors=False)
+                    )
                 ),
             },
             {
@@ -501,10 +517,12 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         (
             {
                 "x2": OneHotEncoding(drop_first=True),
-                "x4": MolecularEncoding(
-                    generator=Fragments(
-                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                        filter_descriptors=False,
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=Fragments(
+                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                            filter_descriptors=False,
+                        )
                     )
                 ),
             },
@@ -519,11 +537,13 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         (
             {
                 "x2": OrdinalEncoding(),
-                "x4": MolecularEncoding(
-                    generator=FingerprintsFragments(
-                        n_bits=2048,
-                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                        filter_descriptors=False,
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=FingerprintsFragments(
+                            n_bits=2048,
+                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                            filter_descriptors=False,
+                        )
                     )
                 ),
             },
@@ -546,9 +566,11 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         (
             {
                 "x3": OneHotEncoding(),
-                "x4": MolecularEncoding(
-                    generator=MordredDescriptors(
-                        descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=MordredDescriptors(
+                            descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                        )
                     )
                 ),
             },
@@ -564,9 +586,11 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
             {
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
-                "x4": MolecularEncoding(
-                    generator=MordredDescriptors(
-                        descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=MordredDescriptors(
+                            descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                        )
                     )
                 ),
             },
@@ -672,9 +696,11 @@ def test_input_reverse_transform_molecular():
         ],
     )
     specs = {
-        "x3": MolecularEncoding(
-            generator=MordredDescriptors(
-                descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+        "x3": DescriptorEncoding(
+            source=GeneratedSource(
+                generator=MordredDescriptors(
+                    descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                )
             )
         ),
         "x2": OneHotEncoding(),
@@ -692,8 +718,10 @@ def test_input_reverse_transform_molecular():
         (
             {
                 "x2": OneHotEncoding(),
-                "x4": MolecularEncoding(
-                    generator=Fingerprints(n_bits=32, filter_descriptors=False)
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=Fingerprints(n_bits=32, filter_descriptors=False)
+                    )
                 ),
             },
             {
@@ -739,10 +767,12 @@ def test_input_reverse_transform_molecular():
         (
             {
                 "x2": OneHotEncoding(drop_first=True),
-                "x4": MolecularEncoding(
-                    generator=Fragments(
-                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                        filter_descriptors=False,
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=Fragments(
+                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                            filter_descriptors=False,
+                        )
                     )
                 ),
             },
@@ -758,11 +788,13 @@ def test_input_reverse_transform_molecular():
         (
             {
                 "x2": OrdinalEncoding(),
-                "x4": MolecularEncoding(
-                    generator=FingerprintsFragments(
-                        n_bits=32,
-                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                        filter_descriptors=False,
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=FingerprintsFragments(
+                            n_bits=32,
+                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                            filter_descriptors=False,
+                        )
                     )
                 ),
             },
@@ -810,9 +842,11 @@ def test_input_reverse_transform_molecular():
             {
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
-                "x4": MolecularEncoding(
-                    generator=MordredDescriptors(
-                        descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=MordredDescriptors(
+                            descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                        )
                     )
                 ),
             },
@@ -1169,25 +1203,9 @@ def test_inputs_get_bounds_fit():
             {
                 "x2": OneHotEncoding(),
                 "x3": OneHotEncoding(),
-                "x4": MolecularEncoding(
-                    generator=Fingerprints(n_bits=2, filter_descriptors=False)
-                ),
-            },
-            ["x1"],
-            ["x2", "x3"],
-            ["x4"],
-            [0],
-            [3, 4, 5, 6, 7, 8, 9],
-            [1, 2],
-        ),
-        (
-            {
-                "x2": OneHotEncoding(),
-                "x3": OneHotEncoding(),
-                "x4": MolecularEncoding(
-                    generator=Fragments(
-                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                        filter_descriptors=False,
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=Fingerprints(n_bits=2, filter_descriptors=False)
                     )
                 ),
             },
@@ -1202,9 +1220,31 @@ def test_inputs_get_bounds_fit():
             {
                 "x2": OneHotEncoding(),
                 "x3": OneHotEncoding(),
-                "x4": MolecularEncoding(
-                    generator=MordredDescriptors(
-                        descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=Fragments(
+                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                            filter_descriptors=False,
+                        )
+                    )
+                ),
+            },
+            ["x1"],
+            ["x2", "x3"],
+            ["x4"],
+            [0],
+            [3, 4, 5, 6, 7, 8, 9],
+            [1, 2],
+        ),
+        (
+            {
+                "x2": OneHotEncoding(),
+                "x3": OneHotEncoding(),
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=MordredDescriptors(
+                            descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                        )
                     )
                 ),
             },
@@ -1219,25 +1259,9 @@ def test_inputs_get_bounds_fit():
             {
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
-                "x4": MolecularEncoding(
-                    generator=Fingerprints(n_bits=2, filter_descriptors=False)
-                ),
-            },
-            ["x1", "x3"],
-            ["x2"],
-            ["x4"],
-            [0, 3, 4],
-            [5, 6, 7],
-            [1, 2],
-        ),
-        (
-            {
-                "x2": OneHotEncoding(),
-                "x3": DescriptorEncoding(),
-                "x4": MolecularEncoding(
-                    generator=Fragments(
-                        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                        filter_descriptors=False,
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=Fingerprints(n_bits=2, filter_descriptors=False)
                     )
                 ),
             },
@@ -1252,9 +1276,31 @@ def test_inputs_get_bounds_fit():
             {
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
-                "x4": MolecularEncoding(
-                    generator=MordredDescriptors(
-                        descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=Fragments(
+                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                            filter_descriptors=False,
+                        )
+                    )
+                ),
+            },
+            ["x1", "x3"],
+            ["x2"],
+            ["x4"],
+            [0, 3, 4],
+            [5, 6, 7],
+            [1, 2],
+        ),
+        (
+            {
+                "x2": OneHotEncoding(),
+                "x3": DescriptorEncoding(),
+                "x4": DescriptorEncoding(
+                    source=GeneratedSource(
+                        generator=MordredDescriptors(
+                            descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
+                        )
                     )
                 ),
             },

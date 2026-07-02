@@ -40,7 +40,7 @@ def test_engineered_features():
     )
     with pytest.raises(
         ValueError,
-        match="Not all descriptors",
+        match="descriptor columns .* are not available",
     ):
         engineered_features.validate_inputs(inputs)
 

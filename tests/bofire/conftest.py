@@ -205,6 +205,11 @@ def encoding_spec(request) -> specs.Spec:
     return request.param
 
 
+@fixture(params=specs.descriptors.valids)
+def descriptor_spec(request) -> specs.Spec:
+    return request.param
+
+
 @fixture(params=specs.local_search_configs.valids)
 def local_search_config_spec(request) -> specs.Spec:
     return request.param

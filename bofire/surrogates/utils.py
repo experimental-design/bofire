@@ -10,8 +10,13 @@ from botorch.models.transforms.input import (
     Normalize,
 )
 
+from bofire.data_models.descriptors.api import (
+    CompositeSource,
+    GeneratedSource,
+    StaticSource,
+)
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
-from bofire.data_models.encodings.api import DescriptorEncoding, MolecularEncoding
+from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.molfeatures.api import CompositeMolFeatures, MordredDescriptors
 from bofire.data_models.surrogates.scaler import AnyScaler
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
@@ -20,25 +25,35 @@ from bofire.surrogates.engineered_features import map as map_feature
 from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
 
 
-def _produces_continuous_columns(value) -> bool:
-    """Whether an encoding produces real-valued (continuous-like) columns that
-    should undergo the default scaler.
+def _source_produces_continuous(source) -> bool:
+    """Whether a descriptor source yields real-valued (continuous-like) columns.
 
-    Real-valued descriptor encodings (manual descriptors, Mordred descriptors)
-    are scaled; binary/count encodings (one-hot, fingerprints, fragments) are not.
+    Static descriptors and Mordred descriptors are real-valued; fingerprints /
+    fragments are binary/count. A composite is continuous only if all its members are.
     """
-    if isinstance(value, DescriptorEncoding):
+    if isinstance(source, StaticSource):
         return True
-    if isinstance(value, MolecularEncoding):
-        generator = value.generator
+    if isinstance(source, GeneratedSource):
+        generator = source.generator
         if isinstance(generator, MordredDescriptors):
             return True
-        if isinstance(generator, CompositeMolFeatures) and any(
+        return isinstance(generator, CompositeMolFeatures) and any(
             isinstance(molfeature, MordredDescriptors)
             for molfeature in generator.features
-        ):
-            return True
+        )
+    if isinstance(source, CompositeSource):
+        return all(_source_produces_continuous(s) for s in source.sources)
     return False
+
+
+def _produces_continuous_columns(value) -> bool:
+    """Whether an encoding produces real-valued columns that should be scaled.
+
+    One-hot/ordinal are not; a descriptor encoding depends on its source.
+    """
+    return isinstance(value, DescriptorEncoding) and _source_produces_continuous(
+        value.source
+    )
 
 
 def get_continuous_feature_keys(

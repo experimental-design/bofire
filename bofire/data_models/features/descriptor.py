@@ -1,66 +1,41 @@
 import warnings
-from typing import ClassVar, List, Literal
+from typing import ClassVar, Literal
 
 import pandas as pd
 from pydantic import model_validator
 
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
-from bofire.data_models.types import Descriptors, DiscreteVals
 
 
 class ContinuousDescriptorInput(ContinuousInput):
-    """Class for continuous input features with descriptors
+    """Deprecated. Use :class:`ContinuousInput` with a ``descriptors`` table instead.
 
-    Attributes:
-        lower_bound (float): Lower bound of the feature in the optimization.
-        upper_bound (float): Upper bound of the feature in the optimization.
-        descriptors (List[str]): Names of the descriptors.
-        values (List[float]): Values of the descriptors.
-
+    Kept as a thin deserialization shim: the legacy ``descriptors`` (list of names)
+    + ``values`` (single row) input is rewritten into the base ``descriptors`` dict
+    (single-element columns, since a continuous feature is one component).
     """
 
     type: Literal["ContinuousDescriptorInput"] = "ContinuousDescriptorInput"
     order_id: ClassVar[int] = 2
 
-    descriptors: Descriptors
-    values: DiscreteVals
-
-    def _extra_description_parts(self) -> List[str]:
-        return [f"descriptors: {dict(zip(self.descriptors, self.values))}"]
-
-    @model_validator(mode="after")
-    def validate_list_lengths(self):
-        """Compares the length of the defined descriptors list with the provided values
-
-        Args:
-            values (Dict): Dictionary with all attributes
-
-        Raises:
-            ValueError: when the number of descriptors does not math the number of provided values
-
-        Returns:
-            Dict: Dict with the attributes
-
-        """
-        if len(self.descriptors) != len(self.values):
-            raise ValueError(
-                'must provide same number of descriptors and values, got {len(values["descriptors"])} != {len(values["values"])}',
-            )
-        return self
-
-    def to_df(self) -> pd.DataFrame:
-        """Tabular overview of the feature as DataFrame
-
-        Returns:
-            pd.DataFrame: tabular overview of the feature as DataFrame
-
-        """
-        return pd.DataFrame(
-            data=[self.values],
-            index=[self.key],
-            columns=self.descriptors,
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_legacy_descriptors(cls, data):
+        if not isinstance(data, dict):
+            return data
+        warnings.warn(
+            "`ContinuousDescriptorInput` is deprecated, use `ContinuousInput` "
+            "with a `descriptors` table instead.",
+            DeprecationWarning,
+            stacklevel=2,
         )
+        # legacy shape: descriptors=[names], values=[row]
+        if "values" in data or isinstance(data.get("descriptors"), list):
+            names = data.pop("descriptors")
+            values = data.pop("values")
+            data["descriptors"] = {name: [values[j]] for j, name in enumerate(names)}
+        return data
 
 
 class CategoricalDescriptorInput(CategoricalInput):

@@ -1,7 +1,6 @@
 from functools import partial
-from typing import Callable, Optional, Type
+from typing import Callable, Dict, Optional, Type
 
-import pandas as pd
 import torch
 from botorch.models.transforms.input import AppendFeatures
 
@@ -104,56 +103,24 @@ def _map_reduction_feature(
     )
 
 
-def _map_weighted_feature(
+def map_weighted_feature(
     inputs: Inputs,
     transform_specs: InputTransformSpecs,
     feature: WeightedSumFeature,
-    normalize: bool,
 ) -> AppendFeatures:
     features2idx, _ = inputs._get_transform_info(transform_specs)
     indices = [features2idx[key][0] for key in feature.features]
-    descriptors = torch.tensor(
-        [
-            inputs.get_by_key(key)
-            .to_df()[feature.descriptors]  # ty: ignore[unresolved-attribute]
-            .values[0]
-            for key in feature.features
-        ],
-        dtype=torch.double,
-    )
+    # one descriptor row per component; the source filters correlated descriptors
+    # once over the combined component structures (generated sources).
+    components = [inputs.get_by_key(key) for key in feature.features]
+    matrix = feature.source.component_table(components)
+    descriptors = torch.tensor(matrix.values, dtype=torch.double)
     return AppendFeatures(
         f=_weighted_features,
         fkwargs={
             "indices": indices,
             "descriptors": descriptors,
-            "normalize": normalize,
-        },
-        transform_on_train=True,
-    )
-
-
-def _map_molecular_weighted_feature(
-    inputs: Inputs,
-    transform_specs: InputTransformSpecs,
-    feature: MolecularWeightedSumFeature,
-    normalize: bool,
-) -> AppendFeatures:
-    features2idx, _ = inputs._get_transform_info(transform_specs)
-    indices = [features2idx[key][0] for key in feature.features]
-    molecules = [
-        inputs.get_by_key(key).molecule  # ty: ignore[unresolved-attribute]
-        for key in feature.features
-    ]
-    # filter out highly-correlated descriptors before computing descriptor values
-    feature.molfeatures.remove_correlated_descriptors(molecules)
-    descriptors_df = feature.molfeatures.get_descriptor_values(pd.Series(molecules))
-    descriptors = torch.tensor(descriptors_df.values, dtype=torch.double)
-    return AppendFeatures(
-        f=_weighted_features,
-        fkwargs={
-            "indices": indices,
-            "descriptors": descriptors,
-            "normalize": normalize,
+            "normalize": feature.normalize,
         },
         transform_on_train=True,
     )
@@ -271,23 +238,15 @@ def map_clone_feature(
 map_sum_feature = partial(_map_reduction_feature, reducer=torch.sum)
 map_product_feature = partial(_map_reduction_feature, reducer=torch.prod)
 map_mean_feature = partial(_map_reduction_feature, reducer=torch.mean)
-map_weighted_sum_feature = partial(_map_weighted_feature, normalize=False)
-map_weighted_mean_feature = partial(_map_weighted_feature, normalize=True)
-map_molecular_weighted_sum_feature = partial(
-    _map_molecular_weighted_feature, normalize=False
-)
-map_molecular_weighted_mean_feature = partial(
-    _map_molecular_weighted_feature, normalize=True
-)
 
-AGGREGATE_MAP = {
+AGGREGATE_MAP: Dict[Type[EngineeredFeature], Callable] = {
     SumFeature: map_sum_feature,
     ProductFeature: map_product_feature,
     MeanFeature: map_mean_feature,
-    WeightedSumFeature: map_weighted_sum_feature,
-    WeightedMeanFeature: map_weighted_mean_feature,
-    MolecularWeightedSumFeature: map_molecular_weighted_sum_feature,
-    MolecularWeightedMeanFeature: map_molecular_weighted_mean_feature,
+    WeightedSumFeature: map_weighted_feature,
+    WeightedMeanFeature: map_weighted_feature,
+    MolecularWeightedSumFeature: map_weighted_feature,
+    MolecularWeightedMeanFeature: map_weighted_feature,
     InterpolateFeature: map_interpolate_feature,
     CloneFeature: map_clone_feature,
 }

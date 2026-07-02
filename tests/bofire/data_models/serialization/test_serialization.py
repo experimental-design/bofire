@@ -112,6 +112,12 @@ def test_encoding_should_be_serializable(encoding_spec: Spec):
     assert obj.model_dump() == spec
 
 
+def test_descriptor_should_be_serializable(descriptor_spec: Spec):
+    spec = descriptor_spec.typed_spec()
+    obj = descriptor_spec.cls(**spec)
+    assert obj.model_dump() == spec
+
+
 def test_inputs_should_be_serializable(inputs_spec: Spec):
     spec = inputs_spec.typed_spec()
     obj = inputs_spec.cls(**spec)

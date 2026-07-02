@@ -26,6 +26,7 @@ from scipy.stats.qmc import LatinHypercube, Sobol
 from typing_extensions import Self
 
 from bofire.data_models.base import BaseModel
+from bofire.data_models.encodings.encoding import CategoricalEncoding
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     AnyEngineeredFeature,
@@ -741,6 +742,8 @@ class Inputs(_BaseFeatures[AnyInput]):
                 raise ValueError(
                     f"Forbidden transform type for feature with key {key}",
                 )
+            if isinstance(value, CategoricalEncoding):
+                value.validate_for_feature(feat)
         return specs
 
     def get_bounds(

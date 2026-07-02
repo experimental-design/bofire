@@ -1,10 +1,13 @@
-"""Descriptor encoding: encode a category by looking up its numeric descriptor row."""
+"""Descriptor encoding: encode a category via its descriptor row from a source."""
 
 from typing import TYPE_CHECKING, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from pydantic import Field
 
+from bofire.data_models.descriptors.api import AnyDescriptorSource
+from bofire.data_models.descriptors.static import StaticSource
 from bofire.data_models.encodings.encoding import CategoricalEncoding
 from bofire.data_models.encodings.naming import get_encoded_name
 
@@ -14,45 +17,38 @@ if TYPE_CHECKING:
 
 
 class DescriptorEncoding(CategoricalEncoding):
-    """Encode categories via (a subset of) the feature's numeric descriptor columns.
+    """Encode categories via a per-category descriptor row from a descriptor source.
 
-    Attributes:
-        columns: Names of the numeric descriptor columns to use. ``None`` means
-            all non-reserved (role ``"descriptor"``) columns in declared order.
+    The ``source`` (static columns / molecular generator / composite) decides how
+    the descriptor columns are produced; the encoding itself (select-row on encode,
+    nearest-neighbour on decode, min/max bounds) is the same for every source.
     """
 
     type: Literal["DescriptorEncoding"] = "DescriptorEncoding"
-    columns: Optional[List[str]] = None
+    # default: use the feature's own static descriptor columns (legacy zero-arg shape).
+    source: AnyDescriptorSource = Field(default_factory=StaticSource)
 
-    def _columns(self, feature: "CategoricalInput") -> List[str]:
-        if self.columns is None:
-            return feature.descriptor_columns(role="descriptor")
-        available = set(feature.descriptor_columns(role="descriptor"))
-        missing = [c for c in self.columns if c not in available]
-        if missing:
-            raise ValueError(
-                f"{feature.key}: descriptor columns {missing} are not available "
-                f"as numeric descriptors. Available: {sorted(available)}.",
-            )
-        return list(self.columns)
+    def validate_for_feature(self, feature: "CategoricalInput") -> None:
+        self.source.check(feature)
 
     def get_names(self, feature: "CategoricalInput") -> List[str]:
-        return [get_encoded_name(feature.key, d) for d in self._columns(feature)]
+        return [get_encoded_name(feature.key, d) for d in self.source.names(feature)]
 
     def encode(self, feature: "CategoricalInput", values: pd.Series) -> pd.DataFrame:
-        table = feature.descriptor_table(self._columns(feature))
-        return pd.DataFrame(
+        table = self.source.table(feature)
+        out = pd.DataFrame(
             data=table.loc[values.tolist()].to_numpy(),
             columns=self.get_names(feature),
             index=values.index,
         )
+        return out
 
     def get_bounds(
         self,
         feature: "CategoricalInput",
         values: Optional[pd.Series] = None,
     ) -> Tuple[List[float], List[float]]:
-        table = feature.descriptor_table(self._columns(feature))
+        table = self.source.table(feature)
         # values None -> optimization bounds over allowed categories,
         # else full bounds over all categories (for model fitting).
         if values is None:
@@ -69,7 +65,7 @@ class DescriptorEncoding(CategoricalEncoding):
                 f"{values.columns}, {cat_cols}.",
             )
         allowed = feature.get_allowed_categories()
-        table_allowed = feature.descriptor_table(self._columns(feature)).loc[allowed]
+        table_allowed = self.source.table(feature).loc[allowed]
         s = pd.DataFrame(
             data=np.sqrt(
                 np.sum(

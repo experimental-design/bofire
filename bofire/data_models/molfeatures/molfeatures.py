@@ -18,6 +18,9 @@ class MolFeatures(BaseModel):
     """Base class for all molecular features"""
 
     type: Any
+    # the kind of structure identifier this generator consumes; a generated
+    # descriptor source validates its structure column carries this kind.
+    reads: Literal["smiles"] = "smiles"
     filter_descriptors: bool = True
     correlation_cutoff: float = 0.95
     _descriptors: Optional[Annotated[List[str], Field(min_length=1)]] = PrivateAttr(

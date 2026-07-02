@@ -3,10 +3,10 @@ from typing import Literal, Optional, Type
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
 
+from bofire.data_models.descriptors.api import GeneratedSource, StaticSource
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
-    MolecularEncoding,
     OneHotEncoding,
     OrdinalEncoding,
 )
@@ -124,8 +124,10 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     ) -> dict:
         return {
             CategoricalInput: OneHotEncoding(),
-            CategoricalMolecularInput: MolecularEncoding(generator=Fingerprints()),
-            CategoricalDescriptorInput: DescriptorEncoding(),
+            CategoricalMolecularInput: DescriptorEncoding(
+                source=GeneratedSource(generator=Fingerprints())
+            ),
+            CategoricalDescriptorInput: DescriptorEncoding(source=StaticSource()),
             CategoricalTaskInput: OrdinalEncoding(),
         }
 

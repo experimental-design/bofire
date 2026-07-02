@@ -10,38 +10,38 @@ from bofire.utils.cheminformatics import smiles2mol
 
 
 class ContinuousMolecularInput(ContinuousInput):
+    """Deprecated. Use :class:`ContinuousInput` with a ``smiles`` descriptor column
+    instead.
+
+    Kept as a thin deserialization shim: the single ``molecule`` SMILES is mirrored
+    into a reserved ``smiles`` descriptor column.
+    """
+
     type: Literal["ContinuousMolecularInput"] = "ContinuousMolecularInput"
     order_id: ClassVar[int] = 4
-    molecule: str
 
-    def _description_prefix(self) -> str:
-        return (
-            f"Continuous molecular (SMILES: {self.molecule}), "
-            f"bounds [{self.bounds[0]}, {self.bounds[1]}]"
-        )
-
-    @field_validator("molecule")
+    @model_validator(mode="before")
     @classmethod
-    def validate_smiles(cls, v: str) -> str:
-        """Validates that molecule is a valid smiles. Note that this check can only
-        be executed when rdkit is available.
-
-        Args:
-            v (str): smiles
-        """
-        # check on rdkit availability:
-        try:
-            smiles2mol(v)
-        except NameError:
-            warnings.warn("rdkit not installed, molecule cannot be validated.")
-            return v
-        smiles2mol(v)
-        return v
+    def _migrate_legacy_molecule(cls, data):
+        if not isinstance(data, dict):
+            return data
+        warnings.warn(
+            "`ContinuousMolecularInput` is deprecated, use `ContinuousInput` with "
+            "a `smiles` descriptor column instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        molecule = data.pop("molecule", None)
+        descriptors = dict(data.get("descriptors") or {})
+        if molecule is not None and "smiles" not in descriptors:
+            descriptors["smiles"] = [molecule]
+            data["descriptors"] = descriptors
+        return data
 
 
 class CategoricalMolecularInput(CategoricalInput):
     """Deprecated. Use :class:`CategoricalInput` with a ``smiles`` descriptor column
-    and a :class:`MolecularEncoding` on the surrogate instead.
+    and a :class:`DescriptorEncoding` on the surrogate instead.
 
     Kept as a thin deserialization shim: the SMILES categories are mirrored into a
     reserved ``smiles`` descriptor column so molecular encoders can consume them.
@@ -58,7 +58,7 @@ class CategoricalMolecularInput(CategoricalInput):
             return data
         warnings.warn(
             "`CategoricalMolecularInput` is deprecated, use `CategoricalInput` with "
-            "a `smiles` descriptor column and a `MolecularEncoding` instead.",
+            "a `smiles` descriptor column and a `DescriptorEncoding` instead.",
             DeprecationWarning,
             stacklevel=2,
         )

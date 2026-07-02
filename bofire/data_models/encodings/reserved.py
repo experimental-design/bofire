@@ -13,7 +13,7 @@ importable without rdkit and there is no ``features <-> encodings`` import cycle
 
 import warnings
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Literal
+from typing import Callable, Dict, List, Literal, Optional
 
 
 DescriptorRole = Literal["descriptor", "structure"]
@@ -29,12 +29,15 @@ class ReservedDescriptor:
         role: ``"structure"`` for identifiers consumed by generators (e.g. SMILES),
             ``"descriptor"`` for directly usable numeric columns.
         validator: Callable validating the column values; raises on invalid input.
+        kind: For structure columns, the structure kind (e.g. ``"smiles"``) that a
+            generator must declare it ``reads``; ``None`` for numeric descriptors.
     """
 
     name: str
     dtype: type
     role: DescriptorRole
     validator: Callable[[List], None]
+    kind: Optional[str] = None
 
 
 _RESERVED: Dict[str, ReservedDescriptor] = {}
@@ -89,5 +92,6 @@ register_reserved_descriptor(
         dtype=str,
         role="structure",
         validator=_validate_smiles_column,
+        kind="smiles",
     ),
 )

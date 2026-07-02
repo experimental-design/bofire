@@ -5,7 +5,8 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from bofire.data_models.encodings.api import MolecularEncoding, OneHotEncoding
+from bofire.data_models.descriptors.api import GeneratedSource
+from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
 from bofire.data_models.features.molecular import (
     CategoricalMolecularInput,
     ContinuousMolecularInput,
@@ -153,9 +154,9 @@ def test_categorical_molecular_input_to_descriptor_encoding(
 ):
     input_feature = CategoricalMolecularInput(key=key, categories=VALID_SMILES.tolist())
 
-    encoded = MolecularEncoding(generator=transform_type).encode(
-        input_feature, VALID_SMILES
-    )
+    encoded = DescriptorEncoding(
+        source=GeneratedSource(generator=transform_type)
+    ).encode(input_feature, VALID_SMILES)
     assert len(encoded.columns) == len(transform_type.get_descriptor_names())
     assert len(encoded) == len(smiles)
     assert_frame_equal(encoded, pd.DataFrame.from_dict(values))
@@ -200,7 +201,7 @@ def test_categorical_molecular_input_from_descriptor_encoding(key):
         Fragments(),
         MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
     ]:
-        encoding = MolecularEncoding(generator=transform_type)
+        encoding = DescriptorEncoding(source=GeneratedSource(generator=transform_type))
         encoded = encoding.encode(feat, values=values)
         decoded = encoding.decode(feat, values=encoded)
         assert np.all(decoded == values)
@@ -226,26 +227,30 @@ def test_categorical_molecular_input_get_bounds():
         categories=VALID_SMILES.to_list(),
         allowed=[True, True, False, False],
     )
-    lower, upper = MolecularEncoding(
-        generator=MordredDescriptors(
-            descriptors=[
-                "nAromAtom",
-                "nAromBond",
-            ],
-            filter_descriptors=False,
-        ),
+    lower, upper = DescriptorEncoding(
+        source=GeneratedSource(
+            generator=MordredDescriptors(
+                descriptors=[
+                    "nAromAtom",
+                    "nAromBond",
+                ],
+                filter_descriptors=False,
+            ),
+        )
     ).get_bounds(feat)
     assert lower == [6.0, 6.0]
     assert upper == [6.0, 6.0]
 
-    lower, upper = MolecularEncoding(
-        generator=MordredDescriptors(
-            descriptors=[
-                "nAromAtom",
-                "nAromBond",
-            ],
-            filter_descriptors=False,
-        ),
+    lower, upper = DescriptorEncoding(
+        source=GeneratedSource(
+            generator=MordredDescriptors(
+                descriptors=[
+                    "nAromAtom",
+                    "nAromBond",
+                ],
+                filter_descriptors=False,
+            ),
+        )
     ).get_bounds(feat, values=VALID_SMILES)
     assert lower == [0.0, 0.0]
     assert upper == [6.0, 6.0]
@@ -279,7 +284,6 @@ def test_categorical_molecular_input_to_pydantic_field_falls_back_above_threshol
 def test_continuous_molecular_input_to_pydantic_field():
     feat = ContinuousMolecularInput(key="conc", molecule="CCO", bounds=(0.0, 1.0))
     _, field_info = feat.to_pydantic_field()
-    assert (
-        field_info.description
-        == "Continuous molecular (SMILES: CCO), bounds [0.0, 1.0]"
-    )
+    # the deprecated shim is now a plain ContinuousInput carrying a `smiles`
+    # descriptor column; the SMILES no longer surfaces in the field description.
+    assert field_info.description == "Continuous, bounds [0.0, 1.0]"

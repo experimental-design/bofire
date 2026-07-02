@@ -1,9 +1,7 @@
 from typing import (
     TYPE_CHECKING,
     Annotated,
-    Any,
     ClassVar,
-    Dict,
     List,
     Literal,
     Optional,
@@ -18,11 +16,10 @@ from pydantic.fields import FieldInfo
 
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
-    MolecularEncoding,
     OneHotEncoding,
     OrdinalEncoding,
 )
-from bofire.data_models.encodings.reserved import get_reserved_descriptor, is_reserved
+from bofire.data_models.features._descriptors import DescriptorsMixin
 from bofire.data_models.features.feature import Input, Output, TTransform
 from bofire.data_models.objectives.api import AnyCategoricalObjective
 from bofire.data_models.types import CategoryVals
@@ -50,7 +47,7 @@ if TYPE_CHECKING:
 LLM_ENUM_SCHEMA_THRESHOLD = 32
 
 
-class CategoricalInput(Input):
+class CategoricalInput(Input, DescriptorsMixin):
     """Base class for all categorical input features.
 
     Attributes:
@@ -68,7 +65,9 @@ class CategoricalInput(Input):
         default=None,
         validate_default=True,
     )
-    descriptors: Dict[str, List[Any]] = Field(default_factory=dict)
+
+    def descriptor_levels(self) -> List:
+        return list(self.categories)
 
     @field_validator("allowed")
     @classmethod
@@ -77,61 +76,6 @@ class CategoricalInput(Input):
         if allowed is None and "categories" in info.data.keys():
             return [True for _ in range(len(info.data["categories"]))]
         return allowed
-
-    @field_validator("descriptors")
-    @classmethod
-    def validate_descriptors(cls, descriptors, info):
-        """Validates the per-category descriptor table.
-
-        Each column must have one entry per category. Reserved keys (e.g.
-        ``smiles``) are validated and typed by the reserved-descriptor registry;
-        all other columns are free-form numeric descriptors coerced to ``float``.
-        """
-        categories = info.data.get("categories")
-        if categories is None:
-            return descriptors
-        validated: Dict[str, List[Any]] = {}
-        for name, column in descriptors.items():
-            if len(column) != len(categories):
-                raise ValueError(
-                    f"descriptor column '{name}' must have same length as categories",
-                )
-            if is_reserved(name):
-                reserved = get_reserved_descriptor(name)
-                coerced = [reserved.dtype(v) for v in column]
-                reserved.validator(coerced)
-                validated[name] = coerced
-            else:
-                try:
-                    validated[name] = [float(v) for v in column]
-                except (TypeError, ValueError):
-                    raise ValueError(
-                        f"descriptor column '{name}' must be numeric",
-                    )
-        return validated
-
-    def descriptor_columns(self, role: Optional[str] = None) -> List[str]:
-        """Names of descriptor columns, optionally filtered by role.
-
-        Non-reserved columns have role ``"descriptor"``; reserved columns carry
-        their registered role (e.g. ``smiles`` is ``"structure"``).
-        """
-        columns = list(self.descriptors.keys())
-        if role is None:
-            return columns
-        return [
-            c
-            for c in columns
-            if (get_reserved_descriptor(c).role if is_reserved(c) else "descriptor")
-            == role
-        ]
-
-    def descriptor_table(self, columns: List[str]) -> pd.DataFrame:
-        """Per-category table (rows=categories, columns=selected descriptors)."""
-        return pd.DataFrame(
-            {c: self.descriptors[c] for c in columns},
-            index=list(self.categories),
-        )
 
     @model_validator(mode="after")
     def validate_categories_fitting_allowed(self):
@@ -185,16 +129,13 @@ class CategoricalInput(Input):
     def valid_transform_types(self) -> List:
         """Valid encoding classes for this feature.
 
-        One-hot and ordinal are always valid; the data-backed encoders are valid
-        only when the feature carries the data they consume (numeric descriptor
-        columns for ``DescriptorEncoding``, a structure column for
-        ``MolecularEncoding``).
+        One-hot and ordinal are always valid; ``DescriptorEncoding`` is valid when
+        the feature carries any descriptor data (numeric columns and/or a structure
+        column), since its source can read either.
         """
         types: List = [OneHotEncoding, OrdinalEncoding]
-        if self.descriptor_columns(role="descriptor"):
+        if self.descriptors:
             types.append(DescriptorEncoding)
-        if self.descriptor_columns(role="structure"):
-            types.append(MolecularEncoding)
         return types
 
     def is_fixed(self) -> bool:

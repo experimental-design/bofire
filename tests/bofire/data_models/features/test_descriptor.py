@@ -339,7 +339,7 @@ def test_continuous_descriptor_input_feature_as_dataframe(descriptors, values):
         descriptors=descriptors,
         values=values,
     )
-    df = f.to_df()
+    df = f.descriptor_table(f.descriptor_columns(role="descriptor"))
     assert len(df.columns) == len(descriptors)
     assert len(df) == 1
     assert df.values.tolist()[0] == values
@@ -402,9 +402,9 @@ def test_continuous_descriptor_input_to_pydantic_field():
     )
     field_type, field_info = feat.to_pydantic_field()
     assert field_type is float
-    assert field_info.description == (
-        "Continuous, bounds [0.0, 1.0] — descriptors: {'d1': 0.5}"
-    )
+    # the deprecated shim is now a plain ContinuousInput; the descriptor table no
+    # longer surfaces in the LLM field description.
+    assert field_info.description == "Continuous, bounds [0.0, 1.0]"
 
 
 def test_categorical_descriptor_input_to_pydantic_field_falls_back_above_threshold():

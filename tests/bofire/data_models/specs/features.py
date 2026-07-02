@@ -2,6 +2,7 @@ import random
 import uuid
 
 import bofire.data_models.features.api as features
+from bofire.data_models.descriptors.api import GeneratedSource, StaticSource
 from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.objectives.api import (
     ConstrainedCategoricalObjective,
@@ -62,7 +63,8 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
-        "descriptors": ["alpha", "beta"],
+        "source": StaticSource(columns=["alpha", "beta"]).model_dump(),
+        "normalize": False,
         "keep_features": True,
         "context": None,
     },
@@ -73,7 +75,8 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
-        "descriptors": ["alpha", "beta"],
+        "source": StaticSource(columns=["alpha", "beta"]).model_dump(),
+        "normalize": True,
         "keep_features": True,
         "context": None,
     },
@@ -84,10 +87,14 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
-        "molfeatures": MordredDescriptors(
-            descriptors=["NssCH2", "ATSC2d"],
-            ignore_3D=True,
+        "source": GeneratedSource(
+            structure="smiles",
+            generator=MordredDescriptors(
+                descriptors=["NssCH2", "ATSC2d"],
+                ignore_3D=True,
+            ),
         ).model_dump(),
+        "normalize": False,
         "keep_features": True,
         "context": None,
     },
@@ -118,10 +125,14 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
-        "molfeatures": MordredDescriptors(
-            descriptors=["NssCH2", "ATSC2d"],
-            ignore_3D=True,
+        "source": GeneratedSource(
+            structure="smiles",
+            generator=MordredDescriptors(
+                descriptors=["NssCH2", "ATSC2d"],
+                ignore_3D=True,
+            ),
         ).model_dump(),
+        "normalize": True,
         "keep_features": True,
         "context": None,
     },
@@ -232,6 +243,7 @@ specs.add_valid(
         "values": [random.random(), random.random() + 3],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "rtol": 1e-7,
+        "descriptors": {},
         "context": None,
     },
 )
@@ -258,6 +270,7 @@ specs.add_valid(
         "local_relative_bounds": None,
         "stepsize": None,
         "allow_zero": False,
+        "descriptors": {},
         "context": None,
     },
 )
@@ -288,8 +301,9 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "bounds": [3, 5.3],
-        "descriptors": ["d1", "d2"],
-        "values": [1.0, 2.0],
+        # legacy descriptors/values are migrated to the new `descriptors` table
+        # (single-element columns), which is the canonical (re-emitted) shape.
+        "descriptors": {"d1": [1.0], "d2": [2.0]},
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "local_relative_bounds": None,
         "stepsize": None,
@@ -407,7 +421,8 @@ specs.add_valid(
     features.ContinuousMolecularInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "molecule": "CC",
+        # legacy `molecule` is mirrored into the reserved `smiles` descriptor column.
+        "descriptors": {"smiles": ["CC"]},
         "bounds": [0.0, 1.0],
         "allow_zero": False,
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
@@ -443,6 +458,7 @@ specs.add_valid(
         "local_relative_bounds": None,
         "stepsize": None,
         "allow_zero": False,
+        "descriptors": {},
         "context": None,
     },
 )

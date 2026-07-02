@@ -2,7 +2,8 @@ from typing import Literal, Optional, Type
 
 from pydantic import Field, model_validator
 
-from bofire.data_models.encodings.api import MolecularEncoding
+from bofire.data_models.descriptors.api import GeneratedSource
+from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
@@ -62,8 +63,9 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
             )
 
         if not any(
-            isinstance(value, MolecularEncoding)
-            and _is_tanimoto_generator(value.generator)
+            isinstance(value, DescriptorEncoding)
+            and isinstance(value.source, GeneratedSource)
+            and _is_tanimoto_generator(value.source.generator)
             for value in self.categorical_encodings.values()
         ):
             raise ValueError(

@@ -1,11 +1,11 @@
 from pydantic import Field, field_validator, model_validator
 
+from bofire.data_models.descriptors.api import GeneratedSource, StaticSource
 from bofire.data_models.domain.api import EngineeredFeatures
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.encodings._migrate import migrate_legacy_encodings
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
-    MolecularEncoding,
     OneHotEncoding,
     OrdinalEncoding,
 )
@@ -81,8 +81,10 @@ class BotorchSurrogate(Surrogate):
     ) -> dict:
         return {
             CategoricalInput: OneHotEncoding(),
-            CategoricalMolecularInput: MolecularEncoding(generator=Fingerprints()),
-            CategoricalDescriptorInput: DescriptorEncoding(),
+            CategoricalMolecularInput: DescriptorEncoding(
+                source=GeneratedSource(generator=Fingerprints())
+            ),
+            CategoricalDescriptorInput: DescriptorEncoding(source=StaticSource()),
             CategoricalTaskInput: OneHotEncoding(),
         }
 
