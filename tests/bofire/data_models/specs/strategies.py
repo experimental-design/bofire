@@ -38,6 +38,10 @@ from bofire.data_models.strategies.api import (
     RelativeMovingReferenceValue,
     RelativeToMaxMovingReferenceValue,
 )
+from bofire.data_models.strategies.convergence_criteria.api import (
+    ObjectiveImprovementCriterion,
+    ProposalDeviationCriterion,
+)
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     LinearDeterministicSurrogate,
@@ -65,6 +69,7 @@ strategy_commons = {
     "frequency_hyperopt": 0,
     "folds": 5,
     "include_infeasible_exps_in_acqf_calc": False,
+    "convergence_criterion": None,
 }
 
 
@@ -88,6 +93,9 @@ specs.add_valid(
             }
         ).model_dump(),
         **strategy_commons,
+        "convergence_criterion": ProposalDeviationCriterion(
+            threshold=0.001, n_consecutive=2
+        ).model_dump(),
     },
 )
 
@@ -160,6 +168,9 @@ specs.add_valid(
         ).model_dump(),
         **strategy_commons,
         "acquisition_function": qPI(tau=0.1).model_dump(),
+        "convergence_criterion": ObjectiveImprovementCriterion(
+            min_improvement=0.01, n_lookback=5
+        ).model_dump(),
     },
 )
 specs.add_valid(
@@ -273,6 +284,7 @@ specs.add_valid(
         "solver_verbose": False,
         "solver_params": {},
         "kappa_fantasy": 10.0,
+        "convergence_criterion": None,
     },
 )
 
