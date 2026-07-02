@@ -24,6 +24,35 @@ def _callback_write_generation(algorithm, path: str):
 
 
 @pytest.fixture
+def ga_domain() -> data_models_domain.Domain:
+    return data_models_domain.Domain(
+        inputs=[data_models_features.ContinuousInput(key="x", bounds=(0.0, 1.0))],
+        constraints=[],
+    )
+
+
+@pytest.fixture
+def ga_objective():
+    def _objective(x):
+        return -x[:, 0, 0].reshape(-1)
+
+    return _objective
+
+
+@pytest.fixture
+def ga_optimizer_factory():
+    def _make_optimizer(callback=None):
+        return data_models_strategies.GeneticAlgorithmOptimizer(
+            population_size=4,
+            n_max_gen=1,
+            n_max_evals=20,
+            callback=callback,
+        )
+
+    return _make_optimizer
+
+
+@pytest.fixture
 def domain_handler(optimizer_benchmark) -> GaMixedDomainHandler:
     """Fixture to provide a problem and algorithm for testing."""
     domain = optimizer_benchmark.get_adapted_domain()
@@ -293,28 +322,22 @@ class TestLinearProjection:
             assert n_non_zero >= min_count
 
 
-def test_run_ga_callback_writes_file(tmp_path):
-    domain = data_models_domain.Domain(
-        inputs=[data_models_features.ContinuousInput(key="x", bounds=(0.0, 1.0))],
-        constraints=[],
-    )
-    optimizer = data_models_strategies.GeneticAlgorithmOptimizer(
-        population_size=4,
-        n_max_gen=1,
-        n_max_evals=20,
-    )
+def test_run_ga_callback_writes_file(
+    tmp_path,
+    ga_domain,
+    ga_objective,
+    ga_optimizer_factory,
+):
+    optimizer = ga_optimizer_factory()
     callback_path = tmp_path / "ga_callback.txt"
-
-    def _objective(x):
-        return -x[:, 0, 0].reshape(-1)
 
     def _callback(algorithm):
         callback_path.write_text(f"generation={algorithm.n_gen}\n", encoding="utf-8")
 
     x_opt, f_opt = run_ga(
         data_model=optimizer,
-        domain=domain,
-        objective_callables=[_objective],
+        domain=ga_domain,
+        objective_callables=[ga_objective],
         q=1,
         callable_format="torch",
         callback=_callback,
@@ -329,29 +352,24 @@ def test_run_ga_callback_writes_file(tmp_path):
     assert f_opt.shape == (1,)
 
 
-def test_run_ga_callback_from_data_model_definition(tmp_path):
-    domain = data_models_domain.Domain(
-        inputs=[data_models_features.ContinuousInput(key="x", bounds=(0.0, 1.0))],
-        constraints=[],
-    )
+def test_run_ga_callback_from_data_model_definition(
+    tmp_path,
+    ga_domain,
+    ga_objective,
+    ga_optimizer_factory,
+):
     callback_path = tmp_path / "ga_callback_from_model.txt"
-    optimizer = data_models_strategies.GeneticAlgorithmOptimizer(
-        population_size=4,
-        n_max_gen=1,
-        n_max_evals=20,
+    optimizer = ga_optimizer_factory(
         callback=data_models_strategies.ImportPathCallback(
             target="tests.bofire.strategies.test_utils:_callback_write_generation",
             kwargs={"path": str(callback_path)},
         ),
     )
 
-    def _objective(x):
-        return -x[:, 0, 0].reshape(-1)
-
     x_opt, f_opt = run_ga(
         data_model=optimizer,
-        domain=domain,
-        objective_callables=[_objective],
+        domain=ga_domain,
+        objective_callables=[ga_objective],
         q=1,
         callable_format="torch",
     )
@@ -363,3 +381,35 @@ def test_run_ga_callback_from_data_model_definition(tmp_path):
     assert not callback_path.exists()
     assert x_opt.shape == (1, 1)
     assert f_opt.shape == (1,)
+
+
+@pytest.fixture
+def csv_callback_case(tmp_path):
+    callback_path = tmp_path / "ga_progress_custom.csv"
+    callback = data_models_strategies.CsvProgressCallback(file_path=str(callback_path))
+    return callback, callback_path
+
+
+def test_run_ga_csv_callback_from_data_model_definition(
+    ga_domain,
+    ga_objective,
+    ga_optimizer_factory,
+    csv_callback_case,
+):
+    callback, callback_path = csv_callback_case
+    optimizer = ga_optimizer_factory(callback=callback)
+
+    _x_opt, _f_opt = run_ga(
+        data_model=optimizer,
+        domain=ga_domain,
+        objective_callables=[ga_objective],
+        q=1,
+        callable_format="torch",
+    )
+
+    assert callback_path.exists()
+    lines = callback_path.read_text(encoding="utf-8").strip().splitlines()
+    assert lines[0] == "generation,n_eval,best_f"
+    assert len(lines) >= 2
+    callback_path.unlink()
+    assert not callback_path.exists()

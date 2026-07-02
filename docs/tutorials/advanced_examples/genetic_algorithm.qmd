@@ -361,3 +361,146 @@ x_opt[0]
 ```{python}
 x_opt[1]
 ```
+
+## Example 4: Callback Interface and CSV Progress Tracking
+
+The GA callback receives the pymoo algorithm object after each generation step.
+In abstract form, a callback has the following signature:
+
+```{python}
+def callback(algorithm):
+    # algorithm.n_gen: current generation
+    # algorithm.evaluator.n_eval: number of evaluated candidates
+    # algorithm.opt: current best population entry
+    ...
+```
+
+For serializable usage via the data model, two callback types are available:
+
+1. `ImportPathCallback`: resolve a callback from `"module:function"`
+2. `CsvProgressCallback`: built-in fixed CSV tracker
+
+`CsvProgressCallback` writes columns
+`generation,n_eval,best_f`.
+The output path must be specified explicitly with `file_path`.
+
+### 4a) Built-in CSV callback with custom location
+
+```{python}
+import tempfile
+from pathlib import Path
+```
+
+```{python}
+progress_dir = Path(tempfile.mkdtemp(prefix="bofire-ga-progress-"))
+progress_file = progress_dir / "custom_ga_progress.csv"
+
+optimizer = strategies_data_models.GeneticAlgorithmOptimizer(
+    population_size=30,
+    n_max_gen=10,
+    n_max_evals=200,
+    callback=strategies_data_models.CsvProgressCallback(
+        file_path=str(progress_file),
+    ),
+)
+
+x_opt, f_opt = run_ga(
+    data_model=optimizer,
+    domain=domain,
+    objective_callables=[objective_function],
+    q=3,
+    callable_format="pandas",
+    optimization_direction="max",
+)
+
+progress_file
+```
+
+```{python}
+pd.read_csv(progress_file).head()
+```
+
+### 4b) Run GA in a subprocess and track CSV from main process
+
+```{python}
+import subprocess
+import sys
+import textwrap
+import time
+```
+
+```{python}
+subprocess_progress_file = progress_dir / "subprocess_ga_progress.csv"
+
+worker_script = textwrap.dedent(
+    f"""
+    import numpy as np
+    import pandas as pd
+
+    from bofire.data_models.constraints import api as constraints_data_models
+    from bofire.data_models.domain import api as domains_data_models
+    from bofire.data_models.features import api as features_data_models
+    from bofire.data_models.strategies import api as strategies_data_models
+    from bofire.strategies.utils import run_ga
+
+    domain = domains_data_models.Domain(
+        inputs=domains_data_models.Inputs(
+            features=[
+                features_data_models.ContinuousInput(key="x_1", bounds=(-6, 6)),
+                features_data_models.ContinuousInput(key="x_2", bounds=(-6, 6)),
+            ]
+        ),
+        constraints=[
+            constraints_data_models.NonlinearInequalityConstraint(
+                expression="x_1**2 + x_2**2 - 16",
+                features=["x_1", "x_2"],
+            ),
+        ],
+    )
+
+    optimizer = strategies_data_models.GeneticAlgorithmOptimizer(
+        population_size=40,
+        n_max_gen=20,
+        n_max_evals=1000,
+        callback=strategies_data_models.CsvProgressCallback(
+            file_path={str(subprocess_progress_file)!r},
+        ),
+    )
+
+    def objective_function(x):
+        vars_ = [xi.var(numeric_only=True).mean() for xi in x]
+        return np.array(vars_)
+
+    run_ga(
+        data_model=optimizer,
+        domain=domain,
+        objective_callables=[objective_function],
+        q=3,
+        callable_format="pandas",
+        optimization_direction="max",
+    )
+    """
+)
+
+proc = subprocess.Popen(
+    [sys.executable, "-c", worker_script],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.PIPE,
+    text=True,
+)
+
+last_n_rows = 0
+while proc.poll() is None:
+    if subprocess_progress_file.exists():
+        df_progress = pd.read_csv(subprocess_progress_file)
+        if len(df_progress) > last_n_rows:
+            display(df_progress.tail(1))
+            last_n_rows = len(df_progress)
+    time.sleep(0.2)
+
+stdout, stderr = proc.communicate()
+if proc.returncode != 0:
+    raise RuntimeError(stderr)
+
+pd.read_csv(subprocess_progress_file).tail()
+```

@@ -1,5 +1,6 @@
 import importlib
 import inspect
+import os
 from functools import partial
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
@@ -37,6 +38,10 @@ from bofire.data_models.features.api import (
 from bofire.data_models.strategies.api import (
     GeneticAlgorithmOptimizer as GeneticAlgorithmDataModel,
 )
+from bofire.data_models.strategies.predictives.acqf_optimization import (
+    CsvProgressCallback,
+    ImportPathCallback,
+)
 from bofire.data_models.types import InputTransformSpecs
 from bofire.utils.domain_repair import (
     LinearProjection,
@@ -52,6 +57,14 @@ def _resolve_ga_callback(
     callback_spec = data_model.callback
     if callback_spec is None:
         return None
+
+    if isinstance(callback_spec, CsvProgressCallback):
+        return _make_csv_progress_callback(callback_spec.file_path)
+
+    if not isinstance(callback_spec, ImportPathCallback):
+        raise ValueError(
+            f"Unsupported callback specification type: {type(callback_spec)}"
+        )
 
     module_name, sep, attr_name = callback_spec.target.rpartition(":")
     if not sep or not module_name or not attr_name:
@@ -83,6 +96,37 @@ def _resolve_ga_callback(
         return partial(callback_obj, **callback_spec.kwargs)
 
     return callback_obj
+
+
+def _make_csv_progress_callback(file_path: str) -> Callable[..., Any]:
+    """Create a callback that appends GA progress information to CSV."""
+
+    header = "generation,n_eval,best_f\n"
+    os.makedirs(os.path.dirname(file_path) or ".", exist_ok=True)
+    with open(file_path, "w", encoding="utf-8") as file:
+        file.write(header)
+
+    def _csv_callback(algorithm):
+        generation = getattr(algorithm, "n_gen", "")
+        evaluator = getattr(algorithm, "evaluator", None)
+        n_eval = getattr(evaluator, "n_eval", "") if evaluator is not None else ""
+
+        best_f = ""
+        opt = getattr(algorithm, "opt", None)
+        if opt is not None:
+            try:
+                f_val = opt.get("F")
+                if f_val is not None:
+                    arr = np.asarray(f_val).reshape(-1)
+                    if arr.size > 0:
+                        best_f = float(np.min(arr))
+            except Exception:
+                best_f = ""
+
+        with open(file_path, "a", encoding="utf-8") as file:
+            file.write(f"{generation},{n_eval},{best_f}\n")
+
+    return _csv_callback
 
 
 class GaMixedDomainHandler:

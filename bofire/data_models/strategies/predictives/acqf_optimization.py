@@ -112,7 +112,14 @@ class ImportPathCallback(BaseModel):
     kwargs: Dict[str, Any] = Field(default_factory=dict)
 
 
-AnyGACallback = ImportPathCallback
+class CsvProgressCallback(BaseModel):
+    """Built-in GA callback writing per-generation progress to a CSV file."""
+
+    type: Literal["CsvProgressCallback"] = "CsvProgressCallback"
+    file_path: str
+
+
+AnyGACallback = tagged_union(ImportPathCallback, CsvProgressCallback)
 
 
 class BotorchOptimizer(AcquisitionOptimizer):
