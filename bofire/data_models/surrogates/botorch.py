@@ -1,6 +1,5 @@
 from pydantic import Field, field_validator, model_validator
 
-from bofire.data_models.descriptors.api import GeneratedSource, StaticSource
 from bofire.data_models.domain.api import EngineeredFeatures
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.encodings._migrate import migrate_legacy_encodings
@@ -97,12 +96,15 @@ class BotorchSurrogate(Surrogate):
         """
         fallbacks = cls._default_plain_categorical_encodings()
         if not isinstance(feat, CategoricalTaskInput):
-            if feat.descriptor_columns(role="structure"):
+            structure_cols = feat.descriptor_columns(role="structure")
+            if structure_cols:
+                # fingerprint-encode from the structure column(s), static columns excluded
                 return DescriptorEncoding(
-                    source=GeneratedSource(generator=Fingerprints())
+                    columns=[],
+                    generators={col: [Fingerprints()] for col in structure_cols},
                 )
             if feat.descriptor_columns(role="descriptor"):
-                return DescriptorEncoding(source=StaticSource())
+                return DescriptorEncoding()  # all numeric descriptor columns
         for klass in type(feat).__mro__:
             if klass in fallbacks:
                 return fallbacks[klass]

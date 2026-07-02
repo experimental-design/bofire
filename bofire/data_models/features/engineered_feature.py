@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
 
 from pydantic import Field, PositiveFloat, PositiveInt, model_validator
 
-from bofire.data_models.descriptors.api import AnyDescriptorSource
+from bofire.data_models.features._descriptor_spec import DescriptorSpec
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.features.feature import Feature
 from bofire.data_models.types import Bounds, FeatureKeys, OneFeatureKeys
@@ -81,52 +81,60 @@ class MeanFeature(EngineeredFeature):
         return 1
 
 
-class WeightedSumFeature(EngineeredFeature):
+class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
     """Amount-weighted blend of descriptors over the specified component features.
 
     For each descriptor ``d`` the output is ``Σᵢ amountᵢ · rowᵢ,d`` where ``amountᵢ``
     is the value of component feature ``i`` (optionally normalized by ``Σᵢ amountᵢ``).
-    The ``source`` decides how each component's descriptor row is produced (static
-    columns / molecular generator / composite).
+    The descriptor columns are declared by the :class:`DescriptorSpec` mixin
+    (``columns`` for static columns and/or ``generators`` for molecular generators).
 
     Args:
         features: The component features to blend.
-        source: The descriptor source (read from each component's descriptors).
+        columns / generators / filter_descriptors: see :class:`DescriptorSpec`.
         normalize: If True, divide by the sum of amounts (weighted mean).
         keep_features: Whether to keep the original features in surrogate creation.
     """
 
     type: Literal["WeightedSumFeature"] = "WeightedSumFeature"
     order_id: ClassVar[int] = 2
-    source: AnyDescriptorSource
     normalize: bool = False
 
     @model_validator(mode="before")
     @classmethod
     def _migrate_legacy_descriptors(cls, data):
-        # legacy shape: descriptors=[names] (static) and no source
-        if isinstance(data, dict) and "source" not in data and "descriptors" in data:
+        # legacy shape: descriptors=[names] (static) -> columns=[names]
+        if isinstance(data, dict) and "columns" not in data and "descriptors" in data:
             warnings.warn(
                 "`descriptors=` on WeightedSumFeature is deprecated; use "
-                "`source=StaticSource(columns=...)` instead.",
+                "`columns=[...]` instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
-            data["source"] = {
-                "type": "StaticSource",
-                "columns": data.pop("descriptors"),
-            }
+            data["columns"] = data.pop("descriptors")
         return data
 
     @property
     def n_transformed_inputs(self) -> int:
-        declared = self.source.declared_names()
+        # width is frozen by validate_features once the components are known; before
+        # that (or when columns are explicit) the declared width is feature-free.
+        if self._resolved_names is not None:
+            return len(self._resolved_names)
+        declared = self.declared_names()
         return len(declared) if declared is not None else 0
 
     def validate_features(self, inputs: "Inputs"):
         super().validate_features(inputs)
-        for feature_key in self.features:
-            self.source.check(inputs.get_by_key(feature_key))
+        components = [inputs.get_by_key(key) for key in self.features]
+        for component in components:
+            self.validate_for(component)
+        # freeze the final column set so n_transformed_inputs (offset bookkeeping)
+        # matches the columns the mapper appends. Filtering needs the assembled table;
+        # otherwise the feature-aware declared names suffice (no generation).
+        if self.filter_descriptors:
+            self.component_table(components)
+        else:
+            self._resolved_names = self.declared_names(components[0])
 
 
 class WeightedMeanFeature(WeightedSumFeature):
@@ -150,7 +158,7 @@ class WeightedMeanFeature(WeightedSumFeature):
 
 
 class MolecularWeightedSumFeature(WeightedSumFeature):
-    """Deprecated. Use :class:`WeightedSumFeature` with a ``GeneratedSource``."""
+    """Deprecated. Use :class:`WeightedSumFeature` with ``generators=...``."""
 
     type: Literal["MolecularWeightedSumFeature"] = "MolecularWeightedSumFeature"
     order_id: ClassVar[int] = 3
@@ -158,23 +166,28 @@ class MolecularWeightedSumFeature(WeightedSumFeature):
     @model_validator(mode="before")
     @classmethod
     def _migrate_molecular(cls, data):
-        if isinstance(data, dict) and "source" not in data and "molfeatures" in data:
+        if (
+            isinstance(data, dict)
+            and "generators" not in data
+            and "molfeatures" in data
+        ):
             warnings.warn(
                 "`MolecularWeightedSumFeature` is deprecated, use "
-                "`WeightedSumFeature(source=GeneratedSource(generator=...))`.",
+                "`WeightedSumFeature(generators={'smiles': [...]})`.",
                 DeprecationWarning,
                 stacklevel=2,
             )
-            data["source"] = {
-                "type": "GeneratedSource",
-                "structure": "smiles",
-                "generator": data.pop("molfeatures"),
-            }
+            mol = data.pop("molfeatures")
+            if isinstance(mol, dict) and mol.get("type") == "CompositeMolFeatures":
+                generators = mol["features"]
+            else:
+                generators = [mol]
+            data["generators"] = {"smiles": generators}
         return data
 
 
 class MolecularWeightedMeanFeature(MolecularWeightedSumFeature):
-    """Deprecated. Use :class:`WeightedSumFeature` with a ``GeneratedSource`` and
+    """Deprecated. Use :class:`WeightedSumFeature` with ``generators=...`` and
     ``normalize=True``."""
 
     type: Literal["MolecularWeightedMeanFeature"] = "MolecularWeightedMeanFeature"

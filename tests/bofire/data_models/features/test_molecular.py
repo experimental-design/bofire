@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from bofire.data_models.descriptors.api import GeneratedSource
 from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
 from bofire.data_models.features.molecular import (
     CategoricalMolecularInput,
@@ -13,7 +12,6 @@ from bofire.data_models.features.molecular import (
 )
 from bofire.data_models.molfeatures.api import (
     Fingerprints,
-    FingerprintsFragments,
     Fragments,
     MordredDescriptors,
 )
@@ -41,7 +39,7 @@ INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
     [
         (
             "molecule_2_two",
-            Fingerprints(n_bits=32, filter_descriptors=False),
+            Fingerprints(n_bits=32),
             {
                 "molecule_2_two_fingerprint_0": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
                 "molecule_2_two_fingerprint_1": {0: 1.0, 1: 0.0, 2: 1.0, 3: 1.0},
@@ -81,7 +79,6 @@ INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
             "molecule_",
             Fragments(
                 fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                filter_descriptors=False,
             ),
             {
                 "molecule__fr_unbrch_alkane": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
@@ -89,54 +86,8 @@ INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
             },
         ),
         (
-            "molecule",
-            FingerprintsFragments(
-                n_bits=32,
-                fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                filter_descriptors=False,
-            ),
-            {
-                "molecule_fingerprint_0": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_1": {0: 1.0, 1: 0.0, 2: 1.0, 3: 1.0},
-                "molecule_fingerprint_2": {0: 1.0, 1: 0.0, 2: 1.0, 3: 0.0},
-                "molecule_fingerprint_3": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
-                "molecule_fingerprint_4": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_5": {0: 1.0, 1: 1.0, 2: 0.0, 3: 1.0},
-                "molecule_fingerprint_6": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
-                "molecule_fingerprint_7": {0: 1.0, 1: 0.0, 2: 1.0, 3: 1.0},
-                "molecule_fingerprint_8": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
-                "molecule_fingerprint_9": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_10": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
-                "molecule_fingerprint_11": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_12": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_13": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
-                "molecule_fingerprint_14": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_15": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_16": {0: 1.0, 1: 1.0, 2: 1.0, 3: 0.0},
-                "molecule_fingerprint_17": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_18": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
-                "molecule_fingerprint_19": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
-                "molecule_fingerprint_20": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_21": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_22": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_23": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
-                "molecule_fingerprint_24": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_25": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
-                "molecule_fingerprint_26": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_27": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_28": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fingerprint_29": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
-                "molecule_fingerprint_30": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
-                "molecule_fingerprint_31": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fr_unbrch_alkane": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "molecule_fr_thiocyan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
-            },
-        ),
-        (
             "_mo_le_cule",
-            MordredDescriptors(
-                descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
-            ),
+            MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             {
                 "_mo_le_cule_NssCH2": {
                     0: 0.5963718820861676,
@@ -155,7 +106,7 @@ def test_categorical_molecular_input_to_descriptor_encoding(
     input_feature = CategoricalMolecularInput(key=key, categories=VALID_SMILES.tolist())
 
     encoded = DescriptorEncoding(
-        source=GeneratedSource(generator=transform_type)
+        columns=[], generators={"smiles": [transform_type]}
     ).encode(input_feature, VALID_SMILES)
     assert len(encoded.columns) == len(transform_type.get_descriptor_names())
     assert len(encoded) == len(smiles)
@@ -197,11 +148,14 @@ def test_categorical_molecular_input_from_descriptor_encoding(key):
     values = pd.Series(data=["c1ccccc1", "[CH3][CH2][OH]"], name=key)
     for transform_type in [
         Fingerprints(),
-        FingerprintsFragments(),
+        Fingerprints(),
+        Fragments(),
         Fragments(),
         MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
     ]:
-        encoding = DescriptorEncoding(source=GeneratedSource(generator=transform_type))
+        encoding = DescriptorEncoding(
+            columns=[], generators={"smiles": [transform_type]}
+        )
         encoded = encoding.encode(feat, values=values)
         decoded = encoding.decode(feat, values=encoded)
         assert np.all(decoded == values)
@@ -228,29 +182,33 @@ def test_categorical_molecular_input_get_bounds():
         allowed=[True, True, False, False],
     )
     lower, upper = DescriptorEncoding(
-        source=GeneratedSource(
-            generator=MordredDescriptors(
-                descriptors=[
-                    "nAromAtom",
-                    "nAromBond",
-                ],
-                filter_descriptors=False,
-            ),
-        )
+        columns=[],
+        generators={
+            "smiles": [
+                MordredDescriptors(
+                    descriptors=[
+                        "nAromAtom",
+                        "nAromBond",
+                    ],
+                ),
+            ]
+        },
     ).get_bounds(feat)
     assert lower == [6.0, 6.0]
     assert upper == [6.0, 6.0]
 
     lower, upper = DescriptorEncoding(
-        source=GeneratedSource(
-            generator=MordredDescriptors(
-                descriptors=[
-                    "nAromAtom",
-                    "nAromBond",
-                ],
-                filter_descriptors=False,
-            ),
-        )
+        columns=[],
+        generators={
+            "smiles": [
+                MordredDescriptors(
+                    descriptors=[
+                        "nAromAtom",
+                        "nAromBond",
+                    ],
+                ),
+            ]
+        },
     ).get_bounds(feat, values=VALID_SMILES)
     assert lower == [0.0, 0.0]
     assert upper == [6.0, 6.0]

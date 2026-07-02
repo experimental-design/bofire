@@ -17,7 +17,6 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
     ProductInequalityConstraint,
 )
-from bofire.data_models.descriptors.api import GeneratedSource
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
@@ -1216,9 +1215,7 @@ def test_get_categorical_encoder(feature, transform, expected_encoding):
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_get_categorical_encoder_molecular():
     feat = CategoricalMolecularInput(key="m", categories=["CC", "CCC"])
-    transform = DescriptorEncoding(
-        source=GeneratedSource(generator=Fingerprints(filter_descriptors=False))
-    )
+    transform = DescriptorEncoding(columns=[], generators={"smiles": [Fingerprints()]})
     expected_encoding = torch.from_numpy(
         transform.encode(feat, pd.Series(feat.categories)).values
     ).to(**tkwargs)

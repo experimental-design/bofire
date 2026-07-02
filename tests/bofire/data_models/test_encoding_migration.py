@@ -8,7 +8,6 @@ as encoder objects.
 
 import pytest
 
-from bofire.data_models.descriptors.api import GeneratedSource, StaticSource
 from bofire.data_models.encodings._migrate import migrate_legacy_encodings
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
@@ -35,8 +34,9 @@ def test_migrate_legacy_string_values(legacy, expected_type, drop_first):
     if expected_type is OneHotEncoding:
         assert enc.drop_first is drop_first
     if expected_type is DescriptorEncoding:
-        # "DESCRIPTOR" maps to the static-column source.
-        assert isinstance(enc.source, StaticSource)
+        # "DESCRIPTOR" maps to all static descriptor columns (no generators).
+        assert enc.columns is None
+        assert enc.generators == {}
 
 
 def test_migrate_bare_molfeature():
@@ -44,8 +44,9 @@ def test_migrate_bare_molfeature():
         migrated = migrate_legacy_encodings({"x": Fingerprints(n_bits=32)})
     enc = migrated["x"]
     assert isinstance(enc, DescriptorEncoding)
-    assert isinstance(enc.source, GeneratedSource)
-    assert isinstance(enc.source.generator, Fingerprints)
+    assert enc.columns == []
+    assert list(enc.generators) == ["smiles"]
+    assert isinstance(enc.generators["smiles"][0], Fingerprints)
 
 
 def test_migrate_legacy_molecular_encoding_dict():
@@ -64,24 +65,26 @@ def test_migrate_legacy_molecular_encoding_dict():
     # dict-shaped legacy values migrate to a dict; pydantic constructs the object.
     enc = TypeAdapter(AnyCategoricalEncoding).validate_python(migrated["x"])
     assert isinstance(enc, DescriptorEncoding)
-    assert isinstance(enc.source, GeneratedSource)
-    assert enc.source.structure == "smiles"
-    assert isinstance(enc.source.generator, Fingerprints)
+    assert enc.columns == []
+    assert isinstance(enc.generators["smiles"][0], Fingerprints)
 
 
-def test_migrate_legacy_descriptor_columns_dict():
-    """An old ``DescriptorEncoding`` dict with ``columns`` maps to a static source."""
+def test_legacy_descriptor_columns_dict_deserializes_natively():
+    """The old ``DescriptorEncoding`` dict with ``columns`` is now natively valid."""
+    import warnings
+
     from pydantic import TypeAdapter
 
     from bofire.data_models.encodings.api import AnyCategoricalEncoding
 
     legacy = {"type": "DescriptorEncoding", "columns": ["d1", "d2"]}
-    with pytest.warns(DeprecationWarning):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # `columns` is a native field, no migration
         migrated = migrate_legacy_encodings({"x": legacy})
     enc = TypeAdapter(AnyCategoricalEncoding).validate_python(migrated["x"])
     assert isinstance(enc, DescriptorEncoding)
-    assert isinstance(enc.source, StaticSource)
-    assert enc.source.columns == ["d1", "d2"]
+    assert enc.columns == ["d1", "d2"]
+    assert enc.generators == {}
 
 
 def test_migrate_passthrough_objects_no_warning():

@@ -1,5 +1,4 @@
 import bofire.data_models.surrogates.api as models
-from bofire.data_models.descriptors.api import GeneratedSource
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
@@ -752,9 +751,8 @@ specs.add_valid(
         "input_preprocessing_specs": {"mol1": OrdinalEncoding().model_dump()},
         "categorical_encodings": {
             "mol1": DescriptorEncoding(
-                source=GeneratedSource(
-                    generator=Fingerprints(n_bits=32, bond_radius=3),
-                ),
+                columns=[],
+                generators={"smiles": [Fingerprints(n_bits=32, bond_radius=3)]},
             ).model_dump(),
         },
         "dump": None,

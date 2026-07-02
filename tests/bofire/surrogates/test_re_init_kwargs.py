@@ -7,7 +7,7 @@ import torch
 from bofire.benchmarks.api import Himmelblau
 from bofire.data_models.domain import api as domain_api
 from bofire.data_models.features import api as features_api
-from bofire.data_models.molfeatures.api import FingerprintsFragments
+from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate, TanimotoGPSurrogate
 from bofire.surrogates.api import map
 
@@ -39,7 +39,7 @@ def test_re_init_kwargs_fingerprints(
     chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame],
 ):
     domain, X, Y = chem_domain_simple
-    specs = {domain.inputs.get_keys()[0]: FingerprintsFragments(n_bits=2048)}
+    specs = {domain.inputs.get_keys()[0]: Fingerprints(n_bits=2048)}
     surrogate_data_model = TanimotoGPSurrogate(
         inputs=domain.inputs,
         outputs=domain.outputs,

@@ -2,7 +2,6 @@ import random
 import uuid
 
 import bofire.data_models.features.api as features
-from bofire.data_models.descriptors.api import GeneratedSource, StaticSource
 from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.objectives.api import (
     ConstrainedCategoricalObjective,
@@ -63,7 +62,10 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
-        "source": StaticSource(columns=["alpha", "beta"]).model_dump(),
+        "columns": ["alpha", "beta"],
+        "generators": {},
+        "filter_descriptors": False,
+        "correlation_cutoff": 0.95,
         "normalize": False,
         "keep_features": True,
         "context": None,
@@ -75,7 +77,10 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
-        "source": StaticSource(columns=["alpha", "beta"]).model_dump(),
+        "columns": ["alpha", "beta"],
+        "generators": {},
+        "filter_descriptors": False,
+        "correlation_cutoff": 0.95,
         "normalize": True,
         "keep_features": True,
         "context": None,
@@ -87,13 +92,16 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
-        "source": GeneratedSource(
-            structure="smiles",
-            generator=MordredDescriptors(
-                descriptors=["NssCH2", "ATSC2d"],
-                ignore_3D=True,
-            ),
-        ).model_dump(),
+        "columns": None,
+        "generators": {
+            "smiles": [
+                MordredDescriptors(
+                    descriptors=["NssCH2", "ATSC2d"], ignore_3D=True
+                ).model_dump()
+            ]
+        },
+        "filter_descriptors": False,
+        "correlation_cutoff": 0.95,
         "normalize": False,
         "keep_features": True,
         "context": None,
@@ -125,13 +133,16 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
-        "source": GeneratedSource(
-            structure="smiles",
-            generator=MordredDescriptors(
-                descriptors=["NssCH2", "ATSC2d"],
-                ignore_3D=True,
-            ),
-        ).model_dump(),
+        "columns": None,
+        "generators": {
+            "smiles": [
+                MordredDescriptors(
+                    descriptors=["NssCH2", "ATSC2d"], ignore_3D=True
+                ).model_dump()
+            ]
+        },
+        "filter_descriptors": False,
+        "correlation_cutoff": 0.95,
         "normalize": True,
         "keep_features": True,
         "context": None,

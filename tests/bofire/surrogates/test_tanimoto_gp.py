@@ -7,12 +7,8 @@ import pytest
 import torch
 
 from bofire.data_models.domain import api as domain_api
-from bofire.data_models.molfeatures.api import (
-    CompositeMolFeatures,
-    Fingerprints,
-    Fragments,
-    MolFeatures,
-)
+from bofire.data_models.encodings.api import DescriptorEncoding
+from bofire.data_models.molfeatures.api import Fingerprints, Fragments, MolFeatures
 from bofire.data_models.priors.api import GammaPrior
 from bofire.data_models.strategies import api as strategies_api
 from bofire.data_models.surrogates.api import BotorchSurrogates, TanimotoGPSurrogate
@@ -30,17 +26,19 @@ def n_bits(request) -> int:
 
 
 @pytest.fixture(params=["Figerprints", "Fragments", "Composite"])
-def mol_feature_data_model(request, n_bits) -> MolFeatures:
+def mol_feature_data_model(request, n_bits):
+    # bare molfeatures migrate to a DescriptorEncoding; the composite (two generators
+    # on one structure column) is expressed directly as a DescriptorEncoding.
     if request.param == "Figerprints":
         return Fingerprints(bond_radius=3, n_bits=n_bits)
     elif request.param == "Fragments":
         return Fragments()
     elif request.param == "Composite":
-        return CompositeMolFeatures(
-            features=[
-                Fingerprints(bond_radius=2, n_bits=n_bits),
-                Fragments(),
-            ]
+        return DescriptorEncoding(
+            columns=[],
+            generators={
+                "smiles": [Fingerprints(bond_radius=2, n_bits=n_bits), Fragments()]
+            },
         )
 
 

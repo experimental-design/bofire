@@ -558,3 +558,24 @@ def test_categorical_input_to_pydantic_field_at_threshold_stays_literal():
     field_type, _ = feat.to_pydantic_field()
     assert get_origin(field_type) is get_origin(Literal["x"])
     assert list(get_args(field_type)) == categories
+
+
+def test_descriptor_encoding_filter_prunes_correlated_columns():
+    """`filter_descriptors` drops correlated columns across the assembled block."""
+    from bofire.data_models.features.api import CategoricalInput
+
+    feat = CategoricalInput(
+        key="c",
+        categories=["a", "b", "c"],
+        # d2 == 2 * d1 (perfectly correlated); d3 is independent.
+        descriptors={
+            "d1": [1.0, 2.0, 3.0],
+            "d2": [2.0, 4.0, 6.0],
+            "d3": [0.0, 1.0, 0.0],
+        },
+    )
+    # without filtering, all three columns are used
+    assert DescriptorEncoding().get_names(feat) == ["c_d1", "c_d2", "c_d3"]
+    # with filtering, the collinear d2 is dropped (the earlier d1 is kept)
+    filtered = DescriptorEncoding(filter_descriptors=True).get_names(feat)
+    assert filtered == ["c_d1", "c_d3"]

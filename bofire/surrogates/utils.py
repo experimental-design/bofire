@@ -10,14 +10,9 @@ from botorch.models.transforms.input import (
     Normalize,
 )
 
-from bofire.data_models.descriptors.api import (
-    CompositeSource,
-    GeneratedSource,
-    StaticSource,
-)
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
 from bofire.data_models.encodings.api import DescriptorEncoding
-from bofire.data_models.molfeatures.api import CompositeMolFeatures, MordredDescriptors
+from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.surrogates.scaler import AnyScaler
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.types import InputTransformSpecs
@@ -25,34 +20,18 @@ from bofire.surrogates.engineered_features import map as map_feature
 from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
 
 
-def _source_produces_continuous(source) -> bool:
-    """Whether a descriptor source yields real-valued (continuous-like) columns.
-
-    Static descriptors and Mordred descriptors are real-valued; fingerprints /
-    fragments are binary/count. A composite is continuous only if all its members are.
-    """
-    if isinstance(source, StaticSource):
-        return True
-    if isinstance(source, GeneratedSource):
-        generator = source.generator
-        if isinstance(generator, MordredDescriptors):
-            return True
-        return isinstance(generator, CompositeMolFeatures) and any(
-            isinstance(molfeature, MordredDescriptors)
-            for molfeature in generator.features
-        )
-    if isinstance(source, CompositeSource):
-        return all(_source_produces_continuous(s) for s in source.sources)
-    return False
-
-
 def _produces_continuous_columns(value) -> bool:
-    """Whether an encoding produces real-valued columns that should be scaled.
+    """Whether an encoding produces only real-valued columns that should be scaled.
 
-    One-hot/ordinal are not; a descriptor encoding depends on its source.
+    Static descriptor columns and Mordred descriptors are real-valued; fingerprints /
+    fragments are binary/count. A descriptor encoding qualifies only if *every* generator
+    is Mordred (static columns are always real-valued, so they don't disqualify it) —
+    i.e. no binary fingerprint/fragment column is present. One-hot/ordinal never qualify.
     """
-    return isinstance(value, DescriptorEncoding) and _source_produces_continuous(
-        value.source
+    return isinstance(value, DescriptorEncoding) and all(
+        isinstance(generator, MordredDescriptors)
+        for generators in value.generators.values()
+        for generator in generators
     )
 
 

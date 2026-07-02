@@ -8,7 +8,6 @@ import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
-from bofire.data_models.descriptors.api import GeneratedSource
 from bofire.data_models.domain.api import Features, Inputs, Outputs
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
@@ -25,7 +24,6 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.molfeatures.api import (
     Fingerprints,
-    FingerprintsFragments,
     Fragments,
     MordredDescriptors,
 )
@@ -346,7 +344,7 @@ def test_inputs_sample_empty():
         ({"x2": DescriptorEncoding()}),
         ({"x1": Fingerprints()}),
         ({"x2": Fragments()}),
-        ({"x3": FingerprintsFragments()}),
+        ({"x3": Fingerprints()}),
         ({"x3": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])}),
     ],
 )
@@ -426,21 +424,28 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
 @pytest.mark.parametrize(
     "specs",
     [
-        ({"x4": DescriptorEncoding(source=GeneratedSource(generator=Fingerprints()))}),
-        ({"x4": DescriptorEncoding(source=GeneratedSource(generator=Fragments()))}),
         (
             {
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(generator=FingerprintsFragments())
+                    columns=[], generators={"smiles": [Fingerprints()]}
+                )
+            }
+        ),
+        ({"x4": DescriptorEncoding(columns=[], generators={"smiles": [Fragments()]})}),
+        (
+            {
+                "x4": DescriptorEncoding(
+                    columns=[], generators={"smiles": [Fingerprints(), Fragments()]}
                 )
             }
         ),
         (
             {
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
-                    )
+                    columns=[],
+                    generators={
+                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
+                    },
                 )
             }
         ),
@@ -448,7 +453,7 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
             {
                 "x2": OneHotEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(generator=Fingerprints())
+                    columns=[], generators={"smiles": [Fingerprints()]}
                 ),
             }
         ),
@@ -456,7 +461,7 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
             {
                 "x3": DescriptorEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(generator=Fingerprints())
+                    columns=[], generators={"smiles": [Fingerprints()]}
                 ),
             }
         ),
@@ -465,7 +470,7 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(generator=Fingerprints())
+                    columns=[], generators={"smiles": [Fingerprints()]}
                 ),
             }
         ),
@@ -496,9 +501,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
             {
                 "x2": OneHotEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=Fingerprints(n_bits=2048, filter_descriptors=False)
-                    )
+                    columns=[], generators={"smiles": [Fingerprints(n_bits=2048)]}
                 ),
             },
             {
@@ -518,12 +521,14 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
             {
                 "x2": OneHotEncoding(drop_first=True),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=Fragments(
-                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                            filter_descriptors=False,
-                        )
-                    )
+                    columns=[],
+                    generators={
+                        "smiles": [
+                            Fragments(
+                                fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                            )
+                        ]
+                    },
                 ),
             },
             {"x1": (0,), "x2": (4, 5), "x3": (3,), "x4": (1, 2)},
@@ -538,13 +543,13 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
             {
                 "x2": OrdinalEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=FingerprintsFragments(
-                            n_bits=2048,
-                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                            filter_descriptors=False,
-                        )
-                    )
+                    columns=[],
+                    generators={
+                        "smiles": [
+                            Fingerprints(n_bits=2048),
+                            Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+                        ]
+                    },
                 ),
             },
             {
@@ -567,11 +572,10 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
             {
                 "x3": OneHotEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=MordredDescriptors(
-                            descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
-                        )
-                    )
+                    columns=[],
+                    generators={
+                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
+                    },
                 ),
             },
             {"x1": (0,), "x2": (7,), "x3": (3, 4, 5, 6), "x4": (1, 2)},
@@ -587,11 +591,10 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=MordredDescriptors(
-                            descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
-                        )
-                    )
+                    columns=[],
+                    generators={
+                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
+                    },
                 ),
             },
             {"x1": (0,), "x2": (5, 6, 7), "x3": (3, 4), "x4": (1, 2)},
@@ -697,11 +700,10 @@ def test_input_reverse_transform_molecular():
     )
     specs = {
         "x3": DescriptorEncoding(
-            source=GeneratedSource(
-                generator=MordredDescriptors(
-                    descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
-                )
-            )
+            columns=[],
+            generators={
+                "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
+            },
         ),
         "x2": OneHotEncoding(),
     }
@@ -719,9 +721,7 @@ def test_input_reverse_transform_molecular():
             {
                 "x2": OneHotEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=Fingerprints(n_bits=32, filter_descriptors=False)
-                    )
+                    columns=[], generators={"smiles": [Fingerprints(n_bits=32)]}
                 ),
             },
             {
@@ -768,12 +768,14 @@ def test_input_reverse_transform_molecular():
             {
                 "x2": OneHotEncoding(drop_first=True),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=Fragments(
-                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                            filter_descriptors=False,
-                        )
-                    )
+                    columns=[],
+                    generators={
+                        "smiles": [
+                            Fragments(
+                                fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                            )
+                        ]
+                    },
                 ),
             },
             {
@@ -789,13 +791,13 @@ def test_input_reverse_transform_molecular():
             {
                 "x2": OrdinalEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=FingerprintsFragments(
-                            n_bits=32,
-                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                            filter_descriptors=False,
-                        )
-                    )
+                    columns=[],
+                    generators={
+                        "smiles": [
+                            Fingerprints(n_bits=32),
+                            Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+                        ]
+                    },
                 ),
             },
             {
@@ -843,11 +845,10 @@ def test_input_reverse_transform_molecular():
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=MordredDescriptors(
-                            descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
-                        )
-                    )
+                    columns=[],
+                    generators={
+                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
+                    },
                 ),
             },
             {
@@ -1204,9 +1205,7 @@ def test_inputs_get_bounds_fit():
                 "x2": OneHotEncoding(),
                 "x3": OneHotEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=Fingerprints(n_bits=2, filter_descriptors=False)
-                    )
+                    columns=[], generators={"smiles": [Fingerprints(n_bits=2)]}
                 ),
             },
             ["x1"],
@@ -1221,12 +1220,14 @@ def test_inputs_get_bounds_fit():
                 "x2": OneHotEncoding(),
                 "x3": OneHotEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=Fragments(
-                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                            filter_descriptors=False,
-                        )
-                    )
+                    columns=[],
+                    generators={
+                        "smiles": [
+                            Fragments(
+                                fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                            )
+                        ]
+                    },
                 ),
             },
             ["x1"],
@@ -1241,11 +1242,10 @@ def test_inputs_get_bounds_fit():
                 "x2": OneHotEncoding(),
                 "x3": OneHotEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=MordredDescriptors(
-                            descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
-                        )
-                    )
+                    columns=[],
+                    generators={
+                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
+                    },
                 ),
             },
             ["x1", "x4"],
@@ -1260,9 +1260,7 @@ def test_inputs_get_bounds_fit():
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=Fingerprints(n_bits=2, filter_descriptors=False)
-                    )
+                    columns=[], generators={"smiles": [Fingerprints(n_bits=2)]}
                 ),
             },
             ["x1", "x3"],
@@ -1277,12 +1275,14 @@ def test_inputs_get_bounds_fit():
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=Fragments(
-                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                            filter_descriptors=False,
-                        )
-                    )
+                    columns=[],
+                    generators={
+                        "smiles": [
+                            Fragments(
+                                fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                            )
+                        ]
+                    },
                 ),
             },
             ["x1", "x3"],
@@ -1297,11 +1297,10 @@ def test_inputs_get_bounds_fit():
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": DescriptorEncoding(
-                    source=GeneratedSource(
-                        generator=MordredDescriptors(
-                            descriptors=["NssCH2", "ATSC2d"], filter_descriptors=False
-                        )
-                    )
+                    columns=[],
+                    generators={
+                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
+                    },
                 ),
             },
             ["x1", "x3", "x4"],

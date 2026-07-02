@@ -1,4 +1,3 @@
-import bofire.data_models.descriptors.api as descriptors
 import bofire.data_models.encodings.api as encodings
 import bofire.data_models.molfeatures.api as molfeatures
 from tests.bofire.data_models.specs.specs import Specs
@@ -21,36 +20,57 @@ specs.add_valid(
     lambda: {},
 )
 
+
+def _descriptor_spec(**kwargs):
+    """A DescriptorEncoding spec with all mixin defaults spelled out."""
+    return {
+        "columns": None,
+        "generators": {},
+        "filter_descriptors": False,
+        "correlation_cutoff": 0.95,
+        **kwargs,
+    }
+
+
+# static descriptor columns (all / subset)
+specs.add_valid(encodings.DescriptorEncoding, lambda: _descriptor_spec())
 specs.add_valid(
-    encodings.DescriptorEncoding,
-    lambda: {"source": descriptors.StaticSource(columns=None).model_dump()},
+    encodings.DescriptorEncoding, lambda: _descriptor_spec(columns=["d1", "d2"])
 )
 
+# molecular generator
 specs.add_valid(
     encodings.DescriptorEncoding,
-    lambda: {"source": descriptors.StaticSource(columns=["d1", "d2"]).model_dump()},
+    lambda: _descriptor_spec(
+        columns=[],
+        generators={
+            "smiles": [molfeatures.Fingerprints(n_bits=32, bond_radius=3).model_dump()]
+        },
+    ),
 )
 
+# composite: static + molecular on one feature
 specs.add_valid(
     encodings.DescriptorEncoding,
-    lambda: {
-        "source": descriptors.GeneratedSource(
-            structure="smiles",
-            generator=molfeatures.Fingerprints(n_bits=32, bond_radius=3),
-        ).model_dump(),
-    },
+    lambda: _descriptor_spec(
+        columns=["logP"],
+        generators={
+            "smiles": [molfeatures.Fingerprints(n_bits=32, bond_radius=3).model_dump()]
+        },
+        filter_descriptors=True,
+    ),
 )
 
+# two generators on the same structure column
 specs.add_valid(
     encodings.DescriptorEncoding,
-    lambda: {
-        "source": descriptors.CompositeSource(
-            sources=[
-                descriptors.StaticSource(columns=["logP"]),
-                descriptors.GeneratedSource(
-                    generator=molfeatures.Fingerprints(n_bits=32, bond_radius=3),
-                ),
-            ],
-        ).model_dump(),
-    },
+    lambda: _descriptor_spec(
+        columns=[],
+        generators={
+            "smiles": [
+                molfeatures.Fingerprints(n_bits=32, bond_radius=3).model_dump(),
+                molfeatures.Fragments().model_dump(),
+            ]
+        },
+    ),
 )

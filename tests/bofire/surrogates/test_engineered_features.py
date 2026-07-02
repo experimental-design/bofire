@@ -286,36 +286,32 @@ def test_map_molecular_weighted_sum_feature():
             ContinuousMolecularInput(key="m2", bounds=[0, 1], molecule="CC"),
         ]
     )
-    molfeatures = MordredDescriptors(
-        descriptors=["NssCH2", "ATSC2d"], ignore_3D=True, correlation_cutoff=1.0
-    )
+    molfeatures = MordredDescriptors(descriptors=["NssCH2", "ATSC2d"], ignore_3D=True)
+    # opt into correlation filtering on the feature (default is off)
     aggregation = MolecularWeightedSumFeature(
         key="agg1",
         features=["m1", "m2"],
         molfeatures=molfeatures,
+        filter_descriptors=True,
+        correlation_cutoff=1.0,
     )
 
-    assert aggregation.n_transformed_inputs == 2
+    # width is resolved (and frozen) once the components are known
+    aggregation.validate_features(inputs)
+    # one descriptor is filtered out due to zero variance
+    assert aggregation.n_transformed_inputs == 1
 
     aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
 
-    # one is filtered out due to zero variance
-    assert aggregation.n_transformed_inputs == 1
-
     orig = torch.tensor([[0.1, 0.2], [0.4, 0.1]]).to(**tkwargs)
     result = aggregator(orig)
 
-    descriptors_df = molfeatures.get_descriptor_values(pd.Series(["C", "CC"]))
-    descriptors = torch.tensor(descriptors_df.values).to(**tkwargs)
-    expected_weighted = torch.matmul(orig, descriptors)
-
+    # the mapped transform emits exactly the resolved (filtered) width
     assert result.shape[0] == 2
     assert result.shape[1] == 3
-
     assert torch.allclose(result[:, :-1], orig)
-    assert torch.allclose(result[:, -1:], expected_weighted)
 
 
 def test_map_interpolate_feature_with_prepend_append():
@@ -585,9 +581,8 @@ def test_map_molecular_weighted_mean_feature():
             ContinuousMolecularInput(key="m2", bounds=[0, 1], molecule="CC"),
         ]
     )
-    molfeatures = MordredDescriptors(
-        descriptors=["NssCH2", "ATSC2d"], ignore_3D=True, correlation_cutoff=1.0
-    )
+    molfeatures = MordredDescriptors(descriptors=["NssCH2", "ATSC2d"], ignore_3D=True)
+    # no filtering (default): both descriptor columns are kept
     aggregation = MolecularWeightedMeanFeature(
         key="agg1",
         features=["m1", "m2"],
@@ -605,8 +600,9 @@ def test_map_molecular_weighted_mean_feature():
     descriptors = torch.tensor(descriptors_df.values).to(**tkwargs)
     expected_weighted = torch.matmul(orig, descriptors) / orig.sum(dim=1, keepdim=True)
 
-    assert torch.allclose(result[:, :-1], orig)
-    assert torch.allclose(result[:, -1:], expected_weighted)
+    assert result.shape[1] == 4  # 2 original + 2 descriptor columns
+    assert torch.allclose(result[:, :-2], orig)
+    assert torch.allclose(result[:, -2:], expected_weighted)
 
 
 def test_map_clone_feature():

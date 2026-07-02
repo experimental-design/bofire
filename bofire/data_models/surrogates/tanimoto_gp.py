@@ -2,16 +2,11 @@ from typing import Literal, Optional, Type
 
 from pydantic import Field, model_validator
 
-from bofire.data_models.descriptors.api import GeneratedSource
 from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
-from bofire.data_models.molfeatures.api import (
-    CompositeMolFeatures,
-    Fingerprints,
-    Fragments,
-)
+from bofire.data_models.molfeatures.api import Fingerprints, Fragments
 from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
@@ -51,24 +46,28 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
 
     @model_validator(mode="after")
     def validate_moleculars(self):
-        """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
+        """Checks that at least one fingerprint/fragment descriptor encoding is present."""
 
-        def _is_tanimoto_generator(generator) -> bool:
-            return isinstance(generator, (Fingerprints, Fragments)) or (
-                isinstance(generator, CompositeMolFeatures)
+        def _is_tanimoto_encoding(encoding) -> bool:
+            # a DescriptorEncoding with no static columns whose generators are all
+            # fingerprints/fragments produces the binary space Tanimoto needs.
+            return (
+                isinstance(encoding, DescriptorEncoding)
+                and not encoding.columns
+                and bool(encoding.generators)
                 and all(
-                    isinstance(feature, (Fingerprints, Fragments))
-                    for feature in generator.features
+                    isinstance(generator, (Fingerprints, Fragments))
+                    for generators in encoding.generators.values()
+                    for generator in generators
                 )
             )
 
         if not any(
-            isinstance(value, DescriptorEncoding)
-            and isinstance(value.source, GeneratedSource)
-            and _is_tanimoto_generator(value.source.generator)
+            _is_tanimoto_encoding(value)
             for value in self.categorical_encodings.values()
         ):
             raise ValueError(
-                "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or composite molfeatures containing only fingerprints or fragments are present.",
+                "TanimotoGPSurrogate can only be used if at least one fingerprint or "
+                "fragment descriptor encoding (no static columns) is present.",
             )
         return self

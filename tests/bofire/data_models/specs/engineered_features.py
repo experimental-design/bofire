@@ -1,4 +1,3 @@
-from bofire.data_models.descriptors.api import StaticSource
 from bofire.data_models.domain.api import EngineeredFeatures
 from bofire.data_models.features.api import MeanFeature, SumFeature, WeightedSumFeature
 from tests.bofire.data_models.specs.specs import Specs
@@ -15,7 +14,7 @@ specs.add_valid(
             WeightedSumFeature(
                 key="weighted_sum1",
                 features=["a", "b"],
-                source=StaticSource(columns=["alpha", "beta"]),
+                columns=["alpha", "beta"],
                 normalize=True,
             ).model_dump(),
         ],

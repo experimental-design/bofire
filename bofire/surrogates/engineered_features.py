@@ -110,10 +110,10 @@ def map_weighted_feature(
 ) -> AppendFeatures:
     features2idx, _ = inputs._get_transform_info(transform_specs)
     indices = [features2idx[key][0] for key in feature.features]
-    # one descriptor row per component; the source filters correlated descriptors
-    # once over the combined component structures (generated sources).
+    # one descriptor row per component; the spec filters correlated descriptors
+    # once over the combined component structures (when enabled).
     components = [inputs.get_by_key(key) for key in feature.features]
-    matrix = feature.source.component_table(components)
+    matrix = feature.component_table(components)
     descriptors = torch.tensor(matrix.values, dtype=torch.double)
     return AppendFeatures(
         f=_weighted_features,
