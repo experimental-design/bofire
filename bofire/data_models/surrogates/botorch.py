@@ -10,9 +10,7 @@ from bofire.data_models.encodings.api import (
     OrdinalEncoding,
 )
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
-    CategoricalMolecularInput,
     CategoricalTaskInput,
     NumericalInput,
 )
@@ -32,11 +30,11 @@ class BotorchSurrogate(Surrogate):
             categorical features, which is also set as default if nothing is provided.
         categorical_encodings: A dictionary specifying how
             categorical features are to be encoded **within** the botorch based surrogate.
-            Keys are the feature keys and values are the encoding types. If no surrogate specific
-            default is defined, by default categorical features are one-hot encoded, categorical
-            descriptor features are descriptor encoded and categorical molecular features
-            are fingerprint encoded. If a feature is not specified in the dictionary, the default
-            encoding for the feature type is used.
+            Keys are the feature keys and values are the encoding types. If a feature is
+            not specified, a default is chosen from the descriptor *data* the feature
+            carries: a feature with a structure column (e.g. ``smiles``) is fingerprint
+            encoded, one with numeric descriptor columns is descriptor encoded, and a
+            plain categorical falls back to the surrogate-specific default (one-hot here).
     """
 
     categorical_encodings: InputTransformSpecs = Field(
@@ -76,28 +74,50 @@ class BotorchSurrogate(Surrogate):
         return migrate_legacy_encodings(v)
 
     @classmethod
-    def _default_categorical_encodings(
-        cls,
-    ) -> dict:
+    def _default_plain_categorical_encodings(cls) -> dict:
+        """Fallback encodings for categoricals *without* descriptor data, keyed by type.
+
+        Descriptor-carrying features are resolved from their data (see
+        :meth:`_resolve_default_categorical_encoding`); this map only covers the
+        non-descriptor case, where surrogates differ (one-hot vs ordinal) and task
+        inputs may want their own default.
+        """
         return {
             CategoricalInput: OneHotEncoding(),
-            CategoricalMolecularInput: DescriptorEncoding(
-                source=GeneratedSource(generator=Fingerprints())
-            ),
-            CategoricalDescriptorInput: DescriptorEncoding(source=StaticSource()),
             CategoricalTaskInput: OneHotEncoding(),
         }
+
+    @classmethod
+    def _resolve_default_categorical_encoding(cls, feat: CategoricalInput):
+        """Pick the default encoding for ``feat`` from the descriptor data it carries.
+
+        Task inputs never descriptor-encode. Otherwise a structure column implies a
+        molecular (fingerprint) generator, numeric descriptor columns imply a static
+        source, and a plain categorical uses the surrogate's non-descriptor fallback.
+        """
+        fallbacks = cls._default_plain_categorical_encodings()
+        if not isinstance(feat, CategoricalTaskInput):
+            if feat.descriptor_columns(role="structure"):
+                return DescriptorEncoding(
+                    source=GeneratedSource(generator=Fingerprints())
+                )
+            if feat.descriptor_columns(role="descriptor"):
+                return DescriptorEncoding(source=StaticSource())
+        for klass in type(feat).__mro__:
+            if klass in fallbacks:
+                return fallbacks[klass]
+        return OneHotEncoding()
 
     @classmethod
     def _generate_default_categorical_encodings(
         cls, inputs: Inputs, categorical_encodings: InputTransformSpecs
     ) -> InputTransformSpecs:
-        default_encodings = cls._default_categorical_encodings()
         categorical_keys = inputs.get_keys(CategoricalInput, exact=False)
         for key in categorical_keys:
             if key not in categorical_encodings:
-                feat = inputs.get_by_key(key)
-                default = default_encodings[type(feat)]
+                default = cls._resolve_default_categorical_encoding(
+                    inputs.get_by_key(key)
+                )
                 # deep-copy so per-feature encoders (and their stateful generators)
                 # are not shared between features.
                 categorical_encodings[key] = (

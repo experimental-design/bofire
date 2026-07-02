@@ -3,24 +3,16 @@ from typing import Literal, Optional, Type
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
 
-from bofire.data_models.descriptors.api import GeneratedSource, StaticSource
 from bofire.data_models.domain.api import Inputs
-from bofire.data_models.encodings.api import (
-    DescriptorEncoding,
-    OneHotEncoding,
-    OrdinalEncoding,
-)
+from bofire.data_models.encodings.api import OneHotEncoding, OrdinalEncoding
 from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
-    CategoricalDescriptorInput,
     CategoricalInput,
-    CategoricalMolecularInput,
     CategoricalTaskInput,
     ContinuousOutput,
 )
 from bofire.data_models.kernels.api import AnyKernel, MaternKernel, RBFKernel
-from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
@@ -119,15 +111,9 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     )
 
     @classmethod
-    def _default_categorical_encodings(
-        cls,
-    ) -> dict:
+    def _default_plain_categorical_encodings(cls) -> dict:
         return {
             CategoricalInput: OneHotEncoding(),
-            CategoricalMolecularInput: DescriptorEncoding(
-                source=GeneratedSource(generator=Fingerprints())
-            ),
-            CategoricalDescriptorInput: DescriptorEncoding(source=StaticSource()),
             CategoricalTaskInput: OrdinalEncoding(),
         }
 
