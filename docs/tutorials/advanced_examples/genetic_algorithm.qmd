@@ -59,6 +59,8 @@ optimizer = strategies_data_models.GeneticAlgorithmOptimizer(
     population_size=100,
     n_max_gen=100,
     verbose=False,
+    # Write per-generation GA progress so it can be inspected while optimization runs.
+    ga_progress_csv_path="_custom_ga_progress.csv",
 )
 ```
 
@@ -208,6 +210,13 @@ plt.legend()
 plt.show()
 ```
 
+Inspect the current progress rows written by the optimizer. Note, that these results can also be obtained during execution.
+
+```{python}
+pd.read_csv("_custom_ga_progress.csv").head()
+```
+
+
 ## Example 2) Usage for Custom Function Optimization
 
 We can define a domain with input features, and constraints. Output features are not required
@@ -242,6 +251,9 @@ optimizer = strategies_data_models.GeneticAlgorithmOptimizer(
     verbose=False,
 )
 ```
+
+The GA progress file is updated generation-by-generation and can already be read
+while the GA run is still executing.
 
 ### Define the optimization problem: a) Using evaluations on `pd.DataFrame`
 We want to maximize the mean variance of the experiments dataframe. The objective function will be called with a list of dataframes, each representing a set of experiments. Each list entry is one individual in the population of the GA.

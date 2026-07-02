@@ -163,6 +163,54 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        "acquisition_optimizer": strategies.GeneticAlgorithmOptimizer(
+            population_size=4,
+            n_max_gen=1,
+            n_max_evals=20,
+            ga_progress_csv_path="ga_progress_specs.csv",
+        ).model_dump(),
+        "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
+        "outlier_detection_specs": None,
+        "seed": 42,
+        "min_experiments_before_outlier_check": 1,
+        "frequency_check": 1,
+        "frequency_hyperopt": 0,
+        "folds": 5,
+        "include_infeasible_exps_in_acqf_calc": False,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+    },
+)
+specs.add_valid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        "acquisition_optimizer": strategies.GeneticAlgorithmOptimizer(
+            population_size=4,
+            n_max_gen=1,
+            n_max_evals=20,
+            ga_progress_csv_path="ga_progress_specs_2.csv",
+        ).model_dump(),
+        "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
+        "outlier_detection_specs": None,
+        "seed": 42,
+        "min_experiments_before_outlier_check": 1,
+        "frequency_check": 1,
+        "frequency_hyperopt": 0,
+        "folds": 5,
+        "include_infeasible_exps_in_acqf_calc": False,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+    },
+)
+specs.add_valid(
     strategies.AdditiveSoboStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
