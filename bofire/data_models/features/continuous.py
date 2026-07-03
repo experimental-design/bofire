@@ -33,9 +33,8 @@ class ContinuousInput(NumericalInput, DescriptorsMixin):
 
     bounds: Bounds
 
-    def descriptor_levels(self) -> List:
-        # a continuous feature is a single component -> one descriptor row.
-        return [self.key]
+    # descriptor_levels() -> [self.key]: a single numeric component, inherited from
+    # DescriptorsMixin.
 
     local_relative_bounds: Optional[
         Annotated[List[PositiveFloat], Field(min_length=2, max_length=2)]

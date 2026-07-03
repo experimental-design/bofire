@@ -58,8 +58,13 @@ class DescriptorsMixin(BaseModel):
     structure: Optional[List[str]] = None
 
     def descriptor_levels(self) -> List:
-        """The row labels of the descriptor table (categories / values / [key])."""
-        raise NotImplementedError
+        """The row labels of the descriptor table.
+
+        A numeric feature (continuous / discrete) is a single component — one
+        descriptor row, keyed by the feature. ``CategoricalInput`` overrides this with
+        one row per category.
+        """
+        return [self.key]
 
     @model_validator(mode="before")
     @classmethod

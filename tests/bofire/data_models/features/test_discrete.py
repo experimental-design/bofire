@@ -122,3 +122,22 @@ def test_discrete_input_to_pydantic_field():
     field_type, field_info = feat.to_pydantic_field()
     assert field_type == Literal[1.0, 2.0, 5.0]
     assert field_info.description == "Discrete, allowed values: [1.0, 2.0, 5.0]"
+
+
+def test_discrete_input_is_single_component_for_descriptors():
+    """A DiscreteInput is a single numeric component (like ContinuousInput), so its
+    descriptor table has one row keyed by the feature — not one row per value."""
+    feat = DiscreteInput(key="eq", values=[1.0, 2.0, 3.0])
+    assert feat.descriptor_levels() == ["eq"]
+
+    # a single-row descriptor / structure is valid (a discrete amount of one molecule)
+    feat = DiscreteInput(
+        key="eq", values=[1.0, 2.0, 3.0], descriptors={"mw": [46.0]}, structure=["CCO"]
+    )
+    assert feat.descriptor_levels() == ["eq"]
+
+    # a per-value (length-3) descriptor column is rejected
+    with pytest.raises(ValueError, match="must have 1 value"):
+        DiscreteInput(
+            key="eq", values=[1.0, 2.0, 3.0], descriptors={"mw": [1.0, 2.0, 3.0]}
+        )

@@ -26,8 +26,8 @@ class DiscreteInput(NumericalInput, DescriptorsMixin):
     values: DiscreteVals
     rtol: float = 1e-7
 
-    def descriptor_levels(self) -> List:
-        return [str(v) for v in self.values]
+    # descriptor_levels() -> [self.key]: a discrete feature is a single numeric
+    # component (like continuous), inherited from DescriptorsMixin.
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(description=...))`` with allowed values.
