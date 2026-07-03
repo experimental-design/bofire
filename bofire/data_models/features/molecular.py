@@ -10,11 +10,10 @@ from bofire.utils.cheminformatics import smiles2mol
 
 
 class ContinuousMolecularInput(ContinuousInput):
-    """Deprecated. Use :class:`ContinuousInput` with a ``smiles`` descriptor column
-    instead.
+    """Deprecated. Use :class:`ContinuousInput` with a ``structure`` column instead.
 
     Kept as a thin deserialization shim: the single ``molecule`` SMILES is mirrored
-    into a reserved ``smiles`` descriptor column.
+    into the ``structure`` field.
     """
 
     type: Literal["ContinuousMolecularInput"] = "ContinuousMolecularInput"
@@ -27,24 +26,22 @@ class ContinuousMolecularInput(ContinuousInput):
             return data
         warnings.warn(
             "`ContinuousMolecularInput` is deprecated, use `ContinuousInput` with "
-            "a `smiles` descriptor column instead.",
+            "a `structure` column instead.",
             DeprecationWarning,
             stacklevel=2,
         )
         molecule = data.pop("molecule", None)
-        descriptors = dict(data.get("descriptors") or {})
-        if molecule is not None and "smiles" not in descriptors:
-            descriptors["smiles"] = [molecule]
-            data["descriptors"] = descriptors
+        if molecule is not None and data.get("structure") is None:
+            data["structure"] = [molecule]
         return data
 
 
 class CategoricalMolecularInput(CategoricalInput):
-    """Deprecated. Use :class:`CategoricalInput` with a ``smiles`` descriptor column
-    and a :class:`DescriptorEncoding` on the surrogate instead.
+    """Deprecated. Use :class:`CategoricalInput` with a ``structure`` column and a
+    :class:`DescriptorEncoding` on the surrogate instead.
 
-    Kept as a thin deserialization shim: the SMILES categories are mirrored into a
-    reserved ``smiles`` descriptor column so molecular encoders can consume them.
+    Kept as a thin deserialization shim: the SMILES categories are mirrored into the
+    ``structure`` field so descriptor generators can consume them.
     """
 
     type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"
@@ -58,15 +55,13 @@ class CategoricalMolecularInput(CategoricalInput):
             return data
         warnings.warn(
             "`CategoricalMolecularInput` is deprecated, use `CategoricalInput` with "
-            "a `smiles` descriptor column and a `DescriptorEncoding` instead.",
+            "a `structure` column and a `DescriptorEncoding` instead.",
             DeprecationWarning,
             stacklevel=2,
         )
         categories = data.get("categories")
-        descriptors = dict(data.get("descriptors") or {})
-        if categories is not None and "smiles" not in descriptors:
-            descriptors["smiles"] = list(categories)
-            data["descriptors"] = descriptors
+        if categories is not None and data.get("structure") is None:
+            data["structure"] = list(categories)
         return data
 
     @field_validator("categories")

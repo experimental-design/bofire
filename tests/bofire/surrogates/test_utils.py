@@ -233,9 +233,7 @@ def test_get_scaler_with_experiments():
             {
                 "x_mol": DescriptorEncoding(
                     columns=[],
-                    generators={
-                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
-                    },
+                    generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
                 ),
             },
             Normalize,
@@ -245,7 +243,7 @@ def test_get_scaler_with_experiments():
             NormalizeScaler(),
             {
                 "x_mol": DescriptorEncoding(
-                    columns=[], generators={"smiles": [Fingerprints(n_bits=2)]}
+                    columns=[], generators=[Fingerprints(n_bits=2)]
                 ),
             },
             Normalize,
@@ -256,9 +254,7 @@ def test_get_scaler_with_experiments():
             {
                 "x_mol": DescriptorEncoding(
                     columns=[],
-                    generators={
-                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
-                    },
+                    generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
                 ),
             },
             InputStandardize,
@@ -269,13 +265,11 @@ def test_get_scaler_with_experiments():
             {
                 "x_mol": DescriptorEncoding(
                     columns=[],
-                    generators={
-                        "smiles": [
-                            Fragments(
-                                fragments=["fr_unbrch_alkane", "fr_thiocyan"],
-                            )
-                        ]
-                    },
+                    generators=[
+                        Fragments(
+                            fragments=["fr_unbrch_alkane", "fr_thiocyan"],
+                        )
+                    ],
                 ),
             },
             InputStandardize,
@@ -286,9 +280,7 @@ def test_get_scaler_with_experiments():
             {
                 "x_mol": DescriptorEncoding(
                     columns=[],
-                    generators={
-                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
-                    },
+                    generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
                 ),
             },
             type(None),
@@ -299,7 +291,7 @@ def test_get_scaler_with_experiments():
             {
                 "x_mol": DescriptorEncoding(
                     columns=[],
-                    generators={"smiles": [Fingerprints(n_bits=32), Fragments()]},
+                    generators=[Fingerprints(n_bits=32), Fragments()],
                 ),
             },
             type(None),
@@ -443,7 +435,7 @@ def test_get_scaler_feature_specific():
                 "x2": OneHotEncoding(),
                 "x3": OneHotEncoding(),
                 "x4": DescriptorEncoding(
-                    columns=[], generators={"smiles": [Fingerprints(n_bits=2)]}
+                    columns=[], generators=[Fingerprints(n_bits=2)]
                 ),
             },
             ["x1"],
@@ -454,11 +446,9 @@ def test_get_scaler_feature_specific():
                 "x3": OneHotEncoding(),
                 "x4": DescriptorEncoding(
                     columns=[],
-                    generators={
-                        "smiles": [
-                            Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"])
-                        ]
-                    },
+                    generators=[
+                        Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"])
+                    ],
                 ),
             },
             ["x1"],
@@ -469,9 +459,7 @@ def test_get_scaler_feature_specific():
                 "x3": OneHotEncoding(),
                 "x4": DescriptorEncoding(
                     columns=[],
-                    generators={
-                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
-                    },
+                    generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
                 ),
             },
             ["x1", "x4"],
@@ -481,7 +469,7 @@ def test_get_scaler_feature_specific():
                 "x2": OneHotEncoding(),
                 "x3": DescriptorEncoding(),
                 "x4": DescriptorEncoding(
-                    columns=[], generators={"smiles": [Fingerprints(n_bits=2)]}
+                    columns=[], generators=[Fingerprints(n_bits=2)]
                 ),
             },
             ["x1", "x3"],
@@ -492,11 +480,9 @@ def test_get_scaler_feature_specific():
                 "x3": DescriptorEncoding(),
                 "x4": DescriptorEncoding(
                     columns=[],
-                    generators={
-                        "smiles": [
-                            Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"])
-                        ]
-                    },
+                    generators=[
+                        Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"])
+                    ],
                 ),
             },
             ["x1", "x3"],
@@ -507,12 +493,10 @@ def test_get_scaler_feature_specific():
                 "x3": DescriptorEncoding(),
                 "x4": DescriptorEncoding(
                     columns=[],
-                    generators={
-                        "smiles": [
-                            Fingerprints(n_bits=32),
-                            Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
-                        ]
-                    },
+                    generators=[
+                        Fingerprints(n_bits=32),
+                        Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+                    ],
                 ),
             },
             ["x1", "x3"],
@@ -523,9 +507,7 @@ def test_get_scaler_feature_specific():
                 "x3": DescriptorEncoding(),
                 "x4": DescriptorEncoding(
                     columns=[],
-                    generators={
-                        "smiles": [MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]
-                    },
+                    generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
                 ),
             },
             ["x1", "x3", "x4"],
@@ -538,12 +520,10 @@ def test_get_scaler_feature_specific():
                 # so x4 is not scaled (every generator must be real-valued to qualify).
                 "x4": DescriptorEncoding(
                     columns=[],
-                    generators={
-                        "smiles": [
-                            MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
-                            Fingerprints(n_bits=128),
-                        ]
-                    },
+                    generators=[
+                        MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                        Fingerprints(n_bits=128),
+                    ],
                 ),
             },
             ["x1", "x3"],

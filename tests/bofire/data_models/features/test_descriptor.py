@@ -319,7 +319,7 @@ def test_categorical_descriptor_input_feature_as_dataframe(
         descriptors=descriptors,
         values=values,
     )
-    df = f.descriptor_table(f.descriptor_columns(role="descriptor"))
+    df = f.descriptor_table(f.descriptor_columns())
     assert len(df.columns) == len(descriptors)
     assert len(df) == len(categories)
     assert df.values.tolist() == values
@@ -339,7 +339,7 @@ def test_continuous_descriptor_input_feature_as_dataframe(descriptors, values):
         descriptors=descriptors,
         values=values,
     )
-    df = f.descriptor_table(f.descriptor_columns(role="descriptor"))
+    df = f.descriptor_table(f.descriptor_columns())
     assert len(df.columns) == len(descriptors)
     assert len(df) == 1
     assert df.values.tolist()[0] == values
@@ -373,7 +373,7 @@ def test_categorical_descriptor_input_feature_from_dataframe(
     )
     f = CategoricalDescriptorInput.from_df("k", df)
     assert f.categories == categories
-    assert f.descriptor_columns(role="descriptor") == descriptors
+    assert f.descriptor_columns() == descriptors
     assert f.descriptor_table(descriptors).values.tolist() == values
 
 

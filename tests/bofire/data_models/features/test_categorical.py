@@ -579,3 +579,16 @@ def test_descriptor_encoding_filter_prunes_correlated_columns():
     # with filtering, the collinear d2 is dropped (the earlier d1 is kept)
     filtered = DescriptorEncoding(filter_descriptors=True).get_names(feat)
     assert filtered == ["c_d1", "c_d3"]
+
+
+def test_legacy_smiles_descriptor_migrates_to_structure():
+    """Old dumps stored SMILES as a `smiles` descriptor column; it moves to `structure`."""
+    from bofire.data_models.features.api import CategoricalInput
+
+    feat = CategoricalInput(
+        key="c",
+        categories=["a", "b"],
+        descriptors={"smiles": ["O", "CCO"], "mw": [18.0, 46.0]},
+    )
+    assert feat.structure == ["O", "CCO"]
+    assert list(feat.descriptors) == ["mw"]  # smiles no longer a descriptor column

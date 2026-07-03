@@ -134,7 +134,7 @@ class CategoricalInput(Input, DescriptorsMixin):
         column), since its source can read either.
         """
         types: List = [OneHotEncoding, OrdinalEncoding]
-        if self.descriptors:
+        if self.descriptors or self.structure is not None:
             types.append(DescriptorEncoding)
         return types
 

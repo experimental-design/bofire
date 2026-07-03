@@ -57,8 +57,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                 and bool(encoding.generators)
                 and all(
                     isinstance(generator, (Fingerprints, Fragments))
-                    for generators in encoding.generators.values()
-                    for generator in generators
+                    for generator in encoding.generators
                 )
             )
 

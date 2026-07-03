@@ -16,7 +16,6 @@ specs.add_valid(
     lambda: {
         "bond_radius": random.randrange(1, 6),
         "n_bits": random.randrange(32, 2048),
-        "reads": "smiles",
     },
 )
 
@@ -28,7 +27,6 @@ if RDKIT_AVAILABLE:
                 names.fragments,
                 k=random.randrange(1, len(names.fragments)),
             ),
-            "reads": "smiles",
         },
     )
 
@@ -38,6 +36,5 @@ if RDKIT_AVAILABLE:
             lambda: {
                 "descriptors": random.sample(names.mordred, k=random.randrange(1, 10)),
                 "ignore_3D": False,
-                "reads": "smiles",
             },
         )

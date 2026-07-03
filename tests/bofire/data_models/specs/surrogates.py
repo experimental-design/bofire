@@ -752,7 +752,7 @@ specs.add_valid(
         "categorical_encodings": {
             "mol1": DescriptorEncoding(
                 columns=[],
-                generators={"smiles": [Fingerprints(n_bits=32, bond_radius=3)]},
+                generators=[Fingerprints(n_bits=32, bond_radius=3)],
             ).model_dump(),
         },
         "dump": None,

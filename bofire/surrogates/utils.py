@@ -29,9 +29,7 @@ def _produces_continuous_columns(value) -> bool:
     i.e. no binary fingerprint/fragment column is present. One-hot/ordinal never qualify.
     """
     return isinstance(value, DescriptorEncoding) and all(
-        isinstance(generator, MordredDescriptors)
-        for generators in value.generators.values()
-        for generator in generators
+        isinstance(generator, MordredDescriptors) for generator in value.generators
     )
 
 

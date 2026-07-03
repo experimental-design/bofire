@@ -25,34 +25,27 @@ class DescriptorGenerator(BaseModel):
     """
 
     type: Any
-    # the kind of structure identifier this generator consumes; the descriptor spec
-    # validates its structure column carries this kind.
-    reads: Literal["smiles"] = "smiles"
 
     @model_validator(mode="before")
     @classmethod
-    def _drop_legacy_filter_fields(cls, data):
-        """Correlation filtering moved to the descriptor encoding/feature.
+    def _drop_legacy_fields(cls, data):
+        """Drop fields that moved elsewhere so old dumps still load (``extra="forbid"``).
 
-        Old serialized generators may still carry ``filter_descriptors`` /
-        ``correlation_cutoff``; drop them (with a warning) so those dumps still load.
+        ``filter_descriptors`` / ``correlation_cutoff`` moved to the consuming descriptor
+        encoding/feature; ``reads`` (structure kind) is gone now that only SMILES is
+        supported (it returns as a field on ``structure`` if other languages are added).
         """
-        if isinstance(data, dict) and (
-            "filter_descriptors" in data or "correlation_cutoff" in data
-        ):
-            warnings.warn(
-                "`filter_descriptors` / `correlation_cutoff` moved off the descriptor "
-                "generator to the descriptor encoding/feature (`filter_descriptors` on "
-                "`DescriptorEncoding` / `WeightedSumFeature`); the values on the "
-                "generator are ignored.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            data = {
-                k: v
-                for k, v in data.items()
-                if k not in ("filter_descriptors", "correlation_cutoff")
-            }
+        legacy = ("filter_descriptors", "correlation_cutoff", "reads")
+        if isinstance(data, dict) and any(k in data for k in legacy):
+            if "filter_descriptors" in data or "correlation_cutoff" in data:
+                warnings.warn(
+                    "`filter_descriptors` / `correlation_cutoff` moved off the descriptor "
+                    "generator to the descriptor encoding/feature; the values on the "
+                    "generator are ignored.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+            data = {k: v for k, v in data.items() if k not in legacy}
         return data
 
     @abstractmethod

@@ -36,7 +36,7 @@ def test_migrate_legacy_string_values(legacy, expected_type, drop_first):
     if expected_type is DescriptorEncoding:
         # "DESCRIPTOR" maps to all static descriptor columns (no generators).
         assert enc.columns is None
-        assert enc.generators == {}
+        assert enc.generators == []
 
 
 def test_migrate_bare_molfeature():
@@ -45,8 +45,7 @@ def test_migrate_bare_molfeature():
     enc = migrated["x"]
     assert isinstance(enc, DescriptorEncoding)
     assert enc.columns == []
-    assert list(enc.generators) == ["smiles"]
-    assert isinstance(enc.generators["smiles"][0], Fingerprints)
+    assert isinstance(enc.generators[0], Fingerprints)
 
 
 def test_migrate_legacy_molecular_encoding_dict():
@@ -66,7 +65,7 @@ def test_migrate_legacy_molecular_encoding_dict():
     enc = TypeAdapter(AnyCategoricalEncoding).validate_python(migrated["x"])
     assert isinstance(enc, DescriptorEncoding)
     assert enc.columns == []
-    assert isinstance(enc.generators["smiles"][0], Fingerprints)
+    assert isinstance(enc.generators[0], Fingerprints)
 
 
 def test_legacy_descriptor_columns_dict_deserializes_natively():
@@ -84,7 +83,7 @@ def test_legacy_descriptor_columns_dict_deserializes_natively():
     enc = TypeAdapter(AnyCategoricalEncoding).validate_python(migrated["x"])
     assert isinstance(enc, DescriptorEncoding)
     assert enc.columns == ["d1", "d2"]
-    assert enc.generators == {}
+    assert enc.generators == []
 
 
 def test_migrate_passthrough_objects_no_warning():

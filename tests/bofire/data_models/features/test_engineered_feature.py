@@ -124,9 +124,7 @@ def test_molecular_weighted_sum_feature_validation():
             ContinuousInput(key="m2", bounds=(0, 1)),
         ]
     )
-    with pytest.raises(
-        ValueError, match="m2: structure column 'smiles' is not present"
-    ):
+    with pytest.raises(ValueError, match="m2: has no .structure. column"):
         mol_feature.validate_features(inputs)
 
     inputs = Inputs(
@@ -150,9 +148,7 @@ def test_molecular_weighted_mean_feature_validation():
             ContinuousInput(key="m2", bounds=(0, 1)),
         ]
     )
-    with pytest.raises(
-        ValueError, match="m2: structure column 'smiles' is not present"
-    ):
+    with pytest.raises(ValueError, match="m2: has no .structure. column"):
         mol_feature.validate_features(inputs)
 
     inputs = Inputs(

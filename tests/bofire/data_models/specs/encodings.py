@@ -25,7 +25,7 @@ def _descriptor_spec(**kwargs):
     """A DescriptorEncoding spec with all mixin defaults spelled out."""
     return {
         "columns": None,
-        "generators": {},
+        "generators": [],
         "filter_descriptors": False,
         "correlation_cutoff": 0.95,
         **kwargs,
@@ -43,9 +43,7 @@ specs.add_valid(
     encodings.DescriptorEncoding,
     lambda: _descriptor_spec(
         columns=[],
-        generators={
-            "smiles": [molfeatures.Fingerprints(n_bits=32, bond_radius=3).model_dump()]
-        },
+        generators=[molfeatures.Fingerprints(n_bits=32, bond_radius=3).model_dump()],
     ),
 )
 
@@ -54,9 +52,7 @@ specs.add_valid(
     encodings.DescriptorEncoding,
     lambda: _descriptor_spec(
         columns=["logP"],
-        generators={
-            "smiles": [molfeatures.Fingerprints(n_bits=32, bond_radius=3).model_dump()]
-        },
+        generators=[molfeatures.Fingerprints(n_bits=32, bond_radius=3).model_dump()],
         filter_descriptors=True,
     ),
 )
@@ -66,11 +62,9 @@ specs.add_valid(
     encodings.DescriptorEncoding,
     lambda: _descriptor_spec(
         columns=[],
-        generators={
-            "smiles": [
-                molfeatures.Fingerprints(n_bits=32, bond_radius=3).model_dump(),
-                molfeatures.Fragments().model_dump(),
-            ]
-        },
+        generators=[
+            molfeatures.Fingerprints(n_bits=32, bond_radius=3).model_dump(),
+            molfeatures.Fragments().model_dump(),
+        ],
     ),
 )

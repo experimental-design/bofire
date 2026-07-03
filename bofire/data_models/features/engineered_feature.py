@@ -158,7 +158,7 @@ class WeightedMeanFeature(WeightedSumFeature):
 
 
 class MolecularWeightedSumFeature(WeightedSumFeature):
-    """Deprecated. Use :class:`WeightedSumFeature` with ``generators=...``."""
+    """Deprecated. Use :class:`WeightedSumFeature` with ``generators=[...]``."""
 
     type: Literal["MolecularWeightedSumFeature"] = "MolecularWeightedSumFeature"
     order_id: ClassVar[int] = 3
@@ -173,16 +173,15 @@ class MolecularWeightedSumFeature(WeightedSumFeature):
         ):
             warnings.warn(
                 "`MolecularWeightedSumFeature` is deprecated, use "
-                "`WeightedSumFeature(generators={'smiles': [...]})`.",
+                "`WeightedSumFeature(generators=[...])`.",
                 DeprecationWarning,
                 stacklevel=2,
             )
             mol = data.pop("molfeatures")
             if isinstance(mol, dict) and mol.get("type") == "CompositeMolFeatures":
-                generators = mol["features"]
+                data["generators"] = mol["features"]
             else:
-                generators = [mol]
-            data["generators"] = {"smiles": generators}
+                data["generators"] = [mol]
         return data
 
 

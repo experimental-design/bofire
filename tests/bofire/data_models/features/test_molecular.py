@@ -105,9 +105,9 @@ def test_categorical_molecular_input_to_descriptor_encoding(
 ):
     input_feature = CategoricalMolecularInput(key=key, categories=VALID_SMILES.tolist())
 
-    encoded = DescriptorEncoding(
-        columns=[], generators={"smiles": [transform_type]}
-    ).encode(input_feature, VALID_SMILES)
+    encoded = DescriptorEncoding(columns=[], generators=[transform_type]).encode(
+        input_feature, VALID_SMILES
+    )
     assert len(encoded.columns) == len(transform_type.get_descriptor_names())
     assert len(encoded) == len(smiles)
     assert_frame_equal(encoded, pd.DataFrame.from_dict(values))
@@ -153,9 +153,7 @@ def test_categorical_molecular_input_from_descriptor_encoding(key):
         Fragments(),
         MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
     ]:
-        encoding = DescriptorEncoding(
-            columns=[], generators={"smiles": [transform_type]}
-        )
+        encoding = DescriptorEncoding(columns=[], generators=[transform_type])
         encoded = encoding.encode(feat, values=values)
         decoded = encoding.decode(feat, values=encoded)
         assert np.all(decoded == values)
@@ -183,32 +181,28 @@ def test_categorical_molecular_input_get_bounds():
     )
     lower, upper = DescriptorEncoding(
         columns=[],
-        generators={
-            "smiles": [
-                MordredDescriptors(
-                    descriptors=[
-                        "nAromAtom",
-                        "nAromBond",
-                    ],
-                ),
-            ]
-        },
+        generators=[
+            MordredDescriptors(
+                descriptors=[
+                    "nAromAtom",
+                    "nAromBond",
+                ],
+            ),
+        ],
     ).get_bounds(feat)
     assert lower == [6.0, 6.0]
     assert upper == [6.0, 6.0]
 
     lower, upper = DescriptorEncoding(
         columns=[],
-        generators={
-            "smiles": [
-                MordredDescriptors(
-                    descriptors=[
-                        "nAromAtom",
-                        "nAromBond",
-                    ],
-                ),
-            ]
-        },
+        generators=[
+            MordredDescriptors(
+                descriptors=[
+                    "nAromAtom",
+                    "nAromBond",
+                ],
+            ),
+        ],
     ).get_bounds(feat, values=VALID_SMILES)
     assert lower == [0.0, 0.0]
     assert upper == [6.0, 6.0]
@@ -220,10 +214,9 @@ def test_categorical_molecular_input_to_pydantic_field():
     feat = CategoricalMolecularInput(key="mol", categories=["CCO", "CC"])
     field_type, field_info = feat.to_pydantic_field()
     assert field_type == Literal["CCO", "CC"]
-    assert (
-        field_info.description
-        == "Categorical, allowed: ['CCO', 'CC'] — descriptors: ['smiles']"
-    )
+    # SMILES now live in the explicit `structure` field, not the descriptor table,
+    # so they no longer appear in the categorical descriptor list.
+    assert field_info.description == "Categorical, allowed: ['CCO', 'CC']"
 
 
 def test_categorical_molecular_input_to_pydantic_field_falls_back_above_threshold():

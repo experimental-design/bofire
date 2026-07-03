@@ -63,7 +63,7 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
         "columns": ["alpha", "beta"],
-        "generators": {},
+        "generators": [],
         "filter_descriptors": False,
         "correlation_cutoff": 0.95,
         "normalize": False,
@@ -78,7 +78,7 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
         "columns": ["alpha", "beta"],
-        "generators": {},
+        "generators": [],
         "filter_descriptors": False,
         "correlation_cutoff": 0.95,
         "normalize": True,
@@ -93,13 +93,11 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
         "columns": None,
-        "generators": {
-            "smiles": [
-                MordredDescriptors(
-                    descriptors=["NssCH2", "ATSC2d"], ignore_3D=True
-                ).model_dump()
-            ]
-        },
+        "generators": [
+            MordredDescriptors(
+                descriptors=["NssCH2", "ATSC2d"], ignore_3D=True
+            ).model_dump()
+        ],
         "filter_descriptors": False,
         "correlation_cutoff": 0.95,
         "normalize": False,
@@ -134,13 +132,11 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "features": ["a", "b", "c"],
         "columns": None,
-        "generators": {
-            "smiles": [
-                MordredDescriptors(
-                    descriptors=["NssCH2", "ATSC2d"], ignore_3D=True
-                ).model_dump()
-            ]
-        },
+        "generators": [
+            MordredDescriptors(
+                descriptors=["NssCH2", "ATSC2d"], ignore_3D=True
+            ).model_dump()
+        ],
         "filter_descriptors": False,
         "correlation_cutoff": 0.95,
         "normalize": True,
@@ -255,6 +251,7 @@ specs.add_valid(
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "rtol": 1e-7,
         "descriptors": {},
+        "structure": None,
         "context": None,
     },
 )
@@ -282,6 +279,7 @@ specs.add_valid(
         "stepsize": None,
         "allow_zero": False,
         "descriptors": {},
+        "structure": None,
         "context": None,
     },
 )
@@ -315,6 +313,7 @@ specs.add_valid(
         # legacy descriptors/values are migrated to the new `descriptors` table
         # (single-element columns), which is the canonical (re-emitted) shape.
         "descriptors": {"d1": [1.0], "d2": [2.0]},
+        "structure": None,
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "local_relative_bounds": None,
         "stepsize": None,
@@ -329,6 +328,7 @@ specs.add_valid(
         "categories": ["c1", "c2", "c3"],
         "allowed": [True, True, False],
         "descriptors": {},
+        "structure": None,
         "context": None,
     },
 )
@@ -376,6 +376,7 @@ specs.add_valid(
         # legacy descriptors/values are migrated to the new `descriptors` table,
         # which is the canonical (re-emitted) shape.
         "descriptors": {"d1": [1.0, 3.0, 5.0], "d2": [2.0, 7.0, 1.0]},
+        "structure": None,
         "context": None,
     },
 )
@@ -414,15 +415,14 @@ specs.add_valid(
             "N[C@](C)(F)C(=O)O",
         ],
         "allowed": [True, True, True, True],
-        # SMILES categories are mirrored into the reserved `smiles` column.
-        "descriptors": {
-            "smiles": [
-                "CC(=O)Oc1ccccc1C(=O)O",
-                "c1ccccc1",
-                "[CH3][CH2][OH]",
-                "N[C@](C)(F)C(=O)O",
-            ],
-        },
+        "descriptors": {},
+        # SMILES categories are mirrored into the explicit `structure` field.
+        "structure": [
+            "CC(=O)Oc1ccccc1C(=O)O",
+            "c1ccccc1",
+            "[CH3][CH2][OH]",
+            "N[C@](C)(F)C(=O)O",
+        ],
         "context": None,
     },
 )
@@ -432,8 +432,9 @@ specs.add_valid(
     features.ContinuousMolecularInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        # legacy `molecule` is mirrored into the reserved `smiles` descriptor column.
-        "descriptors": {"smiles": ["CC"]},
+        "descriptors": {},
+        # legacy `molecule` is mirrored into the explicit `structure` field.
+        "structure": ["CC"],
         "bounds": [0.0, 1.0],
         "allow_zero": False,
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
@@ -456,6 +457,7 @@ specs.add_valid(
         "allowed": [True, True, True],
         "fidelities": [0, 1, 2],
         "descriptors": {},
+        "structure": None,
         "context": None,
     },
 )
@@ -470,6 +472,7 @@ specs.add_valid(
         "stepsize": None,
         "allow_zero": False,
         "descriptors": {},
+        "structure": None,
         "context": None,
     },
 )

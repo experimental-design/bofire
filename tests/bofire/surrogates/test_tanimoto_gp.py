@@ -40,9 +40,7 @@ def mol_feature_data_model(request, n_bits):
     elif request.param == "Composite":
         return DescriptorEncoding(
             columns=[],
-            generators={
-                "smiles": [Fingerprints(bond_radius=2, n_bits=n_bits), Fragments()]
-            },
+            generators=[Fingerprints(bond_radius=2, n_bits=n_bits), Fragments()],
         )
 
 

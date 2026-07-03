@@ -26,11 +26,13 @@ def _generator_list(generator: Any) -> list:
     return [generator]
 
 
-def _descriptor_dict(structure: str, generator: Any) -> dict:
+def _descriptor_dict(generator: Any) -> dict:
+    # structures are read from the feature's `structure` column, so the legacy
+    # `structure` name on old MolecularEncoding dicts is dropped (always SMILES).
     return {
         "type": "DescriptorEncoding",
         "columns": [],
-        "generators": {structure: _generator_list(generator)},
+        "generators": _generator_list(generator),
     }
 
 
@@ -49,17 +51,15 @@ def _migrate_value(value: Any) -> Any:
     if isinstance(value, str) and value in legacy:
         return legacy[value]()
     if isinstance(value, DescriptorGenerator):  # bare generator
-        return DescriptorEncoding(columns=[], generators={"smiles": [value]})
+        return DescriptorEncoding(columns=[], generators=[value])
     if isinstance(value, dict):
         t = value.get("type")
         if (
             t in _MOLFEATURE_TYPES or t == "CompositeMolFeatures"
         ):  # bare molfeature dict
-            return _descriptor_dict("smiles", value)
+            return _descriptor_dict(value)
         if t == "MolecularEncoding":  # pre-source molecular encoding
-            return _descriptor_dict(
-                value.get("structure", "smiles"), value["generator"]
-            )
+            return _descriptor_dict(value["generator"])
     return value
 
 
