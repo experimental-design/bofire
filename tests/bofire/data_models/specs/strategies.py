@@ -39,6 +39,7 @@ from bofire.data_models.strategies.api import (
     RelativeToMaxMovingReferenceValue,
 )
 from bofire.data_models.strategies.convergence_criteria.api import (
+    HypervolumeImprovementCriterion,
     ObjectiveImprovementCriterion,
     ProposalDeviationCriterion,
 )
@@ -119,6 +120,9 @@ specs.add_valid(
             }
         ).model_dump(),
         **strategy_commons,
+        "convergence_criterion": HypervolumeImprovementCriterion(
+            min_improvement=0.01, n_lookback=5
+        ).model_dump(),
     },
 )
 

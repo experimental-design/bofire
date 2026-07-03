@@ -15,6 +15,9 @@ from typing import Callable, Optional, Type
 
 import bofire.data_models.strategies.convergence_criteria.api as data_models
 from bofire.data_models.strategies.convergence_criteria.api import ConvergenceCriterion
+from bofire.strategies.convergence_criteria.hypervolume_improvement import (
+    evaluate_hypervolume_improvement_criterion,
+)
 from bofire.strategies.convergence_criteria.objective_improvement import (
     evaluate_objective_improvement_criterion,
 )
@@ -26,6 +29,9 @@ from bofire.strategies.convergence_criteria.proposal_deviation import (
 CONVERGENCE_MAP: dict[type[ConvergenceCriterion], Callable[..., bool]] = {
     data_models.ObjectiveImprovementCriterion: (
         evaluate_objective_improvement_criterion
+    ),
+    data_models.HypervolumeImprovementCriterion: (
+        evaluate_hypervolume_improvement_criterion
     ),
     data_models.ProposalDeviationCriterion: (evaluate_proposal_deviation_criterion),
 }

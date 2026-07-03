@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Any
 
 from bofire.data_models.base import BaseModel
@@ -40,3 +41,38 @@ class ConvergenceCriterion(BaseModel):
     """
 
     type: Any
+
+    @classmethod
+    @abstractmethod
+    def is_applicable_to_multiobjective(cls) -> bool:
+        """Abstract method to check if the convergence criterion is multi-objective
+
+        Returns:
+            bool: True if the convergence criterion is multi-objective, False otherwise
+
+        """
+
+    @classmethod
+    @abstractmethod
+    def is_applicable_to_singleobjective(cls) -> bool:
+        """Abstract method to check if the convergence criterion is single-objective
+
+        Returns:
+            bool: True if the convergence criterion is multi-objective, False otherwise
+
+        """
+
+    @classmethod
+    @abstractmethod
+    def is_applicable_to_objective_free(cls) -> bool:
+        """Abstract method to check if the criterion needs no objective information.
+
+        This is True for criteria that assess convergence without relying on any
+        objective values (e.g. purely from the proposed input locations), so they
+        can be used by objective-free strategies such as active learning.
+
+        Returns:
+            bool: True if the convergence criterion can be evaluated without any
+            objective, False otherwise
+
+        """

@@ -36,3 +36,15 @@ class ObjectiveImprovementCriterion(ConvergenceCriterion):
     type: Literal["ObjectiveImprovementCriterion"] = "ObjectiveImprovementCriterion"
     min_improvement: PositiveFloat
     n_lookback: PositiveInt
+
+    @classmethod
+    def is_applicable_to_multiobjective(cls) -> bool:
+        return False
+
+    @classmethod
+    def is_applicable_to_singleobjective(cls) -> bool:
+        return True
+
+    @classmethod
+    def is_applicable_to_objective_free(cls) -> bool:
+        return False

@@ -4,7 +4,12 @@ import pytest
 import bofire.strategies.api as strategies
 import bofire.strategies.convergence_criteria.api as convergence_criteria
 from bofire.benchmarks.single import Himmelblau
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import (
+    ActiveLearningStrategy,
+    MoboStrategy,
     SoboStrategy,
     StrategyHasConvergedCondition,
 )
@@ -12,6 +17,7 @@ from bofire.data_models.strategies.convergence_criteria.api import (
     ConvergenceCriterion as convergence_data_models_ConvergenceCriterion,
 )
 from bofire.data_models.strategies.convergence_criteria.api import (
+    HypervolumeImprovementCriterion,
     ObjectiveImprovementCriterion,
     ProposalDeviationCriterion,
 )
@@ -40,9 +46,50 @@ def _strategy_with_experiments(criterion, points, y):
     return strategy
 
 
+def _mobo_strategy_with_experiments(criterion, points, y1, y2):
+    """Build a MoboStrategy on a 2-objective domain and tell it experiments.
+
+    Both outputs use a ``MaximizeObjective`` and the reference point is inferred
+    from the recorded experiments. The surrogate model is not fitted here
+    (``retrain=False``) to keep the tests fast, as the built-in criteria only
+    read the recorded experiments.
+
+    Args:
+        criterion: convergence criterion to attach to the strategy.
+        points: list of ``(x_1, x_2)`` input locations.
+        y1: list of output values for the ``y1`` output.
+        y2: list of output values for the ``y2`` output.
+    """
+    domain = Domain(
+        inputs=Inputs(
+            features=[
+                ContinuousInput(key="x_1", bounds=(0, 5)),
+                ContinuousInput(key="x_2", bounds=(0, 5)),
+            ]
+        ),
+        outputs=Outputs(
+            features=[
+                ContinuousOutput(key="y1", objective=MaximizeObjective()),
+                ContinuousOutput(key="y2", objective=MaximizeObjective()),
+            ]
+        ),
+    )
+    experiments = pd.DataFrame(points, columns=["x_1", "x_2"])
+    experiments["y1"] = y1
+    experiments["y2"] = y2
+    experiments["valid_y1"] = 1
+    experiments["valid_y2"] = 1
+    strategy = strategies.map(
+        MoboStrategy(domain=domain, convergence_criterion=criterion)
+    )
+    strategy.tell(experiments, retrain=False)
+    return strategy
+
+
 def test_convergence_criterion_serialization_roundtrip():
     for criterion in [
         ObjectiveImprovementCriterion(min_improvement=1e-2, n_lookback=5),
+        HypervolumeImprovementCriterion(min_improvement=1e-2, n_lookback=5),
         ProposalDeviationCriterion(threshold=1e-3, n_consecutive=2),
     ]:
         reconstructed = type(criterion)(**criterion.model_dump())
@@ -88,6 +135,111 @@ def test_objective_improvement_not_enough_experiments():
     assert strategy.has_converged() is False
 
 
+def test_hypervolume_improvement_converged():
+    # The Pareto front is fully established by the first three experiments; the
+    # last experiments are dominated, so the hypervolume does not grow.
+    strategy = _mobo_strategy_with_experiments(
+        HypervolumeImprovementCriterion(min_improvement=0.5, n_lookback=3),
+        points=[(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (1, 1)],
+        y1=[1, 2, 3, 1, 1, 1],
+        y2=[1, 3, 2, 1, 1, 1],
+    )
+    assert strategy.has_converged() is True
+
+
+def test_hypervolume_improvement_not_converged():
+    # The Pareto front keeps expanding within the lookback window, so the
+    # dominated hypervolume grows substantially.
+    strategy = _mobo_strategy_with_experiments(
+        HypervolumeImprovementCriterion(min_improvement=0.5, n_lookback=3),
+        points=[(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (1, 2)],
+        y1=[1.0, 1.1, 1.2, 2.0, 3.0, 4.0],
+        y2=[1.0, 1.1, 1.2, 2.0, 3.0, 4.0],
+    )
+    assert strategy.has_converged() is False
+
+
+def test_hypervolume_improvement_not_enough_experiments():
+    strategy = _mobo_strategy_with_experiments(
+        HypervolumeImprovementCriterion(min_improvement=0.5, n_lookback=3),
+        points=[(0, 0), (1, 1), (2, 2)],
+        y1=[1, 2, 3],
+        y2=[3, 2, 1],
+    )
+    assert strategy.has_converged() is False
+
+
+def test_hypervolume_improvement_single_objective():
+    # A single-objective strategy does not support the hypervolume criterion, so
+    # attaching it is rejected at construction time.
+    domain = Himmelblau().domain
+    with pytest.raises(
+        ValueError,
+        match="is not implemented for strategy",
+    ):
+        SoboStrategy(
+            domain=domain,
+            convergence_criterion=HypervolumeImprovementCriterion(
+                min_improvement=0.5, n_lookback=3
+            ),
+        )
+
+
+def test_criterion_objective_free_applicability():
+    # Only the objective-agnostic proposal deviation criterion can be evaluated
+    # without any objective; the objective-progress criteria cannot.
+    assert ProposalDeviationCriterion.is_applicable_to_objective_free() is True
+    assert ObjectiveImprovementCriterion.is_applicable_to_objective_free() is False
+    assert HypervolumeImprovementCriterion.is_applicable_to_objective_free() is False
+
+
+def _active_learning_domain() -> Domain:
+    """A multi-output domain valid for the ActiveLearningStrategy."""
+    return Domain(
+        inputs=Inputs(
+            features=[
+                ContinuousInput(key="x_1", bounds=(0, 1)),
+                ContinuousInput(key="x_2", bounds=(0, 1)),
+            ]
+        ),
+        outputs=Outputs(
+            features=[
+                ContinuousOutput(key="y1", objective=MaximizeObjective()),
+                ContinuousOutput(key="y2", objective=MaximizeObjective()),
+            ]
+        ),
+    )
+
+
+def test_active_learning_accepts_proposal_deviation_criterion():
+    # Active learning does not optimize an objective but still produces
+    # proposals, so the objective-agnostic proposal deviation criterion applies.
+    strategy = ActiveLearningStrategy(
+        domain=_active_learning_domain(),
+        convergence_criterion=ProposalDeviationCriterion(
+            threshold=1e-2, n_consecutive=2
+        ),
+    )
+    assert isinstance(strategy.convergence_criterion, ProposalDeviationCriterion)
+
+
+@pytest.mark.parametrize(
+    "criterion",
+    [
+        ObjectiveImprovementCriterion(min_improvement=0.5, n_lookback=3),
+        HypervolumeImprovementCriterion(min_improvement=0.5, n_lookback=3),
+    ],
+)
+def test_active_learning_rejects_objective_based_criteria(criterion):
+    # Objective-progress criteria require objective information, which active
+    # learning does not optimize, so attaching them is rejected.
+    with pytest.raises(ValueError, match="is not implemented for strategy"):
+        ActiveLearningStrategy(
+            domain=_active_learning_domain(),
+            convergence_criterion=criterion,
+        )
+
+
 def test_proposal_deviation_converged():
     # The last proposals coincide -> deviation is zero.
     strategy = _strategy_with_experiments(
@@ -123,6 +275,18 @@ def test_has_converged_requires_missing_surrogate():
     class _SurrogateRequiringCriterion(convergence_data_models_ConvergenceCriterion):
         type: Literal["_SurrogateRequiringCriterion"] = "_SurrogateRequiringCriterion"
 
+        @classmethod
+        def is_applicable_to_singleobjective(cls) -> bool:
+            return True
+
+        @classmethod
+        def is_applicable_to_multiobjective(cls) -> bool:
+            return False
+
+        @classmethod
+        def is_applicable_to_objective_free(cls) -> bool:
+            return False
+
     def _evaluate(criterion, strategy):
         # A custom criterion may access the strategy's surrogate model(s)
         # directly; here we simply assert that a fitted strategy exposes them.
@@ -146,6 +310,18 @@ def test_has_converged_requires_missing_surrogate():
 def test_map_unregistered_convergence_criterion():
     class _UnknownCriterion(convergence_data_models_ConvergenceCriterion):
         type: str = "_UnknownCriterion"
+
+        @classmethod
+        def is_applicable_to_singleobjective(cls) -> bool:
+            return True
+
+        @classmethod
+        def is_applicable_to_multiobjective(cls) -> bool:
+            return True
+
+        @classmethod
+        def is_applicable_to_objective_free(cls) -> bool:
+            return True
 
     with pytest.raises(KeyError, match="No convergence evaluator registered"):
         convergence_criteria.map(_UnknownCriterion())
@@ -175,6 +351,18 @@ def test_register_custom_convergence_criterion():
 
     class _CustomConvergenceCriterion(convergence_data_models_ConvergenceCriterion):
         type: Literal["_CustomConvergenceCriterion"] = "_CustomConvergenceCriterion"
+
+        @classmethod
+        def is_applicable_to_singleobjective(cls) -> bool:
+            return True
+
+        @classmethod
+        def is_applicable_to_multiobjective(cls) -> bool:
+            return False
+
+        @classmethod
+        def is_applicable_to_objective_free(cls) -> bool:
+            return False
 
     calls = {}
 

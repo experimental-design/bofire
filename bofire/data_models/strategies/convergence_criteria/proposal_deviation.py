@@ -45,3 +45,15 @@ class ProposalDeviationCriterion(ConvergenceCriterion):
     type: Literal["ProposalDeviationCriterion"] = "ProposalDeviationCriterion"
     threshold: PositiveFloat
     n_consecutive: PositiveInt = 1
+
+    @classmethod
+    def is_applicable_to_multiobjective(cls) -> bool:
+        return True
+
+    @classmethod
+    def is_applicable_to_singleobjective(cls) -> bool:
+        return True
+
+    @classmethod
+    def is_applicable_to_objective_free(cls) -> bool:
+        return True
