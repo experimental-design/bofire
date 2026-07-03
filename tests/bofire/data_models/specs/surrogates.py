@@ -1,4 +1,5 @@
 import bofire.data_models.surrogates.api as models
+from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
@@ -24,7 +25,6 @@ from bofire.data_models.kernels.api import (
     ScaleKernel,
     TanimotoKernel,
 )
-from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
     PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
     PAIRWISEGP_LENGTHSCALE_PRIOR,

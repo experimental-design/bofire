@@ -2,11 +2,11 @@ from typing import Literal, Optional, Type
 
 from pydantic import Field, model_validator
 
+from bofire.data_models.descriptor_generators.api import Fingerprints, Fragments
 from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
-from bofire.data_models.molfeatures.api import Fingerprints, Fragments
 from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,

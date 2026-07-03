@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from bofire.data_models.molfeatures import names
-from bofire.data_models.molfeatures.api import (
+from bofire.data_models.descriptor_generators import names
+from bofire.data_models.descriptor_generators.api import (
     Fingerprints,
     Fragments,
     MordredDescriptors,

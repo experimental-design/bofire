@@ -1,5 +1,6 @@
 import pytest
 
+from bofire.data_models.descriptor_generators.api import MordredDescriptors
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import (
     ContinuousDescriptorInput,
@@ -11,7 +12,6 @@ from bofire.data_models.features.api import (
     WeightedMeanFeature,
     WeightedSumFeature,
 )
-from bofire.data_models.molfeatures.api import MordredDescriptors
 
 
 def test_engineered_feature_validation():

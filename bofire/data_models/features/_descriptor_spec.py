@@ -19,8 +19,8 @@ import pandas as pd
 from pydantic import Field, PrivateAttr, model_validator
 
 from bofire.data_models.base import BaseModel
+from bofire.data_models.descriptor_generators.api import AnyDescriptorGenerator
 from bofire.data_models.encodings.reserved import get_reserved_descriptor, is_reserved
-from bofire.data_models.molfeatures.api import AnyMolFeatures
 
 
 if TYPE_CHECKING:
@@ -70,7 +70,7 @@ class DescriptorSpec(BaseModel):
     """
 
     columns: Optional[List[str]] = None
-    generators: Dict[str, List[AnyMolFeatures]] = Field(default_factory=dict)
+    generators: Dict[str, List[AnyDescriptorGenerator]] = Field(default_factory=dict)
     filter_descriptors: bool = False
     correlation_cutoff: float = 0.95
 

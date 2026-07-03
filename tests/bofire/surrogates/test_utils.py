@@ -11,6 +11,11 @@ from botorch.models.transforms.input import (
     NumericToCategoricalEncoding,
 )
 
+from bofire.data_models.descriptor_generators.api import (
+    Fingerprints,
+    Fragments,
+    MordredDescriptors,
+)
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
@@ -26,11 +31,6 @@ from bofire.data_models.features.api import (
     MeanFeature,
     SumFeature,
     WeightedSumFeature,
-)
-from bofire.data_models.molfeatures.api import (
-    Fingerprints,
-    Fragments,
-    MordredDescriptors,
 )
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler

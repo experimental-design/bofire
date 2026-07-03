@@ -23,6 +23,10 @@ from torch.nn import Module
 
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.api import Hartmann, Himmelblau
+from bofire.data_models.descriptor_generators.api import (
+    Fingerprints,
+    MordredDescriptors,
+)
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.encodings.api import OrdinalEncoding
 from bofire.data_models.enum import RegressionMetricsEnum
@@ -42,7 +46,6 @@ from bofire.data_models.kernels.api import (
     SphericalLinearKernel,
     TanimotoKernel,
 )
-from bofire.data_models.molfeatures.api import Fingerprints, MordredDescriptors
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,

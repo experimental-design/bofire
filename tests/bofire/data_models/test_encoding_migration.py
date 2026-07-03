@@ -8,13 +8,13 @@ as encoder objects.
 
 import pytest
 
+from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.encodings._migrate import migrate_legacy_encodings
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
     OneHotEncoding,
     OrdinalEncoding,
 )
-from bofire.data_models.molfeatures.api import Fingerprints
 
 
 @pytest.mark.parametrize(

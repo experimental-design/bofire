@@ -1,8 +1,8 @@
 import importlib
 import random
 
-import bofire.data_models.molfeatures.api as molfeatures
-from bofire.data_models.molfeatures import names
+import bofire.data_models.descriptor_generators.api as molfeatures
+from bofire.data_models.descriptor_generators import names
 from tests.bofire.data_models.specs.specs import Specs
 
 

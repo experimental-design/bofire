@@ -10,10 +10,10 @@ single ``DeprecationWarning`` per spec map.
 import warnings
 from typing import Any, Dict
 
+from bofire.data_models.descriptor_generators.generators import DescriptorGenerator
 from bofire.data_models.encodings.descriptors import DescriptorEncoding
 from bofire.data_models.encodings.onehot import OneHotEncoding
 from bofire.data_models.encodings.ordinal import OrdinalEncoding
-from bofire.data_models.molfeatures.molfeatures import MolFeatures
 
 
 _MOLFEATURE_TYPES = {"Fingerprints", "Fragments", "MordredDescriptors"}
@@ -48,7 +48,7 @@ def _migrate_value(value: Any) -> Any:
     }
     if isinstance(value, str) and value in legacy:
         return legacy[value]()
-    if isinstance(value, MolFeatures):  # bare generator
+    if isinstance(value, DescriptorGenerator):  # bare generator
         return DescriptorEncoding(columns=[], generators={"smiles": [value]})
     if isinstance(value, dict):
         t = value.get("type")

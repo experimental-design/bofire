@@ -5,9 +5,9 @@ import pytest
 import torch
 
 from bofire.benchmarks.api import Himmelblau
+from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain import api as domain_api
 from bofire.data_models.features import api as features_api
-from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate, TanimotoGPSurrogate
 from bofire.surrogates.api import map
 

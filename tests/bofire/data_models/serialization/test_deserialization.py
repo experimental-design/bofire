@@ -5,11 +5,11 @@ from bofire.data_models.api import (
     AnyCondition,
     AnyConstraint,
     AnyDataFrame,
+    AnyDescriptorGenerator,
     AnyFeature,
     AnyKernel,
     AnyLLMProvider,
     AnyLocalSearchConfig,
-    AnyMolFeatures,
     AnyObjective,
     AnyOutlierDetection,
     AnyPrior,
@@ -110,7 +110,7 @@ def test_outlier_detection_should_be_deserializable(outlier_detection_spec: Spec
 
 def test_molfeatures_should_be_deserializable(molfeatures_spec: Spec):
     obj = molfeatures_spec.obj()
-    deserialized = TypeAdapter(AnyMolFeatures).validate_python(obj.model_dump())
+    deserialized = TypeAdapter(AnyDescriptorGenerator).validate_python(obj.model_dump())
     assert obj == deserialized
 
 

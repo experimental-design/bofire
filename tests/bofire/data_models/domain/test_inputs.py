@@ -8,6 +8,11 @@ import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
+from bofire.data_models.descriptor_generators.api import (
+    Fingerprints,
+    Fragments,
+    MordredDescriptors,
+)
 from bofire.data_models.domain.api import Features, Inputs, Outputs
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
@@ -21,11 +26,6 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
-)
-from bofire.data_models.molfeatures.api import (
-    Fingerprints,
-    Fragments,
-    MordredDescriptors,
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
 

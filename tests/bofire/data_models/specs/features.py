@@ -2,7 +2,7 @@ import random
 import uuid
 
 import bofire.data_models.features.api as features
-from bofire.data_models.molfeatures.api import MordredDescriptors
+from bofire.data_models.descriptor_generators.api import MordredDescriptors
 from bofire.data_models.objectives.api import (
     ConstrainedCategoricalObjective,
     MaximizeObjective,

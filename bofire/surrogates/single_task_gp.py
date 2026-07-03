@@ -12,7 +12,7 @@ import bofire.kernels.api as kernels
 import bofire.priors.api as priors
 from bofire.data_models.enum import OutputFilteringEnum
 
-# from bofire.data_models.molfeatures.api import MolFeatures
+# from bofire.data_models.descriptor_generators.api import DescriptorGenerator
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 

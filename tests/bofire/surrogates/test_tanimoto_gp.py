@@ -6,9 +6,13 @@ import pandas as pd
 import pytest
 import torch
 
+from bofire.data_models.descriptor_generators.api import (
+    DescriptorGenerator,
+    Fingerprints,
+    Fragments,
+)
 from bofire.data_models.domain import api as domain_api
 from bofire.data_models.encodings.api import DescriptorEncoding
-from bofire.data_models.molfeatures.api import Fingerprints, Fragments, MolFeatures
 from bofire.data_models.priors.api import GammaPrior
 from bofire.data_models.strategies import api as strategies_api
 from bofire.data_models.surrogates.api import BotorchSurrogates, TanimotoGPSurrogate
@@ -45,7 +49,7 @@ def mol_feature_data_model(request, n_bits):
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_tanimoto_calculation(
     chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame],
-    mol_feature_data_model: MolFeatures,
+    mol_feature_data_model: DescriptorGenerator,
 ):
     domain, X, Y = chem_domain_simple
 

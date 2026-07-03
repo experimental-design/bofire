@@ -10,9 +10,9 @@ from botorch.models.transforms.input import (
     Normalize,
 )
 
+from bofire.data_models.descriptor_generators.api import MordredDescriptors
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
 from bofire.data_models.encodings.api import DescriptorEncoding
-from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.surrogates.scaler import AnyScaler
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.types import InputTransformSpecs

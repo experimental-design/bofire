@@ -17,6 +17,7 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
     ProductInequalityConstraint,
 )
+from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.encodings.api import (
     DescriptorEncoding,
@@ -30,7 +31,6 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,

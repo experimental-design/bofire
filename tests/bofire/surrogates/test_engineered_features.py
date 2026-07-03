@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 import torch
 
+from bofire.data_models.descriptor_generators.api import MordredDescriptors
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import (
     CloneFeature,
@@ -20,7 +21,6 @@ from bofire.data_models.features.api import (
     WeightedMeanFeature,
     WeightedSumFeature,
 )
-from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.surrogates.engineered_features import (
     map_clone_feature,
     map_interpolate_feature,

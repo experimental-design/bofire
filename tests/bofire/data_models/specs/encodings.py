@@ -1,5 +1,5 @@
+import bofire.data_models.descriptor_generators.api as molfeatures
 import bofire.data_models.encodings.api as encodings
-import bofire.data_models.molfeatures.api as molfeatures
 from tests.bofire.data_models.specs.specs import Specs
 
 

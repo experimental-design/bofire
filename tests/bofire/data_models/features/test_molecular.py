@@ -5,15 +5,15 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
+from bofire.data_models.descriptor_generators.api import (
+    Fingerprints,
+    Fragments,
+    MordredDescriptors,
+)
 from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
 from bofire.data_models.features.molecular import (
     CategoricalMolecularInput,
     ContinuousMolecularInput,
-)
-from bofire.data_models.molfeatures.api import (
-    Fingerprints,
-    Fragments,
-    MordredDescriptors,
 )
 
 

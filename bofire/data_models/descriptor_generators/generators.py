@@ -6,7 +6,7 @@ import pandas as pd
 from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.molfeatures import names
+from bofire.data_models.descriptor_generators import names
 from bofire.utils.cheminformatics import (  # smiles2bag_of_characters,
     smiles2fingerprints,
     smiles2fragments,
@@ -14,14 +14,14 @@ from bofire.utils.cheminformatics import (  # smiles2bag_of_characters,
 )
 
 
-class MolFeatures(BaseModel):
-    """Base class for all molecular features.
+class DescriptorGenerator(BaseModel):
+    """Base class for all descriptor generators.
 
-    A ``MolFeatures`` is a pure, stateless transform: given a series of structure
-    identifiers (SMILES) it returns a dataframe of numeric descriptor columns.
-    Correlation-based decorrelation is *not* done here — it lives on the consuming
-    descriptor encoding / engineered feature (``DescriptorSpec``), applied across the
-    whole assembled descriptor block.
+    A ``DescriptorGenerator`` is a pure, stateless transform: given a series of
+    structure identifiers (e.g. SMILES) it returns a dataframe of numeric descriptor
+    columns. Correlation-based decorrelation is *not* done here — it lives on the
+    consuming descriptor encoding / engineered feature (``DescriptorSpec``), applied
+    across the whole assembled descriptor block.
     """
 
     type: Any
@@ -41,8 +41,8 @@ class MolFeatures(BaseModel):
             "filter_descriptors" in data or "correlation_cutoff" in data
         ):
             warnings.warn(
-                "`filter_descriptors` / `correlation_cutoff` moved off MolFeatures to "
-                "the descriptor encoding/feature (`filter_descriptors` on "
+                "`filter_descriptors` / `correlation_cutoff` moved off the descriptor "
+                "generator to the descriptor encoding/feature (`filter_descriptors` on "
                 "`DescriptorEncoding` / `WeightedSumFeature`); the values on the "
                 "generator are ignored.",
                 DeprecationWarning,
@@ -64,7 +64,7 @@ class MolFeatures(BaseModel):
         """Descriptor values for a series of structures (columns = descriptor names)."""
 
 
-class Fingerprints(MolFeatures):
+class Fingerprints(DescriptorGenerator):
     type: Literal["Fingerprints"] = "Fingerprints"
     bond_radius: int = 5
     n_bits: int = 2048
@@ -84,7 +84,7 @@ class Fingerprints(MolFeatures):
         )
 
 
-class Fragments(MolFeatures):
+class Fragments(DescriptorGenerator):
     type: Literal["Fragments"] = "Fragments"
     fragments: Optional[Annotated[List[str], Field(min_length=1)]] = None
 
@@ -125,7 +125,7 @@ class Fragments(MolFeatures):
         )
 
 
-class MordredDescriptors(MolFeatures):
+class MordredDescriptors(DescriptorGenerator):
     type: Literal["MordredDescriptors"] = "MordredDescriptors"
     descriptors: Optional[Annotated[List[str], Field(min_length=1)]] = None
     ignore_3D: bool = False

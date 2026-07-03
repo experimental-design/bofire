@@ -1,5 +1,6 @@
 from pydantic import Field, field_validator, model_validator
 
+from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain.api import EngineeredFeatures
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.encodings._migrate import migrate_legacy_encodings
@@ -13,7 +14,6 @@ from bofire.data_models.features.api import (
     CategoricalTaskInput,
     NumericalInput,
 )
-from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.types import InputTransformSpecs
 
