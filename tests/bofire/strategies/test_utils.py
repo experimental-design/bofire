@@ -13,8 +13,41 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain import api as data_models_domain
 from bofire.data_models.features import api as data_models_features
 from bofire.data_models.strategies import api as data_models_strategies
-from bofire.strategies.utils import GaMixedDomainHandler, LinearProjectionPymooRepair
+from bofire.strategies.utils import (
+    GaMixedDomainHandler,
+    LinearProjectionPymooRepair,
+    run_ga,
+)
 from bofire.utils.torch_tools import get_linear_constraints
+
+
+@pytest.fixture
+def ga_domain() -> data_models_domain.Domain:
+    return data_models_domain.Domain(
+        inputs=[data_models_features.ContinuousInput(key="x", bounds=(0.0, 1.0))],
+        constraints=[],
+    )
+
+
+@pytest.fixture
+def ga_objective():
+    def _objective(x):
+        return -x[:, 0, 0].reshape(-1)
+
+    return _objective
+
+
+@pytest.fixture
+def ga_optimizer_factory():
+    def _make_optimizer(ga_progress_csv_path=None):
+        return data_models_strategies.GeneticAlgorithmOptimizer(
+            population_size=4,
+            n_max_gen=1,
+            n_max_evals=20,
+            ga_progress_csv_path=ga_progress_csv_path,
+        )
+
+    return _make_optimizer
 
 
 @pytest.fixture
@@ -285,3 +318,60 @@ class TestLinearProjection:
             # check that the min_count is met
             n_non_zero = (xr[i, :] > 1e-5).sum()
             assert n_non_zero >= min_count
+
+
+def test_run_ga_callback_writes_file(
+    tmp_path,
+    ga_domain,
+    ga_objective,
+    ga_optimizer_factory,
+):
+    optimizer = ga_optimizer_factory()
+    callback_path = tmp_path / "ga_callback.txt"
+
+    def _callback(algorithm):
+        callback_path.write_text(f"generation={algorithm.n_gen}\n", encoding="utf-8")
+
+    x_opt, f_opt = run_ga(
+        data_model=optimizer,
+        domain=ga_domain,
+        objective_callables=[ga_objective],
+        q=1,
+        callable_format="torch",
+        callback=_callback,
+    )
+
+    assert callback_path.exists()
+    content = callback_path.read_text(encoding="utf-8").strip()
+    assert content.startswith("generation=")
+    callback_path.unlink()
+    assert not callback_path.exists()
+    assert x_opt.shape == (1, 1)
+    assert f_opt.shape == (1,)
+
+
+def test_run_ga_progress_csv_path_from_data_model(
+    tmp_path,
+    ga_domain,
+    ga_objective,
+    ga_optimizer_factory,
+):
+    callback_path = tmp_path / "ga_progress_from_model.csv"
+    optimizer = ga_optimizer_factory(ga_progress_csv_path=str(callback_path))
+
+    x_opt, f_opt = run_ga(
+        data_model=optimizer,
+        domain=ga_domain,
+        objective_callables=[ga_objective],
+        q=1,
+        callable_format="torch",
+    )
+
+    assert callback_path.exists()
+    lines = callback_path.read_text(encoding="utf-8").strip().splitlines()
+    assert lines[0] == "generation,n_eval,best_f"
+    assert len(lines) >= 2
+    callback_path.unlink()
+    assert not callback_path.exists()
+    assert x_opt.shape == (1, 1)
+    assert f_opt.shape == (1,)
