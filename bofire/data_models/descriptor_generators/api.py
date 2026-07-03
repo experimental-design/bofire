@@ -12,11 +12,3 @@ AnyDescriptorGenerator = tagged_union(
     Fragments,
     MordredDescriptors,
 )
-
-__all__ = [
-    "AnyDescriptorGenerator",
-    "DescriptorGenerator",
-    "Fingerprints",
-    "Fragments",
-    "MordredDescriptors",
-]

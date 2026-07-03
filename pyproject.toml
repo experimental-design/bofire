@@ -25,7 +25,7 @@ classifiers = [
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11.0, <3.15"
 dependencies = [
-    "numpy<=2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
+    "numpy<2.5.0", # pin strictly below 2.5.0: numpy 2.5.0 is too new for numba, forcing uv to backtrack to numba 0.53.1 -> llvmlite 0.36.0, which fails to build on Python 3.10+
     "pandas",
     "pydantic>=2.5",
     "scipy>=1.7",
@@ -36,7 +36,7 @@ dependencies = [
 [project.optional-dependencies]
 optimization = [
     "botorch[fully_bayesian]>=0.18.1",
-    "numpy<=2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
+    "numpy<2.5.0", # pin strictly below 2.5.0: numpy 2.5.0 is too new for numba, forcing uv to backtrack to numba 0.53.1 -> llvmlite 0.36.0, which fails to build on Python 3.10+
     "multiprocess",
     "plotly",
     "formulaic>=1.0.1,<1.1",
@@ -57,7 +57,7 @@ tests = ["pytest", "pytest-cov", "papermill"]
 docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
 all = [
     "botorch[fully_bayesian]>=0.18.1",
-    "numpy<=2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
+    "numpy<2.5.0", # pin strictly below 2.5.0: numpy 2.5.0 is too new for numba, forcing uv to backtrack to numba 0.53.1 -> llvmlite 0.36.0, which fails to build on Python 3.10+
     "multiprocess",
     "plotly",
     "formulaic==1.0.1",
@@ -123,6 +123,10 @@ max-complexity = 19
 [tool.ruff.lint.per-file-ignores]
 "bofire/surrogates/api.py" = ["F401"]
 "bofire/data_models/molfeatures/api.py" = ["F401"]
+"bofire/data_models/molfeatures/names.py" = ["F401"]
+"bofire/data_models/descriptor_generators/api.py" = ["F401"]
+"bofire/data_models/encodings/api.py" = ["F401"]
+"bofire/llm/api.py" = ["F401"]
 "bofire/data_models/priors/api.py" = ["F401"]
 "bofire/priors/api.py" = ["F401"]
 "bofire/utils/annotated.py" = ["F401"]
