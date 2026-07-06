@@ -4,16 +4,8 @@ from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain.api import EngineeredFeatures
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.encodings._migrate import migrate_legacy_encodings
-from bofire.data_models.encodings.api import (
-    DescriptorEncoding,
-    OneHotEncoding,
-    OrdinalEncoding,
-)
-from bofire.data_models.features.api import (
-    CategoricalInput,
-    CategoricalTaskInput,
-    NumericalInput,
-)
+from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
+from bofire.data_models.features.api import CategoricalInput, CategoricalTaskInput
 from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.types import InputTransformSpecs
 
@@ -23,10 +15,6 @@ class BotorchSurrogate(Surrogate):
     based strategies.
 
     Attributes:
-        input_preprocessing_specs: A dictionary specifying how categorical features are to be
-            preprocessed **before** being passed to the surrogate. For all botorch based surrogates, an
-            ordinal encoding (`OrdinalEncoding`) has to be used for all
-            categorical features, which is also set as default if nothing is provided.
         categorical_encodings: A dictionary specifying how
             categorical features are to be encoded **within** the botorch based surrogate.
             Keys are the feature keys and values are the encoding types. If a feature is
@@ -42,30 +30,6 @@ class BotorchSurrogate(Surrogate):
     engineered_features: EngineeredFeatures = Field(
         default_factory=lambda: EngineeredFeatures()
     )
-
-    @field_validator("input_preprocessing_specs")
-    @classmethod
-    def validate_input_preprocessing_specs(cls, v, info):
-        # when validator for inputs fails, this validator is still checked and causes an Exception error instead of a ValueError
-        # fix this by checking if inputs is in info.data
-        if "inputs" not in info.data:
-            return None
-
-        inputs = info.data["inputs"]
-        categorical_keys = inputs.get_keys(CategoricalInput, exact=False)
-        for key in categorical_keys:
-            spec = v.get(key)
-            if spec is not None and not isinstance(spec, OrdinalEncoding):
-                raise ValueError(
-                    "Botorch based models have to use ordinal encodings for categoricals",
-                )
-            v[key] = OrdinalEncoding()
-        for key in inputs.get_keys(NumericalInput):
-            if v.get(key) is not None:
-                raise ValueError(
-                    "Botorch based models have to use internal transforms to preprocess numerical features.",
-                )
-        return v
 
     @field_validator("categorical_encodings", mode="before")
     @classmethod

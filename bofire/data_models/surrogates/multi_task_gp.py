@@ -1,7 +1,7 @@
 from typing import Literal, Optional, Type
 
 import pandas as pd
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.encodings.api import OneHotEncoding, OrdinalEncoding
@@ -139,23 +139,3 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
                 f"The task feature {task_feature.key} has to be encoded as ordinal."
             )
         return self
-
-    @field_validator("input_preprocessing_specs")
-    @classmethod
-    def validate_encoding(cls, v, info):
-        # also validate that the task feature has ordinal encoding
-        if "inputs" not in info.data:
-            return v
-
-        if len(info.data["inputs"].get_keys(CategoricalTaskInput)) == 0:
-            return v
-
-        task_feature_id = info.data["inputs"].get_keys(CategoricalTaskInput)[0]
-        if v.get(task_feature_id) is None:
-            v[task_feature_id] = OrdinalEncoding()
-        elif not isinstance(v[task_feature_id], OrdinalEncoding):
-            raise ValueError(
-                f"The task feature {task_feature_id} has to be encoded as ordinal.",
-            )
-
-        return v

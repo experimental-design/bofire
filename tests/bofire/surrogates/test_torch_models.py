@@ -66,71 +66,11 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
         outputs=outputs,
     )
     surrogate = surrogates.map(data_model)
+    # input_preprocessing_specs is derived: every categorical is ordinal-encoded.
     assert surrogate.input_preprocessing_specs == {
         "x_cat": OrdinalEncoding(),
         "cat": OrdinalEncoding(),
     }
-    # test that it can also handle incomplete specs
-    data_model = modelclass(
-        inputs=inputs,
-        outputs=outputs,
-        input_preprocessing_specs={"x_cat": OrdinalEncoding()},
-    )
-    surrogate = surrogates.map(data_model)
-    assert surrogate.input_preprocessing_specs == {
-        "x_cat": OrdinalEncoding(),
-        "cat": OrdinalEncoding(),
-    }
-
-
-@pytest.mark.parametrize(
-    "modelclass, input_preprocessing_specs",
-    [
-        (
-            data_models.SingleTaskGPSurrogate,
-            {
-                "x_cat": OneHotEncoding(drop_first=True),
-                "cat": OrdinalEncoding(),
-            },
-        ),
-        (
-            data_models.MixedSingleTaskGPSurrogate,
-            {
-                "x_cat": OrdinalEncoding(),
-                "cat": OneHotEncoding(),
-            },
-        ),
-    ],
-)
-def test_BotorchModel_validate_invalid_input_preprocessing_steps(
-    modelclass,
-    input_preprocessing_specs,
-):
-    inputs = Inputs(
-        features=[
-            ContinuousInput(
-                key=f"x_{i + 1}",
-                bounds=(-4, 4),
-            )
-            for i in range(5)
-        ]
-        + [
-            CategoricalInput(key="x_cat", categories=["mama", "papa"]),
-            CategoricalDescriptorInput(
-                key="cat",
-                categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
-            ),
-        ],
-    )
-    outputs = Outputs(features=[ContinuousOutput(key="y")])
-    with pytest.raises(ValueError):
-        modelclass(
-            inputs=inputs,
-            outputs=outputs,
-            input_preprocessing_specs=input_preprocessing_specs,
-        )
 
 
 def test_BotorchSurrogates_invalid_outputs():
@@ -618,6 +558,26 @@ def test_botorch_models_input_preprocessing_specs():
     }
 
 
+def test_legacy_input_preprocessing_specs_is_dropped():
+    """`input_preprocessing_specs` is derived now; a legacy value is dropped (with a
+    warning) and does not appear in the dump."""
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x", bounds=(0, 1)),
+            CategoricalInput(key="c", categories=["a", "b"]),
+        ]
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    with pytest.warns(DeprecationWarning):
+        surrogate = data_models.SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            input_preprocessing_specs={"c": OneHotEncoding()},  # ignored
+        )
+    assert "input_preprocessing_specs" not in surrogate.model_dump()
+    assert surrogate.input_preprocessing_specs == {"c": OrdinalEncoding()}
+
+
 def test_botorch_models_invalid_compatibilize():
     # model 1
     inputs = Inputs(
@@ -834,7 +794,6 @@ def test_botorch_models_rf_fit_and_compatibilize():
     data_model2 = data_models.RandomForestSurrogate(
         inputs=inputs,
         outputs=outputs,
-        input_preprocessing_specs={"x_cat": OrdinalEncoding()},
     )
     # create models
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
