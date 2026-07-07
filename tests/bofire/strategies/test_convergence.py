@@ -23,6 +23,35 @@ from bofire.data_models.strategies.convergence_criteria.api import (
 )
 
 
+@pytest.fixture
+def restore_convergence_registry():
+    """Snapshot and restore the global convergence-criterion registries.
+
+    Registering a custom criterion mutates process-global state (the
+    ``AnyConvergenceCriterion`` union, the ``convergence_criterion`` field
+    patched onto every predictive strategy, and the functional evaluator map).
+    Restoring it after the test keeps the registrations from leaking into other
+    tests.
+    """
+    import bofire.data_models.strategies.convergence_criteria.api as cc_data_api
+    from bofire.data_models.strategies.convergence_criteria._register import (
+        _rebuild_dependent_models,
+    )
+    from bofire.strategies.convergence_criteria.mapper import CONVERGENCE_MAP
+
+    saved_types = list(cc_data_api._CONVERGENCE_CRITERION_TYPES)
+    saved_union = cc_data_api.AnyConvergenceCriterion
+    saved_map = dict(CONVERGENCE_MAP)
+    try:
+        yield
+    finally:
+        cc_data_api._CONVERGENCE_CRITERION_TYPES[:] = saved_types
+        cc_data_api.AnyConvergenceCriterion = saved_union
+        CONVERGENCE_MAP.clear()
+        CONVERGENCE_MAP.update(saved_map)
+        _rebuild_dependent_models()
+
+
 def _strategy_with_experiments(criterion, points, y):
     """Build a SoboStrategy on Himmelblau and tell it crafted experiments.
 
@@ -269,7 +298,7 @@ def test_proposal_deviation_not_enough_experiments():
     assert strategy.has_converged() is False
 
 
-def test_has_converged_requires_missing_surrogate():
+def test_has_converged_requires_missing_surrogate(restore_convergence_registry):
     from typing import Literal
 
     class _SurrogateRequiringCriterion(convergence_data_models_ConvergenceCriterion):
@@ -346,7 +375,7 @@ def test_strategy_has_converged_condition_evaluate():
     )
 
 
-def test_register_custom_convergence_criterion():
+def test_register_custom_convergence_criterion(restore_convergence_registry):
     from typing import Literal
 
     class _CustomConvergenceCriterion(convergence_data_models_ConvergenceCriterion):
