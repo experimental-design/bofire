@@ -1,8 +1,9 @@
 import warnings
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
+from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal, Optional
 
-from pydantic import Field, PositiveFloat, PositiveInt, model_validator
+import pandas as pd
+from pydantic import Field, PositiveFloat, PositiveInt, PrivateAttr, model_validator
 
 from bofire.data_models.features._descriptor_spec import DescriptorSpec
 from bofire.data_models.features.api import ContinuousInput
@@ -12,6 +13,7 @@ from bofire.data_models.types import Bounds, FeatureKeys, OneFeatureKeys
 
 if TYPE_CHECKING:
     from bofire.data_models.domain.api import Inputs
+    from bofire.data_models.features._descriptors import DescriptorsMixin
 
 
 class EngineeredFeature(Feature):
@@ -100,6 +102,10 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
     order_id: ClassVar[int] = 2
     normalize: bool = False
 
+    # frozen post-validation descriptor column names; set once by validate_features so
+    # n_transformed_inputs (offset bookkeeping) matches the columns the mapper appends.
+    _resolved_names: Optional[List[str]] = PrivateAttr(None)
+
     @model_validator(mode="before")
     @classmethod
     def _migrate_legacy_descriptors(cls, data):
@@ -114,14 +120,34 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
             data["columns"] = data.pop("descriptors")
         return data
 
+    def component_table(self, features: List["DescriptorsMixin"]) -> pd.DataFrame:
+        """Descriptor table with one row per component feature (weighted-sum scope).
+
+        Index = component feature keys. Generators filter once over the combined
+        component structures so every row shares the same (filtered) columns.
+        Delegates assembly (and filtering) to :meth:`DescriptorSpec._assemble`.
+        """
+        columns = self._static_columns(features[0])
+        index = [feature.key for feature in features]
+        return self._assemble(
+            index=index,
+            static=pd.concat([f.descriptor_table(columns) for f in features])
+            if columns
+            else None,
+            structures=pd.Series([self._structure(f)[0] for f in features])
+            if self.generators
+            else None,
+        )
+
     @property
     def n_transformed_inputs(self) -> int:
         # width is frozen by validate_features once the components are known; before
-        # that (or when columns are explicit) the declared width is feature-free.
+        # that it is only computable feature-free when the static columns are explicit.
         if self._resolved_names is not None:
             return len(self._resolved_names)
-        declared = self.declared_names()
-        return len(declared) if declared is not None else 0
+        if self.columns is not None:
+            return len(self._check_unique(list(self.columns) + self._generated_names()))
+        return 0
 
     def validate_features(self, inputs: "Inputs"):
         super().validate_features(inputs)
@@ -132,9 +158,9 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
         # matches the columns the mapper appends. Filtering needs the assembled table;
         # otherwise the feature-aware declared names suffice (no generation).
         if self.filter_descriptors:
-            self.component_table(components)
+            self._resolved_names = list(self.component_table(components).columns)
         else:
-            self._resolved_names = self.declared_names(components[0])
+            self._resolved_names = self.column_names(components[0])
 
 
 class WeightedMeanFeature(WeightedSumFeature):

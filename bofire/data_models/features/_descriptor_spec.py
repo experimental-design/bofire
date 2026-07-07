@@ -8,15 +8,20 @@ feature: static numeric columns already stored on the feature (``columns``), plu
 - ``DescriptorEncoding`` (categorical: one descriptor row per category), and
 - ``WeightedSumFeature`` (continuous: one row per component feature).
 
-Correlation-based decorrelation lives here (opt-in via ``filter_descriptors``) and is
-applied across the *whole* assembled block — static and generated columns together —
-as a pure function, so there is no mutable state on the generators.
+This class owns the *scope-agnostic* machinery: column-name resolution, correlation
+decorrelation, and the shared ``_assemble`` core. The scope-specific shaping — what a
+row *is* — lives on each consumer as ``table`` / ``component_table``, which just prepare
+``(index, static, structures)`` and delegate here.
+
+Correlation-based decorrelation (opt-in via ``filter_descriptors``) is applied across the
+*whole* assembled block — static and generated columns together — as a pure function, so
+there is no mutable state on the generators or the spec.
 """
 
-from typing import TYPE_CHECKING, List, Optional, Sequence
+from typing import TYPE_CHECKING, List, Optional
 
 import pandas as pd
-from pydantic import Field, PrivateAttr
+from pydantic import Field
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.descriptor_generators.api import AnyDescriptorGenerator
@@ -72,10 +77,6 @@ class DescriptorSpec(BaseModel):
     filter_descriptors: bool = False
     correlation_cutoff: float = 0.95
 
-    # frozen post-filter column names; set the first time a table is assembled (or by
-    # a consumer's validation) so width is stable and generators stay unmutated.
-    _resolved_names: Optional[List[str]] = PrivateAttr(None)
-
     # -- column resolution ---------------------------------------------------------
 
     def _static_columns(self, feature: "DescriptorsMixin") -> List[str]:
@@ -97,22 +98,16 @@ class DescriptorSpec(BaseModel):
             for name in generator.get_descriptor_names()
         ]
 
-    def declared_names(
-        self, feature: Optional["DescriptorsMixin"] = None
-    ) -> Optional[List[str]]:
-        """Unfiltered descriptor names, or ``None`` if not determinable feature-free.
+    def column_names(self, feature: "DescriptorsMixin") -> List[str]:
+        """Declared (pre-filter) descriptor column names for a feature.
 
-        Static names need the feature when ``columns is None``; generator names are
-        always known. Returns ``None`` only when ``columns is None`` and no feature is
-        given (the caller must then resolve against a feature).
+        Static columns resolved against the feature, followed by generator columns.
+        Always returns a list (a feature is required); post-filter names, when
+        ``filter_descriptors`` is set, are the columns of an assembled table.
         """
-        if self.columns is not None:
-            static = list(self.columns)
-        elif feature is not None:
-            static = feature.descriptor_columns()
-        else:
-            return None
-        return self._check_unique(static + self._generated_names())
+        return self._check_unique(
+            self._static_columns(feature) + self._generated_names()
+        )
 
     def _check_unique(self, names: List[str]) -> List[str]:
         duplicates = sorted({n for n in names if names.count(n) > 1})
@@ -122,17 +117,7 @@ class DescriptorSpec(BaseModel):
             )
         return names
 
-    # -- table assembly ------------------------------------------------------------
-
-    def _finalize(self, raw: pd.DataFrame) -> pd.DataFrame:
-        self._check_unique(list(raw.columns))
-        table = (
-            filter_correlated(raw, self.correlation_cutoff)
-            if self.filter_descriptors
-            else raw
-        )
-        self._resolved_names = list(table.columns)
-        return table
+    # -- table assembly (shared core) ----------------------------------------------
 
     def _generated_frames(
         self, structures: pd.Series, index: List
@@ -145,39 +130,32 @@ class DescriptorSpec(BaseModel):
             frames.append(gen_df)
         return frames
 
-    def table(self, feature: "DescriptorsMixin") -> pd.DataFrame:
-        """Per-level descriptor table for one feature (categorical select-row scope).
+    def _assemble(
+        self,
+        index: List,
+        static: Optional[pd.DataFrame],
+        structures: Optional[pd.Series],
+    ) -> pd.DataFrame:
+        """Assemble a descriptor table from prepared parts (static ‖ generated).
 
-        Index = the feature's levels; columns = static columns + generated columns.
+        Shared by the two scope-specific builders — ``DescriptorEncoding.table`` (one
+        row per category) and ``WeightedSumFeature.component_table`` (one row per
+        component) — which differ only in how they prepare ``index`` / ``static`` /
+        ``structures``. Pure: correlation filtering is applied here when enabled, but
+        no state is written, so the same inputs always yield the same columns.
         """
-        index = feature.descriptor_levels()
         frames: List[pd.DataFrame] = []
-        static_cols = self._static_columns(feature)
-        if static_cols:
-            frames.append(feature.descriptor_table(static_cols))
-        if self.generators:
-            frames += self._generated_frames(pd.Series(self._structure(feature)), index)
-        raw = pd.concat(frames, axis=1) if frames else pd.DataFrame(index=index)
-        return self._finalize(raw)
-
-    def component_table(self, features: Sequence["DescriptorsMixin"]) -> pd.DataFrame:
-        """One descriptor row per component feature (continuous weighted-sum scope).
-
-        Index = component keys. Generators filter once over the combined component
-        structures so every row shares the same (filtered) columns.
-        """
-        index = [feature.key for feature in features]
-        frames: List[pd.DataFrame] = []
-        static_cols = self._static_columns(features[0])
-        if static_cols:
-            frames.append(
-                pd.concat([f.descriptor_table(static_cols) for f in features])
-            )
-        if self.generators:
-            structures = pd.Series([self._structure(f)[0] for f in features])
+        if static is not None:
+            frames.append(static)
+        if structures is not None:
             frames += self._generated_frames(structures, index)
         raw = pd.concat(frames, axis=1) if frames else pd.DataFrame(index=index)
-        return self._finalize(raw)
+        self._check_unique(list(raw.columns))
+        return (
+            filter_correlated(raw, self.correlation_cutoff)
+            if self.filter_descriptors
+            else raw
+        )
 
     # -- validation ----------------------------------------------------------------
 
