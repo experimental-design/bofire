@@ -154,13 +154,9 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
         components = [inputs.get_by_key(key) for key in self.features]
         for component in components:
             self.validate_for(component)
-        # freeze the final column set so n_transformed_inputs (offset bookkeeping)
-        # matches the columns the mapper appends. Filtering needs the assembled table;
-        # otherwise the feature-aware declared names suffice (no generation).
-        if self.filter_descriptors:
-            self._resolved_names = list(self.component_table(components).columns)
-        else:
-            self._resolved_names = self.column_names(components[0])
+        # freeze the final column set from the same table the mapper appends, so
+        # n_transformed_inputs (offset bookkeeping) matches it exactly — filtered or not.
+        self._resolved_names = list(self.component_table(components).columns)
 
 
 class WeightedMeanFeature(WeightedSumFeature):
