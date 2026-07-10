@@ -19,9 +19,7 @@ Math:
     .. math:: d_k = \lVert \tilde{x}_k - \tilde{x}_{k-1} \rVert_2,
 
     and convergence holds once the last ``n_consecutive`` deviations are all
-    below ``threshold`` and no categorical input changed over those steps. A
-    categorical value that differs from its predecessor counts as movement
-    regardless of ``d_k``.
+    below ``threshold`` and no categorical input changed over those steps.
 """
 
 from typing import TYPE_CHECKING
@@ -88,18 +86,16 @@ def evaluate_proposal_deviation_criterion(
     else:
         deviations = np.zeros(n - 1)
 
-    # A categorical proposal that differs from its predecessor counts as movement,
-    # regardless of the continuous deviation.
+    recent_deviations = deviations[-criterion.n_consecutive :]
+    if not np.all(recent_deviations < criterion.threshold):
+        return False
+
+    # A categorical proposal that differs from its predecessor counts as movement.
     if len(categorical_inputs) > 0:
         keys = [feat.key for feat in categorical_inputs]
         values = experiments[keys].to_numpy()
-        categorical_changed = np.any(values[1:] != values[:-1], axis=1)
-    else:
-        categorical_changed = np.zeros(n - 1, dtype=bool)
+        recent = values[-(criterion.n_consecutive + 1) :]
+        if np.any(recent[1:] != recent[:-1]):
+            return False
 
-    recent_deviations = deviations[-criterion.n_consecutive :]
-    recent_categorical_changed = categorical_changed[-criterion.n_consecutive :]
-    return bool(
-        np.all(recent_deviations < criterion.threshold)
-        and not np.any(recent_categorical_changed)
-    )
+    return True
