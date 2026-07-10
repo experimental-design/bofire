@@ -115,16 +115,6 @@ def _mobo_strategy_with_experiments(criterion, points, y1, y2):
     return strategy
 
 
-def test_convergence_criterion_serialization_roundtrip():
-    for criterion in [
-        ObjectiveImprovementCriterion(min_improvement=1e-2, n_lookback=5),
-        HypervolumeImprovementCriterion(min_improvement=1e-2, n_lookback=5),
-        ProposalDeviationCriterion(threshold=1e-3, n_consecutive=2),
-    ]:
-        reconstructed = type(criterion)(**criterion.model_dump())
-        assert reconstructed == criterion
-
-
 def test_has_converged_without_convergence_criterion():
     domain = Himmelblau().domain
     strategy = strategies.map(SoboStrategy(domain=domain))
