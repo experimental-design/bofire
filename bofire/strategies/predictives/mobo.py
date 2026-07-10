@@ -20,6 +20,9 @@ from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import ExplicitReferencePoint
 from bofire.data_models.strategies.api import MoboStrategy as DataModel
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.strategies.predictives.botorch import BotorchStrategy
@@ -144,6 +147,7 @@ class MoboStrategy(BotorchStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ):
         """
         Creates an instance of a multi-objective strategy based on expected hypervolume improvement.

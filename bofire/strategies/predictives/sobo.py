@@ -7,6 +7,9 @@ from typing_extensions import Self
 
 from bofire.data_models.api import Domain
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.data_models.unions import unwrap_annotated
@@ -185,6 +188,7 @@ class SoboStrategy(BotorchStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         """
         Creates a single objective Bayesian optimization strategy.
@@ -293,6 +297,7 @@ class AdditiveSoboStrategy(SoboStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ):
         """
         Creates a Bayesian optimization strategy that adds multiple objectives.
@@ -358,6 +363,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         """
         Creates Bayesian optimization strategy that multiplies multiple objectives. The weights of
@@ -426,6 +432,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         """
         Creates a Bayesian optimization strategy that mixes additions and multiplions of multiple objectives.
@@ -556,6 +563,7 @@ class CustomSoboStrategy(SoboStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ):
         """
         The `CustomSoboStrategy` can be used to design custom objectives or objective combinations for optimizations.
