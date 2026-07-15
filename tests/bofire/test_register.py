@@ -3,6 +3,7 @@ from typing import Literal, Type
 from unittest.mock import MagicMock
 
 import pandas as pd
+import pytest
 
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
@@ -1114,3 +1115,85 @@ class TestRebuildCoverage:
                     ):
                         found.add((obj, field_name))
         return found
+
+
+# ---------------------------------------------------------------------------
+# Duplicate registration
+#
+# Re-running registration code re-defines the data model as a *new* class
+# object that keeps the same ``type`` discriminator. The identity-based guard
+# used to miss this and silently append a duplicate, which later produced a
+# cryptic ``Value '...' for discriminator 'type' mapped to multiple choices``
+# error when a dependent discriminated union was built.
+#
+# Detection lives in the shared ``register_into`` helper used by every
+# ``register_*`` function, so it is covered once here (via the strategy
+# registry as a representative end-to-end case, plus a direct unit check)
+# instead of being re-tested for every registerable.
+# ---------------------------------------------------------------------------
+
+
+def _make_strategy_dm():
+    """Build a fresh strategy data model class with a fixed ``type`` literal."""
+
+    class _DupStrategyDataModel(StrategyDataModel):
+        type: Literal["DupStrategy"] = "DupStrategy"
+
+        def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
+            return True
+
+        @classmethod
+        def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
+            return True
+
+    return _DupStrategyDataModel
+
+
+class TestDuplicateRegistration:
+    def _cleanup(self):
+        import bofire.data_models.strategies.actual_strategy_type as ast_mod
+        from bofire.strategies.mapper_actual import STRATEGY_MAP as ACTUAL_MAP
+
+        for cls in list(ast_mod._ACTUAL_STRATEGY_TYPES):
+            if getattr(cls, "__name__", "") == "_DupStrategyDataModel":
+                ast_mod._ACTUAL_STRATEGY_TYPES.remove(cls)
+        for cls in list(ACTUAL_MAP):
+            if getattr(cls, "__name__", "") == "_DupStrategyDataModel":
+                ACTUAL_MAP.pop(cls, None)
+
+    def test_same_class_is_noop(self):
+        import bofire.strategies.api as strategies_api
+
+        self._cleanup()
+        try:
+            DM = _make_strategy_dm()
+            strategies_api.register(DM, _CustomStrategy)
+            # Registering the identical class object again is a silent no-op.
+            strategies_api.register(DM, _CustomStrategy)
+            import bofire.data_models.strategies.actual_strategy_type as ast_mod
+
+            assert ast_mod._ACTUAL_STRATEGY_TYPES.count(DM) == 1
+        finally:
+            self._cleanup()
+
+    def test_conflicting_type_raises_clear_error(self):
+        import bofire.strategies.api as strategies_api
+
+        self._cleanup()
+        try:
+            strategies_api.register(_make_strategy_dm(), _CustomStrategy)
+            # A different class object with the same ``type`` must be rejected.
+            with pytest.raises(ValueError, match="already registered"):
+                strategies_api.register(_make_strategy_dm(), _CustomStrategy)
+        finally:
+            self._cleanup()
+
+    def test_class_without_fixed_type_is_rejected(self):
+        """A registerable must declare a fixed ``type`` discriminator."""
+        from bofire.data_models._register_utils import register_into
+
+        class _NoType:
+            pass
+
+        with pytest.raises(ValueError, match="fixed `type` discriminator"):
+            register_into([], _NoType, kind="strategy")

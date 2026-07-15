@@ -13,7 +13,22 @@ from tests.bofire.data_models.specs.api import strategies as strat_specs
 def remove_optional(anno):
     origin = get_origin(anno)
     if origin == typing.Union or origin is types.UnionType:
-        return sorted((a for a in anno.__args__ if a is not type(None)), key=hash)
+        result = []
+        for a in anno.__args__:
+            if a is type(None):
+                continue
+            # unwrap Annotated wrappers (e.g. discriminated `tagged_union`s) so
+            # that a data model field storing `Optional[Annotated[Union[...]]]`
+            # compares equal to a make parameter whose Annotated wrapper was
+            # stripped by `get_type_hints`.
+            while get_origin(a) is typing.Annotated:
+                a = a.__origin__
+            # a discriminated union may still be a nested Union after unwrapping
+            if get_origin(a) is typing.Union:
+                result.extend(x for x in a.__args__ if x is not type(None))
+            else:
+                result.append(a)
+        return sorted(result, key=hash)
     else:
         return [anno]
 

@@ -25,7 +25,7 @@ classifiers = [
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11.0, <3.15"
 dependencies = [
-    "numpy",
+    "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
     "pandas",
     "pydantic>=2.5",
     "scipy>=1.7",
@@ -35,8 +35,8 @@ dependencies = [
 
 [project.optional-dependencies]
 optimization = [
-    "botorch>=0.16.1",
-    "numpy",
+    "botorch[fully_bayesian]>=0.18.1",
+    "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
     "multiprocess",
     "plotly",
     "formulaic>=1.0.1,<1.1",
@@ -51,13 +51,13 @@ entmoot = [
     "pyomo<=6.9.4",
     "entmoot>=2.1.1",
 ] # we pin the pyomo version here due to compatibility issues
-llm = ["pydantic-ai>=0.1"]
+llm = ["pydantic-ai>=0.1,<2.0.0"]
 cheminfo = ["rdkit>=2023.3.2", "scikit-learn>=1.0.0", "mordredcommunity>=2.0.1"]
 tests = ["pytest", "pytest-cov", "papermill"]
 docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
 all = [
-    "botorch>=0.16.1",
-    "numpy",
+    "botorch[fully_bayesian]>=0.18.1",
+    "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
     "multiprocess",
     "plotly",
     "formulaic==1.0.1",
@@ -84,7 +84,7 @@ all = [
     "seaborn",
     "pymoo>=0.6.0",
     "shap>=0.48.0",
-    "pydantic-ai>=0.1",
+    "pydantic-ai>=0.1,<2.0.0",
 ]
 
 [tool.setuptools.packages]

@@ -3,7 +3,7 @@ from typing import List, Literal, Optional, Union
 from pydantic import PositiveInt, field_validator, model_validator
 
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
-from bofire.data_models.priors.api import AnyGeneralPrior, AnyPrior, AnyPriorConstraint
+from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 
 
 class ContinuousKernel(FeatureSpecificKernel):
@@ -33,12 +33,12 @@ class MaternKernel(ContinuousKernel):
 
 class LinearKernel(ContinuousKernel):
     type: Literal["LinearKernel"] = "LinearKernel"
-    variance_prior: Optional[AnyGeneralPrior] = None
+    variance_prior: Optional[AnyPrior] = None
 
 
 class PolynomialKernel(ContinuousKernel):
     type: Literal["PolynomialKernel"] = "PolynomialKernel"
-    offset_prior: Optional[AnyGeneralPrior] = None
+    offset_prior: Optional[AnyPrior] = None
     power: int = 2
 
 

@@ -28,6 +28,9 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousTaskInput
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import ExplicitReferencePoint
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient import (
     MultiFidelityHVKGStrategy as DataModel,
@@ -203,6 +206,7 @@ class MultiFidelityHVKGStrategy(MoboStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         return make_strategy(cls, DataModel, locals())
 

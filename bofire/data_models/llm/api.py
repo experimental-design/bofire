@@ -9,9 +9,11 @@ from bofire.data_models.llm.provider import (
 from bofire.data_models.unions import tagged_union
 
 
-AnyLLMProvider = tagged_union(
+_LLM_PROVIDER_TYPES: list[type[LLMProvider]] = [
     AnthropicLLMProvider,
     AnthropicFoundryLLMProvider,
     OpenAILLMProvider,
     OpenAICompatibleLLMProvider,
-)
+]
+
+AnyLLMProvider = tagged_union(*_LLM_PROVIDER_TYPES)

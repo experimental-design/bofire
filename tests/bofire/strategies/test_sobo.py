@@ -16,6 +16,7 @@ from botorch.acquisition import (
 )
 from botorch.acquisition.logei import qLogProbabilityOfFeasibility
 from botorch.acquisition.objective import GenericMCObjective, IdentityMCObjective
+from botorch.acquisition.thompson_sampling import PathwiseThompsonSampling
 
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
@@ -24,6 +25,7 @@ from bofire.benchmarks.multi import DTLZ2
 from bofire.benchmarks.single import Himmelblau, _CategoricalDiscreteHimmelblau
 from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
+    pTS,
     qEI,
     qLogEI,
     qLogNEI,
@@ -70,6 +72,7 @@ def test_SOBO_not_fitted():
         (qNEI(), qNoisyExpectedImprovement),
         (qPI(), qProbabilityOfImprovement),
         (qUCB(), qUpperConfidenceBound),
+        (pTS(), PathwiseThompsonSampling),
         (qSR(), qSimpleRegret),
         (qLogEI(), qLogExpectedImprovement),
         (qLogNEI(), qLogNoisyExpectedImprovement),

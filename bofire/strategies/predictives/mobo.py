@@ -14,14 +14,15 @@ from bofire.data_models.acquisition_functions.api import (
     AnyMultiObjectiveAcquisitionFunction,
     qEHVI,
     qLogEHVI,
-    qLogNEHVI,
-    qNEHVI,
 )
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import ExplicitReferencePoint
 from bofire.data_models.strategies.api import MoboStrategy as DataModel
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.strategies.predictives.botorch import BotorchStrategy
@@ -77,6 +78,8 @@ class MoboStrategy(BotorchStrategy):
 
         assert self.model is not None
 
+        params = self.acquisition_function.model_dump()
+
         acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,
             self.model,
@@ -89,11 +92,7 @@ class MoboStrategy(BotorchStrategy):
             mc_samples=self.acquisition_function.n_mc_samples,
             cache_root=None,
             alpha=self.acquisition_function.alpha,
-            prune_baseline=(
-                self.acquisition_function.prune_baseline
-                if isinstance(self.acquisition_function, (qLogNEHVI, qNEHVI))
-                else True
-            ),
+            prune_baseline=params.get("prune_baseline", True),
             Y=Y,
         )
         return [acqf]
@@ -148,6 +147,7 @@ class MoboStrategy(BotorchStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ):
         """
         Creates an instance of a multi-objective strategy based on expected hypervolume improvement.

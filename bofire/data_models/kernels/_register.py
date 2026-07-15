@@ -99,14 +99,18 @@ def register_kernel(data_model_cls: type) -> None:
 
     Args:
         data_model_cls: A concrete subclass of ``Kernel``.
+
+    Raises:
+        ValueError: If a different kernel with the same ``type`` discriminator
+            is already registered.
     """
     import bofire.data_models.kernels.api as kernels_api
+    from bofire.data_models._register_utils import register_into
     from bofire.data_models.kernels.categorical import CategoricalKernel
     from bofire.data_models.kernels.continuous import ContinuousKernel
 
-    if data_model_cls in kernels_api._KERNEL_TYPES:
+    if not register_into(kernels_api._KERNEL_TYPES, data_model_cls, kind="kernel"):
         return
-    kernels_api._KERNEL_TYPES.append(data_model_cls)
     kernels_api.AnyKernel = tagged_union(*kernels_api._KERNEL_TYPES)
 
     # Auto-detect sub-category from base class

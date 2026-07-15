@@ -12,6 +12,10 @@ from botorch.utils.constraints import (
 
 import bofire.priors.api as priors
 from bofire.data_models.priors.api import (
+    CHEN_LENGTHSCALE_PRIOR,
+    CHEN_OUTPUTSCALE_PRIOR,
+    DIMENSIONALITY_SCALED_THREESIX_LENGTHSCALE_PRIOR,
+    DimensionalityScaledGammaPrior,
     DimensionalityScaledLogNormalPrior,
     GammaPrior,
     GreaterThan,
@@ -94,3 +98,46 @@ def test_DimensionalityScaledLogNormalPrior_map(
     assert isinstance(prior, gpytorch.priors.LogNormalPrior)
     assert prior.loc == loc + math.log(d) * loc_scaling
     assert prior.scale == (scale**2 + math.log(d) * scale_scaling) ** 0.5
+
+
+@pytest.mark.parametrize(
+    "concentration, concentration_scaling, rate, rate_power, d",
+    [
+        (8.0, 0.8, 2.0, 0.0, 6),  # CHEN-style lengthscale
+        (3.0, 0.0, 10.0, -0.5, 9),  # threesix-style rate decay
+    ],
+)
+def test_DimensionalityScaledGammaPrior_map(
+    concentration,
+    concentration_scaling,
+    rate,
+    rate_power,
+    d,
+):
+    prior_data_model = DimensionalityScaledGammaPrior(
+        concentration=concentration,
+        concentration_scaling=concentration_scaling,
+        rate=rate,
+        rate_power=rate_power,
+    )
+    prior = priors.map(prior_data_model, d=d)
+    assert isinstance(prior, gpytorch.priors.GammaPrior)
+    assert prior.concentration == concentration + math.sqrt(d) * concentration_scaling
+    assert prior.rate == rate * d**rate_power
+
+
+@pytest.mark.parametrize("d", [1, 5, 20])
+def test_chen_and_threesix_constants_map(d):
+    # CHEN: lengthscale Gamma(2m, 2), outputscale Gamma(m, 1), m = 0.4*sqrt(d) + 4
+    m = 0.4 * math.sqrt(d) + 4
+    ls = priors.map(CHEN_LENGTHSCALE_PRIOR(), d=d)
+    assert ls.concentration == 2 * m
+    assert ls.rate == 2.0
+    os = priors.map(CHEN_OUTPUTSCALE_PRIOR(), d=d)
+    assert os.concentration == m
+    assert os.rate == 1.0
+
+    # dimensionality-scaled threesix: concentration 3, rate base ~10.16 scaled by d**-0.5
+    threesix = priors.map(DIMENSIONALITY_SCALED_THREESIX_LENGTHSCALE_PRIOR(), d=d)
+    assert threesix.concentration == 3.0
+    assert threesix.rate == 2.0 / math.exp(math.sqrt(2) - 3) * d**-0.5

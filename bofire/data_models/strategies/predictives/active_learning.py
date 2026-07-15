@@ -8,6 +8,7 @@ from bofire.data_models.acquisition_functions.api import (
 )
 from bofire.data_models.features.api import CategoricalOutput, Feature
 from bofire.data_models.objectives.api import Objective
+from bofire.data_models.strategies.convergence_criteria.api import ConvergenceCriterion
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
@@ -60,3 +61,21 @@ class ActiveLearningStrategy(BotorchStrategy):
 
         """
         return True
+
+    @classmethod
+    def is_criterion_implemented(cls, my_type: Type[ConvergenceCriterion]) -> bool:
+        """Method to check if a convergence criterion type is applicable for the strategy.
+
+        Active learning optimizes predictive uncertainty rather than an
+        objective, so objective-progress criteria (e.g. objective or hypervolume
+        improvement) do not apply. Only criteria that can be evaluated without
+        any objective (such as the proposal deviation criterion) are supported.
+
+        Args:
+            my_type: ConvergenceCriterion class
+
+        Returns:
+            bool: True if the convergence criterion type is valid for the strategy chosen, False otherwise
+
+        """
+        return my_type.is_applicable_to_objective_free()

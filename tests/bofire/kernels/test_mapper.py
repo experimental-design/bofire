@@ -37,7 +37,9 @@ from bofire.data_models.kernels.api import (
     WedgeKernel,
 )
 from bofire.data_models.priors.api import (
+    CHEN_OUTPUTSCALE_PRIOR,
     THREESIX_SCALE_PRIOR,
+    DimensionalityScaledGammaPrior,
     GammaPrior,
     LogTransformedInterval,
 )
@@ -106,6 +108,57 @@ def test_map_scale_kernel():
         features_to_idx_mapper=None,
     )
     assert hasattr(k, "outputscale_prior") is False
+
+
+def test_map_scale_kernel_dimensionality_scaled_outputscale():
+    # the outputscale prior is dimension-scaled, so the ScaleKernel mapper has to
+    # forward the dimensionality d (= number of active dims) to the prior mapping.
+    import math
+
+    d = 7
+    kernel = ScaleKernel(
+        base_kernel=RBFKernel(),
+        outputscale_prior=CHEN_OUTPUTSCALE_PRIOR(),
+    )
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        active_dims=list(range(d)),
+        features_to_idx_mapper=None,
+    )
+    assert isinstance(k.outputscale_prior, gpytorch.priors.GammaPrior)
+    m = 0.4 * math.sqrt(d) + 4
+    assert k.outputscale_prior.concentration == pytest.approx(m)
+    assert k.outputscale_prior.rate == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        LinearKernel(variance_prior=DimensionalityScaledGammaPrior()),
+        PolynomialKernel(offset_prior=DimensionalityScaledGammaPrior()),
+        PolynomialFeatureInteractionKernel(
+            kernels=[RBFKernel(), MaternKernel()],
+            max_degree=2,
+            include_self_interactions=False,
+            outputscale_prior=DimensionalityScaledGammaPrior(),
+        ),
+        IndexKernel(num_categories=3, rank=1, prior=DimensionalityScaledGammaPrior()),
+        PositiveIndexKernel(
+            num_categories=3, rank=1, task_prior=DimensionalityScaledGammaPrior()
+        ),
+    ],
+)
+def test_map_dimensionality_scaled_prior_on_kernel_prior_fields(kernel):
+    # every kernel prior field accepts a dimensionality-scaled prior; the mapper threads
+    # the dimensionality d to them, so mapping must not raise a missing-`d` error.
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        active_dims=list(range(5)),
+        features_to_idx_mapper=None,
+    )
+    assert k is not None
 
 
 def test_map_polynomial_kernel():

@@ -7,8 +7,12 @@ from typing_extensions import Self
 
 from bofire.data_models.api import Domain
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
+from bofire.data_models.unions import unwrap_annotated
 from bofire.strategies.strategy import make_strategy
 
 
@@ -30,10 +34,8 @@ from botorch.acquisition.objective import (
 
 from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
-    qLogNEI,
+    AnyUnconstrainedAcquisitionFunction,
     qLogPF,
-    qNEI,
-    qPI,
     qSR,
     qUCB,
 )
@@ -62,6 +64,9 @@ from bofire.utils.torch_tools import (
 )
 
 
+# TODO: tidy up the sobo strategies into one by modularizing the objective and constraint construction.
+
+
 class SoboStrategy(BotorchStrategy):
     def __init__(
         self,
@@ -84,6 +89,8 @@ class SoboStrategy(BotorchStrategy):
 
         assert self.model is not None
 
+        params = self.acquisition_function.model_dump()
+
         acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,
             self.model,
@@ -91,24 +98,12 @@ class SoboStrategy(BotorchStrategy):
             X_observed=X_train,
             X_pending=X_pending,
             constraints=constraint_callables,
-            mc_samples=self.acquisition_function.n_mc_samples,
-            beta=(
-                self.acquisition_function.beta
-                if isinstance(self.acquisition_function, qUCB)
-                else 0.2
-            ),
-            tau=(
-                self.acquisition_function.tau
-                if isinstance(self.acquisition_function, qPI)
-                else 1e-3
-            ),
+            mc_samples=params.get("n_mc_samples", 512),
+            beta=params.get("beta", 0.2),
+            tau=params.get("tau", 1e-3),
             eta=torch.tensor(etas).to(**tkwargs),
             cache_root=None,
-            prune_baseline=(
-                self.acquisition_function.prune_baseline
-                if isinstance(self.acquisition_function, (qNEI, qLogNEI))
-                else True
-            ),
+            prune_baseline=params.get("prune_baseline", True),
         )
         return [acqf]
 
@@ -151,9 +146,10 @@ class SoboStrategy(BotorchStrategy):
             constraint_callables, etas = None, 1e-3
 
         # special cases of qUCB and qSR do not work with separate constraints
-        if (isinstance(self.acquisition_function, (qSR, qUCB))) and (
-            constraint_callables is not None
-        ):
+        if isinstance(
+            self.acquisition_function,
+            unwrap_annotated(AnyUnconstrainedAcquisitionFunction)[0],
+        ) and (constraint_callables is not None):
             return (
                 ConstrainedMCObjective(
                     objective=objective_callable,
@@ -192,6 +188,7 @@ class SoboStrategy(BotorchStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         """
         Creates a single objective Bayesian optimization strategy.
@@ -249,8 +246,11 @@ class AdditiveSoboStrategy(SoboStrategy):
                 experiments=self.experiments,
             )
 
-            # special cases of qUCB and qSR do not work with separate constraints
-            if isinstance(self.acquisition_function, (qSR, qUCB)):
+            # special cases of qUCB and qSRdo not work with separate constraints
+            if isinstance(
+                self.acquisition_function,
+                unwrap_annotated(AnyUnconstrainedAcquisitionFunction)[0],
+            ):
                 return (
                     ConstrainedMCObjective(
                         objective=objective_callable,
@@ -297,6 +297,7 @@ class AdditiveSoboStrategy(SoboStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ):
         """
         Creates a Bayesian optimization strategy that adds multiple objectives.
@@ -362,6 +363,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         """
         Creates Bayesian optimization strategy that multiplies multiple objectives. The weights of
@@ -430,6 +432,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         """
         Creates a Bayesian optimization strategy that mixes additions and multiplions of multiple objectives.
@@ -560,6 +563,7 @@ class CustomSoboStrategy(SoboStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ):
         """
         The `CustomSoboStrategy` can be used to design custom objectives or objective combinations for optimizations.

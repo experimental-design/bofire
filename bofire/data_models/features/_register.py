@@ -12,18 +12,24 @@ def register_engineered_feature(data_model_cls: type) -> None:
 
     Args:
         data_model_cls: A concrete subclass of ``EngineeredFeature``.
+
+    Raises:
+        ValueError: If a different engineered feature with the same ``type``
+            discriminator is already registered.
     """
     import bofire.data_models.features.api as features_api
+    from bofire.data_models._register_utils import append_to_union_field, register_into
+    from bofire.data_models.domain.features import EngineeredFeatures
 
-    if data_model_cls in features_api._ENGINEERED_FEATURE_TYPES:
+    if not register_into(
+        features_api._ENGINEERED_FEATURE_TYPES,
+        data_model_cls,
+        kind="engineered feature",
+    ):
         return
-    features_api._ENGINEERED_FEATURE_TYPES.append(data_model_cls)
     features_api.AnyEngineeredFeature = tagged_union(
         *features_api._ENGINEERED_FEATURE_TYPES
     )
-
-    from bofire.data_models._register_utils import append_to_union_field
-    from bofire.data_models.domain.features import EngineeredFeatures
 
     append_to_union_field(EngineeredFeatures, "features", data_model_cls)
     EngineeredFeatures.model_rebuild(force=True)

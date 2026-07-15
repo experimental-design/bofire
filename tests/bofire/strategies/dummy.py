@@ -18,6 +18,7 @@ from bofire.data_models.objectives.api import (
     MinimizeObjective,
     Objective,
 )
+from bofire.data_models.strategies.convergence_criteria.api import ConvergenceCriterion
 from bofire.strategies.api import BotorchStrategy, PredictiveStrategy, Strategy
 
 
@@ -40,6 +41,13 @@ class DummyStrategyDataModel(data_models.BotorchStrategy):
             MaximizeObjective,
             MinimizeObjective,
         ]
+
+    @classmethod
+    def is_criterion_implemented(cls, my_type: Type[ConvergenceCriterion]) -> bool:
+        return (
+            my_type.is_applicable_to_singleobjective()
+            or my_type.is_applicable_to_multiobjective()
+        )
 
 
 class DummyStrategy(Strategy):
@@ -107,6 +115,13 @@ class DummyPredictiveStrategyDataModel(data_models.PredictiveStrategy):
             MaximizeObjective,
             MinimizeObjective,
         ]
+
+    @classmethod
+    def is_criterion_implemented(cls, my_type: Type[ConvergenceCriterion]) -> bool:
+        return (
+            my_type.is_applicable_to_singleobjective()
+            or my_type.is_applicable_to_multiobjective()
+        )
 
 
 class DummyPredictiveStrategy(PredictiveStrategy):

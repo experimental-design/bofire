@@ -22,7 +22,9 @@ def _rebuild_dependent_models() -> None:
     )
     from bofire.data_models.kernels.conditional import WedgeKernel
     from bofire.data_models.kernels.continuous import (
+        LinearKernel,
         MaternKernel,
+        PolynomialKernel,
         RBFKernel,
         SphericalLinearKernel,
     )
@@ -62,6 +64,10 @@ def _rebuild_dependent_models() -> None:
         (WedgeKernel, "lengthscale_prior"),
         (WedgeKernel, "angle_prior"),
         (WedgeKernel, "radius_prior"),
+        (ScaleKernel, "outputscale_prior"),
+        (LinearKernel, "variance_prior"),
+        (PolynomialKernel, "offset_prior"),
+        (PolynomialFeatureInteractionKernel, "outputscale_prior"),
         (WassersteinKernel, "lengthscale_prior"),
         (ExactWassersteinKernel, "lengthscale_prior"),
         (SingleTaskGPSurrogate, "noise_prior"),
@@ -101,6 +107,8 @@ def _rebuild_dependent_models() -> None:
     for cls in [
         RBFKernel,
         MaternKernel,
+        LinearKernel,
+        PolynomialKernel,
         SphericalLinearKernel,
         HammingDistanceKernel,
         IndexKernel,
@@ -148,12 +156,16 @@ def register_prior(data_model_cls: type) -> None:
 
     Args:
         data_model_cls: A concrete subclass of ``Prior``.
+
+    Raises:
+        ValueError: If a different prior with the same ``type`` discriminator
+            is already registered.
     """
     import bofire.data_models.priors.api as priors_api
+    from bofire.data_models._register_utils import register_into
 
-    if data_model_cls in priors_api._PRIOR_TYPES:
+    if not register_into(priors_api._PRIOR_TYPES, data_model_cls, kind="prior"):
         return
-    priors_api._PRIOR_TYPES.append(data_model_cls)
     priors_api.AnyPrior = tagged_union(*priors_api._PRIOR_TYPES)
     _rebuild_dependent_models()
 
@@ -167,11 +179,17 @@ def register_prior_constraint(data_model_cls: type) -> None:
 
     Args:
         data_model_cls: A concrete subclass of ``PriorConstraint`` or ``Interval``.
+
+    Raises:
+        ValueError: If a different prior constraint with the same ``type``
+            discriminator is already registered.
     """
     import bofire.data_models.priors.api as priors_api
+    from bofire.data_models._register_utils import register_into
 
-    if data_model_cls in priors_api._PRIOR_CONSTRAINT_TYPES:
+    if not register_into(
+        priors_api._PRIOR_CONSTRAINT_TYPES, data_model_cls, kind="prior constraint"
+    ):
         return
-    priors_api._PRIOR_CONSTRAINT_TYPES.append(data_model_cls)
     priors_api.AnyPriorConstraint = tagged_union(*priors_api._PRIOR_CONSTRAINT_TYPES)
     _rebuild_dependent_models()
