@@ -45,6 +45,47 @@ class FractionalFactorialStrategy(Strategy):
         else:
             self.n_blocks = 1
 
+    def get_required_number_of_experiments(self) -> int:
+        """Return the exact number of experiments produced by this strategy.
+        It will be the exact number of points for a full factorial design with the given parameters.
+
+        The design is the cartesian product of the continuous part and the
+        discrete/categorical part
+        - Continuous inputs form a two-level full factorial (``2**n_continuous``)
+          repeated ``n_repetitions`` times plus ``n_center`` center points.
+        - Every discrete/categorical combination repeats that continuous design.
+        If there are no continuous inputs, only the discrete/categorical grid is
+        returned (no center points are added).
+        """
+
+
+        continuous_inputs = self.domain.inputs.get(ContinuousInput)
+
+        categorical_keys = [
+            key
+            for key in self.domain.inputs.get_keys([CategoricalInput, DiscreteInput])
+            if key != self.block_feature_key
+        ]
+        categorical_inputs = self.domain.inputs.get_by_keys(categorical_keys)
+        n_categorical_combinations = (
+            categorical_inputs.get_number_of_categorical_combinations(
+                include_semicontinuous=False,
+            )
+        )
+
+        if len(continuous_inputs) == 0:
+            return n_categorical_combinations
+
+        gen = self.generator or get_generator(
+            n_factors=len(continuous_inputs),
+            n_generators=self.n_generators,
+        )
+        n_corners = len(fracfact(gen=gen))
+        n_continuous_points = n_corners * self.n_repetitions + (
+            self.n_center * self.n_blocks
+        )
+        return n_continuous_points * n_categorical_combinations
+
     def _get_continuous_design(self) -> pd.DataFrame:
         # that is used to store the block information before it is converted to the block_feature_key
         continuous_inputs = self.domain.inputs.get(ContinuousInput)
