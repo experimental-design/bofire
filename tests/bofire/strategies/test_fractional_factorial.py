@@ -330,6 +330,38 @@ def test_FractionalFactorialStrategy_get_required_number_of_experiments():
             ),
             n_center=1,
         ),
+        # Fractional examples: setup by specifying the number of generators
+        FractionalFactorialStrategy(
+            domain=Domain(
+                inputs=Inputs(
+                    features=[
+                        ContinuousInput(key="a", bounds=(0, 1)),
+                        ContinuousInput(key="b", bounds=(0, 1)),
+                        ContinuousInput(key="c", bounds=(0, 1)),
+                        ContinuousInput(key="d", bounds=(0, 1)),
+                    ],
+                ),
+            ),
+            n_repetitions=2,
+            n_center=1,
+            n_generators=1,
+        ),
+        FractionalFactorialStrategy(
+            domain=Domain(
+                inputs=Inputs(
+                    features=[
+                        ContinuousInput(key="a", bounds=(0, 1)),
+                        ContinuousInput(key="b", bounds=(0, 1)),
+                        ContinuousInput(key="c", bounds=(0, 1)),
+                        ContinuousInput(key="d", bounds=(0, 1)),
+                        CategoricalInput(key="alpha", categories=["a", "b"]),
+                    ],
+                ),
+            ),
+            n_repetitions=1,
+            n_center=1,
+            n_generators=1,
+        ),
         FractionalFactorialStrategy(
             domain=Domain(
                 inputs=Inputs(
