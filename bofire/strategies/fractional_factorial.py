@@ -58,7 +58,6 @@ class FractionalFactorialStrategy(Strategy):
         returned (no center points are added).
         """
 
-
         continuous_inputs = self.domain.inputs.get(ContinuousInput)
 
         categorical_keys = [
