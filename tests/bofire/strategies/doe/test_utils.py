@@ -3,7 +3,7 @@ import sys
 
 import numpy as np
 import pytest
-from scipy.optimize import LinearConstraint, NonlinearConstraint
+from scipy import sparse
 
 from bofire.data_models.constraints.api import (
     InterpointEqualityConstraint,
@@ -35,6 +35,7 @@ from bofire.strategies.doe.utils import (
 
 
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
+POUNCE_AVAILABLE = importlib.util.find_spec("pounce") is not None
 
 
 def get_formula_from_string_recursion_limit():
@@ -280,27 +281,30 @@ def test_constraints_as_scipy_constraints():
 
     n_experiments = 2
 
+    # Now returns old-style dict constraints with a sparse (coo) jac.
+    # scipy convention: "eq" → g(x)==0, "ineq" → g(x)>=0.
     constraints = constraints_as_scipy_constraints(domain, n_experiments)
-
+    n = len(domain.inputs) * n_experiments
+    assert [c["type"] for c in constraints] == ["eq", "ineq", "ineq"]
     for c in constraints:
-        assert isinstance(c, LinearConstraint)
-        assert c.A.shape == (n_experiments, len(domain.inputs) * n_experiments)
-        assert len(c.lb) == n_experiments
-        assert len(c.ub) == n_experiments
+        J = c["jac"](np.zeros(n))
+        assert sparse.issparse(J)
+        assert J.shape == (n_experiments, n)
 
-    A = np.array([[1, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 1]]) / np.sqrt(3)
-    lb = np.array([1, 1]) / np.sqrt(3)
-    ub = np.array([1, 1]) / np.sqrt(3)
-    assert np.allclose(constraints[0].A, A)
-    assert np.allclose(constraints[0].lb, lb)
-    assert np.allclose(constraints[0].ub, ub)
+    # mixture equality (normalized): jac == block-diagonal A, fun(0) == -rhs/norm
+    A_eq = np.array([[1, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 1]]) / np.sqrt(3)
+    assert np.allclose(constraints[0]["jac"](np.zeros(n)).toarray(), A_eq)
+    assert np.allclose(constraints[0]["fun"](np.zeros(n)), -np.ones(2) / np.sqrt(3))
 
-    lb = -np.inf * np.ones(n_experiments)
-    ub = 3.9 / np.linalg.norm([5, 4]) * np.ones(n_experiments)
-    assert np.allclose(constraints[1].lb, lb)
-    assert np.allclose(constraints[1].ub, ub)
+    # first inequality (A x <= ub): jac == -A, fun(0) == ub == 3.9/||[5,4]||
+    ub1 = 3.9 / np.linalg.norm([5, 4])
+    r1 = np.array([5, 4, 0]) / np.linalg.norm([5, 4])
+    A1 = np.zeros((2, 6))
+    A1[0, :3], A1[1, 3:] = r1, r1
+    assert np.allclose(constraints[1]["jac"](np.zeros(n)).toarray(), -A1)
+    assert np.allclose(constraints[1]["fun"](np.zeros(n)), ub1 * np.ones(2))
 
-    # domain with nonlinear constraints
+    # domain with nonlinear constraints (g = x1**2 + x2**2 - 1)
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(3)],
         outputs=[ContinuousOutput(key="y")],
@@ -317,12 +321,12 @@ def test_constraints_as_scipy_constraints():
     )
 
     constraints = constraints_as_scipy_constraints(domain, n_experiments)
-
-    for c in constraints:
-        assert isinstance(c, NonlinearConstraint)
-        assert len(c.lb) == n_experiments
-        assert len(c.ub) == n_experiments
-        assert np.allclose(c.fun(np.array([1, 1, 1, 1, 1, 1])), [1, 1])
+    # equality: fun = g(x); inequality (g<=0): fun = -g(x). At x=1, g=[1,1].
+    assert constraints[0]["type"] == "eq"
+    assert np.allclose(constraints[0]["fun"](np.ones(6)), [1, 1])
+    assert sparse.issparse(constraints[0]["jac"](np.ones(6)))
+    assert constraints[1]["type"] == "ineq"
+    assert np.allclose(constraints[1]["fun"](np.ones(6)), [-1, -1])
 
     # TODO NChooseKConstraint requires input lower_bounds to be 0.
     # can we lift this requirement?
@@ -355,14 +359,15 @@ def test_constraints_as_scipy_constraints():
         n_experiments,
         ignore_nchoosek=False,
     )
+    # NChooseK is an upper-sided inequality (g<=0) → "ineq", fun = -g(x).
     assert len(constraints) == 1
-    assert isinstance(constraints[0], NonlinearConstraint)
+    assert constraints[0]["type"] == "ineq"
     assert np.allclose(
-        constraints[0].fun(np.array([1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0])),
-        [2, 0, 0],
+        constraints[0]["fun"](np.array([1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0])),
+        [-2, 0, 0],
     )
 
-    # domain with batch constraint
+    # domain with batch (interpoint) constraint
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(3)],
         outputs=[ContinuousOutput(key="y")],
@@ -374,7 +379,7 @@ def test_constraints_as_scipy_constraints():
 
     constraints = constraints_as_scipy_constraints(domain, n_experiments)
     assert len(constraints) == 1
-    assert isinstance(constraints[0], LinearConstraint)
+    assert constraints[0]["type"] == "eq"
     A = np.array(
         [
             [1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -383,9 +388,8 @@ def test_constraints_as_scipy_constraints():
         ],
         dtype=float,
     )
-    assert np.allclose(constraints[0].A, A)
-    assert np.allclose(constraints[0].lb, np.zeros(3))
-    assert np.allclose(constraints[0].ub, np.zeros(3))
+    assert np.allclose(constraints[0]["jac"](np.zeros(15)).toarray(), A)
+    assert np.allclose(constraints[0]["fun"](np.zeros(15)), np.zeros(3))
 
 
 def test_ConstraintWrapper():
@@ -496,10 +500,6 @@ def test_ConstraintWrapper():
         ),
     )
     assert np.allclose(
-        c.jacobian(x, sparse=True), np.array([2, 0, 0, 2, 1, 0, 0, 1, 6, 0, 0, 0])
-    )
-
-    assert np.allclose(
         c.hessian(x),
         [
             [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -518,10 +518,7 @@ def test_ConstraintWrapper():
     )
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="cyipopt required")
-def test_minimize():
-    # Run _minimize() with and without ipopt
-    n_experiments = 4
+def _mixture_doe_setup(n_experiments=4):
     criterion = DOptimalityCriterion(formula="linear")
     domain = Domain.from_lists(
         inputs=[
@@ -532,62 +529,107 @@ def test_minimize():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=["x1", "x2", "x3"],
-                coefficients=[1, 1, 1],
-                rhs=1,
+                features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=1
             ),
         ],
     )
-
     objective_function = get_objective_function(
         criterion, domain=domain, n_experiments=n_experiments
     )
-
     x0 = (
-        domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM)
+        domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM, seed=1)
         .to_numpy()
         .flatten()
     )
     constraints = constraints_as_scipy_constraints(
-        domain,
-        n_experiments,
-        ignore_nchoosek=True,
+        domain, n_experiments, ignore_nchoosek=True
     )
     bounds = nchoosek_constraints_as_bounds(domain, n_experiments)
+    return objective_function, x0, bounds, constraints, n_experiments
 
-    result_ipopt = _minimize(
-        objective_function=objective_function,
-        x0=x0,
-        bounds=bounds,
-        constraints=constraints,
-        ipopt_options={"max_iter": 500, "print_level": 0},
-        use_hessian=False,
-        use_cyipopt=True,
+
+@pytest.mark.parametrize("optimizer", ["ipopt", "pounce", "scipy"])
+def test_minimize(optimizer):
+    """Each backend reaches a feasible design of the same (D-optimal) quality."""
+    if optimizer == "ipopt" and not CYIPOPT_AVAILABLE:
+        pytest.skip("cyipopt required")
+    if optimizer == "pounce" and not POUNCE_AVAILABLE:
+        pytest.skip("pounce required")
+    obj, x0, bounds, constraints, n = _mixture_doe_setup()
+
+    ref = _minimize(
+        obj,
+        x0,
+        bounds,
+        constraints,
+        optimizer="scipy",
+        optimizer_options={"max_iter": 500},
+    ).reshape(n, 3)
+    res = _minimize(
+        obj,
+        x0,
+        bounds,
+        constraints,
+        optimizer=optimizer,
+        optimizer_options={"max_iter": 500, "print_level": 0},
+    ).reshape(n, 3)
+
+    # feasible (mixture sum = 1 per experiment) and same optimum value as scipy
+    assert np.allclose(res.sum(axis=1), 1.0, atol=1e-6)
+    assert abs(obj.evaluate(res.flatten()) - obj.evaluate(ref.flatten())) < 1e-3
+
+
+def test_minimize_box_only_uses_lbfgsb():
+    """A box-only DoE (no general constraints) solves regardless of `optimizer`
+    (routes to scipy L-BFGS-B) and stays within bounds."""
+    n_experiments = 4
+    criterion = DOptimalityCriterion(formula="linear")
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in (1, 2, 3)],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[],  # only box bounds
     )
-
-    result_scipy = _minimize(
-        objective_function=objective_function,
-        x0=x0,
-        bounds=bounds,
-        constraints=constraints,
-        ipopt_options={"max_iter": 500},
-        use_hessian=False,
-        use_cyipopt=False,
+    obj = get_objective_function(criterion, domain=domain, n_experiments=n_experiments)
+    x0 = (
+        domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM, seed=1)
+        .to_numpy()
+        .flatten()
     )
+    constraints = constraints_as_scipy_constraints(
+        domain, n_experiments, ignore_nchoosek=True
+    )
+    assert constraints == []  # box-only → no general constraints
+    bounds = nchoosek_constraints_as_bounds(domain, n_experiments)
 
-    for i in range(n_experiments):
-        assert np.any(
-            [
-                np.allclose(result_ipopt[j], result_scipy[i])
-                for j in range(n_experiments)
-            ]
+    # optimizer="pounce" but box-only → L-BFGS-B (no IPM/cyipopt/pounce needed)
+    res = _minimize(
+        obj, x0, bounds, constraints, optimizer="pounce", optimizer_options={}
+    ).reshape(n_experiments, 3)
+    assert (res >= -1e-6).all() and (res <= 1 + 1e-6).all()
+
+
+def test_doestrategy_datamodel_legacy_kwargs_deprecated():
+    """The public deprecation surface is the DoEStrategy data model: legacy
+    `use_cyipopt`/`ipopt_options`/`use_hessian` are mapped to `optimizer`/
+    `optimizer_options` with a DeprecationWarning."""
+    from bofire.data_models.strategies.api import DoEStrategy as _DoEStrategyDM
+    from bofire.data_models.strategies.api import DOptimalityCriterion as _DOptDM
+
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in (1, 2, 3)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    with pytest.warns(DeprecationWarning):
+        dm = _DoEStrategyDM(
+            domain=domain,
+            criterion=_DOptDM(formula="linear"),
+            use_cyipopt=False,
+            ipopt_options={"max_iter": 200},
+            use_hessian=True,
         )
-        assert np.any(
-            [
-                np.allclose(result_scipy[j], result_ipopt[i])
-                for j in range(n_experiments)
-            ]
-        )
+    assert dm.optimizer == "scipy"
+    assert dm.optimizer_options == {"max_iter": 200}
+    assert not hasattr(dm, "use_cyipopt")
 
 
 def test_nchoosek_constraints_as_bounds():

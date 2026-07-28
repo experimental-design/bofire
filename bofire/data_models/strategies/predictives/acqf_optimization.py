@@ -110,6 +110,24 @@ class BotorchOptimizer(AcquisitionOptimizer):
     # for a discussion on the use of sequential, have a look here
     # https://github.com/pytorch/botorch/discussions/2810
 
+    use_ipopt: bool = False
+    optimizer_options: dict = Field(default_factory=dict)
+
+    # ipopt is only applied to systems with constraints
+
+    retry_on_optimization_warning: bool = Field(
+        default=True,
+        description=(
+            "Forwarded to botorch's ``optimize_acqf`` / ``optimize_acqf_mixed``. "
+            "BoTorch retries the whole acqf optimization with fresh initial "
+            "conditions whenever a solver reports a non-success status. Defaults "
+            "to True (BoTorch's own default). Set False with ``use_ipopt=True``: "
+            "interior-point solvers often report ``success=False`` at a perfectly "
+            "feasible optimum (they reach it fast but don't formally satisfy the "
+            "KKT tolerance within max_iter), which triggers a wasted retry."
+        ),
+    )
+
     # local search region params
     local_search_config: Optional[AnyLocalSearchConfig] = None
 

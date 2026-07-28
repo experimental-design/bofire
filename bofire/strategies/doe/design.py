@@ -24,12 +24,11 @@ from bofire.strategies.random import RandomStrategy
 def find_local_max_ipopt(
     domain: Domain,
     objective_function: Objective,
-    ipopt_options: Optional[Dict] = None,
+    optimizer_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
-    use_hessian: bool = False,
-    use_cyipopt: Optional[bool] = None,
+    optimizer: str = "ipopt",
     seed: Optional[int] = None,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
@@ -37,7 +36,8 @@ def find_local_max_ipopt(
     Args:
         domain: domain containing the inputs and constraints.
         objective_function: The function defining the objective of the optimizattion.
-        ipopt_options: options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+        optimizer_options: options forwarded to the chosen optimizer (Ipopt-style
+            options such as ``max_iter``/``print_level`` for ipopt/pounce).
         sampling : dataframe containing the initial guess.
         fixed_experiments : dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
@@ -45,9 +45,9 @@ def find_local_max_ipopt(
             Values are set before the optimization. Within one experiment not all variables need to be fixed.
             Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
             Non-fixed variables have to be set to None or nan.
-        use_hessian: If True, the hessian of the objective function is used. Default is False.
-        use_cyipopt: If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
-            If None, cyipopt is used if available.
+        optimizer: which NLP solver to use — ``"ipopt"`` | ``"pounce"`` | ``"scipy"``.
+            Defaults to ``"ipopt"`` (falling back to scipy if cyipopt is absent).
+            Problems with only box bounds always use scipy L-BFGS-B.
         seed: Random seed for sampling. Defaults to None, in this case no seed is given to the
 
     Returns:
@@ -153,14 +153,10 @@ def find_local_max_ipopt(
         x0,
     )
 
-    # set ipopt options
-    if ipopt_options is None:
-        ipopt_options = {}
-    _ipopt_options = {"max_iter": 500, "print_level": 0}
-    for key in ipopt_options.keys():
-        _ipopt_options[key] = ipopt_options[key]
-    if _ipopt_options["print_level"] > 12:
-        _ipopt_options["print_level"] = 0
+    # set optimizer options (Ipopt-style defaults; mapped to scipy names internally)
+    _options = {"max_iter": 500, "print_level": 0, **(optimizer_options or {})}
+    if _options.get("print_level", 0) > 12:
+        _options["print_level"] = 0
 
     #
     # Do the optimization
@@ -170,9 +166,8 @@ def find_local_max_ipopt(
         x0=x0,
         bounds=bounds,
         constraints=constraints,
-        use_hessian=use_hessian,
-        ipopt_options=_ipopt_options,
-        use_cyipopt=use_cyipopt,
+        optimizer=optimizer,
+        optimizer_options=_options,
     )
 
     design = pd.DataFrame(

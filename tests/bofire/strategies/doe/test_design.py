@@ -191,7 +191,7 @@ def test_find_local_max_ipopt_mixed_results():
             domain=domain,
             n_experiments=N,
         ),
-        ipopt_options={"max_iter": 100},
+        optimizer_options={"max_iter": 100},
     )
     opt = np.eye(3)
     for row in A.to_numpy():
@@ -268,7 +268,7 @@ def test_find_local_max_ipopt_batch_constraint():
             domain=domain,
             n_experiments=30,
         ),
-        ipopt_options={"max_iter": 100},
+        optimizer_options={"max_iter": 100},
     )
 
     x1 = np.round(np.array(result["x1"].values), 6)
@@ -377,7 +377,7 @@ def test_find_local_max_ipopt_fixed_experiments():
             domain=domain,
             n_experiments=num_exp,
         ),
-        ipopt_options={"max_iter": 100},
+        optimizer_options={"max_iter": 100},
         fixed_experiments=pd.DataFrame(
             [[1, 0, 0], [0, 1, 0]],
             columns=["x1", "x2", "x3"],
@@ -541,7 +541,7 @@ def test_find_local_max_ipopt_nonlinear_constraint():
             domain=domain,
             n_experiments=num_exp,
         ),
-        ipopt_options={"max_iter": 100},
+        optimizer_options={"max_iter": 100},
     )
 
     assert np.allclose(domain.constraints(result), 0, atol=1e-6)

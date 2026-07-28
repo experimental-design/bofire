@@ -136,7 +136,7 @@ class IOptimality(ModelBasedObjective):
         delta: float = 1e-7,
         transform_range: Optional[Bounds] = None,
         n_space_filling_points: Optional[int] = None,
-        ipopt_options: Optional[dict] = None,
+        optimizer_options: Optional[dict] = None,
     ) -> None:
         """
         Args:
@@ -146,8 +146,8 @@ class IOptimality(ModelBasedObjective):
             delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
             transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
             n_space_filling_points (int, optional): Number of space filling points. Only relevant if SpaceFilling is used
-            ipopt_options (dict, optional): Options for the Ipopt solver to generate space filling point.
-                If None is provided, the default options (max_iter = 500) are used.
+            optimizer_options (dict, optional): Options for the solver used to generate the space-filling points.
+                If None is provided, the default options are used.
         """
 
         if transform_range is not None:
@@ -195,8 +195,8 @@ class IOptimality(ModelBasedObjective):
                 x0=x0,
                 bounds=bounds,
                 constraints=constraints,
-                ipopt_options={"print_level": 0},
-                use_hessian=False,
+                optimizer="ipopt",
+                optimizer_options={"print_level": 0, **(optimizer_options or {})},
             )
 
             self.Y = pd.DataFrame(
@@ -422,7 +422,7 @@ def get_objective_function(
                 delta=criterion.delta,
                 transform_range=criterion.transform_range,
                 n_space_filling_points=criterion.n_space_filling_points,
-                ipopt_options=criterion.ipopt_options,
+                optimizer_options=criterion.optimizer_options,
             )
     if isinstance(criterion, SpaceFillingCriterion):
         return SpaceFilling(

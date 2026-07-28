@@ -1,12 +1,16 @@
 import unittest
 from typing import cast
 
+import numpy as np
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.utils.testing import MockAcquisitionFunction
 
+import bofire.strategies.predictives.acqf_optimization as acqf_mod
 from bofire.benchmarks.api import Hartmann
+from bofire.data_models.acquisition_functions.api import qLogEI
 from bofire.data_models.constraints.api import (
+    LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
@@ -17,9 +21,12 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.strategies.api import SoboStrategy as SoboStrategyDataModel
 from bofire.data_models.strategies.predictives.acqf_optimization import (
     BotorchOptimizer as BotorchOptimizerModel,
 )
+from bofire.strategies.api import RandomStrategy, SoboStrategy
 from bofire.strategies.predictives.acqf_optimization import (
     BotorchOptimizer,
     OptimizerEnum,
@@ -301,4 +308,117 @@ def test_base_get_categorical_combinations():
             {1: 0.5, 6: 1, 7: 1},
             {1: 0.5, 6: 1, 7: 2},
         ],
+    )
+
+
+# -- BoTorch → pounce dispatch coverage (`use_ipopt=True` route) -------------
+
+
+def _mixture_domain() -> Domain:
+    """3-component continuous mixture in [0, 1] with x1+x2+x3 = 1."""
+    return Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0.0, 1.0)),
+            ContinuousInput(key="x2", bounds=(0.0, 1.0)),
+            ContinuousInput(key="x3", bounds=(0.0, 1.0)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearEqualityConstraint(
+                features=["x1", "x2", "x3"],
+                coefficients=[1.0, 1.0, 1.0],
+                rhs=1.0,
+            )
+        ],
+    )
+
+
+def _seed_sobo_with_random(domain: Domain, optimizer_dm: BotorchOptimizerModel):
+    """Build a fitted SoboStrategy seeded with a handful of random experiments."""
+    strategy = SoboStrategy(
+        data_model=SoboStrategyDataModel(
+            domain=domain,
+            acquisition_function=qLogEI(),
+            acquisition_optimizer=optimizer_dm,
+        )
+    )
+    rs = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
+    seed = rs.ask(5)
+    seed["y"] = np.random.default_rng(0).normal(size=len(seed))
+    strategy.tell(seed)
+    return strategy
+
+
+def test_optimizer_options_merged_into_botorch_options():
+    """`optimizer_options` from the data model must reach the options dict."""
+    domain = _mixture_domain()
+    optimizer_dm = BotorchOptimizerModel(
+        use_ipopt=True,
+        optimizer_options={"tol": 1e-12, "max_iter": 500, "print_level": 0},
+    )
+    optimizer = BotorchOptimizer(optimizer_dm)
+    options = optimizer._get_optimizer_options(domain)
+    assert options["tol"] == 1e-12
+    assert options["max_iter"] == 500
+    assert options["print_level"] == 0
+    # The pounce method assignment is still present.
+    assert options["method"] is acqf_mod.minimize_pounce
+    # User overrides should beat BoFire defaults — verify with a known key.
+    optimizer_dm2 = BotorchOptimizerModel(
+        use_ipopt=True, optimizer_options={"maxiter": 1}
+    )
+    options2 = BotorchOptimizer(optimizer_dm2)._get_optimizer_options(domain)
+    assert options2["maxiter"] == 1
+
+
+def test_use_ipopt_actually_calls_pounce(monkeypatch):
+    """End-to-end: ask(1) with use_ipopt=True must invoke pounce.minimize."""
+    domain = _mixture_domain()
+
+    call_count = {"n": 0}
+    real_pounce = acqf_mod.minimize_pounce
+
+    def tracking_pounce(*args, **kwargs):
+        call_count["n"] += 1
+        return real_pounce(*args, **kwargs)
+
+    monkeypatch.setattr(acqf_mod, "minimize_pounce", tracking_pounce)
+
+    optimizer_dm = BotorchOptimizerModel(
+        use_ipopt=True, n_restarts=2, n_raw_samples=16, maxiter=50
+    )
+    strategy = _seed_sobo_with_random(domain, optimizer_dm)
+    candidates = strategy.ask(1)
+
+    # The route fired at least once during the acqf optimization.
+    assert call_count["n"] > 0, (
+        "pounce.minimize was never invoked despite use_ipopt=True; "
+        "the route is broken"
+    )
+    # And the candidate is mixture-feasible to ipopt-level tolerance.
+    mixture_sum = float(candidates[["x1", "x2", "x3"]].iloc[0].sum())
+    assert abs(mixture_sum - 1.0) < 1e-6
+
+
+def test_use_ipopt_false_does_not_call_pounce(monkeypatch):
+    """Negative control: with use_ipopt=False the route is gated off."""
+    domain = _mixture_domain()
+
+    call_count = {"n": 0}
+    real_pounce = acqf_mod.minimize_pounce
+
+    def tracking_pounce(*args, **kwargs):
+        call_count["n"] += 1
+        return real_pounce(*args, **kwargs)
+
+    monkeypatch.setattr(acqf_mod, "minimize_pounce", tracking_pounce)
+
+    optimizer_dm = BotorchOptimizerModel(
+        use_ipopt=False, n_restarts=2, n_raw_samples=16, maxiter=50
+    )
+    strategy = _seed_sobo_with_random(domain, optimizer_dm)
+    strategy.ask(1)
+
+    assert call_count["n"] == 0, (
+        "pounce.minimize was invoked despite use_ipopt=False; " "the gate has regressed"
     )

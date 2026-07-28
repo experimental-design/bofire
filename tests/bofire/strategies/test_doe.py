@@ -486,13 +486,13 @@ def test_functional_constraint():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        ipopt_options={
+        optimizer_options={
             "max_iter": 5000,
             "derivative_test": "first-order",
             "print_level": 5,
         },
         sampling=sampling,
-        use_cyipopt=True,
+        optimizer="ipopt",
     )
     strategy = DoEStrategy(data_model=data_model)
 
