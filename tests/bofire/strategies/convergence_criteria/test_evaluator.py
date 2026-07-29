@@ -8,17 +8,17 @@ from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.api import SoboStrategy as SoboStrategyDataModel
 from bofire.strategies.api import RandomStrategy, SoboStrategy
-from bofire.strategies.stepwise.termination.exp_min_regret_gap import (
+from bofire.strategies.convergence_criteria.exp_min_regret_gap import (
     ExpMinRegretGapEvaluator,
 )
-from bofire.strategies.stepwise.termination.log_eipc import LogEIPCEvaluator
-from bofire.strategies.stepwise.termination.probabilistic_regret_bound import (
+from bofire.strategies.convergence_criteria.log_eipc import LogEIPCEvaluator
+from bofire.strategies.convergence_criteria.probabilistic_regret_bound import (
     ProbabilisticRegretBoundEvaluator,
     _minimize_sample_paths,
     _run_prb_level_test,
 )
-from bofire.strategies.stepwise.termination.ucb_lcb import UCBLCBRegretEvaluator
-from bofire.strategies.stepwise.termination.utils import clopper_pearson_ci
+from bofire.strategies.convergence_criteria.ucb_lcb import UCBLCBRegretEvaluator
+from bofire.strategies.convergence_criteria.utils import clopper_pearson_ci
 
 
 @pytest.fixture

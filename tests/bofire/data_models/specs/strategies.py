@@ -39,9 +39,13 @@ from bofire.data_models.strategies.api import (
     RelativeToMaxMovingReferenceValue,
 )
 from bofire.data_models.strategies.convergence_criteria.api import (
+    ExpMinRegretGapCriterion,
     HypervolumeImprovementCriterion,
+    LogEIPCCriterion,
     ObjectiveImprovementCriterion,
+    ProbabilisticRegretBoundCriterion,
     ProposalDeviationCriterion,
+    UCBLCBRegretBoundCriterion,
 )
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
@@ -177,6 +181,36 @@ specs.add_valid(
         ).model_dump(),
     },
 )
+# One spec per GP-based convergence criterion, so each criterion is covered by
+# the serialization roundtrip tests.
+for _gp_criterion in [
+    UCBLCBRegretBoundCriterion(noise_variance=0.1, threshold_factor=2.0),
+    UCBLCBRegretBoundCriterion(
+        noise_variance="cv",
+        cv_fold_columns=["f0", "f1", "f2", "f3", "f4"],
+        threshold_factor=0.5,
+        lcb_method="optimize",
+        batch_size=256,
+    ),
+    ExpMinRegretGapCriterion(threshold_mode="adaptive", delta=0.1),
+    ExpMinRegretGapCriterion(
+        threshold_mode="median", rate=0.05, start_timing=15, noise_var_override=1e-6
+    ),
+    LogEIPCCriterion(lambda_cost=0.5, cost_column="cost", alpha=0.5),
+    ProbabilisticRegretBoundCriterion(epsilon=1.0, delta_mod=0.025, delta_est=0.025),
+]:
+    specs.add_valid(
+        strategies.SoboStrategy,
+        lambda criterion=_gp_criterion: {
+            "domain": Domain(
+                inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+                outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+            ).model_dump(),
+            **strategy_commons,
+            "acquisition_function": qPI(tau=0.1).model_dump(),
+            "convergence_criterion": criterion.model_dump(),
+        },
+    )
 specs.add_valid(
     strategies.SoboStrategy,
     lambda: {
