@@ -12,21 +12,24 @@ from botorch.models.model import Model
 from bofire.utils.torch_tools import tkwargs
 
 
-def has_fitted_model_and_data(strategy, min_experiments: int) -> bool:
+def get_ready_experiments(strategy, min_experiments: int) -> Optional[pd.DataFrame]:
     """Shared guard for the GP-based convergence criterion evaluators.
 
-    Returns True when the strategy has recorded at least ``min_experiments``
-    experiments and carries a fitted model — the preconditions every
-    model-based evaluator needs before it can compute anything. While these
-    do not hold, a strategy is simply not (yet) considered converged.
+    Returns the strategy's recorded experiments when there are at least
+    ``min_experiments`` of them and the strategy carries a fitted model — the
+    preconditions every model-based evaluator needs before it can compute
+    anything — and ``None`` otherwise. While the preconditions do not hold, a
+    strategy is simply not (yet) considered converged.
     """
     experiments = strategy.experiments
     if experiments is None or len(experiments) < min_experiments:
-        return False
-    return bool(
-        getattr(strategy, "is_fitted", False)
-        and getattr(strategy, "model", None) is not None
-    )
+        return None
+    if (
+        not getattr(strategy, "is_fitted", False)
+        or getattr(strategy, "model", None) is None
+    ):
+        return None
+    return experiments
 
 
 class ConvergenceEvaluator(ABC):

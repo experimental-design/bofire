@@ -18,7 +18,7 @@ from bofire.data_models.strategies.convergence_criteria.api import (
 )
 from bofire.strategies.convergence_criteria.evaluator import (
     RegretBoundEvaluator,
-    has_fitted_model_and_data,
+    get_ready_experiments,
 )
 from bofire.strategies.convergence_criteria.utils import (
     compute_threshold_cv,
@@ -233,9 +233,9 @@ def evaluate_ucb_lcb_regret_bound_criterion(
         False otherwise (including when there are not yet enough experiments,
         the strategy is not fitted, or the threshold cannot be computed).
     """
-    if not has_fitted_model_and_data(strategy, criterion.min_experiments):
+    experiments = get_ready_experiments(strategy, criterion.min_experiments)
+    if experiments is None:
         return False
-    experiments = strategy.experiments
 
     evaluator = UCBLCBRegretEvaluator(
         delta=criterion.delta,

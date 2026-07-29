@@ -30,7 +30,7 @@ from bofire.data_models.strategies.convergence_criteria.api import (
 )
 from bofire.strategies.convergence_criteria.evaluator import (
     RegretBoundEvaluator,
-    has_fitted_model_and_data,
+    get_ready_experiments,
 )
 from bofire.utils.torch_tools import tkwargs
 
@@ -577,13 +577,13 @@ def evaluate_exp_min_regret_gap_criterion(
     # The gap needs a previous state of at least ``min_experiments`` (and at
     # least 2) observations plus the newly added point.
     m0 = max(criterion.min_experiments, 2)
-    if not has_fitted_model_and_data(strategy, m0 + 1):
+    experiments = get_ready_experiments(strategy, m0 + 1)
+    if experiments is None:
         return False
     # The regret gap only applies to plain minimize/maximize objectives; bail
     # out before any refits when the evaluation would come back empty anyway.
     if ExpMinRegretGapEvaluator._objective_sign(strategy) is None:
         return False
-    experiments = strategy.experiments
     n = len(experiments)
 
     # Work on positional (0-based) labels so incumbent indices line up with

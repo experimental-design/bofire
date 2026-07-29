@@ -24,7 +24,7 @@ from bofire.data_models.strategies.convergence_criteria.api import (
 )
 from bofire.strategies.convergence_criteria.evaluator import (
     ConvergenceEvaluator,
-    has_fitted_model_and_data,
+    get_ready_experiments,
 )
 from bofire.strategies.convergence_criteria.utils import clopper_pearson_ci
 from bofire.utils.torch_tools import tkwargs
@@ -522,9 +522,9 @@ def evaluate_probabilistic_regret_bound_criterion(
         the raw MC estimate satisfies it), False otherwise (including when
         there are not yet enough experiments or the strategy is not fitted).
     """
-    if not has_fitted_model_and_data(strategy, criterion.min_experiments):
+    experiments = get_ready_experiments(strategy, criterion.min_experiments)
+    if experiments is None:
         return False
-    experiments = strategy.experiments
 
     evaluator = ProbabilisticRegretBoundEvaluator(
         epsilon=criterion.epsilon,
