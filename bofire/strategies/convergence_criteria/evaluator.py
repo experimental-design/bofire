@@ -1,4 +1,4 @@
-"""Termination evaluators that compute metrics for termination conditions."""
+"""Evaluator base classes that compute metrics for convergence criteria."""
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Literal, Optional
@@ -12,13 +12,31 @@ from botorch.models.model import Model
 from bofire.utils.torch_tools import tkwargs
 
 
-class TerminationEvaluator(ABC):
-    """Base class for all termination evaluators.
+def has_fitted_model_and_data(strategy, min_experiments: int) -> bool:
+    """Shared guard for the GP-based convergence criterion evaluators.
 
-    Computes metrics from a BO strategy that termination conditions use to
-    decide whether to stop.  This base holds only behaviour shared by *every*
-    evaluator; the GP-UCB / confidence-bound machinery (which only some
-    criteria use) lives in :class:`RegretBoundEvaluator`.
+    Returns True when the strategy has recorded at least ``min_experiments``
+    experiments and carries a fitted model — the preconditions every
+    model-based evaluator needs before it can compute anything. While these
+    do not hold, a strategy is simply not (yet) considered converged.
+    """
+    experiments = strategy.experiments
+    if experiments is None or len(experiments) < min_experiments:
+        return False
+    return bool(
+        getattr(strategy, "is_fitted", False)
+        and getattr(strategy, "model", None) is not None
+    )
+
+
+class ConvergenceEvaluator(ABC):
+    """Base class for all convergence metric evaluators.
+
+    Computes metrics from a BO strategy that convergence criteria use to
+    decide whether the optimization has converged.  This base holds only
+    behaviour shared by *every* evaluator; the GP-UCB / confidence-bound
+    machinery (which only some criteria use) lives in
+    :class:`RegretBoundEvaluator`.
     """
 
     @staticmethod
@@ -62,12 +80,12 @@ class TerminationEvaluator(ABC):
         experiments: pd.DataFrame,
         iteration: int,
     ) -> Dict[str, Any]:
-        """Return a dict of termination metrics for the current iteration."""
+        """Return a dict of convergence metrics for the current iteration."""
         pass
 
 
-class RegretBoundEvaluator(TerminationEvaluator):
-    """Base class for GP-UCB / simple-regret-bound termination evaluators.
+class RegretBoundEvaluator(ConvergenceEvaluator):
+    """Base class for GP-UCB / simple-regret-bound convergence evaluators.
 
     Holds the GP-UCB ``beta`` schedule and the UCB-LCB confidence-bound
     machinery shared by the criteria that build confidence bounds:
@@ -76,7 +94,7 @@ class RegretBoundEvaluator(TerminationEvaluator):
 
     Criteria that do not use confidence bounds — the cost-aware
     ``LogEIPCEvaluator`` and ``ProbabilisticRegretBoundEvaluator`` — inherit
-    :class:`TerminationEvaluator` directly and carry none of these parameters.
+    :class:`ConvergenceEvaluator` directly and carry none of these parameters.
 
     Args:
         delta: Confidence parameter for the GP-UCB beta formula (Srinivas et

@@ -1,8 +1,23 @@
-"""ExpMinRegretGapEvaluator stopping criterion evaluator."""
+"""Functional convergence evaluation for the expected minimum regret gap criterion.
+
+The evaluator is a pure function of the criterion and the strategy's *recorded
+history*: the previous-iteration posterior it compares against is reused from
+an in-memory per-strategy cache within a running loop (no extra GP fits) and
+reconstructed by refitting on all but the last experiment on a cold start —
+the normal, cheap path for campaigns that re-run the BO loop as a fresh
+process per round; ``"median"`` mode additionally replays early stopping
+values from history prefixes. A strategy reconstructed by replaying ``tell``
+therefore reaches the same result (up to the stochasticity of GP fitting and
+Monte Carlo sampling). For manual loops or exact cross-session state
+carryover, the stateful :class:`ExpMinRegretGapEvaluator` remains available
+via its ``dumps()`` / ``loads()`` methods.
+"""
 
 import base64
 import io
-from typing import Any, Dict, List, Literal, Optional
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional
+from weakref import WeakKeyDictionary
 
 import numpy as np
 import pandas as pd
@@ -10,8 +25,18 @@ import torch
 from botorch.models.model import Model
 from scipy.stats import norm
 
-from bofire.strategies.stepwise.termination.evaluator import RegretBoundEvaluator
+from bofire.data_models.strategies.convergence_criteria.api import (
+    ExpMinRegretGapCriterion,
+)
+from bofire.strategies.convergence_criteria.evaluator import (
+    RegretBoundEvaluator,
+    has_fitted_model_and_data,
+)
 from bofire.utils.torch_tools import tkwargs
+
+
+if TYPE_CHECKING:
+    from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 
 class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
@@ -324,6 +349,19 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
             "seq_values": list(self._seq_values),
         }
 
+    def prime(self, strategy, experiments: pd.DataFrame) -> None:
+        """Set the previous-model state without computing a stopping value.
+
+        Use this to (re-)anchor the evaluator at a given point of the history,
+        e.g. before evaluating the stopping value of the next iteration. The
+        incumbent is derived from ``experiments`` like in :meth:`evaluate`.
+        """
+        direction = self._objective_sign(strategy)
+        sign = -direction if direction is not None else 1.0
+        output_key = strategy.domain.outputs.get_keys()[0]
+        incumbent_idx = int((sign * experiments[output_key]).idxmin())
+        self._save_state(strategy, experiments, incumbent_idx)
+
     def _save_state(
         self,
         strategy,
@@ -415,3 +453,176 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         self._prev_n_experiments = state["prev_n_experiments"]
         self._prev_input_preprocessing_specs = state["prev_input_preprocessing_specs"]
         self._seq_values = state["seq_values"]
+
+
+def _refit_on_prefix(strategy, experiments: pd.DataFrame, m: int):
+    """Refit a copy of the strategy on the first ``m`` recorded experiments.
+
+    Returns the refit strategy, or ``None`` when the refit fails (callers
+    should skip evaluation). The main strategy is unaffected.
+    """
+    from bofire.strategies.mapper import map as map_strategy
+
+    try:
+        prefix_strategy = map_strategy(strategy._data_model)
+        prefix_strategy.tell(experiments.iloc[:m])
+    except Exception:
+        return None
+    return prefix_strategy
+
+
+@dataclass
+class _CachedCheckState:
+    """Per-strategy state carried between consecutive convergence checks.
+
+    ``evaluator`` holds the previous check's model, incumbent, and the
+    accumulated stopping-value sequence. ``last_n`` / ``last_decision`` make
+    repeated checks at the same experiment count idempotent (the
+    ``StepwiseStrategy`` may evaluate its conditions several times per ask).
+    """
+
+    key: str
+    evaluator: ExpMinRegretGapEvaluator
+    last_n: int
+    last_decision: bool
+
+
+# Weakly keyed by the strategy instance: entries vanish with the strategy, and
+# a fresh (or deserialized) strategy simply takes the cold-start path below.
+_CHECK_STATE_CACHE: "WeakKeyDictionary[Any, _CachedCheckState]" = WeakKeyDictionary()
+
+
+def _cold_start_evaluator(
+    criterion: ExpMinRegretGapCriterion,
+    strategy: "PredictiveStrategy",
+    experiments: pd.DataFrame,
+    n: int,
+    m0: int,
+) -> Optional[ExpMinRegretGapEvaluator]:
+    """Reconstruct the previous check's evaluator state purely from history.
+
+    Refits a copy of the strategy on all but the last experiment (and, in
+    ``"median"`` mode, replays the early stopping values from history prefixes
+    needed for the median threshold). Returns ``None`` when a refit fails.
+    """
+    evaluator = ExpMinRegretGapEvaluator(
+        delta=criterion.delta,
+        rate=criterion.rate,
+        start_timing=criterion.start_timing,
+        beta_scale=criterion.beta_scale,
+        n_samples_lcb=criterion.n_samples_lcb,
+        noise_var_override=criterion.noise_var_override,
+        threshold_mode=criterion.threshold_mode,
+    )
+
+    if criterion.threshold_mode == "median":
+        # The median threshold needs the first ``start_timing`` stopping
+        # values, i.e. the values at m0+1 .. m0+start_timing. Replay as many
+        # of them as the history already contains (at most up to n-1; the
+        # value at n is computed by the caller with the live model).
+        end = min(m0 + criterion.start_timing, n - 1)
+        prefix_strategy = _refit_on_prefix(strategy, experiments, m0)
+        if prefix_strategy is None:
+            return None
+        evaluator.prime(prefix_strategy, experiments.iloc[:m0])
+        for m in range(m0 + 1, end + 1):
+            prefix_strategy = _refit_on_prefix(strategy, experiments, m)
+            if prefix_strategy is None:
+                return None
+            evaluator.evaluate(prefix_strategy, experiments.iloc[:m], m)
+        # Re-anchor at the previous iteration for the current stopping value
+        # (unless the replay already ended there).
+        if end != n - 1:
+            prefix_strategy = _refit_on_prefix(strategy, experiments, n - 1)
+            if prefix_strategy is None:
+                return None
+            evaluator.prime(prefix_strategy, experiments.iloc[: n - 1])
+    else:
+        prefix_strategy = _refit_on_prefix(strategy, experiments, n - 1)
+        if prefix_strategy is None:
+            return None
+        evaluator.prime(prefix_strategy, experiments.iloc[: n - 1])
+
+    return evaluator
+
+
+def evaluate_exp_min_regret_gap_criterion(
+    criterion: ExpMinRegretGapCriterion,
+    strategy: "PredictiveStrategy",
+) -> bool:
+    """Evaluate whether the expected minimum regret gap dropped below the threshold.
+
+    The stopping value compares the GP posterior of the current iteration with
+    the posterior of the previous one. In a running BO loop (one new experiment
+    per check) the previous posterior is reused from a per-strategy cache — at
+    the previous check the strategy's own model was fit on exactly that prefix
+    — so consecutive checks need no extra GP fits. On a cold start (fresh or
+    deserialized strategy, config change, experiment count not advanced by
+    exactly one) the previous-iteration model is reconstructed purely from the
+    recorded history by refitting on all but the last experiment; ``"median"``
+    threshold mode additionally replays the early stopping values from history
+    prefixes (one refit per prefix), which makes cold starts in that mode
+    considerably more expensive.
+
+    Args:
+        criterion: The convergence criterion data model with its parameters.
+        strategy: The functional strategy providing the recorded experiments
+            and the fitted model.
+
+    Returns:
+        bool: True if the stopping value is below the selected threshold,
+        False otherwise (including when there are not yet enough experiments,
+        the strategy is not fitted, or the threshold cannot be computed).
+    """
+    # The gap needs a previous state of at least ``min_experiments`` (and at
+    # least 2) observations plus the newly added point.
+    m0 = max(criterion.min_experiments, 2)
+    if not has_fitted_model_and_data(strategy, m0 + 1):
+        return False
+    # The regret gap only applies to plain minimize/maximize objectives; bail
+    # out before any refits when the evaluation would come back empty anyway.
+    if ExpMinRegretGapEvaluator._objective_sign(strategy) is None:
+        return False
+    experiments = strategy.experiments
+    n = len(experiments)
+
+    # Work on positional (0-based) labels so incumbent indices line up with
+    # tensor positions across prefixes.
+    experiments = experiments.reset_index(drop=True)
+
+    key = criterion.model_dump_json()
+    state = _CHECK_STATE_CACHE.get(strategy)
+    evaluator = None
+    if state is not None and state.key == key:
+        if state.last_n == n:
+            # Repeated check without new data (e.g. get_step is called more
+            # than once per ask): return the cached decision unchanged.
+            return state.last_decision
+        if state.evaluator._prev_n_experiments == n - 1:
+            # Warm path: the evaluator already holds the model that was fit on
+            # the first n-1 experiments at the previous check — no refits.
+            evaluator = state.evaluator
+
+    if evaluator is None:
+        evaluator = _cold_start_evaluator(criterion, strategy, experiments, n, m0)
+        if evaluator is None:
+            return False
+
+    metrics = evaluator.evaluate(strategy, experiments, n)
+
+    decision = False
+    if metrics:
+        stopping_value = metrics["stopping_value"]
+        if criterion.threshold_mode == "adaptive":
+            threshold = metrics.get("threshold_adaptive")
+        else:
+            threshold = metrics.get("threshold_median")
+        if threshold is not None:
+            decision = bool(stopping_value < threshold)
+
+    # ``evaluate`` left the evaluator primed on the current model, ready to be
+    # reused as the "previous" state at the next check.
+    _CHECK_STATE_CACHE[strategy] = _CachedCheckState(
+        key=key, evaluator=evaluator, last_n=n, last_decision=decision
+    )
+    return decision

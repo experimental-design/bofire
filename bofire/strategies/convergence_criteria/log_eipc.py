@@ -1,6 +1,13 @@
-"""LogEIPCEvaluator stopping criterion evaluator."""
+"""Functional convergence evaluation for the cost-aware LogEIPC criterion.
 
-from typing import Any, Callable, Dict, Literal, Optional, Union
+The evaluator is a pure function of the criterion and the strategy's *recorded
+history*: it must not keep internal state between ``has_converged`` calls. All
+quantities are computed from the strategy's fitted model and its recorded
+experiments, so a strategy reconstructed by replaying ``tell`` reaches the
+same result (up to Monte Carlo noise in the max-LogEIPC search).
+"""
+
+from typing import TYPE_CHECKING, Any, Callable, Dict, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -17,12 +24,20 @@ from botorch.models.model import Model
 from botorch.utils.transforms import t_batch_mode_transform
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
-from bofire.strategies.stepwise.termination.evaluator import TerminationEvaluator
+from bofire.data_models.strategies.convergence_criteria.api import LogEIPCCriterion
+from bofire.strategies.convergence_criteria.evaluator import (
+    ConvergenceEvaluator,
+    has_fitted_model_and_data,
+)
 from bofire.utils.torch_tools import tkwargs
 
 
+if TYPE_CHECKING:
+    from bofire.strategies.predictives.predictive import PredictiveStrategy
+
+
 # TODO: replace with `from botorch.acquisition.analytic import LogExpectedImprovementPerCost`
-#       once the BoTorch PR (wgst/botorch feature/log-expected-improvement-with-cost) is merged.
+#       once the BoTorch PR (https://github.com/meta-pytorch/botorch/pull/3304) is merged.
 class LogExpectedImprovementPerCost(AnalyticAcquisitionFunction):
     r"""Single-outcome Log Expected Improvement per unit cost (analytic).
 
@@ -99,7 +114,7 @@ class LogExpectedImprovementPerCost(AnalyticAcquisitionFunction):
         return log_ei - self.alpha * log_cost
 
 
-class LogEIPCEvaluator(TerminationEvaluator):
+class LogEIPCEvaluator(ConvergenceEvaluator):
     """Cost-aware stopping criterion based on Xie et al., 2025.
 
     Stops when the maximum log expected-improvement-per-cost over the domain
@@ -178,7 +193,7 @@ class LogEIPCEvaluator(TerminationEvaluator):
         cost_model: Literal["mean", "gp"] = "mean",
     ):
         # LogEIPC is a confidence-bound-free criterion, so it inherits the slim
-        # TerminationEvaluator base directly (no GP-UCB beta parameters).
+        # ConvergenceEvaluator base directly (no GP-UCB beta parameters).
         self.lambda_cost = lambda_cost
         self.cost_column = cost_column
         self.cost_value = cost_value
@@ -418,3 +433,40 @@ class LogEIPCEvaluator(TerminationEvaluator):
             "cost_estimate": cost_estimate,
             "lambda_cost": self.lambda_cost,
         }
+
+
+def evaluate_log_eipc_criterion(
+    criterion: LogEIPCCriterion,
+    strategy: "PredictiveStrategy",
+) -> bool:
+    """Evaluate whether no candidate's expected improvement is worth its cost.
+
+    Args:
+        criterion: The convergence criterion data model with its parameters.
+        strategy: The functional strategy providing the recorded experiments
+            and the fitted model.
+
+    Returns:
+        bool: True if ``max_log_eipc <= 0``, i.e. the maximum log expected
+        improvement-per-cost over the domain is non-positive, False otherwise
+        (including when there are not yet enough experiments or the strategy
+        is not fitted).
+    """
+    if not has_fitted_model_and_data(strategy, criterion.min_experiments):
+        return False
+    experiments = strategy.experiments
+
+    evaluator = LogEIPCEvaluator(
+        lambda_cost=criterion.lambda_cost,
+        cost_column=criterion.cost_column,
+        cost_value=criterion.cost_value,
+        alpha=criterion.alpha,
+        n_samples=criterion.n_samples,
+        search_method=criterion.search_method,
+        cost_model=criterion.cost_model,
+    )
+    metrics = evaluator.evaluate(strategy, experiments, len(experiments))
+    if not metrics:
+        return False
+
+    return bool(metrics["max_log_eipc"] <= 0)

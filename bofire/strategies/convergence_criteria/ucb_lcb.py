@@ -1,13 +1,34 @@
-"""UCBLCBRegretEvaluator stopping criterion evaluator."""
+"""Functional convergence evaluation for the UCB-LCB regret bound criterion.
 
-from typing import Any, Dict, Literal, Optional
+The evaluator is a pure function of the criterion and the strategy's *recorded
+history*: it must not keep internal state between ``has_converged`` calls. All
+quantities are computed from the strategy's fitted model and its recorded
+experiments, so a strategy reconstructed by replaying ``tell`` reaches the
+same result (up to Monte Carlo noise in the min-LCB estimate).
+"""
+
+from typing import TYPE_CHECKING, Any, Dict, Literal, Optional
 
 import numpy as np
 import pandas as pd
 import torch
 
-from bofire.strategies.stepwise.termination.evaluator import RegretBoundEvaluator
+from bofire.data_models.strategies.convergence_criteria.api import (
+    UCBLCBRegretBoundCriterion,
+)
+from bofire.strategies.convergence_criteria.evaluator import (
+    RegretBoundEvaluator,
+    has_fitted_model_and_data,
+)
+from bofire.strategies.convergence_criteria.utils import (
+    compute_threshold_cv,
+    compute_threshold_noise,
+)
 from bofire.utils.torch_tools import tkwargs
+
+
+if TYPE_CHECKING:
+    from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 
 class UCBLCBRegretEvaluator(RegretBoundEvaluator):
@@ -194,3 +215,76 @@ class UCBLCBRegretEvaluator(RegretBoundEvaluator):
             "estimated_noise_variance": estimated_noise_var,
             "beta": beta,
         }
+
+
+def evaluate_ucb_lcb_regret_bound_criterion(
+    criterion: UCBLCBRegretBoundCriterion,
+    strategy: "PredictiveStrategy",
+) -> bool:
+    """Evaluate whether the UCB-LCB regret bound dropped below the threshold.
+
+    Args:
+        criterion: The convergence criterion data model with its parameters.
+        strategy: The functional strategy providing the recorded experiments
+            and the fitted model.
+
+    Returns:
+        bool: True if the regret bound is below the threshold ``epsilon_BO``,
+        False otherwise (including when there are not yet enough experiments,
+        the strategy is not fitted, or the threshold cannot be computed).
+    """
+    if not has_fitted_model_and_data(strategy, criterion.min_experiments):
+        return False
+    experiments = strategy.experiments
+
+    evaluator = UCBLCBRegretEvaluator(
+        delta=criterion.delta,
+        beta_scale=criterion.beta_scale,
+        fallback_noise_variance=criterion.fallback_noise_variance,
+        n_samples_lcb=criterion.n_samples_lcb,
+        batch_size=criterion.batch_size,
+        lcb_method=criterion.lcb_method,
+        topq=criterion.topq,
+        min_topq=criterion.min_topq,
+    )
+
+    # Objective direction (+1 maximise / -1 minimise, BoFire convention);
+    # the regret bound does not apply to other objectives, so the strategy
+    # is never considered converged.  Negate to the minimisation frame used
+    # for the CV threshold below.
+    direction = evaluator._objective_sign(strategy)
+    if direction is None:
+        return False
+    sign = -direction  # +1 minimise / -1 maximise
+
+    metrics = evaluator.evaluate(strategy, experiments, len(experiments))
+    if not metrics:
+        return False
+
+    regret_bound = metrics["regret_bound"]
+
+    output_key = strategy.domain.outputs.get_keys()[0]
+
+    if isinstance(criterion.noise_variance, (int, float)):
+        epsilon_bo = compute_threshold_noise(
+            criterion.noise_variance,
+            criterion.threshold_factor,
+        )
+    elif criterion.noise_variance == "cv":
+        epsilon_bo = compute_threshold_cv(
+            experiments,
+            output_key,
+            criterion.cv_fold_columns,
+            criterion.threshold_factor,
+            sign=sign,
+        )
+    else:
+        epsilon_bo = compute_threshold_noise(
+            metrics.get("estimated_noise_variance"),
+            criterion.threshold_factor,
+        )
+
+    if epsilon_bo is None:
+        return False
+
+    return bool(regret_bound < epsilon_bo)

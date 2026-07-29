@@ -1,4 +1,4 @@
-"""Pure utility helpers for the termination module."""
+"""Pure utility helpers for the convergence criteria module."""
 
 from typing import List, Optional
 

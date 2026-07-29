@@ -1,6 +1,16 @@
-"""Probabilistic regret bound stopping criterion (Wilson, 2024)."""
+"""Functional convergence evaluation for the probabilistic regret bound criterion.
 
-from typing import Any, Callable, Dict, Optional
+The evaluator is a pure function of the criterion and the strategy's *recorded
+history*: it must not keep internal state between ``has_converged`` calls. The
+sequential Clopper-Pearson level test runs to completion within a single call,
+so a strategy reconstructed by replaying ``tell`` reaches the same result (up
+to the Monte Carlo noise of the GP path samples).
+
+Reference: Wilson (2024), "Stopping Bayesian Optimization with Probabilistic
+Regret Bounds" (NeurIPS 2024).
+"""
+
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -9,9 +19,19 @@ from botorch.models.model import Model
 from botorch.sampling.pathwise import draw_matheron_paths
 from scipy.optimize import minimize as scipy_minimize
 
-from bofire.strategies.stepwise.termination.evaluator import TerminationEvaluator
-from bofire.strategies.stepwise.termination.utils import clopper_pearson_ci
+from bofire.data_models.strategies.convergence_criteria.api import (
+    ProbabilisticRegretBoundCriterion,
+)
+from bofire.strategies.convergence_criteria.evaluator import (
+    ConvergenceEvaluator,
+    has_fitted_model_and_data,
+)
+from bofire.strategies.convergence_criteria.utils import clopper_pearson_ci
 from bofire.utils.torch_tools import tkwargs
+
+
+if TYPE_CHECKING:
+    from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 
 def _minimize_sample_paths(
@@ -198,7 +218,7 @@ def _run_prb_level_test(
     return estimates, converged_below, total_n, cis
 
 
-class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
+class ProbabilisticRegretBoundEvaluator(ConvergenceEvaluator):
     """Evaluator for the probabilistic regret bound (PRB) stopping criterion.
 
     Terminates BO when the model-based probability that the incumbent's simple
@@ -286,7 +306,7 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
         optim_maxiter: int = 200,
         optim_ftol: float = 1e-9,
     ):
-        # Confidence-bound-free criterion: inherits the slim TerminationEvaluator
+        # Confidence-bound-free criterion: inherits the slim ConvergenceEvaluator
         # base directly (no GP-UCB beta parameters).
         self.epsilon = epsilon
         self.epsilon_relative = epsilon_relative
@@ -483,3 +503,47 @@ class ProbabilisticRegretBoundEvaluator(TerminationEvaluator):
         upper = torch.tensor(bounds[1], **tkwargs)
 
         return self._evaluate_core(model, X_test, lower, upper, epsilon, sign)
+
+
+def evaluate_probabilistic_regret_bound_criterion(
+    criterion: ProbabilisticRegretBoundCriterion,
+    strategy: "PredictiveStrategy",
+) -> bool:
+    """Evaluate whether the probabilistic regret bound criterion is satisfied.
+
+    Args:
+        criterion: The convergence criterion data model with its parameters.
+        strategy: The functional strategy providing the recorded experiments
+            and the fitted model.
+
+    Returns:
+        bool: True if the Clopper-Pearson sequential test certifies that
+        ``P(regret > ε) ≤ delta_mod`` (or, with ``enforce_convergence=False``,
+        the raw MC estimate satisfies it), False otherwise (including when
+        there are not yet enough experiments or the strategy is not fitted).
+    """
+    if not has_fitted_model_and_data(strategy, criterion.min_experiments):
+        return False
+    experiments = strategy.experiments
+
+    evaluator = ProbabilisticRegretBoundEvaluator(
+        epsilon=criterion.epsilon,
+        epsilon_relative=criterion.epsilon_relative,
+        delta_mod=criterion.delta_mod,
+        delta_est=criterion.delta_est,
+        enforce_convergence=criterion.enforce_convergence,
+        n_samples_max=criterion.n_samples_max,
+        initial_batch=criterion.initial_batch,
+        batch_growth=criterion.batch_growth,
+        n_starts=criterion.n_starts,
+        n_random=criterion.n_random,
+        n_test_points=criterion.n_test_points,
+        optim_method=criterion.optim_method,
+        optim_maxiter=criterion.optim_maxiter,
+        optim_ftol=criterion.optim_ftol,
+    )
+    metrics = evaluator.evaluate(strategy, experiments, len(experiments))
+    if not metrics:
+        return False
+
+    return bool(metrics["criterion_satisfied"])
