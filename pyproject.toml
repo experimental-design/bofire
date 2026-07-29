@@ -26,7 +26,7 @@ readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11.0, <3.15"
 dependencies = [
     "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
-    "pandas",
+    "pandas>=3.0.0",
     "pydantic>=2.5",
     "scipy>=1.7",
     "typing-extensions",
