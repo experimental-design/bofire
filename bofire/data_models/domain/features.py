@@ -569,6 +569,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         exclude: Union[
             Type, List[Type]
         ] = None,  # ty: ignore[invalid-parameter-default]
+        include_semicontinuous: bool = True,
     ) -> list[tuple[tuple[str, float] | tuple[str, str], ...]]:
         """Get a list of tuples pairing the feature keys with a list of valid categories
 
@@ -576,6 +577,16 @@ class Inputs(_BaseFeatures[AnyInput]):
             include (Feature, optional): Features to be included. Defaults to Input.
             exclude (Feature, optional): Features to be excluded, e.g. subclasses
                 of the included features. Defaults to None.
+            include_semicontinuous (bool, optional): When True (default), each
+                semi-continuous feature (`ContinuousInput` with `allow_zero=True`
+                and a positive lower bound, un-fixed) doubles the number of
+                combinations via its on/off enumeration. When False,
+                semi-continuous features are excluded from the enumeration --
+                useful when the caller handles them via a post-optimisation
+                pruning step rather than by AF-time enumeration. Mirrors the
+                flag of the same name on
+                `get_number_of_categorical_combinations`; the two must be
+                passed the same value to stay consistent.
 
         Returns:
             List[(str, List[str])]: Returns a list of tuples pairing the feature
@@ -602,11 +613,14 @@ class Inputs(_BaseFeatures[AnyInput]):
         cat_and_discrete_values = cat_values + discrete_values
         all_combos = list(itertools.product(*cat_and_discrete_values))
 
-        conditional_conts = [
-            f
-            for f in self.get(includes=include, excludes=exclude)
-            if (isinstance(f, ContinuousInput) and f.is_semicontinuous)
-        ]
+        if include_semicontinuous:
+            conditional_conts = [
+                f
+                for f in self.get(includes=include, excludes=exclude)
+                if (isinstance(f, ContinuousInput) and f.is_semicontinuous)
+            ]
+        else:
+            conditional_conts = []
 
         conditional_values = [[(d.key, 0.0), (d.key, None)] for d in conditional_conts]
 

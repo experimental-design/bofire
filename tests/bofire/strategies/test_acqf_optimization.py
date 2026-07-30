@@ -1,6 +1,7 @@
 import unittest
 from typing import cast
 
+import pandas as pd
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.utils.testing import MockAcquisitionFunction
@@ -20,6 +21,10 @@ from bofire.data_models.features.api import (
 from bofire.data_models.strategies.predictives.acqf_optimization import (
     BotorchOptimizer as BotorchOptimizerModel,
 )
+from bofire.data_models.strategies.predictives.sobo import (
+    SoboStrategy as SoboStrategyModel,
+)
+from bofire.strategies.api import SoboStrategy
 from bofire.strategies.predictives.acqf_optimization import (
     BotorchOptimizer,
     OptimizerEnum,
@@ -302,3 +307,85 @@ def test_base_get_categorical_combinations():
             {1: 0.5, 6: 1, 7: 2},
         ],
     )
+
+
+def _semicontinuous_categorical_domain() -> Domain:
+    """Domain of issue #795 plus a categorical, which forces the mixed
+    optimizer while pruning handles the semi-continuous features.
+    """
+    return Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 20.0), allow_zero=True)
+            for i in (1, 2, 3)
+        ]
+        + [CategoricalInput(key="c", categories=["a", "b"])],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+
+def test_get_categorical_combinations_excludes_semicontinuous_when_pruning():
+    """Regression test for #795.
+
+    When pruning is applicable, the semi-continuous features are resolved by
+    the post-AF pruning step, so their on/off states must not additionally be
+    enumerated into the `fixed_features_list`. Enumerating them yields
+    combinations that pin *every* tensor column (all features off) next to
+    combinations that do not; `optimize_acqf_mixed` stacks the per-combination
+    acqf values, and botorch's all-features-fixed shortcut collapses the
+    restart dimension, so the stack raises
+    `RuntimeError: stack expects each tensor to be equal size`.
+    """
+    domain = _semicontinuous_categorical_domain()
+    optimizer = BotorchOptimizer(BotorchOptimizerModel())
+
+    combinations = optimizer.get_categorical_combinations(domain)
+
+    # only the two categorical levels, not 2 (categories) * 2**3 (on/off)
+    assert combinations == [{3: 0}, {3: 1}]
+
+    # and no combination pins every tensor column
+    n_columns = sum(len(idx) for idx in optimizer._features2idx(domain).values())
+    assert all(len(combo) < n_columns for combo in combinations)
+
+    # consistent with the count the optimizer routing is based on
+    assert len(combinations) == domain.inputs.get_number_of_categorical_combinations(
+        include_semicontinuous=False,
+    )
+
+
+def test_ask_with_semicontinuous_and_categorical():
+    """End-to-end regression test for #795: `ask` must not blow up in
+    `optimize_acqf_mixed` for a domain mixing `allow_zero` inputs with a
+    categorical input.
+    """
+    domain = _semicontinuous_categorical_domain()
+    experiments = pd.DataFrame(
+        {
+            "x1": [5.0, 10.0, 15.0, 18.0],
+            "x2": [5.0, 10.0, 15.0, 8.0],
+            "x3": [5.0, 10.0, 15.0, 12.0],
+            "c": ["a", "b", "a", "b"],
+            "y": [1.0, 2.0, 3.0, 4.0],
+            "valid_y": [1, 1, 1, 1],
+        },
+    )
+
+    data_model = SoboStrategyModel(domain=domain, seed=42)
+    strategy = SoboStrategy(data_model=data_model)
+    assert (
+        strategy.acqf_optimizer._determine_optimizer(domain, n_acqfs=1)
+        == OptimizerEnum.OPTIMIZE_ACQF_MIXED
+    )
+
+    strategy.tell(experiments)
+    candidates = strategy.ask(candidate_count=2)
+
+    assert len(candidates) == 2
+    for key in ["x1", "x2", "x3"]:
+        feat = cast(ContinuousInput, domain.inputs.get_by_key(key))
+        values = candidates[key]
+        # pruning resolves every semi-continuous feature to either zero or
+        # a value inside its bounds -- never into the forbidden gap
+        assert (
+            (values == 0.0) | ((values >= feat.bounds[0]) & (values <= feat.bounds[1]))
+        ).all()
