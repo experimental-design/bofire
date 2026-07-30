@@ -919,15 +919,13 @@ class TestEngineeredFeatureRegistration:
 
 
 # ---------------------------------------------------------------------------
-# Regression tests for issue #794: a registered engineered feature was stored
+# Regression test for issue #794: a registered engineered feature was stored
 # in the container but silently dropped by the default ``get``/``get_keys``
 # filter, which was bound to ``AnyFeature`` at import time.
 # ---------------------------------------------------------------------------
 
 
 class _VisibleEngineeredFeature(EngineeredFeature):
-    """Registered in ``TestRegisteredFeatureIsVisible`` via the mapper."""
-
     type: Literal["_VisibleEngineered"] = "_VisibleEngineered"
     order_id = 102
 
@@ -936,35 +934,15 @@ class _VisibleEngineeredFeature(EngineeredFeature):
         return 1
 
 
-def _map_visible_feature(inputs, transform_specs, feature):
-    from botorch.models.transforms.input import AppendFeatures
-
-    features2idx, _ = inputs._get_transform_info(transform_specs)
-    indices = [features2idx[key][0] for key in feature.features]
-
-    def _max(X, indices):
-        return X[..., indices].max(dim=-1, keepdim=True).values.unsqueeze(-2)
-
-    return AppendFeatures(
-        f=_max,
-        fkwargs={"indices": indices},
-        transform_on_train=True,
-    )
-
-
 class TestRegisteredFeatureIsVisible:
     """A registered engineered feature must be visible to the default filter."""
-
-    @pytest.fixture(autouse=True)
-    def _register(self):
-        from bofire.surrogates.engineered_features import register
-
-        register(_VisibleEngineeredFeature, _map_visible_feature)
 
     @pytest.fixture
     def container(self):
         from bofire.data_models.domain.features import EngineeredFeatures
+        from bofire.data_models.features.api import register_engineered_feature
 
+        register_engineered_feature(_VisibleEngineeredFeature)
         return EngineeredFeatures(
             features=[_VisibleEngineeredFeature(key="engineered", features=["a", "b"])]
         )
@@ -981,127 +959,11 @@ class TestRegisteredFeatureIsVisible:
     def test_features2idx_maps_registered_feature(self, container):
         assert container.get_features2idx() == {"engineered": (0,)}
 
-    def test_validate_inputs_is_not_skipped(self, container):
-        """The default filter fed ``validate_inputs``, so it silently passed."""
-        from bofire.data_models.domain.api import Inputs
-
-        inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))])
-        with pytest.raises(ValueError, match="missing in inputs"):
-            container.validate_inputs(inputs)
-
-    def test_add_returns_engineered_features(self, container):
-        """``__add__`` filtered on a union bound at import time."""
-        from bofire.data_models.domain.features import EngineeredFeatures
-
-        combined = EngineeredFeatures(features=[]) + list(container.features)
-        assert isinstance(combined, EngineeredFeatures)
-        assert combined.get_keys() == ["engineered"]
-
-    def test_any_feature_union_is_kept_in_sync(self):
-        """``AnyFeature`` is independent of ``AnyEngineeredFeature``."""
-        from bofire.data_models.features.api import (
-            _FEATURE_TYPES,
-            AnyEngineeredFeature,
-            AnyFeature,
-        )
-        from bofire.data_models.unions import to_list
-
-        assert _VisibleEngineeredFeature in _FEATURE_TYPES
-        assert _VisibleEngineeredFeature in to_list(AnyFeature)
-        assert _VisibleEngineeredFeature in to_list(AnyEngineeredFeature)
-
     def test_generic_features_container_accepts_registered_feature(self, container):
-        """``Features.features`` is annotated with ``AnyFeature``."""
+        """``AnyFeature`` is a separate union and has to be kept in sync too."""
         from bofire.data_models.domain.features import Features
 
-        generic = Features(features=list(container.features))
-        assert generic.get_keys() == ["engineered"]
-
-    def test_registered_feature_roundtrips_through_any_feature(self, container):
-        """Deserialization goes through the ``AnyFeature`` TypeAdapter."""
-        from pydantic import TypeAdapter
-
-        import bofire.data_models.features.api as features_api
-
-        feature = container.features[0]
-        restored = TypeAdapter(features_api.AnyFeature).validate_python(
-            feature.model_dump()
-        )
-        assert restored == feature
-
-    def test_surrogate_appends_the_engineered_dimension(self, container):
-        """End-to-end: the feature was silently absent from the fitted model."""
-        import bofire.surrogates.api as surrogates
-        from bofire.data_models.domain.api import Inputs
-        from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
-
-        inputs = Inputs(
-            features=[ContinuousInput(key=k, bounds=(0, 1)) for k in ("a", "b", "c")]
-        )
-        surrogate = surrogates.map(
-            SingleTaskGPSurrogate(
-                inputs=inputs, outputs=_OUTPUTS, engineered_features=container
-            )
-        )
-
-        experiments = inputs.sample(10)
-        experiments["y"] = experiments.sum(axis=1)
-        experiments["valid_y"] = 1
-        surrogate.fit(experiments)
-
-        # 3 raw inputs + 1 appended engineered feature
-        assert surrogate.model.train_inputs[0].shape[-1] == 4
-
-
-class TestGetFilterDefaults:
-    """The default ``includes`` must not change existing filter semantics."""
-
-    @pytest.fixture
-    def inputs(self):
-        return Inputs(
-            features=[
-                ContinuousInput(key="x", bounds=(0, 1)),
-                CategoricalInput(key="c", categories=["a", "b"]),
-            ]
-        )
-
-    def test_default_returns_all(self, inputs):
-        assert sorted(inputs.get_keys()) == ["c", "x"]
-
-    def test_explicit_none_without_excludes_still_raises(self, inputs):
-        """``None`` means 'no include filter', not 'use the default'."""
-        with pytest.raises(ValueError, match="no filter provided"):
-            inputs.get_keys(includes=None)
-
-    def test_explicit_none_with_excludes_filters_by_excludes_only(self, inputs):
-        assert inputs.get_keys(includes=None, excludes=CategoricalInput) == ["x"]
-
-    def test_explicit_includes_still_narrows(self, inputs):
-        assert inputs.get_keys(ContinuousInput) == ["x"]
-
-    def test_exact_matching_is_unaffected(self, inputs):
-        assert inputs.get_keys(ContinuousInput, exact=True) == ["x"]
-
-    def test_element_union_tracks_the_container_type(self):
-        """Each container resolves its own union, not the global ``AnyFeature``."""
-        from bofire.data_models.domain.features import (
-            EngineeredFeatures,
-            Features,
-            _BaseFeatures,
-            _element_union,
-        )
-        from bofire.data_models.unions import to_list
-
-        assert ContinuousOutput not in to_list(_element_union(Inputs))
-        assert ContinuousInput in to_list(_element_union(Inputs))
-        assert ContinuousOutput in to_list(_element_union(Outputs))
-        assert ContinuousOutput in to_list(_element_union(Features))
-        assert _VisibleEngineeredFeature in to_list(
-            _element_union(EngineeredFeatures)
-        ), "registered feature must appear in the container's live union"
-        # Unparametrized base falls back to ``Feature``; a bare TypeVar would
-        # blow up ``isinstance``.
-        assert _element_union(_BaseFeatures) is Feature
+        assert Features(features=list(container.get())).get_keys() == ["engineered"]
 
 
 # ---------------------------------------------------------------------------

@@ -211,3 +211,19 @@ def test_exclude_include():
 
     with pytest.raises(ValueError, match="no filter provided"):
         test(includes=None, excludes=None, expected=[if1, if2, if3, if4, if5, if7])
+
+
+@pytest.mark.parametrize(
+    "container",
+    [inputs, outputs, features],
+)
+def test_default_includes_is_resolved_from_the_container(container):
+    """Omitting ``includes`` keeps filtering on what the container accepts.
+
+    The default used to be the ``AnyFeature`` union bound at import time, which
+    froze it before ``register_engineered_feature`` could extend it (issue
+    #794). It is now resolved per call from the container, and must stay
+    equivalent for the built-in feature types.
+    """
+    assert container.get() == container.get(AnyFeature)
+    assert container.get_keys() == container.get_keys(AnyFeature)
