@@ -32,7 +32,7 @@ from bofire.data_models.features.task import (
 from bofire.data_models.unions import tagged_union
 
 
-AnyFeature = tagged_union(
+_FEATURE_TYPES: list[type[Feature]] = [
     DiscreteInput,
     CategoricalInput,
     ContinuousInput,
@@ -53,7 +53,9 @@ AnyFeature = tagged_union(
     ProductFeature,
     InterpolateFeature,
     CloneFeature,
-)
+]
+
+AnyFeature = tagged_union(*_FEATURE_TYPES)
 
 AnyInput = tagged_union(
     DiscreteInput,
