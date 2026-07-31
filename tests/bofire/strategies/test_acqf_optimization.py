@@ -243,6 +243,24 @@ def test_get_arguments_for_optimizer():
         bounds=get_bounds(domain),
     )
     assert optimizer_args.fixed_features == {1: 0.5}
+
+    # Semi-continuous features are handled by post-AF pruning, so they must not
+    # cause optimize_acqf_list to receive a fixed_features_list.
+    semi_feature = domain.inputs.get_by_key("x_2")
+    assert isinstance(semi_feature, ContinuousInput)
+    semi_feature.bounds = (1.0, 2.0)
+    semi_feature.allow_zero = True
+    optimizer_args = optimizer._get_arguments_for_optimizer(
+        optimizer=OptimizerEnum.OPTIMIZE_ACQF_LIST,
+        domain=domain,
+        candidate_count=2,
+        acqfs=[simple_acqf, simple_acqf],
+        bounds=get_bounds(domain),
+    )
+    assert isinstance(optimizer_args, _OptimizeAcqfListInput)
+    assert optimizer_args.fixed_features == {1: 0.5}
+    assert optimizer_args.fixed_features_list is None
+
     domain.inputs.features.append(
         CategoricalInput(key="x_cat", categories=[f"cat_{i}" for i in range(2)])
     )
