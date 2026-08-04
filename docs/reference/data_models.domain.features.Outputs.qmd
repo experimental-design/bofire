@@ -1,0 +1,167 @@
+# data_models.domain.features.Outputs { #bofire.data_models.domain.features.Outputs }
+
+```python
+data_models.domain.features.Outputs()
+```
+
+Container of output features, only output features are allowed.
+
+## Attributes {.doc-section .doc-section-attributes}
+
+| Name     | Type         | Description           |
+|----------|--------------|-----------------------|
+| features | List(Outputs | list of the features. |
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [add_valid_columns](#bofire.data_models.domain.features.Outputs.add_valid_columns) | Add the `valid_{feature.key}` columns to the experiments dataframe, |
+| [get_by_objective](#bofire.data_models.domain.features.Outputs.get_by_objective) | Get output features filtered by the type of the attached objective. |
+| [get_keys_by_objective](#bofire.data_models.domain.features.Outputs.get_keys_by_objective) | Get keys of output features filtered by the type of the attached objective. |
+| [preprocess_experiments_all_valid_outputs](#bofire.data_models.domain.features.Outputs.preprocess_experiments_all_valid_outputs) | Method to get a dataframe where non-valid entries of all output feature are removed |
+| [preprocess_experiments_any_valid_output](#bofire.data_models.domain.features.Outputs.preprocess_experiments_any_valid_output) | Method to get a dataframe where at least one output feature has a valid entry |
+| [preprocess_experiments_one_valid_output](#bofire.data_models.domain.features.Outputs.preprocess_experiments_one_valid_output) | Method to get a dataframe where non-valid entries of the provided output feature are removed |
+
+### add_valid_columns { #bofire.data_models.domain.features.Outputs.add_valid_columns }
+
+```python
+data_models.domain.features.Outputs.add_valid_columns(experiments)
+```
+
+Add the `valid_{feature.key}` columns to the experiments dataframe,
+in case that they are not present.
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type         | Description                        | Default    |
+|-------------|--------------|------------------------------------|------------|
+| experiments | pd.DataFrame | Dataframe holding the experiments. | _required_ |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                      |
+|--------|--------------|--------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: Dataframe holding the experiments. |
+
+### get_by_objective { #bofire.data_models.domain.features.Outputs.get_by_objective }
+
+```python
+data_models.domain.features.Outputs.get_by_objective(
+    includes=Objective,
+    excludes=None,
+    exact=False,
+)
+```
+
+Get output features filtered by the type of the attached objective.
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name     | Type                                          | Description                                                                                                                                             | Default     |
+|----------|-----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
+| includes | Union\[List\[TObjective\], TObjective\]       | Objective class or list of objective classes to be returned. Defaults to Objective.                                                                     | `Objective` |
+| excludes | Union\[List\[TObjective\], TObjective, None\] | Objective class or list of specific objective classes to be excluded from the return. Defaults to None.                                                 | `None`      |
+| exact    | bool                                          | Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False. | `False`     |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type    | Description                                                                  |
+|--------|---------|------------------------------------------------------------------------------|
+|        | Outputs | List[AnyOutput]: List of output features fitting to the passed requirements. |
+
+### get_keys_by_objective { #bofire.data_models.domain.features.Outputs.get_keys_by_objective }
+
+```python
+data_models.domain.features.Outputs.get_keys_by_objective(
+    includes=Objective,
+    excludes=None,
+    exact=False,
+)
+```
+
+Get keys of output features filtered by the type of the attached objective.
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name     | Type                                          | Description                                                                                                                                             | Default     |
+|----------|-----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
+| includes | Union\[List\[TObjective\], TObjective\]       | Objective class or list of objective classes to be returned. Defaults to Objective.                                                                     | `Objective` |
+| excludes | Union\[List\[TObjective\], TObjective, None\] | Objective class or list of specific objective classes to be excluded from the return. Defaults to None.                                                 | `None`      |
+| exact    | bool                                          | Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False. | `False`     |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type        | Description                                                                |
+|--------|-------------|----------------------------------------------------------------------------|
+|        | List\[str\] | List[str]: List of output feature keys fitting to the passed requirements. |
+
+### preprocess_experiments_all_valid_outputs { #bofire.data_models.domain.features.Outputs.preprocess_experiments_all_valid_outputs }
+
+```python
+data_models.domain.features.Outputs.preprocess_experiments_all_valid_outputs(
+    experiments,
+    output_feature_keys=None,
+)
+```
+
+Method to get a dataframe where non-valid entries of all output feature are removed
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name                | Type             | Description                                                                                             | Default    |
+|---------------------|------------------|---------------------------------------------------------------------------------------------------------|------------|
+| experiments         | pd.DataFrame     | Dataframe with experimental data                                                                        | _required_ |
+| output_feature_keys | Optional\[List\] | List of output feature keys which should be considered for removal of invalid values. Defaults to None. | `None`     |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                                                                                 |
+|--------|--------------|-------------------------------------------------------------------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: Dataframe with all experiments where only valid entries of the selected features are included |
+
+### preprocess_experiments_any_valid_output { #bofire.data_models.domain.features.Outputs.preprocess_experiments_any_valid_output }
+
+```python
+data_models.domain.features.Outputs.preprocess_experiments_any_valid_output(
+    experiments,
+)
+```
+
+Method to get a dataframe where at least one output feature has a valid entry
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type         | Description                      | Default    |
+|-------------|--------------|----------------------------------|------------|
+| experiments | pd.DataFrame | Dataframe with experimental data | _required_ |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                                                                      |
+|--------|--------------|--------------------------------------------------------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: Dataframe with all experiments where at least one output feature has a valid entry |
+
+### preprocess_experiments_one_valid_output { #bofire.data_models.domain.features.Outputs.preprocess_experiments_one_valid_output }
+
+```python
+data_models.domain.features.Outputs.preprocess_experiments_one_valid_output(
+    output_feature_key,
+    experiments,
+)
+```
+
+Method to get a dataframe where non-valid entries of the provided output feature are removed
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name               | Type         | Description                                                   | Default    |
+|--------------------|--------------|---------------------------------------------------------------|------------|
+| experiments        | pd.DataFrame | Dataframe with experimental data                              | _required_ |
+| output_feature_key | str          | The feature based on which non-valid entries rows are removed | _required_ |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type         | Description                                                                                                |
+|--------|--------------|------------------------------------------------------------------------------------------------------------|
+|        | pd.DataFrame | pd.DataFrame: Dataframe with all experiments where only valid entries of the specific feature are included |

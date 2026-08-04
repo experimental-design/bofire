@@ -1,7 +1,12 @@
 from typing import Union
 
-from bofire.benchmarks.aspen_benchmark import Aspen_benchmark
-from bofire.benchmarks.benchmark import Benchmark, GenericBenchmark
+from bofire.benchmarks.benchmark import (
+    Benchmark,
+    FormulationWrapper,
+    GenericBenchmark,
+    SpuriousFeaturesWrapper,
+    SyntheticBoTorch,
+)
 from bofire.benchmarks.detergent import Detergent
 from bofire.benchmarks.hyperopt import Hyperopt
 from bofire.benchmarks.multi import (
@@ -11,6 +16,7 @@ from bofire.benchmarks.multi import (
     TNK,
     ZDT1,
     CrossCoupling,
+    MOMFBraninCurrin,
     SnarBenchmark,
 )
 from bofire.benchmarks.single import (
@@ -34,6 +40,7 @@ AnyMultiBenchmark = Union[
     SnarBenchmark,
     BNH,
     TNK,
+    MOMFBraninCurrin,
 ]
 AnySingleBenchmark = Union[
     Ackley,

@@ -1,16 +1,19 @@
 from abc import abstractmethod
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+import shap
 from pydantic import PositiveInt
 
+import bofire.strategies.convergence_criteria.api as convergence_criteria
 from bofire.data_models.features.task import TaskInput
-from bofire.data_models.strategies.api import Strategy as DataModel
+from bofire.data_models.strategies.api import PredictiveStrategy as DataModel
 from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue, OutputValue
 from bofire.strategies.strategy import Strategy
+from bofire.surrogates.feature_importance import shap_importance
 from bofire.utils.naming_conventions import (
     get_column_names,
     postprocess_categorical_predictions,
@@ -23,18 +26,59 @@ class PredictiveStrategy(Strategy):
     Provides abstract scaffold for fit, predict, and calc_acquistion methods.
     """
 
+    # Narrow the base ``Strategy._data_model`` annotation to the predictive data
+    # model so type checkers know it carries e.g. ``convergence_criterion``.
+    _data_model: DataModel
+
     def __init__(
         self,
         data_model: DataModel,
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.is_fitted = False
+        self._is_fitted = False
+
+    @property
+    def is_fitted(self) -> bool:
+        """Check if the strategy is fitted."""
+        return self._is_fitted
+
+    def has_converged(self) -> bool:
+        """Returns whether the strategy has converged according to its convergence criterion.
+
+        The convergence criterion is evaluated against the internal state and
+        data of the strategy. If the criterion needs the strategy's surrogate
+        model(s), it reads them directly from the strategy. If no convergence
+        criterion is configured, the strategy is never considered converged.
+
+        Returns:
+            bool: True if the strategy's convergence criterion is met, False otherwise.
+
+        """
+        criterion = self._data_model.convergence_criterion
+        if criterion is None:
+            return False
+        evaluator = convergence_criteria.map(criterion)
+        return evaluator(criterion, self)
 
     @property
     @abstractmethod
     def input_preprocessing_specs(self) -> InputTransformSpecs:
         pass
+
+    def _postprocess_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Postprocess the candidates.
+
+        Here we append the predictions to the candidates.
+
+        Args:
+            candidates: The generated candidates.
+
+        Returns:
+            Dataframe with candidates and corresponding predictions
+        """
+        preds = self.predict(candidates)
+        return pd.concat((candidates, preds), axis=1)
 
     def ask(
         self,
@@ -120,6 +164,30 @@ class PredictiveStrategy(Strategy):
             # initializing the ACQF.
             self._tell()
 
+    def calc_shap(self, candidates: pd.DataFrame) -> Dict[str, shap.Explanation]:
+        """Calculate SHAP values for the provided candidates.
+
+        Args:
+            candidates (pd.DataFrame): Candidates for which SHAP values should
+                be calculated.
+
+        Returns:
+            Dict[str, shap.Explanation]: Dictionary with SHAP values for each
+                output feature.
+
+        """
+        if not self.is_fitted:
+            raise ValueError("Model not yet fitted.")
+        if self.experiments is None:
+            raise ValueError(
+                "No experiments available. Strategy needs experiments to perform "
+                "SHAP calculations. Use `tell` to provide experimental data.",
+            )
+
+        return shap_importance(
+            predictor=self, bg_experiments=self.experiments, experiments=candidates
+        )
+
     def predict(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """Run predictions for the provided experiments. Only input features
         have to be provided.
@@ -182,7 +250,7 @@ class PredictiveStrategy(Strategy):
         self.domain.validate_experiments(self.experiments, strict=True)
         # transformed = self.transformer.fit_transform(self.experiments)
         self._fit(self.experiments)
-        self.is_fitted = True
+        self._is_fitted = True
 
     @abstractmethod
     def _fit(self, experiments: pd.DataFrame):

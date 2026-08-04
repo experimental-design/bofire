@@ -1,3 +1,4 @@
+import importlib.util
 import sys
 
 import numpy as np
@@ -12,20 +13,28 @@ from bofire.data_models.constraints.api import (
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.data_models.domain.api import Domain
+from bofire.data_models.domain.api import Domain, Inputs
+from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
+    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
 )
+from bofire.strategies.doe.objective import DOptimalityCriterion, get_objective_function
 from bofire.strategies.doe.utils import (
     ConstraintWrapper,
-    check_nchoosek_constraints_as_bounds,
+    _minimize,
     constraints_as_scipy_constraints,
+    convert_formula_to_string,
+    formula_str_to_fully_continuous,
     get_formula_from_string,
     n_zero_eigvals,
     nchoosek_constraints_as_bounds,
 )
+
+
+CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
 
 def get_formula_from_string_recursion_limit():
@@ -57,14 +66,14 @@ def test_get_formula_from_string():
 
     # linear model
     terms = ["1", "x0", "x1", "x2"]
-    model_formula = get_formula_from_string(domain=domain, model_type="linear")
+    model_formula = get_formula_from_string(inputs=domain.inputs, model_type="linear")
     assert all(term in terms for term in model_formula)
     assert all(term in np.array(model_formula, dtype=str) for term in terms)
 
     # linear and interaction
     terms = ["1", "x0", "x1", "x2", "x0:x1", "x0:x2", "x1:x2"]
     model_formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="linear-and-interactions",
     )
     assert all(term in terms for term in model_formula)
@@ -73,7 +82,7 @@ def test_get_formula_from_string():
     # linear and quadratic
     terms = ["1", "x0", "x1", "x2", "x0 ** 2", "x1 ** 2", "x2 ** 2"]
     model_formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="linear-and-quadratic",
     )
     assert all(term in terms for term in model_formula)
@@ -92,7 +101,9 @@ def test_get_formula_from_string():
         "x1 ** 2",
         "x2 ** 2",
     ]
-    model_formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
+    model_formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="fully-quadratic"
+    )
     assert all(term in terms for term in model_formula)
     assert all(term in np.array(model_formula, dtype=str) for term in terms)
 
@@ -100,7 +111,7 @@ def test_get_formula_from_string():
     terms_lhs = ["y"]
     terms_rhs = ["1", "x0", "x0 ** 2", "x0:x1"]
     model_formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="y ~ 1 + x0 + x0:x1 + {x0**2}",
         rhs_only=False,
     )
@@ -136,7 +147,7 @@ def test_get_formula_from_string():
 def test_n_zero_eigvals_unconstrained():
     # 5 continuous
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 100)) for i in range(5)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 100)) for i in range(5)],
         outputs=[ContinuousOutput(key="y")],
     )
 
@@ -170,10 +181,11 @@ def test_n_zero_eigvals_constrained():
     # thus there was one degree of freedom more if quadratic terms where added.
     # Here, discretes are sampled within their respective domain, thus discrete2==discrete2**2 always
     # thus we have one degree of freedom less.
+    # discrete2**2 (with only two levels) is no longer in the formula so  counts for linear-and quadratic and quadratic are updated accordingly.
     assert n_zero_eigvals(domain, "linear") == 1
-    assert n_zero_eigvals(domain, "linear-and-quadratic") == 2
+    assert n_zero_eigvals(domain, "linear-and-quadratic") == 1
     assert n_zero_eigvals(domain, "linear-and-interactions") == 3
-    assert n_zero_eigvals(domain, "fully-quadratic") == 7
+    assert n_zero_eigvals(domain, "fully-quadratic") == 6
 
     # TODO: NChooseK?
 
@@ -185,19 +197,23 @@ def test_number_of_model_terms():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    formula = get_formula_from_string(domain=domain, model_type="linear")
+    formula = get_formula_from_string(inputs=domain.inputs, model_type="linear")
     assert len(formula) == 6
 
-    formula = get_formula_from_string(domain=domain, model_type="linear-and-quadratic")
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="linear-and-quadratic"
+    )
     assert len(formula) == 11
 
     formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="linear-and-interactions",
     )
     assert len(formula) == 16
 
-    formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="fully-quadratic"
+    )
     assert len(formula) == 21
 
     # 3 continuous & 2 discrete inputs
@@ -212,20 +228,24 @@ def test_number_of_model_terms():
         outputs=[ContinuousOutput(key="y")],
     )
 
-    formula = get_formula_from_string(domain=domain, model_type="linear")
+    formula = get_formula_from_string(inputs=domain.inputs, model_type="linear")
     assert len(formula) == 6
 
-    formula = get_formula_from_string(domain=domain, model_type="linear-and-quadratic")
-    assert len(formula) == 11
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="linear-and-quadratic"
+    )
+    assert len(formula) == 10  # discrete2 has only 2 levels, no quadratic term
 
     formula = get_formula_from_string(
-        domain=domain,
+        inputs=domain.inputs,
         model_type="linear-and-interactions",
     )
     assert len(formula) == 16
 
-    formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
-    assert len(formula) == 21
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="fully-quadratic"
+    )
+    assert len(formula) == 20  # discrete2 has only 2 levels, no quadratic term
 
 
 def test_constraints_as_scipy_constraints():
@@ -282,7 +302,7 @@ def test_constraints_as_scipy_constraints():
 
     # domain with nonlinear constraints
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(3)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(3)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             NonlinearEqualityConstraint(
@@ -347,7 +367,7 @@ def test_constraints_as_scipy_constraints():
         inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(3)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
-            InterpointEqualityConstraint(feature="x0", multiplicity=3),
+            InterpointEqualityConstraint(features=["x0"], multiplicity=3),
         ],
     )
     n_experiments = 5
@@ -371,7 +391,7 @@ def test_constraints_as_scipy_constraints():
 def test_ConstraintWrapper():
     # define domain with all types of constraints
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
@@ -475,122 +495,99 @@ def test_ConstraintWrapper():
             ],
         ),
     )
-
-
-def test_check_nchoosek_constraints_as_bounds():
-    # define domain: possible to formulate as bounds, no NChooseK constraints
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
+    assert np.allclose(
+        c.jacobian(x, sparse=True), np.array([2, 0, 0, 2, 1, 0, 0, 1, 6, 0, 0, 0])
     )
-    check_nchoosek_constraints_as_bounds(domain)
 
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(-1, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[],
-    )
-    check_nchoosek_constraints_as_bounds(domain)
-
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(-np.inf, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
+    assert np.allclose(
+        c.hessian(x),
+        [
+            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
         ],
     )
-    check_nchoosek_constraints_as_bounds(domain)
 
-    # n-choose-k constraints when variables can be negative
-    domain = Domain.from_lists(
-        inputs=[
-            ContinuousInput(key=f"x{1}", bounds=(0, 1)),
-            ContinuousInput(key=f"x{2}", bounds=(-1, 1)),
-            ContinuousInput(key=f"x{3}", bounds=(-2, 1)),
-            ContinuousInput(key=f"x{4}", bounds=(-3, 1)),
-        ],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
-            LinearInequalityConstraint(
-                features=["x3", "x4"],
-                coefficients=[1, 1],
-                rhs=0,
-            ),
-            NChooseKConstraint(
-                features=["x1", "x2"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
-            NChooseKConstraint(
-                features=["x3", "x4"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
-        ],
-    )
-    check_nchoosek_constraints_as_bounds(domain)
 
-    # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.1, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            NChooseKConstraint(
-                features=["x1", "x2"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
-        ],
-    )
-    with pytest.raises(ValueError):
-        check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
-
-    # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="cyipopt required")
+def test_minimize():
+    # Run _minimize() with and without ipopt
+    n_experiments = 4
+    criterion = DOptimalityCriterion(formula="linear")
     domain = Domain.from_lists(
         inputs=[
-            ContinuousInput(key=f"x{1}", bounds=(-1, -0.1)),
-            ContinuousInput(key=f"x{2}", bounds=(-1, -0.1)),
-            ContinuousInput(key=f"x{3}", bounds=(-1, -0.1)),
-            ContinuousInput(key=f"x{4}", bounds=(-1, -0.1)),
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
-            NChooseKConstraint(
-                features=["x1", "x2"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
+            LinearEqualityConstraint(
+                features=["x1", "x2", "x3"],
+                coefficients=[1, 1, 1],
+                rhs=1,
             ),
         ],
     )
-    with pytest.raises(ValueError):
-        check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
 
-    # Not allowed: names parameters of two NChooseK overlap
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            NChooseKConstraint(
-                features=["x1", "x2"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
-            NChooseKConstraint(
-                features=["x2", "x3", "x4"],
-                max_count=2,
-                min_count=0,
-                none_also_valid=True,
-            ),
-        ],
+    objective_function = get_objective_function(
+        criterion, domain=domain, n_experiments=n_experiments
     )
-    with pytest.raises(ValueError):
-        check_nchoosek_constraints_as_bounds(domain)
+
+    x0 = (
+        domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM)
+        .to_numpy()
+        .flatten()
+    )
+    constraints = constraints_as_scipy_constraints(
+        domain,
+        n_experiments,
+        ignore_nchoosek=True,
+    )
+    bounds = nchoosek_constraints_as_bounds(domain, n_experiments)
+
+    result_ipopt = _minimize(
+        objective_function=objective_function,
+        x0=x0,
+        bounds=bounds,
+        constraints=constraints,
+        ipopt_options={"max_iter": 500, "print_level": 0},
+        use_hessian=False,
+        use_cyipopt=True,
+    )
+
+    result_scipy = _minimize(
+        objective_function=objective_function,
+        x0=x0,
+        bounds=bounds,
+        constraints=constraints,
+        ipopt_options={"max_iter": 500},
+        use_hessian=False,
+        use_cyipopt=False,
+    )
+
+    for i in range(n_experiments):
+        assert np.any(
+            [
+                np.allclose(result_ipopt[j], result_scipy[i])
+                for j in range(n_experiments)
+            ]
+        )
+        assert np.any(
+            [
+                np.allclose(result_scipy[j], result_ipopt[i])
+                for j in range(n_experiments)
+            ]
+        )
 
 
 def test_nchoosek_constraints_as_bounds():
@@ -598,8 +595,8 @@ def test_nchoosek_constraints_as_bounds():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
-                key=f"x{i+1}",
-                bounds=(-1, 1),
+                key=f"x{i + 1}",
+                bounds=(0, 1),
             )
             for i in range(5)
         ],
@@ -615,40 +612,545 @@ def test_nchoosek_constraints_as_bounds():
     for i in range(20):
         assert _bounds[i] == bounds[i]
 
-    # define domain: with NChooseK constraints
-    # define domain: no NChooseK constraints
-    # domain = Domain(
-    #     inputs=[
-    #         ContinuousInput(key=f"x{i+1}", bounds=(-1, 1),)
-    #         for i in range(5)
-    #     ],
-    #     outputs=[ContinuousOutput(key="y")],
-    #     constraints=[opti.NChooseK(["x1", "x2", "x3"], max_active=1)],
-    # )
-    # np.random.seed(1)
-    # bounds = nchoosek_constraints_as_bounds(domain, n_experiments=4)
-    # _bounds = [
-    #     (0.0, 0.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (0.0, 0.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (0.0, 0.0),
-    #     (0.0, 0.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    #     (-1.0, 1.0),
-    # ]
-    # assert len(bounds) == 20
-    # for i in range(20):
-    #     assert _bounds[i] == bounds[i]
+
+def test_convert_formula_to_string():
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(3)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    formula = get_formula_from_string(
+        inputs=domain.inputs, model_type="fully-quadratic"
+    )
+
+    formula_str = convert_formula_to_string(domain=domain, formula=formula)
+    assert (
+        formula_str
+        == "torch.vstack([torch.ones_like(x0), x0, x1, x2, x0 ** 2, x1 ** 2, x2 ** 2,"
+        + " x0*x1, x0*x2, x1*x2, ]).T"
+    )
+
+
+def test_formula_discrete_handled_like_continuous():
+    domain_w_discrete = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
+        + [DiscreteInput(key=f"x{i}", values=[0, 1, 2]) for i in range(3, 5)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    domain_wo_discrete = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
+        + [ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3, 5)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    for model_type in [
+        "linear",
+        "linear-and-interactions",
+        "linear-and-quadratic",
+        "fully-quadratic",
+    ]:
+        formula_w_discrete = get_formula_from_string(
+            inputs=domain_w_discrete.inputs, model_type=model_type
+        )
+        formula_wo_discrete = get_formula_from_string(
+            inputs=domain_wo_discrete.inputs, model_type=model_type
+        )
+        assert formula_w_discrete == formula_wo_discrete
+
+
+def test_formula_discrete_too_few_levels():
+    domain_w_discrete = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
+        + [DiscreteInput(key=f"x{i}", values=[0, 1]) for i in range(3, 5)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    domain_wo_discrete = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3)]
+        + [ContinuousInput(key=f"x{i}", bounds=[0, 1]) for i in range(3, 5)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    for model_type in [
+        "linear",
+        "linear-and-interactions",
+    ]:
+        formula_w_discrete = get_formula_from_string(
+            inputs=domain_w_discrete.inputs, model_type=model_type
+        )
+        formula_wo_discrete = get_formula_from_string(
+            inputs=domain_wo_discrete.inputs, model_type=model_type
+        )
+        assert formula_w_discrete == formula_wo_discrete
+
+    for model_type in [
+        "linear-and-quadratic",
+        "fully-quadratic",
+    ]:
+        formula_w_discrete = str(
+            get_formula_from_string(
+                inputs=domain_w_discrete.inputs, model_type=model_type
+            )
+        )
+
+        formula_wo_discrete = str(
+            get_formula_from_string(
+                inputs=domain_wo_discrete.inputs, model_type=model_type
+            )
+        ).replace(" + x3 ** 2 + x4 ** 2", "")
+        assert formula_w_discrete == formula_wo_discrete
+
+
+def test_formula_str_to_fully_continuous():
+    # Create a small example problem with categorical, continuous, and discrete variables
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="color",
+                categories=["red", "blue", "green"],
+            ),
+            ContinuousInput(
+                key="color_intensity",
+                bounds=(0.0, 1.0),
+            ),
+            CategoricalInput(
+                key="material",
+                categories=["plastic", "metal"],
+            ),
+            ContinuousInput(
+                key="temperature",
+                bounds=(20.0, 100.0),
+            ),
+            DiscreteInput(
+                key="pressure",
+                values=[1.0, 2.0, 3.0, 5.0, 10.0],
+            ),
+        ]
+    )
+
+    # Define a custom formula with interactions among categorical variables
+    # This includes interaction between color and material
+    custom_formula = (
+        "color + material + temperature + pressure + color:material + color_intensity"
+    )
+
+    # Convert to fully continuous representation
+    continuous_formula = formula_str_to_fully_continuous(
+        formula_str=custom_formula,
+        inputs=inputs,
+    )
+
+    # Assert the expected formula explicitly
+    expected_formula = "1 + aux_color_red + aux_color_blue + aux_material_plastic + temperature + pressure + color_intensity + aux_color_red:aux_material_plastic + aux_color_blue:aux_material_plastic"
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+    custom_formula = "color + temperature + pressure + color_intensity"
+    continuous_formula = formula_str_to_fully_continuous(
+        formula_str=custom_formula,
+        inputs=inputs,
+    )
+    expected_formula = (
+        "1 + aux_color_red + aux_color_blue + temperature + pressure + color_intensity"
+    )
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+    custom_formula = "material + temperature + pressure"
+    continuous_formula = formula_str_to_fully_continuous(
+        formula_str=custom_formula,
+        inputs=inputs,
+    )
+    expected_formula = "1 + aux_material_plastic + temperature + pressure"
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+    custom_formula = "temperature:material + color_intensity + pressure:color"
+
+    continuous_formula = formula_str_to_fully_continuous(
+        formula_str=custom_formula,
+        inputs=inputs,
+    )
+    expected_formula = "1 + color_intensity + temperature:aux_material_plastic + pressure:aux_color_red + pressure:aux_color_blue"
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+    custom_formula = "1 + color + material + temperature + pressure + color:material + temperature:material + pressure:color + color_intensity"
+    continuous_formula = formula_str_to_fully_continuous(
+        formula_str=custom_formula,
+        inputs=inputs,
+    )
+    expected_formula = "1 + aux_color_red + aux_color_blue + aux_material_plastic + temperature + pressure + color_intensity + aux_color_red:aux_material_plastic + aux_color_blue:aux_material_plastic + temperature:aux_material_plastic + pressure:aux_color_red + pressure:aux_color_blue"
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+
+def test_formula_str_does_not_match_discrete_levels_emmits_warning():
+    # Create a small example problem with categorical, continuous, and discrete variables
+
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="color",
+                categories=["red", "blue", "green"],
+            ),
+            ContinuousInput(
+                key="color_intensity",
+                bounds=(0.0, 1.0),
+            ),
+            CategoricalInput(
+                key="material",
+                categories=["plastic", "metal"],
+            ),
+            ContinuousInput(
+                key="temperature",
+                bounds=(20.0, 100.0),
+            ),
+            DiscreteInput(
+                key="pressure",
+                values=[0, 1],
+            ),
+        ]
+    )
+
+    # Define a custom formula with interactions among categorical variables
+    # This includes interaction between color and material
+    custom_formula = "color + material + temperature + { pressure ** 2 } + color:material + color_intensity"
+    with pytest.warns(
+        UserWarning,
+        match="Discrete input pressure with 2 levels cannot represent a term of order 2 or higher.",
+    ):
+        formula_str_to_fully_continuous(
+            formula_str=custom_formula,
+            inputs=inputs,
+        )
+
+
+def test_formula_str_to_fully_continuous_only_categoricals():
+    # Create a small example problem with only categorical variables
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="color",
+                categories=["red", "blue", "green"],
+            ),
+            CategoricalInput(
+                key="material",
+                categories=["plastic", "metal"],
+            ),
+            CategoricalInput(
+                key="material_shape",
+                categories=["circle", "square"],
+            ),
+        ]
+    )
+
+    # Define a custom formula with interactions among categorical variables
+    custom_formula = "color + material + color:material + material:material_shape"
+    # Convert to fully continuous representation
+    continuous_formula = formula_str_to_fully_continuous(
+        formula_str=custom_formula,
+        inputs=inputs,
+    )
+    # Assert the expected formula explicitly
+    expected_formula = (
+        "1 + aux_color_red + aux_color_blue + aux_material_plastic"
+        + " + aux_color_red:aux_material_plastic + aux_color_blue:aux_material_plastic"
+        + " + aux_material_plastic:aux_material_shape_circle"
+    )
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+    custom_formula = "material:color + material_shape"
+    continuous_formula = formula_str_to_fully_continuous(
+        formula_str=custom_formula,
+        inputs=inputs,
+    )
+    expected_formula = "1 + aux_material_shape_circle + aux_material_plastic:aux_color_red + aux_material_plastic:aux_color_blue"
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+
+def only_continuous_inputs_formula_str_to_fully_continuous():
+    # Create a small example problem with only continuous and discrete variables
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key="length",
+                bounds=(0.0, 10.0),
+            ),
+            DiscreteInput(
+                key="width",
+                values=[1.0, 2.0, 3.0],
+            ),
+            ContinuousInput(
+                key="height",
+                bounds=(5.0, 15.0),
+            ),
+        ]
+    )
+
+    # Define a custom formula
+    custom_formula = "length + width + height + length:height"
+
+    # Convert to fully continuous representation
+    continuous_formula = formula_str_to_fully_continuous(
+        formula_str=custom_formula,
+        inputs=inputs,
+    )
+
+    # Assert the expected formula explicitly
+    expected_formula = "1 + length + width + height + length:height"
+    assert (
+        str(continuous_formula) == expected_formula
+    ), f"Expected: {expected_formula}\nGot: {continuous_formula}"
+
+
+def test_nchoosek_bounds_known_patterns():
+    """Test nchoosek_constraints_as_bounds against known expected activity patterns.
+
+    For 3 features with min_count=1, max_count=2, the complete set of deactivation
+    patterns is deterministic (only the order within experiments is random):
+      k=1 (2 inactive): (0,0,1), (0,1,0), (1,0,0)
+      k=2 (1 inactive): (0,1,1), (1,0,1), (1,1,0)
+    With n_experiments >= 6, every pattern must appear at least once.
+    """
+    n_features = 3
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0)) for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1", "x2"],
+                min_count=1,
+                max_count=2,
+                none_also_valid=False,
+            )
+        ],
+    )
+    n_experiments = 12
+    bounds = nchoosek_constraints_as_bounds(d, n_experiments=n_experiments)
+
+    D = n_features
+    assert len(bounds) == D * n_experiments
+
+    # extract the activity pattern (1=active, 0=pinned-to-zero) per experiment
+    observed_patterns = set()
+    for i in range(n_experiments):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+        # every active slot must keep its original bounds
+        for j, b in enumerate(exp_bounds):
+            if b != (0.0, 0.0):
+                assert b == (
+                    0.0,
+                    1.0,
+                ), f"exp {i}, feature {j}: expected (0.0, 1.0), got {b}"
+
+    # the expected set of all patterns for min_count=1, max_count=2, 3 features
+    expected_patterns = {
+        # k=1: exactly 1 active feature
+        (1, 0, 0),
+        (0, 1, 0),
+        (0, 0, 1),
+        # k=2: exactly 2 active features
+        (1, 1, 0),
+        (1, 0, 1),
+        (0, 1, 1),
+    }
+    assert observed_patterns == expected_patterns, (
+        f"Expected patterns {sorted(expected_patterns)}, "
+        f"got {sorted(observed_patterns)}"
+    )
+
+    # every pattern must have between min_count and max_count active features
+    for pat in observed_patterns:
+        active = sum(pat)
+        assert 1 <= active <= 2, f"Pattern {pat} has {active} active features"
+
+
+def test_nchoosek_bounds_none_also_valid():
+    """Test none_also_valid behavior for the all-zero pattern."""
+
+    n_features = 3
+
+    # --- Case 1: none_also_valid=False with min_count=0 ---
+    d_no_none = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0), allow_zero=True)
+            for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1", "x2"],
+                min_count=0,
+                max_count=2,
+                none_also_valid=False,
+            )
+        ],
+    )
+
+    n_experiments = 12
+    bounds = nchoosek_constraints_as_bounds(d_no_none, n_experiments=n_experiments)
+
+    D = n_features
+    observed_patterns = set()
+    for i in range(n_experiments):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+
+    # none_also_valid=False: all-zero pattern should NOT appear
+    expected_patterns = {
+        (1, 1, 0),
+        (1, 0, 1),
+        (0, 1, 1),
+        (0, 1, 0),
+        (0, 0, 1),
+        (1, 0, 0),
+    }
+    assert observed_patterns == expected_patterns, (
+        f"Expected patterns {sorted(expected_patterns)}, "
+        f"got {sorted(observed_patterns)}"
+    )
+
+    # --- Case 2: none_also_valid=True with min_count=0 ---
+    # When min_count=0, the all-zero pattern is NOT added in bounds
+    # (it is handled at validation level by is_fulfilled / domain.py).
+    d_with_none = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0), allow_zero=True)
+            for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1", "x2"],
+                min_count=0,
+                max_count=2,
+                none_also_valid=True,
+            )
+        ],
+    )
+    bounds = nchoosek_constraints_as_bounds(d_with_none, n_experiments=n_experiments)
+
+    observed_patterns = set()
+    for i in range(n_experiments):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+
+    # Same patterns as Case 1: all-zero is NOT added in bounds when min_count=0
+    assert observed_patterns == expected_patterns, (
+        f"Expected patterns {sorted(expected_patterns)}, "
+        f"got {sorted(observed_patterns)}"
+    )
+
+    # --- Case 3: none_also_valid=True with min_count > 0 ---
+    # none_also_valid does NOT affect bounds generation (only is_fulfilled
+    # and domain.py enumeration).  With min_count=2, max_count=2, we only
+    # get the C(3,1) = 3 patterns with exactly 2 active features.
+    d_min_gt_zero = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0), allow_zero=True)
+            for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1", "x2"],
+                min_count=2,
+                max_count=2,
+                none_also_valid=True,
+            )
+        ],
+    )
+    bounds = nchoosek_constraints_as_bounds(d_min_gt_zero, n_experiments=n_experiments)
+
+    observed_patterns = set()
+    for i in range(n_experiments):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+
+    expected_patterns_min_gt_zero = {
+        (1, 1, 0),
+        (1, 0, 1),
+        (0, 1, 1),
+    }
+    assert observed_patterns == expected_patterns_min_gt_zero, (
+        f"Expected patterns {sorted(expected_patterns_min_gt_zero)}, "
+        f"got {sorted(observed_patterns)}"
+    )
+
+
+def test_multi_nchoosek_bounds_known_patterns():
+    """Test nchoosek_constraints_as_bounds against known expected activity patterns."""
+    n_features = 3
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0)) for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x0", "x1"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["x1", "x2"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+        ],
+    )
+    n_experiments = 12
+    bounds = nchoosek_constraints_as_bounds(d, n_experiments=n_experiments)
+
+    D = n_features
+    assert len(bounds) == D * n_experiments
+
+    # extract the activity pattern (1=active, 0=pinned-to-zero) per experiment
+    observed_patterns = set()
+    for i in range(n_experiments):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        observed_patterns.add(pattern)
+        # every active slot must keep its original bounds
+        for j, b in enumerate(exp_bounds):
+            if b != (0.0, 0.0):
+                assert b == (
+                    0.0,
+                    1.0,
+                ), f"exp {i}, feature {j}: expected (0.0, 1.0), got {b}"
+
+    expected_patterns = {
+        (0, 1, 0),  # x1 active, x0 and x2 inactive
+        (1, 0, 1),  # x0 and x2 active, x1 inactive
+    }
+    assert observed_patterns == expected_patterns, (
+        f"Expected patterns {sorted(expected_patterns)}, "
+        f"got {sorted(observed_patterns)}"
+    )
+
+    # every pattern must have between min_count and max_count active features
+    for pat in observed_patterns:
+        active = sum(pat)
+        assert 1 <= active <= 2, f"Pattern {pat} has {active} active features"
+
+
+if __name__ == "__main__":
+    test_multi_nchoosek_bounds_known_patterns()

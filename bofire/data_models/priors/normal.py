@@ -1,6 +1,6 @@
+import math
 from typing import Literal
 
-import numpy as np
 from pydantic import PositiveFloat
 
 from bofire.data_models.priors.prior import Prior
@@ -43,7 +43,7 @@ class DimensionalityScaledLogNormalPrior(Prior):
     type: Literal["DimensionalityScaledLogNormalPrior"] = (
         "DimensionalityScaledLogNormalPrior"
     )
-    loc: PositiveFloat = np.sqrt(2)
+    loc: PositiveFloat = math.sqrt(2)
     loc_scaling: PositiveFloat = 0.5
-    scale: PositiveFloat = np.sqrt(3)
+    scale: PositiveFloat = math.sqrt(3)
     scale_scaling: float = 0.0

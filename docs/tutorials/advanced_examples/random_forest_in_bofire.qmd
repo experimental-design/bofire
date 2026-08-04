@@ -1,0 +1,80 @@
+---
+title: Random Forest in BoFire
+jupyter: python3
+---
+
+## Imports
+
+
+```{python}
+#| papermill: {duration: 26.862628, end_time: '2024-10-10T20:34:13.573982', exception: false, start_time: '2024-10-10T20:33:46.711354', status: completed}
+#| tags: []
+import bofire.strategies.api as strategies
+import bofire.surrogates.api as surrogates
+from bofire.benchmarks.multi import DTLZ2
+from bofire.data_models.domain.api import Outputs
+from bofire.data_models.strategies.api import MoboStrategy
+from bofire.data_models.surrogates.api import BotorchSurrogates, RandomForestSurrogate
+```
+
+## Setup a RF
+
+```{python}
+#| papermill: {duration: 0.249081, end_time: '2024-10-10T20:34:13.826056', exception: true, start_time: '2024-10-10T20:34:13.576975', status: failed}
+#| tags: []
+benchmark = DTLZ2(dim=6)
+
+experiments = benchmark.f(benchmark.domain.inputs.sample(20), return_complete=True)
+
+# you can use the hyperparams from sklearn
+rf_data_model = RandomForestSurrogate(
+    inputs=benchmark.domain.inputs,
+    outputs=Outputs(features=[benchmark.domain.outputs[0]]),
+    n_estimators=100,
+)
+
+rf = surrogates.map(rf_data_model)
+
+cv_train, cv_test, _ = rf.cross_validate(experiments)
+
+cv_test.get_metrics()
+```
+
+## Setup an optimization
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+benchmark = DTLZ2(dim=6)
+
+data_model = MoboStrategy(
+    domain=benchmark.domain,
+    ref_point={"f_0": 1.1, "f_1": 1.1},
+    surrogate_specs=BotorchSurrogates(
+        surrogates=[
+            RandomForestSurrogate(
+                inputs=benchmark.domain.inputs,
+                outputs=Outputs(features=[benchmark.domain.outputs[0]]),
+            ),
+            RandomForestSurrogate(
+                inputs=benchmark.domain.inputs,
+                outputs=Outputs(features=[benchmark.domain.outputs[1]]),
+            ),
+        ],
+    ),
+)
+
+recommender = strategies.map(data_model=data_model)
+
+experiments = benchmark.f(benchmark.domain.inputs.sample(10), return_complete=True)
+recommender.tell(experiments=experiments)
+
+
+# currently not supported
+# for i in range(10):
+#     samples = benchmark.domain.inputs.sample(512, method=SamplingMethodEnum.SOBOL)
+#     candidates = recommender.ask(1, candidate_pool=samples)
+#     candidates = candidates.reset_index(drop=True)
+#     new_experiments = benchmark.f(candidates[benchmark.domain.inputs.get_keys().copy()], return_complete=True)
+#     recommender.tell(experiments=new_experiments)
+```

@@ -183,6 +183,18 @@ def test_categorical_input_feature_validate_candidental_invalid(input_feature, v
         input_feature.validate_candidental(values)
 
 
+def test_cateogorical_input_is_fulfilled():
+    feature = CategoricalInput(
+        key="a", categories=["B", "A", "C"], allowed=[True, True, False]
+    )
+    values = pd.Series(["A", "B", "C", "D"], index=[0, 1, 2, 5])
+    fulfilled = feature.is_fulfilled(values)
+    assert_series_equal(
+        fulfilled,
+        pd.Series([True, True, False, False], index=[0, 1, 2, 5]),
+    )
+
+
 @pytest.mark.parametrize(
     "key, categories, samples",
     [
@@ -485,3 +497,52 @@ def test_categorical_output_call():
     )
     output = categorical_output(test_df, test_df)
     assert output.tolist() == test_df["c1"].tolist()
+
+
+def test_categorical_input_to_pydantic_field():
+    from typing import Literal
+
+    feat = CategoricalInput(key="sol", categories=["water", "ethanol", "toluene"])
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type == Literal["water", "ethanol", "toluene"]
+    assert (
+        field_info.description
+        == "Categorical, allowed: ['water', 'ethanol', 'toluene']"
+    )
+
+
+def test_categorical_input_to_pydantic_field_respects_allowed():
+    from typing import Literal
+
+    feat = CategoricalInput(
+        key="sol",
+        categories=["water", "ethanol", "toluene"],
+        allowed=[True, True, False],
+    )
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type == Literal["water", "ethanol"]
+    assert field_info.description == "Categorical, allowed: ['water', 'ethanol']"
+
+
+def test_categorical_input_to_pydantic_field_falls_back_to_str_above_threshold():
+    from bofire.data_models.features.categorical import LLM_ENUM_SCHEMA_THRESHOLD
+
+    categories = [f"c{i}" for i in range(LLM_ENUM_SCHEMA_THRESHOLD + 1)]
+    feat = CategoricalInput(key="big", categories=categories)
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type is str
+    # description still lists the categories so the LLM has guidance
+    assert "c0" in field_info.description
+    assert f"c{LLM_ENUM_SCHEMA_THRESHOLD}" in field_info.description
+
+
+def test_categorical_input_to_pydantic_field_at_threshold_stays_literal():
+    from typing import Literal, get_args, get_origin
+
+    from bofire.data_models.features.categorical import LLM_ENUM_SCHEMA_THRESHOLD
+
+    categories = [f"c{i}" for i in range(LLM_ENUM_SCHEMA_THRESHOLD)]
+    feat = CategoricalInput(key="edge", categories=categories)
+    field_type, _ = feat.to_pydantic_field()
+    assert get_origin(field_type) is get_origin(Literal["x"])
+    assert list(get_args(field_type)) == categories

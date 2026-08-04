@@ -15,10 +15,10 @@ from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
-    TaskInput,
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
@@ -42,12 +42,6 @@ class Ackley(Benchmark):
     This function is the negated version of https://en.wikipedia.org/wiki/Ackley_function.
 
     """
-
-    # @validator("validate_categoricals")
-    # def validate_categoricals(cls, v, num_categoricals):
-    #     if v and num_categoricals ==1:
-    #         raise ValueError("num_categories  must be specified if categorical=True")
-    #     return v
 
     def __init__(
         self,
@@ -110,7 +104,7 @@ class Ackley(Benchmark):
         # continuous input features
         for d in range(self.dim):
             input_feature_list.append(
-                ContinuousInput(key=f"x_{d+1}", bounds=[self.lower, self.upper]),
+                ContinuousInput(key=f"x_{d + 1}", bounds=[self.lower, self.upper]),
             )
 
         # Objective
@@ -121,7 +115,7 @@ class Ackley(Benchmark):
             outputs=Outputs(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Evaluates benchmark function.
 
         Args:
@@ -135,7 +129,7 @@ class Ackley(Benchmark):
         a = 20
         b = 0.2
         c = np.pi * 2
-        x = np.array([X[f"x_{d+1}"] for d in range(self.dim)])
+        x = np.array([X[f"x_{d + 1}"] for d in range(self.dim)])
 
         c = np.zeros(len(X))
         d = np.zeros(len(X))
@@ -351,7 +345,7 @@ class Branin30(Benchmark):
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i+1:02d}", bounds=[0, 1])
+                    ContinuousInput(key=f"x_{i + 1:02d}", bounds=[0, 1])
                     for i in range(30)
                 ],
             ),
@@ -406,7 +400,7 @@ class Himmelblau(Benchmark):
             outputs=Outputs(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Evaluates benchmark function.
 
         Args:
@@ -420,6 +414,7 @@ class Himmelblau(Benchmark):
         X_temp = X.eval(
             "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
             inplace=False,
+            engine="python",
         )
         Y = pd.DataFrame({"y": X_temp["y"], "valid_y": 1})
         return Y
@@ -446,6 +441,31 @@ class Himmelblau(Benchmark):
         )
 
 
+class PositiveHimmelblau(Himmelblau):
+    """Modified Himmelblau function shifted to be positive everywhere."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+        """Evaluates modified benchmark function.
+
+        Args:
+            X (pd.DataFrame): Input values. Columns are x_1 and x_2
+            **kwargs: Allow additional unused arguments to prevent errors.
+
+        Returns:
+            pd.DataFrame: y values of the function. Columns are y and valid_y.
+
+        """
+        X_temp = X.eval(
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+            inplace=False,
+        )
+        Y = pd.DataFrame({"y": X_temp["y"], "valid_y": 1})
+        return Y + 1e-8
+
+
 class MultiTaskHimmelblau(Benchmark):
     """Himmelblau function for testing optimization algorithms
     Link to the definition: https://en.wikipedia.org/wiki/Himmelblau%27s_function
@@ -467,7 +487,9 @@ class MultiTaskHimmelblau(Benchmark):
         self.use_constraints = use_constraints
         inputs = []
 
-        inputs.append(TaskInput(key="task_id", categories=["task_1", "task_2"]))
+        inputs.append(
+            CategoricalTaskInput(key="task_id", categories=["task_1", "task_2"])
+        )
         inputs.append(ContinuousInput(key="x_1", bounds=[-6, 6]))
         inputs.append(ContinuousInput(key="x_2", bounds=[-6, 6]))
 
@@ -480,7 +502,7 @@ class MultiTaskHimmelblau(Benchmark):
             outputs=Outputs(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """Evaluates benchmark function.
 
         Args:
@@ -497,6 +519,7 @@ class MultiTaskHimmelblau(Benchmark):
         X_temp = X.query("task_id == 'task_1'").eval(
             "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
             inplace=False,
+            engine="python",
         )
         Y.loc[X_temp.index, "y"] = X_temp["y"]
         Y.loc[X_temp.index, "valid_y"] = 1
@@ -504,6 +527,7 @@ class MultiTaskHimmelblau(Benchmark):
         X_temp = X.query("task_id == 'task_2'").eval(
             "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2) + x_1 * x_2",
             inplace=False,
+            engine="python",
         )
         Y.loc[X_temp.index, "y"] = X_temp["y"]
         Y.loc[X_temp.index, "valid_y"] = 1
@@ -690,7 +714,7 @@ class Multinormalpdfs(Benchmark):
         self.gaussians = gaussians
         self.prefactors = prefactors
 
-    def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(
             {
                 "y": X.apply(

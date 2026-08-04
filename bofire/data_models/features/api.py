@@ -1,5 +1,4 @@
-from typing import Union
-
+from bofire.data_models.features._register import register_engineered_feature
 from bofire.data_models.features.categorical import CategoricalInput, CategoricalOutput
 from bofire.data_models.features.continuous import ContinuousInput, ContinuousOutput
 from bofire.data_models.features.descriptor import (
@@ -7,45 +6,81 @@ from bofire.data_models.features.descriptor import (
     ContinuousDescriptorInput,
 )
 from bofire.data_models.features.discrete import DiscreteInput
+from bofire.data_models.features.engineered_feature import (
+    CloneFeature,
+    EngineeredFeature,
+    InterpolateFeature,
+    MeanFeature,
+    MolecularWeightedMeanFeature,
+    MolecularWeightedSumFeature,
+    ProductFeature,
+    SumFeature,
+    WeightedMeanFeature,
+    WeightedSumFeature,
+)
 from bofire.data_models.features.feature import Feature, Input, Output
 from bofire.data_models.features.molecular import (
     CategoricalMolecularInput,
-    MolecularInput,
+    ContinuousMolecularInput,
 )
 from bofire.data_models.features.numerical import NumericalInput
-from bofire.data_models.features.task import TaskInput
+from bofire.data_models.features.task import (
+    CategoricalTaskInput,
+    ContinuousTaskInput,
+    TaskInput,
+)
+from bofire.data_models.unions import tagged_union
 
 
-AbstractFeature = Union[
-    Feature,
-    Input,
-    Output,
-    NumericalInput,
-]
-
-# TODO: here is a bug, CategoricalOutput has to be the first item here, no idea why ...
-AnyFeature = Union[
-    CategoricalOutput,
+_FEATURE_TYPES: list[type[Feature]] = [
     DiscreteInput,
     CategoricalInput,
+    ContinuousInput,
     ContinuousOutput,
-    ContinuousInput,
+    CategoricalOutput,
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
-    MolecularInput,
     CategoricalMolecularInput,
-    TaskInput,
+    CategoricalTaskInput,
+    ContinuousTaskInput,
+    SumFeature,
+    MeanFeature,
+    WeightedMeanFeature,
+    WeightedSumFeature,
+    MolecularWeightedMeanFeature,
+    MolecularWeightedSumFeature,
+    ContinuousMolecularInput,
+    ProductFeature,
+    InterpolateFeature,
+    CloneFeature,
 ]
 
-AnyInput = Union[
+AnyFeature = tagged_union(*_FEATURE_TYPES)
+
+AnyInput = tagged_union(
     DiscreteInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
-    MolecularInput,
     CategoricalMolecularInput,
-    TaskInput,
+    ContinuousTaskInput,
+    CategoricalTaskInput,
+    ContinuousMolecularInput,
+)
+
+AnyOutput = tagged_union(ContinuousOutput, CategoricalOutput)
+
+_ENGINEERED_FEATURE_TYPES: list[type[EngineeredFeature]] = [
+    SumFeature,
+    MeanFeature,
+    WeightedMeanFeature,
+    WeightedSumFeature,
+    MolecularWeightedMeanFeature,
+    MolecularWeightedSumFeature,
+    ProductFeature,
+    InterpolateFeature,
+    CloneFeature,
 ]
 
-AnyOutput = Union[ContinuousOutput, CategoricalOutput]
+AnyEngineeredFeature = tagged_union(*_ENGINEERED_FEATURE_TYPES)

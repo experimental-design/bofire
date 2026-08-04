@@ -1,0 +1,155 @@
+from typing import Annotated, Dict, List, Literal, Optional, Union
+
+import pandas as pd
+from pydantic import Field
+
+from bofire.data_models.constraints.condition import (
+    SelectionCondition,
+    ThresholdCondition,
+)
+from bofire.data_models.constraints.constraint import Constraint
+from bofire.data_models.domain.features import Inputs
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    DiscreteInput,
+)
+from bofire.data_models.types import FeatureKeys
+
+
+class CategoricalExcludeConstraint(Constraint):
+    """Class for modelling exclusion constraints.
+
+    It evaluates conditions on two features and combines them using logical operators.
+    If the logical combination evaluates to true, the constraint is not fulfilled.
+    So far, this kind of constraint is only supported by the RandomStrategy.
+
+    Attributes:
+        features: List of feature keys to apply the conditions on.
+        conditions: List of conditions to evaluate.
+        logical_op: Logical operator to combine the conditions. Can be "AND", "OR", or "XOR".
+            Default is "AND".
+    """
+
+    type: Literal["CategoricalExcludeConstraint"] = "CategoricalExcludeConstraint"
+    features: FeatureKeys
+    conditions: Annotated[
+        List[Union[ThresholdCondition, SelectionCondition]],
+        Field(min_length=2, max_length=2),
+    ]
+    logical_op: Literal["AND", "OR", "XOR"] = "AND"
+
+    def to_description(self) -> str:
+        """Render as ``"Exclude where solvent in ['A', 'B'] AND temp > 50"``.
+
+        Example::
+
+            >>> c = CategoricalExcludeConstraint(
+            ...     features=["solvent", "temp"],
+            ...     conditions=[SelectionCondition(selection=["A"]), ThresholdCondition(threshold=50, operator=">")],
+            ... )
+            >>> c.to_description()
+            "Exclude where solvent in ['A'] AND temp > 50"
+        """
+        conds = []
+        for feat, cond in zip(self.features, self.conditions):
+            if isinstance(cond, SelectionCondition):
+                conds.append(f"{feat} in {cond.selection}")
+            elif isinstance(cond, ThresholdCondition):
+                conds.append(f"{feat} {cond.operator} {cond.threshold}")
+            else:
+                conds.append(f"{feat}: {type(cond).__name__}")
+        desc = f"Exclude where {f' {self.logical_op} '.join(conds)}"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc
+
+    def validate_inputs(self, inputs: Inputs):
+        """Validates that the features stored in Inputs are compatible with the constraint.
+
+        Args:
+            inputs: Inputs to validate.
+        """
+        found_categorical = False
+        keys = inputs.get_keys([CategoricalInput, DiscreteInput, ContinuousInput])
+        for f in self.features:
+            if f not in keys:
+                raise ValueError(
+                    f"Feature {f} is not a input feature in the provided Inputs object.",
+                )
+        for i in range(2):
+            feat = inputs.get_by_key(self.features[i])
+            condition = self.conditions[i]
+            if isinstance(feat, CategoricalInput):
+                found_categorical = True
+                if not isinstance(condition, SelectionCondition):
+                    raise ValueError(
+                        f"Condition for feature {self.features[i]} is not a SubSelectionCondition.",
+                    )
+                if not all(key in feat.categories for key in condition.selection):
+                    raise ValueError(
+                        f"Some categories in condition {i} are not valid categories for feature {self.features[i]}."
+                    )
+            elif isinstance(feat, DiscreteInput):
+                if isinstance(condition, SelectionCondition):
+                    if not all(key in feat.values for key in condition.selection):
+                        raise ValueError(
+                            f"Some values in condition {i} are not valid values for feature {self.features[i]}."
+                        )
+            else:  # we have a ContinuousInput
+                if not isinstance(condition, ThresholdCondition):
+                    raise ValueError(
+                        f"Condition for ContinuousInput {self.features[i]} is not a ThresholdCondition.",
+                    )
+        if not found_categorical:
+            raise ValueError(
+                "At least one of the features must be a CategoricalInput feature.",
+            )
+
+    def __call__(self, experiments: pd.DataFrame) -> pd.Series:
+        """Numerically evaluates the constraint.
+
+        Returns the distance to the constraint fulfillment. Here 1 for not fulfilled
+        and 0 for fulfilled.
+
+        Args:
+            experiments (pd.DataFrame): Dataframe to evaluate the constraint on.
+
+        Returns:
+            pd.Series: Constraint fulfillment: Will be 1.0 for not fulfilled and 0.0 for fulfilled.
+
+        """
+        return 1 - self.is_fulfilled(experiments).astype(float)
+
+    def is_fulfilled(
+        self,
+        experiments: pd.DataFrame,
+        tol: Optional[float] = 1e-6,
+    ) -> pd.Series:
+        """Checks if the constraint is fulfilled for the given experiments.
+
+        Args:
+            experiments DataFrame containing the experiments.
+            tol: Tolerance for checking. Not used here. Defaults to 1e-6.
+
+        Returns:
+            Series indicating whether the constraint is fulfilled for each experiment.
+
+        """
+        fulfilled_conditions = [
+            condition(experiments[self.features[i]])
+            for i, condition in enumerate(self.conditions)
+        ]
+
+        if self.logical_op == "AND":
+            return ~(fulfilled_conditions[0] & fulfilled_conditions[1])
+        elif self.logical_op == "OR":
+            return ~(fulfilled_conditions[0] | fulfilled_conditions[1])
+        else:
+            return ~(fulfilled_conditions[0] ^ fulfilled_conditions[1])
+
+    def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        raise NotImplementedError("Method `jacobian` currently not implemented.")
+
+    def hessian(self, experiments: pd.DataFrame) -> Dict[Union[str, int], pd.DataFrame]:
+        raise NotImplementedError("Method `hessian` currently not implemented.")

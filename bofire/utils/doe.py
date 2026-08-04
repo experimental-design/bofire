@@ -208,7 +208,7 @@ def get_alias_structure(gen: str, order: int = 4) -> List[str]:
         )  # this is the product of the combination
         scontrast = "".join(np.where(contrast == 1, "+", "-").tolist())
         aliases[scontrast] = aliases.get(scontrast, [])
-        aliases[scontrast].append(combination)  # type: ignore
+        aliases[scontrast].append(combination)
 
     aliases_list = []
     for alias in aliases.values():

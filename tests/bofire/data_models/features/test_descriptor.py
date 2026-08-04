@@ -102,26 +102,6 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
     assert np.all(samples == pd.Series([categories[1], categories[1]]))
 
 
-def test_categorical_descriptor_to_descriptor_encoding_1d():
-    c = CategoricalDescriptorInput(
-        key="c",
-        categories=["B", "A", "C"],
-        descriptors=["d1"],
-        values=[[1], [3], [5]],
-    )
-    samples = pd.Series(["A", "A", "C", "B"])
-    t_samples = c.to_descriptor_encoding(samples)
-    assert_frame_equal(
-        t_samples,
-        pd.DataFrame(
-            data=[[3.0], [3.0], [5.0], [1.0]],
-            columns=["c_d1"],
-        ),
-    )
-    untransformed = c.from_descriptor_encoding(t_samples)
-    assert np.all(samples == untransformed)
-
-
 @pytest.mark.parametrize(
     "input_feature, expected_with_values, expected",
     [
@@ -199,7 +179,7 @@ def test_categorical_descriptor_feature_get_bounds(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
             ),
-            pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
+            pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(200)]),
             True,
         ),
         (
@@ -207,7 +187,7 @@ def test_categorical_descriptor_feature_get_bounds(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
             ),
-            pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
+            pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(200)]),
             False,
         ),
         (
@@ -237,9 +217,7 @@ def test_categorical_descriptor_feature_get_bounds(
                 categories=["1", "2", "3"],
                 allowed=[True, False, False],
             ),
-            pd.Series([random.choice([1, 2, 3]) for _ in range(20)]),
-            # CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
-            # pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
+            pd.Series([random.choice([1, 2, 3]) for _ in range(200)]),
             False,
         ),
     ],
@@ -397,3 +375,54 @@ def test_categorical_descriptor_input_feature_from_dataframe(
     assert f.categories == categories
     assert f.descriptors == descriptors
     assert f.values == values
+
+
+def test_categorical_descriptor_input_to_pydantic_field():
+    feat = CategoricalDescriptorInput(
+        key="cat",
+        categories=["a", "b"],
+        descriptors=["d1", "d2"],
+        values=[[1.0, 2.0], [3.0, 4.0]],
+    )
+    _, field_info = feat.to_pydantic_field()
+    assert field_info.description == (
+        "Categorical with descriptors, allowed: ['a', 'b'] — "
+        "descriptors per category: {'a': {'d1': 1.0, 'd2': 2.0}, 'b': {'d1': 3.0, 'd2': 4.0}}"
+    )
+
+
+def test_continuous_descriptor_input_to_pydantic_field():
+    from bofire.data_models.features.api import ContinuousDescriptorInput
+
+    feat = ContinuousDescriptorInput(
+        key="x",
+        bounds=(0, 1),
+        descriptors=["d1"],
+        values=[0.5],
+    )
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type is float
+    assert field_info.description == (
+        "Continuous, bounds [0.0, 1.0] — descriptors: {'d1': 0.5}"
+    )
+
+
+def test_categorical_descriptor_input_to_pydantic_field_falls_back_above_threshold():
+    from bofire.data_models.features.categorical import LLM_ENUM_SCHEMA_THRESHOLD
+
+    n = LLM_ENUM_SCHEMA_THRESHOLD + 1
+    categories = [f"c{i}" for i in range(n)]
+    # distinct values per category so the per-descriptor variance validator passes
+    values = [[float(i)] for i in range(n)]
+    feat = CategoricalDescriptorInput(
+        key="big",
+        categories=categories,
+        descriptors=["d1"],
+        values=values,
+    )
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type is str
+    # description still lists the categories (via the prefix) and the mapping
+    assert "c0" in field_info.description
+    assert f"c{n - 1}" in field_info.description
+    assert "descriptors per category" in field_info.description

@@ -1,3 +1,4 @@
+import importlib
 import random
 
 import numpy as np
@@ -5,6 +6,7 @@ import pandas as pd
 import pytest
 import torch
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
+from botorch.models.transforms.input import NumericToCategoricalEncoding
 from botorch.utils.objective import compute_smoothed_feasibility_indicator
 
 import bofire.strategies.api as strategies
@@ -20,9 +22,11 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     ContinuousInput,
     ContinuousOutput,
 )
+from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
@@ -39,10 +43,11 @@ from bofire.data_models.objectives.api import (
 )
 from bofire.data_models.strategies.api import RandomStrategy
 from bofire.utils.torch_tools import (
-    InterpolateTransform,
+    Encoder,
     _callables_and_weights,
     constrained_objective2botorch,
     get_additive_botorch_objective,
+    get_categorical_encoder,
     get_custom_botorch_objective,
     get_initial_conditions_generator,
     get_interpoint_constraints,
@@ -52,12 +57,16 @@ from bofire.utils.torch_tools import (
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
     get_nonlinear_constraints,
+    get_NumericToCategorical_input_transform,
     get_objective_callable,
     get_output_constraints,
     get_product_constraints,
     interp1d,
     tkwargs,
 )
+
+
+RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
 if1 = ContinuousInput(
@@ -388,7 +397,7 @@ def test_get_interpoint_equality_constraints():
         ),
         constraints=Constraints(
             constraints=[
-                InterpointEqualityConstraint(feature="b", multiplicity=3),
+                InterpointEqualityConstraint(features=["b"], multiplicity=3),
             ],
         ),
     )
@@ -1034,13 +1043,22 @@ def test_get_initial_conditions_generator(sequential: bool):
             CategoricalDescriptorInput(
                 key="b",
                 categories=["alpha", "beta", "gamma"],
-                descriptors=["omega"],
-                values=[[0], [1], [3]],
+                descriptors=["omega", "gamma"],
+                values=[[0, 4], [1, 5], [3, 6]],
             ),
         ]
     )
     domain = Domain(inputs=inputs)
     strategy = strategies.map(RandomStrategy(domain=domain))
+    # test with ordinal encoding
+    generator = get_initial_conditions_generator(
+        strategy=strategy,
+        transform_specs={"b": CategoricalEncodingEnum.ORDINAL},
+        ask_options={},
+        sequential=sequential,
+    )
+    initial_conditions = generator(n=3, q=2, seed=42)
+    assert initial_conditions.shape == torch.Size((3, 2, 2))
     # test with one hot encoding
     generator = get_initial_conditions_generator(
         strategy=strategy,
@@ -1058,7 +1076,7 @@ def test_get_initial_conditions_generator(sequential: bool):
         sequential=sequential,
     )
     initial_conditions = generator(n=3, q=2, seed=42)
-    assert initial_conditions.shape == torch.Size((3, 2, 2))
+    assert initial_conditions.shape == torch.Size((3, 2, 3))
 
 
 @pytest.mark.parametrize(
@@ -1152,237 +1170,86 @@ def test_interp1d():
     np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
 
 
-def test_InterpolateTransform():
-    new_x = torch.from_numpy(np.linspace(0, 60, 200)).to(**tkwargs)
-    with pytest.raises(ValueError, match="Indices are not unique."):
-        InterpolateTransform(
-            idx_x=[0, 1, 2],
-            idx_y=[2, 3, 4],
-            prepend_x=torch.tensor([0]),
-            append_x=torch.tensor([60]),
-            prepend_y=torch.tensor([0]),
-            append_y=torch.tensor([1]),
-            new_x=new_x,
-        )
-    t = InterpolateTransform(
-        idx_x=[0, 1, 2],
-        idx_y=[3, 4, 5],
-        prepend_x=torch.tensor([0]),
-        append_x=torch.tensor([60]),
-        prepend_y=torch.tensor([0]),
-        append_y=torch.tensor([1]),
-        new_x=new_x,
-    )
+@pytest.mark.parametrize(
+    "feature, transform, expected_encoding",
+    [
+        (
+            CategoricalInput(
+                key="a",
+                categories=["a", "b", "c"],
+            ),
+            CategoricalEncodingEnum.ONE_HOT,
+            torch.tensor([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).to(**tkwargs),
+        ),
+        (
+            CategoricalDescriptorInput(
+                key="a",
+                categories=["a", "b", "c"],
+                descriptors=["oscar", "wilde"],
+                values=[[1, 2], [3, 4], [5, 6]],
+            ),
+            CategoricalEncodingEnum.DESCRIPTOR,
+            torch.tensor([[1, 2], [3, 4], [5, 6]]).to(**tkwargs),
+        ),
+        (
+            CategoricalMolecularInput(
+                key="a",
+                categories=["CC", "CCC"],
+            ),
+            CategoricalEncodingEnum.ONE_HOT,
+            torch.tensor([[1, 0], [0, 1]]).to(**tkwargs),
+        ),
+    ],
+)
+def test_get_categorical_encoder(feature, transform, expected_encoding):
+    encoder = get_categorical_encoder(feature, transform)
+    assert isinstance(encoder, Encoder)
+    assert encoder.dim == encoder.encoding.shape[1]
+    assert torch.allclose(encoder.encoding, expected_encoding)
 
-    # test the append and prepend functionality for 2 dim data
-    X = torch.tensor([[10, 40, 55], [10, 20, 55]]).to(**tkwargs)
-    values = torch.tensor([1.0, 2.0]).to(**tkwargs)
-    X_new = t.append(X, values)
-    assert torch.allclose(
-        X_new,
-        torch.tensor([[10, 40, 55, 1, 2], [10, 20, 55, 1, 2]]).to(**tkwargs),
-    )
 
-    X_new = t.prepend(X, values)
-    assert torch.allclose(
-        X_new,
-        torch.tensor(
-            [
-                [
-                    1,
-                    2,
-                    10,
-                    40,
-                    55,
-                ],
-                [1, 2, 10, 20, 55],
-            ],
-        ).to(**tkwargs),
-    )
-
-    values = torch.tensor([1.0]).to(**tkwargs)
-    X_new = t.append(X, values)
-    assert torch.allclose(
-        X_new,
-        torch.tensor([[10, 40, 55, 1], [10, 20, 55, 1]]).to(**tkwargs),
-    )
-
-    X_new = t.prepend(X, values)
-    assert torch.allclose(
-        X_new,
-        torch.tensor([[1, 10, 40, 55], [1, 10, 20, 55]]).to(**tkwargs),
-    )
-
-    values = torch.tensor([]).to(**tkwargs)
-    X_new = t.append(X, values)
-    assert torch.allclose(
-        X_new,
-        torch.tensor([[10, 40, 55], [10, 20, 55]]).to(**tkwargs),
-    )
-
-    X_new = t.prepend(X, values)
-    assert torch.allclose(
-        X_new,
-        torch.tensor([[10, 40, 55], [10, 20, 55]]).to(**tkwargs),
-    )
-
-    # test the append and prepend functionality for 3 dim data
-    X = torch.tensor([[[10, 40, 55], [10, 20, 55]]]).to(**tkwargs)
-    values = torch.tensor([1.0, 2.0]).to(**tkwargs)
-    X_new = t.append(X, values)
-    assert torch.allclose(
-        X_new,
-        torch.tensor([[[10, 40, 55, 1, 2], [10, 20, 55, 1, 2]]]).to(**tkwargs),
-    )
-
-    X_new = t.prepend(X, values)
-    assert torch.allclose(
-        X_new,
-        torch.tensor(
-            [
-                [
-                    1,
-                    2,
-                    10,
-                    40,
-                    55,
-                ],
-                [1, 2, 10, 20, 55],
-            ],
-        ).to(**tkwargs),
-    )
-
-    values = torch.tensor([1.0]).to(**tkwargs)
-    X_new = t.append(X, values)
-    assert torch.allclose(
-        X_new,
-        torch.tensor([[[10, 40, 55, 1], [10, 20, 55, 1]]]).to(**tkwargs),
-    )
-
-    X_new = t.prepend(X, values)
-    assert torch.allclose(
-        X_new,
-        torch.tensor([[[1, 10, 40, 55], [1, 10, 20, 55]]]).to(**tkwargs),
-    )
-
-    values = torch.tensor([]).to(**tkwargs)
-    X_new = t.append(X, values)
-    assert torch.allclose(
-        X_new,
-        torch.tensor([[[10, 40, 55], [10, 20, 55]]]).to(**tkwargs),
-    )
-
-    X_new = t.prepend(X, values)
-    assert torch.allclose(
-        X_new,
-        torch.tensor([[[10, 40, 55], [10, 20, 55]]]).to(**tkwargs),
-    )
-
-    x_new = np.linspace(0, 60, 200)
-    x = np.array([[0.0, 10, 40, 55, 60], [0.0, 10, 20, 55, 60]])
-    y = np.array([[0.0, 0.2, 0.5, 0.75, 1.0], [0.0, 0.2, 0.5, 0.7, 1.0]])
-    y_new = np.array([np.interp(x_new, x[i], y[i]) for i in range(2)])
-
-    tX = torch.tensor([[10, 40, 55, 0.2, 0.5, 0.75], [10, 20, 55, 0.2, 0.5, 0.7]]).to(
-        **tkwargs,
-    )
-    ty_new = t(tX).numpy()
-    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
-
-    # test error handling
-    with pytest.raises(
-        ValueError,
-        match="The number of x and y indices must be equal.",
-    ):
-        InterpolateTransform(
-            idx_x=[0, 1, 2],
-            idx_y=[3, 4, 5],
-            prepend_x=torch.tensor([0, 0.1]),
-            append_x=torch.tensor([60]),
-            prepend_y=torch.tensor([0]),
-            append_y=torch.tensor([1]),
-            new_x=new_x,
-        )
-
-    # test without prepend and append
-    t = InterpolateTransform(
-        idx_x=[0, 1, 2, 3, 4],
-        idx_y=[5, 6, 7, 8, 9],
-        prepend_x=torch.tensor([]),
-        append_x=torch.tensor([]),
-        prepend_y=torch.tensor([]),
-        append_y=torch.tensor([]),
-        new_x=new_x,
-    )
-
-    tX = torch.tensor(
-        [
-            [0, 10, 40, 55, 60, 0, 0.2, 0.5, 0.75, 1],
-            [0, 10, 20, 55, 60, 0, 0.2, 0.5, 0.7, 1],
-        ],
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_get_categorical_encoder_molecular():
+    feat = CategoricalMolecularInput(key="m", categories=["CC", "CCC"])
+    transform = Fingerprints(filter_descriptors=False)
+    expected_encoding = torch.from_numpy(
+        feat.to_descriptor_encoding(transform, pd.Series(feat.categories)).values
     ).to(**tkwargs)
-    ty_new = t(tX).numpy()
-    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+    encoder = get_categorical_encoder(feat, transform)
+    assert isinstance(encoder, Encoder)
+    assert encoder.dim == encoder.encoding.shape[1]
+    assert torch.allclose(encoder.encoding, expected_encoding)
 
-    # test different prepend and append
-    t = InterpolateTransform(
-        idx_x=[0, 1, 2, 3],
-        idx_y=[4, 5, 6, 7],
-        prepend_x=torch.tensor([0.0]),
-        append_x=torch.tensor([]),
-        prepend_y=torch.tensor([]),
-        append_y=torch.tensor([1.0]),
-        new_x=new_x,
+
+def test_get_NumericToCategorical_input_transform():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=[0, 1]),
+            CategoricalInput(key="x2", categories=["a", "b", "c"]),
+            CategoricalInput(key="x3", categories=["d", "e"]),
+        ]
     )
-
-    tX = torch.tensor(
-        [
-            [10, 40, 55, 60, 0, 0.2, 0.5, 0.75],
-            [
-                10,
-                20,
-                55,
-                60,
-                0,
-                0.2,
-                0.5,
-                0.7,
-            ],
-        ],
-    ).to(**tkwargs)
-    ty_new = t(tX).numpy()
-    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
-
-    # test keep original
-    t = InterpolateTransform(
-        idx_x=[0, 1, 2, 3],
-        idx_y=[4, 5, 6, 7],
-        prepend_x=torch.tensor([0.0]),
-        append_x=torch.tensor([]),
-        prepend_y=torch.tensor([]),
-        append_y=torch.tensor([1.0]),
-        new_x=new_x,
-        keep_original=True,
-    )
-
-    tX = torch.tensor(
-        [
-            [10, 40, 55, 60, 0, 0.2, 0.5, 0.75],
-            [
-                10,
-                20,
-                55,
-                60,
-                0,
-                0.2,
-                0.5,
-                0.7,
-            ],
-        ],
-    ).to(**tkwargs)
-    ty_new = t(tX).numpy()
-    np.testing.assert_allclose(
-        np.concatenate([y_new, tX.numpy()], axis=-1),
-        ty_new,
-        rtol=1e-6,
-    )
+    transform_specs = {
+        "x2": CategoricalEncodingEnum.ONE_HOT,
+        "x3": CategoricalEncodingEnum.ONE_HOT,
+    }
+    transform = get_NumericToCategorical_input_transform(inputs, transform_specs)
+    assert isinstance(transform, NumericToCategoricalEncoding)
+    assert transform.categorical_features == {1: 3, 2: 2}
+    assert len(transform.encoders) == 2
+    assert list(transform.encoders.keys()) == [1, 2]
+    transform_specs = {
+        "x2": CategoricalEncodingEnum.ORDINAL,
+        "x3": CategoricalEncodingEnum.ONE_HOT,
+    }
+    transform = get_NumericToCategorical_input_transform(inputs, transform_specs)
+    assert isinstance(transform, NumericToCategoricalEncoding)
+    assert transform.categorical_features == {2: 2}
+    assert len(transform.encoders) == 1
+    assert list(transform.encoders.keys()) == [2]
+    transform_specs = {
+        "x2": CategoricalEncodingEnum.ORDINAL,
+        "x3": CategoricalEncodingEnum.ORDINAL,
+    }
+    transform = get_NumericToCategorical_input_transform(inputs, transform_specs)
+    assert transform is None

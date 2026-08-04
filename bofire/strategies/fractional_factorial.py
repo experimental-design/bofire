@@ -1,16 +1,18 @@
 import warnings
-from typing import Optional
+from typing import Optional, cast
 
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
+from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     DiscreteInput,
 )
 from bofire.data_models.strategies.api import FractionalFactorialStrategy as DataModel
-from bofire.strategies.strategy import Strategy
+from bofire.strategies.strategy import Strategy, make_strategy
 from bofire.utils.doe import (
     apply_block_generator,
     fracfact,
@@ -38,19 +40,65 @@ class FractionalFactorialStrategy(Strategy):
             self.n_blocks = (
                 len(block_feature.get_allowed_categories())
                 if isinstance(block_feature, CategoricalInput)
-                else len(block_feature.values)  # type: ignore
+                else len(block_feature.values)
             )
         else:
             self.n_blocks = 1
 
-    def _get_continuous_design(self) -> pd.DataFrame:
-        # that is used to store the block information before it is converted to the block_feature_key
+    def _get_continuous_factorial_design(self) -> np.ndarray:
         continuous_inputs = self.domain.inputs.get(ContinuousInput)
         gen = self.generator or get_generator(
             n_factors=len(continuous_inputs),
             n_generators=self.n_generators,
         )
-        design = pd.DataFrame(fracfact(gen=gen), columns=continuous_inputs.get_keys())
+        return fracfact(gen=gen)
+
+    def get_required_number_of_experiments(self) -> int:
+        """Return the exact number of experiments produced by this strategy.
+                It will be the exact number of points for the configured factorial design
+                (full or fractional) with the given parameters.
+
+        The design is the cartesian product of the continuous part and the
+        discrete/categorical part
+                - Continuous inputs form a two-level factorial design from `fracfact(gen)`.
+                    This is full factorial when no generators are used, and fractional
+                    factorial when generators are used. The design is repeated
+                    `n_repetitions` times plus `n_center` center points.
+        - Every discrete/categorical combination repeats that continuous design.
+        If there are no continuous inputs, only the discrete/categorical grid is
+        returned (no center points are added).
+        """
+
+        continuous_inputs = self.domain.inputs.get(ContinuousInput)
+
+        categorical_keys = [
+            key
+            for key in self.domain.inputs.get_keys([CategoricalInput, DiscreteInput])
+            if key != self.block_feature_key
+        ]
+        categorical_inputs = self.domain.inputs.get_by_keys(categorical_keys)
+        n_categorical_combinations = (
+            categorical_inputs.get_number_of_categorical_combinations(
+                include_semicontinuous=False,
+            )
+        )
+
+        if len(continuous_inputs) == 0:
+            return n_categorical_combinations
+
+        n_corners = len(self._get_continuous_factorial_design())
+        n_continuous_points = n_corners * self.n_repetitions + (
+            self.n_center * self.n_blocks
+        )
+        return n_continuous_points * n_categorical_combinations
+
+    def _get_continuous_design(self) -> pd.DataFrame:
+        # that is used to store the block information before it is converted to the block_feature_key
+        continuous_inputs = self.domain.inputs.get(ContinuousInput)
+        design = pd.DataFrame(
+            self._get_continuous_factorial_design(),
+            columns=continuous_inputs.get_keys(),
+        )
 
         if self.n_blocks > 1:
             if self.n_repetitions % self.n_blocks != 0:
@@ -112,7 +160,7 @@ class FractionalFactorialStrategy(Strategy):
             block_vals = (
                 block_feature.get_allowed_categories()
                 if isinstance(block_feature, CategoricalInput)
-                else block_feature.values  # type: ignore
+                else block_feature.values
             )
             design[self.block_feature_key] = design[self.block_feature_key].map(
                 dict(enumerate(block_vals))
@@ -159,7 +207,7 @@ class FractionalFactorialStrategy(Strategy):
         design = pd.concat(
             [
                 pd.concat([design] * len(categorical_design), ignore_index=True),
-                pd.concat([categorical_design] * len(design), ignore_index=True),  # type: ignore
+                pd.concat([categorical_design] * len(design), ignore_index=True),
             ],
             axis=1,
         ).sort_values(
@@ -178,3 +226,30 @@ class FractionalFactorialStrategy(Strategy):
 
     def has_sufficient_experiments(self) -> bool:
         return True
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        n_repetitions: int | None = None,
+        n_center: int | None = None,
+        block_feature_key: str | None = None,
+        generator: str | None = None,
+        n_generators: int | None = None,
+        randomize_runorder: bool | None = None,
+        seed: int | None = None,
+    ) -> Self:
+        """
+        Create a new instance of the strategy with the given parameters. This method will create the datamodel
+        under the hood and pass it to the constructor of the strategy.
+        Args:
+            domain: The domain of the strategy.
+            n_repetitions: The number of repetitions of the continuous part of the design.
+            n_center: The number of center points in the continuous part of the design per block.
+            block_feature_key: The feature key to use for blocking the design.
+            generator: The generator for the continuous part of the design.
+            n_generators: The number of reducing factors.
+            randomize_runorder: If true, the run order is randomized, else it is deterministic.
+            seed: The seed for the random number generator.
+        """
+        return cast(Self, make_strategy(cls, DataModel, locals()))

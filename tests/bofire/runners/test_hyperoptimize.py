@@ -54,13 +54,17 @@ def test_hyperoptimize(strategy: str):
         [e.name for e in RegressionMetricsEnum]
         + surrogate_data.hyperconfig.domain.inputs.get_keys(),
     )
-    assert hasattr(opt_data.kernel, "base_kernel")
-    assert opt_data.kernel.base_kernel.ard == (metrics.iloc[0]["ard"] == "True")
-    if metrics.iloc[0].kernel == "matern_1.5":
-        assert isinstance(opt_data.kernel.base_kernel, MaternKernel)
-        assert opt_data.kernel.base_kernel.nu == 1.5
-    elif metrics.iloc[0].kernel == "matern_2.5":
-        assert isinstance(opt_data.kernel.base_kernel, MaternKernel)
-        assert opt_data.kernel.base_kernel.nu == 2.5
+    if hasattr(opt_data.kernel, "base_kernel"):
+        assert metrics.iloc[0]["scalekernel"] == "True"
+        base_kernel = opt_data.kernel.base_kernel
     else:
-        assert isinstance(opt_data.kernel.base_kernel, RBFKernel)
+        base_kernel = opt_data.kernel
+    assert base_kernel.ard == (metrics.iloc[0]["ard"] == "True")
+    if metrics.iloc[0].kernel == "matern_1.5":
+        assert isinstance(base_kernel, MaternKernel)
+        assert base_kernel.nu == 1.5
+    elif metrics.iloc[0].kernel == "matern_2.5":
+        assert isinstance(base_kernel, MaternKernel)
+        assert base_kernel.nu == 2.5
+    else:
+        assert isinstance(base_kernel, RBFKernel)

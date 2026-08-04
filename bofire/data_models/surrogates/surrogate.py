@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Optional, Type
+from typing import Any, Optional, Type
 
 from pydantic import Field, field_validator
 
@@ -10,7 +10,7 @@ from bofire.data_models.types import InputTransformSpecs
 
 
 class Surrogate(BaseModel):
-    type: str
+    type: Any
     inputs: Inputs
     outputs: Outputs
     input_preprocessing_specs: InputTransformSpecs = Field(

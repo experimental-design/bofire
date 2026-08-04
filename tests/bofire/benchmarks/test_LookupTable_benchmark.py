@@ -15,12 +15,10 @@ from bofire.data_models.objectives.api import MaximizeObjective
     ],
 )
 def test_LookupTable_benchmark(cls_benchmark: LookupTableBenchmark):
-    """Tests the initializer of Aspen_benchmark and whether the filename, domain and paths are set up correctly.
+    """Tests the initializer of LookupTableBenchmark and whether the domain and lookup table are set up correctly.
 
     Args:
-        cls_benchmark (Aspen_benchmark): Aspen_benchmark class
-        return_complete (bool): _description_
-        kwargs (dict): Arguments to the initializer of Aspen_benchmark. {"filename": , "domain": , "paths": }
+        cls_benchmark (LookupTableBenchmark): LookupTableBenchmark class
 
     """
     look_up = pd.DataFrame(columns=["x1", "x2", "y"])

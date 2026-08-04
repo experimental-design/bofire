@@ -15,7 +15,7 @@ def test_cv_folds(folds):
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=f"x_{i+1}",
+                key=f"x_{i + 1}",
                 bounds=(-4, 4),
             )
             for i in range(2)
@@ -23,7 +23,11 @@ def test_cv_folds(folds):
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=100)
-    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.eval(
+        "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+        inplace=True,
+        engine="python",
+    )
     experiments["valid_y"] = 1
     experiments = experiments.sample(10)
     model = SingleTaskGPSurrogate(

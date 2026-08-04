@@ -43,7 +43,7 @@ def smiles2mol(smiles: str):
         rdkit.Mol: rdkit.mol object
 
     """
-    mol = MolFromSmiles(smiles)  # type: ignore
+    mol = MolFromSmiles(smiles)
     if mol is None:
         raise ValueError(f"{smiles} is not a valid smiles string.")
     return mol
@@ -67,7 +67,9 @@ def smiles2fingerprints(
     """
     rdkit_mols = [smiles2mol(m) for m in smiles]
     fps = [
-        AllChem.GetMorganFingerprintAsBitVect(mol, radius=bond_radius, nBits=n_bits)  # type: ignore
+        AllChem.GetMorganFingerprintAsBitVect(  # ty: ignore[unresolved-attribute]
+            mol, radius=bond_radius, nBits=n_bits
+        )
         for mol in rdkit_mols
     ]
 
@@ -89,9 +91,7 @@ def smiles2fragments(
 
     """
     rdkit_fragment_list = [
-        item
-        for item in Descriptors.descList
-        if item[0].startswith("fr_")  # type: ignore
+        item for item in Descriptors.descList if item[0].startswith("fr_")
     ]
     if fragments_list is None:
         fragments = {d[0]: d[1] for d in rdkit_fragment_list}
@@ -107,28 +107,15 @@ def smiles2fragments(
     return frags
 
 
-# def smiles2bag_of_characters(smiles: List[str], max_ngram: int = 5) -> np.ndarray:
-#     """Transforms list of smiles to bag of characters.
-#
-#     Args:
-#         smiles (List[str]): List of smiles
-#         max_ngram (int, optional): Maximal ngram value. Defaults to 5.
-#
-#     Returns:
-#         np.ndarray: Array holding the bag of characters.
-#     """
-#     for smi in smiles:
-#         smiles2mol(smi)
-#     cv = CountVectorizer(ngram_range=(1, max_ngram), analyzer="char", lowercase=False)
-#     return cv.fit_transform(smiles).toarray()
-
-
-def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray:
+def smiles2mordred(
+    smiles: List[str], descriptors_list: List[str], ignore_3D: bool = False
+) -> np.ndarray:
     """Transforms list of smiles to mordred moelcular descriptors.
 
     Args:
         smiles (List[str]): List of smiles
         descriptors_list (List[str]): List of desired mordred descriptors
+        ignore_3D (bool, optional): Whether to ignore 3D descriptors. Defaults to False.
 
     Returns:
         np.ndarray: Array holding the mordred moelcular descriptors.
@@ -136,17 +123,18 @@ def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray
     """
     mols = [smiles2mol(smi) for smi in smiles]
 
-    calc = Calculator(descriptors, ignore_3D=True)  # type: ignore
+    calc = Calculator(descriptors, ignore_3D=ignore_3D)
     calc.descriptors = [d for d in calc.descriptors if str(d) in descriptors_list]
 
-    descriptors_df = calc.pandas(mols)
+    descriptors_temp_df = calc.pandas(mols, quiet=True)
+    descriptors_df = descriptors_temp_df.astype(float).fillna(0)
     nan_list = [
-        pd.to_numeric(descriptors_df[col], errors="coerce").isnull().values.any()  # type: ignore
+        pd.to_numeric(descriptors_df[col], errors="coerce").isnull().values.any()
         for col in descriptors_df.columns
     ]
     if any(nan_list):
         raise ValueError(
-            f"Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}",  # type: ignore
+            f"Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}",
         )
 
     return descriptors_df.astype(float).values

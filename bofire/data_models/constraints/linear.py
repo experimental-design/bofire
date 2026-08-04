@@ -1,4 +1,4 @@
-from typing import Annotated, List, Literal, Tuple
+from typing import Annotated, Dict, List, Literal, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -10,8 +10,7 @@ from bofire.data_models.constraints.constraint import (
     IntrapointConstraint,
 )
 from bofire.data_models.domain.features import Inputs
-from bofire.data_models.features.api import ContinuousInput
-from bofire.data_models.types import FeatureKeys
+from bofire.data_models.features.api import ContinuousInput, DiscreteInput
 
 
 class LinearConstraint(IntrapointConstraint):
@@ -26,7 +25,6 @@ class LinearConstraint(IntrapointConstraint):
 
     type: Literal["LinearConstraint"] = "LinearConstraint"
 
-    features: FeatureKeys
     coefficients: Annotated[List[float], Field(min_length=2)]
     rhs: float
 
@@ -40,7 +38,7 @@ class LinearConstraint(IntrapointConstraint):
         return self
 
     def validate_inputs(self, inputs: Inputs):
-        keys = inputs.get_keys(ContinuousInput)
+        keys = inputs.get_keys([ContinuousInput, DiscreteInput])
         for f in self.features:
             if f not in keys:
                 raise ValueError(
@@ -64,6 +62,9 @@ class LinearConstraint(IntrapointConstraint):
             columns=[f"dg/d{name}" for name in self.features],
         )
 
+    def hessian(self, experiments: pd.DataFrame) -> Dict[Union[int, str], float]:
+        return dict.fromkeys(range(experiments.shape[0]), 0.0)
+
 
 class LinearEqualityConstraint(LinearConstraint, EqualityConstraint):
     """Linear equality constraint of the form `coefficients * x = rhs`.
@@ -76,6 +77,21 @@ class LinearEqualityConstraint(LinearConstraint, EqualityConstraint):
     """
 
     type: Literal["LinearEqualityConstraint"] = "LinearEqualityConstraint"
+
+    def to_description(self) -> str:
+        """Render as ``"1.0*x1 + 2.0*x2 = 5.0"``.
+
+        Example::
+
+            >>> c = LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1.0, 2.0], rhs=5.0)
+            >>> c.to_description()
+            '1.0*x1 + 2.0*x2 = 5.0'
+        """
+        terms = " + ".join(f"{c}*{f}" for c, f in zip(self.coefficients, self.features))
+        desc = f"{terms} = {self.rhs}"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc
 
 
 class LinearInequalityConstraint(LinearConstraint, InequalityConstraint):
@@ -92,6 +108,21 @@ class LinearInequalityConstraint(LinearConstraint, InequalityConstraint):
     """
 
     type: Literal["LinearInequalityConstraint"] = "LinearInequalityConstraint"
+
+    def to_description(self) -> str:
+        """Render as ``"1.0*x1 + 2.0*x2 <= 5.0"``.
+
+        Example::
+
+            >>> c = LinearInequalityConstraint(features=["x1", "x2"], coefficients=[1.0, 2.0], rhs=5.0)
+            >>> c.to_description()
+            '1.0*x1 + 2.0*x2 <= 5.0'
+        """
+        terms = " + ".join(f"{c}*{f}" for c, f in zip(self.coefficients, self.features))
+        desc = f"{terms} <= {self.rhs}"
+        if self.context:
+            desc += f" — {self.context}"
+        return desc
 
     def as_smaller_equal(self) -> Tuple[List[str], List[float], float]:
         """Return attributes in the smaller equal convention

@@ -1,0 +1,56 @@
+---
+title: Spherical linear kernels for high dimensional BO
+jupyter: python3
+---
+[Spherical Linear Kernel](https://arxiv.org/pdf/2512.00170) is useful for optimizing high-dimensional problems.
+
+```{python}
+from bofire.benchmarks.svm import SVM
+from bofire.data_models.strategies.api import SoboStrategy
+from bofire.data_models.kernels.api import SphericalLinearKernel
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate, BotorchSurrogates
+import bofire.strategies.api as strategies
+```
+
+We use the [SVM](https://github.com/LeoIV/BenchSuite/blob/master/benchsuite/svm.py) benchmark.
+```{python}
+# problem setup for spherical linear kernels
+benchmark = SVM()
+candidates = benchmark._domain.inputs.sample(benchmark.dim+1, seed=benchmark.seed)
+experiments = candidates.copy()
+result = benchmark._f(experiments)
+# Add empty columns 'y' and 'valid_y' to experiments DataFrame
+experiments["y"], experiments["valid_y"] = result["y"], result["valid_y"]
+sobo_strategy_data_model = SoboStrategy(
+    domain=benchmark._domain,
+    seed=benchmark.seed,
+    surrogate_specs=BotorchSurrogates(
+        surrogates=[
+            SingleTaskGPSurrogate(
+                inputs=benchmark._domain.inputs,
+                outputs=benchmark._domain.outputs,
+                kernel=SphericalLinearKernel(),
+            )
+        ]
+    ),
+)
+strategy = strategies.map(sobo_strategy_data_model)
+```
+
+Running the optimization loop
+```{python}
+strategy.tell(experiments, replace=True)
+num_steps = 3 # set the number of steps here (the original paper uses 1000 steps)
+for step_number in range(num_steps):
+    print(f"Step {step_number+1}/{num_steps}")
+    new_candidates = strategy.ask(candidate_count=1)
+    new_experiments = new_candidates.copy()
+    result = benchmark._f(new_candidates)
+    new_experiments["y"], new_experiments["valid_y"] = result["y"], result["valid_y"]
+    print(f"New experiment:\n{new_experiments}")
+    strategy.tell(experiments=new_experiments)
+# save all the experiments
+all_experiments = strategy.experiments
+```
+
+One can use the results obtained in ```all_experiments``` to get the evolution of the optimum with respect to the iterations.

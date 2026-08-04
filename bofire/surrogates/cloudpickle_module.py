@@ -5,7 +5,7 @@ import warnings
 try:
     from pickle import Unpickler  # noqa: F401
 
-    from cloudpickle import *  # noqa: F403  # type: ignore
+    from cloudpickle import *  # noqa: F403
     from cloudpickle import CloudPickler as Pickler  # noqa: F401
 
 except ModuleNotFoundError:

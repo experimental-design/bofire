@@ -16,6 +16,12 @@ specs.add_valid(
     objectives.MaximizeObjective,
     lambda: {"w": 1.0, "bounds": [0.1, 0.9]},
 )
+specs.add_invalid(
+    objectives.MaximizeObjective,
+    lambda: {"w": 1.0, "bounds": [0.1, 0.1]},
+    error=ValueError,
+    message="lower bound must be < upper bound",
+)
 specs.add_valid(
     objectives.MaximizeSigmoidObjective,
     lambda: {
@@ -27,6 +33,12 @@ specs.add_valid(
 specs.add_valid(
     objectives.MinimizeObjective,
     lambda: {"w": 1.0, "bounds": [0.1, 0.9]},
+)
+specs.add_invalid(
+    objectives.MinimizeObjective,
+    lambda: {"w": 1.0, "bounds": [0.1, 0.1]},
+    error=ValueError,
+    message="lower bound must be < upper bound",
 )
 
 specs.add_valid(

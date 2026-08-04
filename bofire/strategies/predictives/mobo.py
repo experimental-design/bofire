@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional, cast
 
 import numpy as np
 import torch
@@ -7,17 +7,26 @@ from botorch.acquisition.multi_objective.objective import (
     GenericMCMultiOutputObjective,
     MCMultiOutputObjective,
 )
-from botorch.models.gpytorch import GPyTorchModel
+from pydantic import PositiveInt
+from typing_extensions import Self
 
 from bofire.data_models.acquisition_functions.api import (
+    AnyMultiObjectiveAcquisitionFunction,
     qEHVI,
     qLogEHVI,
-    qLogNEHVI,
-    qNEHVI,
 )
+from bofire.data_models.domain.domain import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective
+from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
+from bofire.data_models.strategies.api import ExplicitReferencePoint
 from bofire.data_models.strategies.api import MoboStrategy as DataModel
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
+from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
+from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.strategies.predictives.botorch import BotorchStrategy
+from bofire.strategies.strategy import make_strategy
 from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
 from bofire.utils.torch_tools import (
     get_multiobjective_objective,
@@ -33,11 +42,11 @@ class MoboStrategy(BotorchStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.ref_point = data_model.ref_point
+        assert isinstance(data_model.ref_point, ExplicitReferencePoint)
+        self.ref_point: ExplicitReferencePoint = data_model.ref_point
         self.ref_point_mask = get_ref_point_mask(self.domain)
         self.acquisition_function = data_model.acquisition_function
 
-    ref_point: Optional[dict] = None
     objective: Optional[MCMultiOutputObjective] = None
 
     def _get_acqfs(self, n) -> List[AcquisitionFunction]:
@@ -69,6 +78,8 @@ class MoboStrategy(BotorchStrategy):
 
         assert self.model is not None
 
+        params = self.acquisition_function.model_dump()
+
         acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,
             self.model,
@@ -79,13 +90,9 @@ class MoboStrategy(BotorchStrategy):
             constraints=constraints,
             eta=etas,
             mc_samples=self.acquisition_function.n_mc_samples,
-            cache_root=True if isinstance(self.model, GPyTorchModel) else False,
+            cache_root=None,
             alpha=self.acquisition_function.alpha,
-            prune_baseline=(
-                self.acquisition_function.prune_baseline
-                if isinstance(self.acquisition_function, (qLogNEHVI, qNEHVI))
-                else True
-            ),
+            prune_baseline=params.get("prune_baseline", True),
             Y=Y,
         )
         return [acqf]
@@ -100,17 +107,19 @@ class MoboStrategy(BotorchStrategy):
 
     def get_adjusted_refpoint(self) -> List[float]:
         assert self.experiments is not None, "No experiments available."
-        if self.ref_point is None:
-            df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                self.experiments,
-            )
-            ref_point = infer_ref_point(
-                self.domain,
-                experiments=df,
-                return_masked=False,
-            )
-        else:
-            ref_point = self.ref_point
+        assert (
+            isinstance(self.ref_point, ExplicitReferencePoint) or self.ref_point is None
+        )
+        df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
+            self.experiments,
+        )
+        ref_point = infer_ref_point(
+            self.domain,
+            experiments=df,
+            return_masked=False,
+            reference_point=self.ref_point,
+        )
+
         return (
             self.ref_point_mask
             * np.array(
@@ -122,3 +131,46 @@ class MoboStrategy(BotorchStrategy):
                 ],
             )
         ).tolist()
+
+    @classmethod
+    def make(
+        cls,
+        domain: Domain,
+        ref_point: ExplicitReferencePoint | Dict[str, float] | None = None,
+        acquisition_function: AnyMultiObjectiveAcquisitionFunction | None = None,
+        acquisition_optimizer: AnyAcqfOptimizer | None = None,
+        surrogate_specs: BotorchSurrogates | None = None,
+        outlier_detection_specs: OutlierDetections | None = None,
+        min_experiments_before_outlier_check: PositiveInt | None = None,
+        frequency_check: PositiveInt | None = None,
+        frequency_hyperopt: int | None = None,
+        folds: int | None = None,
+        seed: int | None = None,
+        include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
+    ):
+        """
+        Creates an instance of a multi-objective strategy based on expected hypervolume improvement.
+
+        S. Daulton, M. Balandat, and E. Bakshy.
+        Parallel Bayesian Optimization of Multiple Noisy Objectives with Expected Hypervolume Improvement.
+        Advances in Neural Information Processing Systems 34, 2021.
+
+        Parameters:
+            domain: The domain specifying the search space.
+            ref_point: Reference point for hypervolume computation.
+            acquisition_function: Acquisition function.
+            acquisition_optimizer: Optimizer for the acquisition function.
+            surrogate_specs: Surrogate model specifications.
+            outlier_detection_specs: Outlier detection configuration.
+            min_experiments_before_outlier_check: Minimum number of experiments before performing outlier detection.
+            frequency_check: Frequency at which to perform outlier checks.
+            frequency_hyperopt: Frequency at which to perform hyperparameter optimization.
+            folds: Number of folds for cross-validation for hyperparameter optimization.
+            seed: Random seed for reproducibility.
+            include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
+                of experiments used to compute the acquisition function.
+        Returns:
+            An instance of the strategy configured with the specified parameters.
+        """
+        return cast(Self, make_strategy(cls, DataModel, locals()))

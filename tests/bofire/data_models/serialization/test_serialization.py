@@ -1,3 +1,5 @@
+import pytest
+
 from tests.bofire.data_models.specs.api import Spec
 
 
@@ -10,6 +12,12 @@ def test_dataframe_should_be_serializable(dataframe_spec: Spec):
 def test_prior_should_be_serializable(prior_spec: Spec):
     spec = prior_spec.typed_spec()
     obj = prior_spec.cls(**spec)
+    assert obj.model_dump() == spec
+
+
+def test_prior_constraint_should_be_serializable(prior_constraint_spec: Spec):
+    spec = prior_constraint_spec.typed_spec()
+    obj = prior_constraint_spec.cls(**spec)
     assert obj.model_dump() == spec
 
 
@@ -34,7 +42,7 @@ def test_objective_should_be_serializable(objective_spec: Spec):
 def test_feature_should_be_serializable(feature_spec: Spec):
     spec = feature_spec.typed_spec()
     obj = feature_spec.cls(**spec)
-    assert obj.dict() == spec
+    assert obj.model_dump() == spec
 
 
 def test_domain_should_be_serializable(domain_spec: Spec):
@@ -57,12 +65,27 @@ def test_acquisition_function_should_be_serializable(acquisition_function_spec: 
 
 def test_strategy_should_be_serializable(strategy_spec: Spec):
     spec = strategy_spec.typed_spec()
-    obj = strategy_spec.cls(**spec)
+    if strategy_spec.cls.__name__ == "FactorialStrategy":
+        with pytest.warns(
+            DeprecationWarning,
+            match="FactorialStrategy is deprecated",
+        ):
+            obj = strategy_spec.cls(**spec)
+    else:
+        obj = strategy_spec.cls(**spec)
     # TODO: can we unhide the comparison of surrogate_specs?
     data = {k: v for k, v in obj.model_dump().items() if k != "surrogate_specs"}
     for k, v in data.items():
-        if v is not None:
-            assert v == spec[k]
+        # Only check keys that were in the original spec (not default values)
+        if k in spec and v is not None:
+            if hasattr(
+                spec[k], "model_dump"
+            ):  # works now for 1-time nested objects. Should be written recursively
+                spec_k_dump = spec[k].model_dump()
+                for kk, vv in v.items():
+                    assert vv == spec_k_dump[kk]
+            else:
+                assert v == spec[k]
 
 
 def test_condition_should_be_serializable(condition_spec: Spec):
@@ -89,6 +112,14 @@ def test_inputs_should_be_serializable(inputs_spec: Spec):
     assert obj.model_dump() == spec
 
 
+def test_engineered_features_should_be_serializable(
+    engineered_features_spec: Spec,
+):
+    spec = engineered_features_spec.typed_spec()
+    obj = engineered_features_spec.cls(**spec)
+    assert obj.model_dump() == spec
+
+
 def test_outputs_should_be_serializable(outputs_spec: Spec):
     spec = outputs_spec.typed_spec()
     obj = outputs_spec.cls(**spec)
@@ -104,4 +135,10 @@ def test_constraints_should_be_serializable(constraints_spec: Spec):
 def test_local_search_config_should_be_serializable(local_search_config_spec: Spec):
     spec = local_search_config_spec.typed_spec()
     obj = local_search_config_spec.cls(**spec)
+    assert obj.model_dump() == spec
+
+
+def test_llm_should_be_serializable(llm_spec: Spec):
+    spec = llm_spec.typed_spec()
+    obj = llm_spec.cls(**spec)
     assert obj.model_dump() == spec

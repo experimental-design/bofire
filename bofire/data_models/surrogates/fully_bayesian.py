@@ -1,16 +1,33 @@
-from typing import Annotated, Literal, Type
+from typing import Annotated, List, Literal, Type
 
-from pydantic import Field, field_validator
+from pydantic import AfterValidator, Field, field_validator, model_validator
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
+from bofire.data_models.types import make_unique_validator
 
 
-class SaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
-    type: Literal["SaasSingleTaskGPSurrogate"] = "SaasSingleTaskGPSurrogate"
+class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate):
+    type: Literal["FullyBayesianSingleTaskGPSurrogate"] = (
+        "FullyBayesianSingleTaskGPSurrogate"
+    )
+    model_type: Literal["linear", "saas", "hvarfner"] = "saas"
     warmup_steps: Annotated[int, Field(ge=1)] = 256
     num_samples: Annotated[int, Field(ge=1)] = 128
     thinning: Annotated[int, Field(ge=1)] = 16
+    features_to_warp: Annotated[
+        List[str], AfterValidator(make_unique_validator("Features"))
+    ] = []
+
+    @model_validator(mode="after")
+    def validate_features_to_warp(self):
+        input_keys = self.inputs.get_keys()
+        for feature in self.features_to_warp:
+            if feature not in input_keys:
+                raise ValueError(
+                    f"Feature '{feature}' in features_to_warp is not a valid input key."
+                )
+        return self
 
     @field_validator("thinning")
     @classmethod

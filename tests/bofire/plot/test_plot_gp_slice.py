@@ -5,7 +5,11 @@ from plotly.graph_objects import Figure
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 from bofire.plot.api import plot_gp_slice_plotly
 
@@ -48,6 +52,45 @@ def setup_surrogate():
     return surrogate, input_features, output_feature, data
 
 
+@pytest.fixture
+def setup_surrogate_with_categorical():
+    """Set up a SingleTaskGPSurrogate with one categorical input feature."""
+    input_features = [
+        ContinuousInput(key="x1", bounds=(0, 1)),
+        ContinuousInput(key="x2", bounds=(0, 1)),
+        ContinuousInput(key="x3", bounds=(0, 1)),
+        CategoricalInput(key="cat", categories=["A", "B"]),
+    ]
+    output_feature = ContinuousOutput(key="y")
+    domain = Domain(inputs=input_features, outputs=output_feature)
+
+    n_samples = 120
+    data = pd.DataFrame(
+        {
+            "x1": np.random.rand(n_samples),
+            "x2": np.random.rand(n_samples),
+            "x3": np.random.rand(n_samples),
+            "cat": np.where(np.arange(n_samples) % 2 == 0, "A", "B"),
+        }
+    )
+    data["y"] = (
+        data["x1"]
+        + data["x2"]
+        + (data["cat"] == "B").astype(float) * 0.2
+        + np.random.normal(0, 0.05, n_samples)
+    )
+    data["valid_y"] = 1
+
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=domain.inputs.get_by_keys(domain.inputs.get_keys()),
+        outputs=domain.outputs,
+    )
+    surrogate = surrogates.map(surrogate_data)
+    surrogate.fit(data)
+
+    return surrogate, input_features, output_feature, data
+
+
 def test_valid_inputs(setup_surrogate):
     """Test plot generation with valid input features and observed data."""
     surrogate, input_features, output_feature, data = setup_surrogate
@@ -71,6 +114,72 @@ def test_valid_inputs(setup_surrogate):
     assert isinstance(fig_sd, Figure)
     assert len(fig_mean.data) > 0  # Ensure the figure contains at least one trace
     assert len(fig_sd.data) > 0
+
+
+def test_valid_inputs_with_categorical_fixed_feature(setup_surrogate_with_categorical):
+    """Test plot generation with mixed continuous/categorical fixed input features."""
+    surrogate, input_features, output_feature, data = setup_surrogate_with_categorical
+    fixed_input_features = [input_features[2], input_features[3]]
+    fixed_values = [0.5, "A"]
+    varied_input_features = [input_features[0], input_features[1]]
+
+    fig_mean, fig_sd = plot_gp_slice_plotly(
+        surrogate=surrogate,
+        fixed_input_features=fixed_input_features,
+        fixed_values=fixed_values,
+        varied_input_features=varied_input_features,
+        output_feature=output_feature,
+        resolution=40,
+        observed_data=data,
+    )
+
+    assert isinstance(fig_mean, Figure)
+    assert isinstance(fig_sd, Figure)
+    assert "x3=0.50" in fig_mean.layout.title.text
+    assert "cat=A" in fig_mean.layout.title.text
+    assert "cat=A" in fig_sd.layout.title.text
+
+
+def test_error_on_invalid_fixed_categorical_value(setup_surrogate_with_categorical):
+    """Test that invalid fixed categorical values are rejected."""
+    surrogate, input_features, output_feature, _ = setup_surrogate_with_categorical
+    fixed_input_features = [input_features[2], input_features[3]]
+    fixed_values = [0.5, "C"]
+    varied_input_features = [input_features[0], input_features[1]]
+
+    with pytest.raises(
+        ValueError,
+        match="Fixed value `C` is not a valid category for input feature `cat`.",
+    ):
+        plot_gp_slice_plotly(
+            surrogate=surrogate,
+            fixed_input_features=fixed_input_features,
+            fixed_values=fixed_values,
+            varied_input_features=varied_input_features,
+            output_feature=output_feature,
+            resolution=40,
+        )
+
+
+def test_error_on_non_string_fixed_categorical_value(setup_surrogate_with_categorical):
+    """Test that non-string fixed values for categorical inputs are rejected."""
+    surrogate, input_features, output_feature, _ = setup_surrogate_with_categorical
+    fixed_input_features = [input_features[2], input_features[3]]
+    fixed_values = [0.5, 1.0]
+    varied_input_features = [input_features[0], input_features[1]]
+
+    with pytest.raises(
+        ValueError,
+        match="Fixed value for categorical input feature `cat` must be a string.",
+    ):
+        plot_gp_slice_plotly(
+            surrogate=surrogate,
+            fixed_input_features=fixed_input_features,
+            fixed_values=fixed_values,
+            varied_input_features=varied_input_features,
+            output_feature=output_feature,
+            resolution=40,
+        )
 
 
 def test_error_on_more_than_two_varied_inputs(setup_surrogate):

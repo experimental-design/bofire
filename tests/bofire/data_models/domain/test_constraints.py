@@ -32,7 +32,7 @@ c6 = LinearInequalityConstraint.from_smaller_equal(
     coefficients=[1, 1, 1],
     rhs=100.0,
 )
-c7 = InterpointEqualityConstraint(feature="f2", multiplicity=2)
+c7 = InterpointEqualityConstraint(features=["f2"], multiplicity=2)
 
 if1 = ContinuousInput(key="f1", bounds=(0, 2))
 if2 = ContinuousInput(key="f2", bounds=(0, 4))
@@ -145,7 +145,7 @@ def test_constraints_jacobian(constraints, num_candidates):
                 ),
             )
         if isinstance(c, NonlinearConstraint):
-            res = candidates.eval(c.jacobian_expression)
+            res = candidates.eval(c.jacobian_expression, engine="python")
             for j, col in enumerate(res):
                 if not hasattr(col, "__iter__"):
                     res[j] = pd.Series(np.repeat(col, candidates.shape[0]))

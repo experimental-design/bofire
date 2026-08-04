@@ -1,14 +1,20 @@
 import warnings
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, TypeVar
 
 import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
+from typing_extensions import Self
 
+from bofire.data_models.domain.domain import Domain, Inputs, Outputs
+from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue
+
+
+ST = TypeVar("ST", bound="Strategy")
 
 
 class Strategy(ABC):
@@ -22,16 +28,37 @@ class Strategy(ABC):
         self,
         data_model: DataModel,
     ):
-        self.domain = data_model.domain
+        self._data_model = data_model
         # if data_model.seed is None (no explicit seed provided by the user),
-        # we draw a random seed from the default random number generator
-        # This is done to ensure reproducibility of the strategy,
+        # we use a randomly generated seed from the seed sequence.
+        # This is done to ensure reproducibility of the strategy:
         # even if the user does not provide a seed one can extract the used seed
         # from the strategy object via `strategy.seed`.
-        self.seed = data_model.seed or np.random.default_rng().integers(1000)
-        self.rng = np.random.default_rng(self.seed)
+        seed = data_model.seed
+        if seed is None:
+            # we generate a new random seed since the default entropy is 128-bits,
+            # which is too large for the `long` dtype
+            seed = np.random.SeedSequence().generate_state(1, dtype=np.uint32).item()
+        self.seed_seq = np.random.SeedSequence(seed)
         self._experiments = None
         self._candidates = None
+        # Default validation tolerance - subclasses can override this
+        self._validation_tol = 1e-5
+
+    @property
+    def domain(self) -> Domain:
+        """Returns the domain of the strategy."""
+        return self._data_model.domain
+
+    @property
+    def inputs(self) -> Inputs:
+        """Shortcut to access the inputs of the strategy's domain."""
+        return self.domain.inputs
+
+    @property
+    def outputs(self) -> Outputs:
+        """Shortcut to access the outputs of the strategy's domain."""
+        return self.domain.outputs
 
     def _get_seed(self) -> int:
         """Returns an integer sampled from the strategies random number generator,
@@ -41,12 +68,18 @@ class Strategy(ABC):
             int: random seed.
 
         """
-        return int(self.rng.integers(1, 100000))
+        (spawned_seed_seq,) = self.seed_seq.spawn(1)
+        return spawned_seed_seq.generate_state(1).item()
 
     @classmethod
-    def from_spec(cls, data_model: DataModel) -> "Strategy":
+    def from_spec(cls, data_model: DataModel) -> Self:
         """Used by the mapper to map from data model to functional strategy."""
         return cls(data_model=data_model)
+
+    @property
+    def seed(self) -> int:
+        """Returns the seed of the strategy."""
+        return self.seed_seq.entropy  # ty: ignore[invalid-return-type]
 
     @property
     def experiments(self) -> Optional[pd.DataFrame]:
@@ -127,9 +160,12 @@ class Strategy(ABC):
 
         candidates = self._ask(candidate_count=candidate_count)
 
+        candidates = self.postprocess_candidates(candidates=candidates)
+
         self.domain.validate_candidates(
             candidates=candidates,
             only_inputs=True,
+            tol=self._validation_tol,
             raise_validation_error=raise_validation_error,
         )
 
@@ -143,6 +179,39 @@ class Strategy(ABC):
         if add_pending:
             self.add_candidates(candidates)
 
+        return candidates
+
+    def postprocess_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Method to allow for postprocessing of candidates.
+
+        By default this methods applies the stepsize of continuous features if applicable.
+
+        Args:
+            candidates: DataFrame with candidates.
+        Returns:
+            DataFrame with postprocessed candidates.
+        """
+        keys_in_constraints = []
+        for c in self.domain.constraints.get():
+            keys_in_constraints.extend(c.features)
+        for feature in self.domain.inputs.get(ContinuousInput):
+            assert isinstance(feature, ContinuousInput)
+            if feature.key not in keys_in_constraints:
+                candidates[feature.key] = feature.round(candidates[feature.key])
+
+        # perform strategy specific postprocessing
+        candidates = self._postprocess_candidates(candidates)
+        return candidates
+
+    def _postprocess_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Method to allow for strategy specific postprocessing of candidates.
+
+        Args:
+            candidates: DataFrame with candidates.
+
+        Returns:
+           DataFrame with postprocessed candidates.
+        """
         return candidates
 
     @abstractmethod
@@ -265,3 +334,22 @@ class Strategy(ABC):
         if self.experiments is None:
             return 0
         return len(self.experiments)
+
+
+def make_strategy(strategy_type: type[ST], data_model_type, locals_of_make: dict) -> ST:
+    """Factory function to create a strategy of type strategy_type from a data model of type data_model_type.
+    This function is a helper for the `make`-`@classmethod`s of the strategies. All locals that are not None are passed to the
+    strategy constructor. The ones that are None are not passed and hence their default values
+    are used.
+    Args:
+        strategy_type: The class of the strategy to be created.
+        data_model_type: The data model class.
+        locals_of_make: The local variables of the make-function that called this function.
+    Returns:
+        Strategy: The strategy object.
+    """
+    locals_of_make = {k: v for k, v in locals_of_make.items() if v is not None}
+    # since we get all locals from the `make`-`@classmethod`s we need to remove the `cls` variable.
+    locals_of_make.pop("cls")
+
+    return strategy_type.from_spec(data_model_type(**locals_of_make))

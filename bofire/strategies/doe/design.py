@@ -4,19 +4,17 @@ from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from formulaic import Formula
-from scipy.optimize._minimize import standardize_constraints
 
 from bofire.data_models.constraints.api import (
     ConstraintNotFulfilledError,
-    NChooseKConstraint,
     NonlinearConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.data_models.strategies.doe import AnyOptimalityCriterion
-from bofire.strategies.doe.objective import get_objective_function
+from bofire.strategies.doe.objective import Objective
 from bofire.strategies.doe.utils import (
+    _minimize,
     constraints_as_scipy_constraints,
     nchoosek_constraints_as_bounds,
 )
@@ -25,29 +23,32 @@ from bofire.strategies.random import RandomStrategy
 
 def find_local_max_ipopt(
     domain: Domain,
-    n_experiments: int,
-    criterion: Optional[AnyOptimalityCriterion] = None,
+    objective_function: Objective,
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
+    use_hessian: bool = False,
+    use_cyipopt: Optional[bool] = None,
+    seed: Optional[int] = None,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
 
     Args:
-        domain (Domain): domain containing the inputs and constraints.
-        n_experiments (int): Number of experiments. By default the value corresponds to
-            the number of model terms - dimension of ker() + 3.
-        delta (float): Regularization parameter. Default value is 1e-3.
-        ipopt_options (Dict, optional): options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
-        sampling (pd.DataFrame): dataframe containing the initial guess.
-        fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
+        domain: domain containing the inputs and constraints.
+        objective_function: The function defining the objective of the optimizattion.
+        ipopt_options: options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+        sampling : dataframe containing the initial guess.
+        fixed_experiments : dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
-        partially_fixed_experiments (pd.DataFrame): dataframe containing (some) fixed variables for experiments.
+        partially_fixed_experiments: dataframe containing (some) fixed variables for experiments.
             Values are set before the optimization. Within one experiment not all variables need to be fixed.
             Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
             Non-fixed variables have to be set to None or nan.
-        criterion (OptimalityCriterion): OptimalityCriterion object indicating which criterion function to use.
+        use_hessian: If True, the hessian of the objective function is used. Default is False.
+        use_cyipopt: If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
+            If None, cyipopt is used if available.
+        seed: Random seed for sampling. Defaults to None, in this case no seed is given to the
 
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
@@ -57,20 +58,7 @@ def find_local_max_ipopt(
     #
     # Checks and preparation steps
     #
-
-    # warn user if IPOPT scipy interface is not available
-    try:
-        from cyipopt import minimize_ipopt  # type: ignore
-    except ImportError:
-        raise ImportError(
-            "cyipopt is not installed. Install it via `conda install -c conda-forge cyipopt`"
-        )
-
-    objective_function = get_objective_function(
-        criterion, domain=domain, n_experiments=n_experiments
-    )
-    assert objective_function is not None, "Criterion type is not supported!"
-
+    n_experiments = objective_function.n_experiments
     if partially_fixed_experiments is not None:
         # check if partially fixed experiments are valid
         check_partially_fixed_experiments(
@@ -107,13 +95,6 @@ def find_local_max_ipopt(
                 UserWarning,
             )
 
-    # check that NChooseK constraints only impose an upper bound on the number of nonzero components (and no lower bound)
-    assert all(
-        c.min_count == 0
-        for c in domain.constraints
-        if isinstance(c, NChooseKConstraint)
-    ), "NChooseKConstraint with min_count !=0 is not supported!"
-
     #
     # Sampling initial values
     #
@@ -121,17 +102,26 @@ def find_local_max_ipopt(
     if sampling is not None:
         sampling.sort_index(axis=1, inplace=True)
         x0 = sampling.values.flatten()
-    elif len(domain.constraints.get(NonlinearConstraint)) == 0:
-        sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
-        x0 = sampler.ask(n_experiments).to_numpy().flatten()
-    else:
+    try:
+        sampler = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=domain, seed=seed)
+        )
+        x0 = (
+            sampler.ask(n_experiments, raise_validation_error=False)
+            .to_numpy()
+            .flatten()
+        )
+    except Exception as e:
+        warnings.warn(str(e))
         warnings.warn(
             "Sampling failed. Falling back to uniform sampling on input domain.\
                       Providing a custom sampling strategy compatible with the problem can \
                       possibly improve performance.",
         )
         x0 = (
-            domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM)
+            domain.inputs.sample(
+                n=n_experiments, method=SamplingMethodEnum.UNIFORM, seed=seed
+            )
             .to_numpy()
             .flatten()
         )
@@ -166,28 +156,27 @@ def find_local_max_ipopt(
     # set ipopt options
     if ipopt_options is None:
         ipopt_options = {}
-    _ipopt_options = {"maxiter": 500, "disp": 0}
+    _ipopt_options = {"max_iter": 500, "print_level": 0}
     for key in ipopt_options.keys():
         _ipopt_options[key] = ipopt_options[key]
-    if _ipopt_options["disp"] > 12:
-        _ipopt_options["disp"] = 0
+    if _ipopt_options["print_level"] > 12:
+        _ipopt_options["print_level"] = 0
 
     #
     # Do the optimization
     #
-
-    result = minimize_ipopt(
-        objective_function.evaluate,
+    x = _minimize(
+        objective_function=objective_function,
         x0=x0,
         bounds=bounds,
-        # "SLSQP" has no deeper meaning here and just ensures correct constraint standardization
-        constraints=standardize_constraints(constraints, x0, "SLSQP"),
-        options=_ipopt_options,
-        jac=objective_function.evaluate_jacobian,
+        constraints=constraints,
+        use_hessian=use_hessian,
+        ipopt_options=_ipopt_options,
+        use_cyipopt=use_cyipopt,
     )
 
     design = pd.DataFrame(
-        result["x"].reshape(n_experiments, len(domain.inputs)),
+        x.reshape(n_experiments, len(domain.inputs)),
         columns=domain.inputs.get_keys(),
         index=[f"exp{i}" for i in range(n_experiments)],
     )

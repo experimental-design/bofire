@@ -22,6 +22,7 @@ from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     ContinuousInput,
     ContinuousOutput,
+    ContinuousTaskInput,
     Input,
 )
 from bofire.data_models.objectives.api import (
@@ -65,9 +66,7 @@ class DTLZ2(Benchmark):
             inputs=Inputs(features=inputs),
             outputs=Outputs(features=outputs),
         )
-        self.ref_point = {
-            feat: 1.1 for feat in domain.outputs.get_keys(ContinuousOutput)
-        }
+        self.ref_point = dict.fromkeys(domain.outputs.get_keys(ContinuousOutput), 1.1)
         self._domain = domain
 
     @field_validator("dim")
@@ -84,7 +83,7 @@ class DTLZ2(Benchmark):
     def best_possible_hypervolume(self) -> float:
         # hypercube - volume of hypersphere in R^d such that all coordinates are
         # positive
-        hypercube_vol = self.ref_point[0] ** self.num_objectives  # type: ignore
+        hypercube_vol = self.ref_point[0] ** self.num_objectives
         pos_hypersphere_vol = (
             math.pi ** (self.num_objectives / 2)
             / gamma(self.num_objectives / 2 + 1)
@@ -152,13 +151,13 @@ class BNH(Benchmark):
             ),
         )
         if self.constraints:
-            self._domain.outputs.features.append(  # type: ignore
+            self._domain.outputs.features.append(  # ty: ignore[unresolved-attribute]
                 ContinuousOutput(
                     key="c1",
                     objective=MinimizeSigmoidObjective(tp=25, steepness=1000),
                 ),
             )
-            self._domain.outputs.features.append(  # type: ignore
+            self._domain.outputs.features.append(  # ty: ignore[unresolved-attribute]
                 ContinuousOutput(
                     key="c2",
                     objective=MaximizeSigmoidObjective(tp=7.7, steepness=1000),
@@ -166,14 +165,22 @@ class BNH(Benchmark):
             )
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        experiments = candidates.eval("f1=4*x1**2 + 4*x2**2", inplace=False)
-        experiments = experiments.eval("f2=(x1-5)**2 + (x2-5)**2", inplace=False)
+        experiments = candidates.eval(
+            "f1=4*x1**2 + 4*x2**2", inplace=False, engine="python"
+        )
+        experiments = experiments.eval(
+            "f2=(x1-5)**2 + (x2-5)**2", inplace=False, engine="python"
+        )
         experiments["valid_f1"] = 1
         experiments["valid_f2"] = 1
         if not self.constraints:
             return experiments[["f1", "f2", "valid_f1", "valid_f2"]].copy()
-        experiments = experiments.eval("c1=(x1-5)**2 + x2**2", inplace=False)
-        experiments = experiments.eval("c2=(x1-8)**2 + (x2+3)**2", inplace=False)
+        experiments = experiments.eval(
+            "c1=(x1-5)**2 + x2**2", inplace=False, engine="python"
+        )
+        experiments = experiments.eval(
+            "c2=(x1-8)**2 + (x2+3)**2", inplace=False, engine="python"
+        )
         experiments["valid_c1"] = 1
         experiments["valid_c2"] = 1
         return experiments[
@@ -208,13 +215,16 @@ class TNK(Benchmark):
         )
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        experiments = candidates.eval("f1=x1", inplace=False)
-        experiments = experiments.eval("f2=x2", inplace=False)
+        experiments = candidates.eval("f1=x1", inplace=False, engine="python")
+        experiments = experiments.eval("f2=x2", inplace=False, engine="python")
         experiments = experiments.eval(
             "c1=x1**2 + x2**2 -1 -0.1*cos(16*arctan(x1/x2))",
             inplace=False,
+            engine="python",
         )
-        experiments = experiments.eval("c2=(x1-0.5)**2+(x2-0.5)**2", inplace=False)
+        experiments = experiments.eval(
+            "c2=(x1-0.5)**2+(x2-0.5)**2", inplace=False, engine="python"
+        )
         experiments["valid_c1"] = 1
         experiments["valid_c2"] = 1
         experiments["valid_f1"] = 1
@@ -232,7 +242,7 @@ class C2DTLZ2(DTLZ2):
     def __init__(self, dim: PositiveInt, num_objectives: PositiveInt = 2, **kwargs):
         super().__init__(dim, num_objectives, **kwargs)
         # add also the constraint
-        self._domain.outputs.features.append(  # type: ignore
+        self._domain.outputs.features.append(
             ContinuousOutput(
                 key="slack",
                 objective=MaximizeSigmoidObjective(w=1.0, tp=0, steepness=1.0 / 1e-3),
@@ -442,18 +452,18 @@ class ZDT1(Benchmark):
         super().__init__(**kwargs)
         self.n_inputs = n_inputs
         inputs = [
-            ContinuousInput(key=f"x{i+1}", bounds=[0, 1]) for i in range(n_inputs)
+            ContinuousInput(key=f"x{i + 1}", bounds=[0, 1]) for i in range(n_inputs)
         ]
         inputs = Inputs(features=inputs)
         outputs = [
-            ContinuousOutput(key=f"y{i+1}", objective=MinimizeObjective(w=1))
+            ContinuousOutput(key=f"y{i + 1}", objective=MinimizeObjective(w=1))
             for i in range(2)
         ]
         outputs = Outputs(features=outputs)
         self._domain = Domain(inputs=inputs, outputs=outputs)
         self.zdt = BotorchZDT1(dim=n_inputs)
 
-    def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         """Function evaluation.
 
         Args:
@@ -491,14 +501,10 @@ class CrossCoupling(Benchmark):
     Virtual experiments representing the Aniline Cross-Coupling reaction
     similar to Baumgartner et al. (2019) <https://`doi.org/10.1021/acs.oprd.9b00236>.
     Experimental outcomes are based on a SingleTaskGP fitted on the experimental data published by Baumgartner et al.
-    This is a five dimensional optimisation of temperature, residence time, base equivalents,
+    This is a five dimensional optimization of temperature, residence time, base equivalents,
     catalyst and base.
     The categorical variables (catalyst and base) contain descriptors
     calculated using COSMO-RS. Specifically, the descriptors are the first two sigma moments.
-
-    Args:
-        Benchmark (Benchmark): Benchmark base class
-
     """
 
     def __init__(
@@ -557,11 +563,6 @@ class CrossCoupling(Benchmark):
             ContinuousInput(key="t_res", bounds=[60, 1800]),
         ]
 
-        input_preprocessing_specs = {
-            "catalyst": CategoricalEncodingEnum.DESCRIPTOR,
-            "base": CategoricalEncodingEnum.DESCRIPTOR,
-        }
-
         # Objectives: yield and cost
         outputs = [
             ContinuousOutput(
@@ -588,11 +589,14 @@ class CrossCoupling(Benchmark):
         data_model = SingleTaskGPSurrogate(
             inputs=Inputs(features=inputs),
             outputs=Outputs(features=[outputs[0]]),
-            input_preprocessing_specs=input_preprocessing_specs,  # type: ignore
+            categorical_encodings={
+                "catalyst": CategoricalEncodingEnum.DESCRIPTOR,
+                "base": CategoricalEncodingEnum.DESCRIPTOR,
+            },
         )
         ground_truth_yield = surrogates.map(data_model)
 
-        ground_truth_yield.fit(experiments=data)  # type: ignore
+        ground_truth_yield.fit(experiments=data)  # ty: ignore[unresolved-attribute]
         self.ground_truth_yield = ground_truth_yield
         super().__init__(**kwargs)
 
@@ -697,3 +701,63 @@ class CrossCoupling(Benchmark):
             "TEA": 0.01,
         }
         return float(base_prices[base] * mmol_base)
+
+
+class MOMFBraninCurrin(Benchmark):
+    def __init__(self, **kwargs):
+        inputs = Inputs(
+            features=[
+                *(ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0)) for i in range(2)),
+                ContinuousTaskInput(key="fidelity", bounds=(0.0, 1.0)),
+            ]
+        )
+
+        outputs = Outputs(
+            features=[
+                ContinuousOutput(key="branin", objective=MinimizeObjective()),
+                ContinuousOutput(key="currin", objective=MinimizeObjective()),
+            ]
+        )
+
+        self._domain = Domain(
+            inputs=inputs,
+            outputs=outputs,
+        )
+
+        super().__init__(**kwargs)
+
+    def _branin(self, X: np.ndarray) -> np.ndarray:
+        x1 = X[..., 0]
+        x2 = X[..., 1]
+        s = X[..., 2]
+
+        x11 = 15 * x1 - 5
+        x22 = 15 * x2
+        b = 5.1 / (4 * math.pi**2) - 0.01 * (1 - s)
+        c = 5 / math.pi - 0.1 * (1 - s)
+        r = 6
+        t = 1 / (8 * math.pi) + 0.05 * (1 - s)
+        y = (x22 - b * x11**2 + c * x11 - r) ** 2 + 10 * (1 - t) * np.cos(x11) + 10
+        B = 21 - y
+        return B / 22
+
+    def _currin(self, X: np.ndarray) -> np.ndarray:
+        x1 = X[..., 0]
+        x2 = X[..., 1]
+        s = X[..., 2]
+        A = 2300 * x1**3 + 1900 * x1**2 + 2092 * x1 + 60
+        B = 100 * x1**3 + 500 * x1**2 + 4 * x1 + 20
+        y = (1 - 0.1 * (1 - s) * np.exp(-1 / (2 * x2))) * A / B
+        C = -y + 14
+        return C / 15
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        X = candidates.to_numpy()
+        return pd.DataFrame(
+            {
+                "branin": self._branin(X),
+                "valid_branin": 1,
+                "currin": self._currin(X),
+                "valid_currin": 1,
+            }
+        )

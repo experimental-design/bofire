@@ -20,10 +20,9 @@ class FactorialStrategy(Strategy):
     This strategy is deprecated, please use FractionalFactorialStrategy instead.
     """
 
-    type: Literal["FactorialStrategy"] = "FactorialStrategy"  # type: ignore
+    type: Literal["FactorialStrategy"] = "FactorialStrategy"
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return False
 
     @classmethod

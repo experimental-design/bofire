@@ -6,9 +6,11 @@ from pydantic import Field, field_validator, model_validator
 from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
     qLogNEI,
+    qLogPF,
 )
 from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
+from bofire.data_models.strategies.convergence_criteria.api import ConvergenceCriterion
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
@@ -43,27 +45,63 @@ class SoboBaseStrategy(BotorchStrategy):
         """
         return True
 
+    @classmethod
+    def is_criterion_implemented(cls, my_type: Type[ConvergenceCriterion]) -> bool:
+        """Method to check if a convergence criterion type is applicable for the strategy.
+
+        SOBO strategies are single-objective, so they accept criteria that are
+        applicable to single-objective optimization.
+
+        Args:
+            my_type: ConvergenceCriterion class
+
+        Returns:
+            bool: True if the convergence criterion type is valid for the strategy chosen, False otherwise
+
+        """
+        return my_type.is_applicable_to_singleobjective()
+
 
 class SoboStrategy(SoboBaseStrategy):
     type: Literal["SoboStrategy"] = "SoboStrategy"
 
-    @field_validator("domain")
-    @classmethod
-    def validate_is_singleobjective(cls, v, values):
-        if len(v.outputs) == 1:
-            return v
+    @model_validator(mode="after")
+    def validate_is_singleobjective(self):
         if (
-            len(v.outputs.get_by_objective(excludes=ConstrainedObjective))
-            - len(v.outputs.get_by_objective(includes=None, excludes=Objective))
-        ) > 1:
+            len(self.domain.outputs.get_by_objective(excludes=ConstrainedObjective))
+            - len(
+                self.domain.outputs.get_by_objective(includes=None, excludes=Objective)
+            )
+        ) > 1 and not isinstance(self.acquisition_function, qLogPF):
             raise ValueError(
                 "SOBO strategy can only deal with one no-constraint objective.",
             )
-        return v
+        if isinstance(self.acquisition_function, qLogPF):
+            if len(self.domain.outputs.get_by_objective(ConstrainedObjective)) == 0:
+                raise ValueError(
+                    "At least one constrained objective is required for qLogPF.",
+                )
+        return self
 
 
-class AdditiveSoboStrategy(SoboBaseStrategy):
+class _ForbidPFMixin:
+    """
+    Mixin to forbid the use of qLogPF acquisition function in single-objective strategies
+    that are not the SoboStrategy.
+    """
+
+    @field_validator("acquisition_function")
+    def validate_acquisition_function(cls, acquisition_function):
+        if isinstance(acquisition_function, qLogPF):
+            raise ValueError(
+                "qLogPF acquisition function is only allowed in the ´SoboStrategy´.",
+            )
+        return acquisition_function
+
+
+class AdditiveSoboStrategy(SoboBaseStrategy, _ForbidPFMixin):
     type: Literal["AdditiveSoboStrategy"] = "AdditiveSoboStrategy"
+
     use_output_constraints: bool = True
 
     @field_validator("domain")
@@ -84,8 +122,10 @@ class _CheckAdaptableWeightsMixin:
     """
 
     @model_validator(mode="after")
-    def check_adaptable_weights(cls, self):
-        for obj in self.domain.outputs.get_by_objective():
+    def check_adaptable_weights(self):
+        for (
+            obj
+        ) in self.domain.outputs.get_by_objective():  # ty: ignore[unresolved-attribute]
             if obj.objective.w < 1e-8:
                 raise pydantic.ValidationError(
                     f"Weight transformation to (1, inf) requires w>=1e-8 . Violated by feature {obj.key}."
@@ -93,7 +133,9 @@ class _CheckAdaptableWeightsMixin:
         return self
 
 
-class MultiplicativeSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
+class MultiplicativeSoboStrategy(
+    SoboBaseStrategy, _CheckAdaptableWeightsMixin, _ForbidPFMixin
+):
     type: Literal["MultiplicativeSoboStrategy"] = "MultiplicativeSoboStrategy"
 
     @field_validator("domain")
@@ -105,7 +147,9 @@ class MultiplicativeSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
         return v
 
 
-class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeightsMixin):
+class MultiplicativeAdditiveSoboStrategy(
+    SoboBaseStrategy, _CheckAdaptableWeightsMixin, _ForbidPFMixin
+):
     """
     Mixed, weighted multiplicative (primary, strict) and additive (secondary, non-strict) objectives.
 
@@ -121,6 +165,7 @@ class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeight
     type: Literal["MultiplicativeAdditiveSoboStrategy"] = (
         "MultiplicativeAdditiveSoboStrategy"
     )
+
     use_output_constraints: bool = True
     additive_features: List[str] = Field(default_factory=list)
 
@@ -135,7 +180,8 @@ class MultiplicativeAdditiveSoboStrategy(SoboBaseStrategy, _CheckAdaptableWeight
         return v
 
 
-class CustomSoboStrategy(SoboBaseStrategy):
+class CustomSoboStrategy(SoboBaseStrategy, _ForbidPFMixin):
     type: Literal["CustomSoboStrategy"] = "CustomSoboStrategy"
+
     use_output_constraints: bool = True
     dump: Optional[str] = None

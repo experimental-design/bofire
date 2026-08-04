@@ -24,6 +24,11 @@ def invalid_prior_spec(request) -> specs.InvalidSpec:
     return request.param
 
 
+@fixture(params=specs.prior_constraints.invalids)
+def invalid_prior_constraint_spec(request) -> specs.InvalidSpec:
+    return request.param
+
+
 @fixture(params=specs.kernels.invalids)
 def invalid_kernel_spec(request) -> specs.InvalidSpec:
     return request.param
@@ -46,6 +51,11 @@ def invalid_domain_spec(request) -> specs.InvalidSpec:
 
 @fixture(params=specs.inputs.invalids)
 def invalid_inputs_spec(request) -> specs.InvalidSpec:
+    return request.param
+
+
+@fixture(params=specs.engineered_features.invalids)
+def invalid_engineered_features_spec(request) -> specs.InvalidSpec:
     return request.param
 
 
@@ -130,6 +140,11 @@ def inputs_spec(request) -> specs.Spec:
     return request.param
 
 
+@fixture(params=specs.engineered_features.valids)
+def engineered_features_spec(request) -> specs.Spec:
+    return request.param
+
+
 @fixture(params=specs.outputs.valids)
 def outputs_spec(request) -> specs.Spec:
     return request.param
@@ -152,6 +167,11 @@ def surrogate_spec(request) -> specs.Spec:
 
 @fixture(params=specs.priors.valids)
 def prior_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.prior_constraints.valids)
+def prior_constraint_spec(request) -> specs.Spec:
     return request.param
 
 
@@ -182,4 +202,9 @@ def molfeatures_spec(request) -> specs.Spec:
 
 @fixture(params=specs.local_search_configs.valids)
 def local_search_config_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.llm.valids)
+def llm_spec(request) -> specs.Spec:
     return request.param

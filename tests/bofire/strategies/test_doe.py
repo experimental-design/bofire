@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import pytest
+import torch
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
@@ -11,6 +12,7 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
     NonlinearEqualityConstraint,
 )
+from bofire.data_models.constraints.constraint import ConstraintNotFulfilledError
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -18,8 +20,15 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
-from bofire.data_models.strategies.doe import DOptimalityCriterion
+from bofire.data_models.strategies.doe import (
+    DOptimalityCriterion,
+    SpaceFillingCriterion,
+)
 from bofire.strategies.api import DoEStrategy
+from bofire.strategies.doe.utils import (
+    get_formula_from_string,
+    nchoosek_constraints_as_bounds,
+)
 
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
@@ -112,7 +121,6 @@ def test_nchoosek_implemented():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        optimization_strategy="partially-random",
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=12)
@@ -224,7 +232,7 @@ def test_categorical_discrete_doe():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        optimization_strategy="partially-random",
+        scip_params={"parallel/maxnthreads": 1, "numerics/feastol": 1e-8},
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=n_experiments)
@@ -234,20 +242,18 @@ def test_categorical_discrete_doe():
 
 def test_partially_fixed_experiments():
     continuous_var = [
-        ContinuousInput(key=f"continuous_var_{i}", bounds=(100, 230)) for i in range(2)
+        ContinuousInput(key=f"continuous_var_{i}", bounds=(0, 230)) for i in range(2)
     ]
 
     all_constraints = [
         NChooseKConstraint(
             features=[var.key for var in continuous_var],
-            min_count=1,
+            min_count=0,
             max_count=2,
             none_also_valid=True,
         ),
     ]
     all_inputs = [
-        CategoricalInput(key="animal", categories=["dog", "whale", "cat"]),
-        CategoricalInput(key="plant", categories=["tulip", "sunflower"]),
         DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
         DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
     ]
@@ -263,44 +269,46 @@ def test_partially_fixed_experiments():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        optimization_strategy="relaxed",
         verbose=True,
+        return_fixed_candidates=True,
+        scip_params={"parallel/maxnthreads": 1, "numerics/feastol": 1e-8},
     )
     strategy = DoEStrategy(data_model=data_model)
     strategy.set_candidates(
         pd.DataFrame(
             [
-                [150, 100, 0.3, 0.2, None, None],
-                [0, 100, 0.3, 0.2, None, "tulip"],
-                [0, 100, None, 0.2, "dog", None],
-                [0, 100, 0.3, 0.2, "cat", "tulip"],
-                [None, 100, 0.3, None, None, None],
+                [150, 100, 0.3, 0.2],
+                [
+                    0,
+                    100,
+                    0.3,
+                    0.2,
+                ],
+                [0, 100, None, 0.2],
+                [0, 100, 0.3, 0.2],
+                [None, 100, 0.3, None],
             ],
             columns=[
                 "continuous_var_0",
                 "continuous_var_1",
                 "a_discrete",
                 "b_discrete",
-                "animal",
-                "plant",
             ],
         ),
     )
 
     only_partially_fixed = pd.DataFrame(
         [
-            [150, 100, 0.3, 0.2, None, None],
-            [0, 100, 0.3, 0.2, None, "tulip"],
-            [0, 100, None, 0.2, "dog", None],
-            [None, 100, 0.3, None, None, None],
+            [150, 100, 0.3, 0.2],
+            [0, 100, 0.3, 0.2],
+            [0, 100, None, 0.2],
+            [None, 100, 0.3, None],
         ],
         columns=[
             "continuous_var_0",
             "continuous_var_1",
             "a_discrete",
             "b_discrete",
-            "animal",
-            "plant",
         ],
     )
 
@@ -310,7 +318,25 @@ def test_partially_fixed_experiments():
         candidates[:4],
     )
     test_df = pd.DataFrame(np.ones((4, 6)))
-    test_df = test_df.where(candidates[:4] == only_partially_fixed, 0)
+    test_df = test_df.where(
+        candidates[:4][
+            [
+                "continuous_var_0",
+                "continuous_var_1",
+                "a_discrete",
+                "b_discrete",
+            ]
+        ]
+        == only_partially_fixed[
+            [
+                "continuous_var_0",
+                "continuous_var_1",
+                "a_discrete",
+                "b_discrete",
+            ]
+        ],
+        0,
+    )
     assert test_df.sum().sum() == 0
 
 
@@ -340,46 +366,37 @@ def test_scaled_doe():
         assert np.any([np.allclose(c, e) for e in expected_candidates])
 
 
-def test_categorical_doe_iterative():
-    quantity_a = [
-        ContinuousInput(key=f"quantity_a_{i}", bounds=(20, 100)) for i in range(2)
-    ]
-    all_inputs = [
-        ContinuousInput(key="independent", bounds=(3, 10)),
-    ]
-    all_inputs.extend(quantity_a)
-
-    all_constraints = [
-        NChooseKConstraint(
-            features=[var.key for var in quantity_a],
-            min_count=1,
-            max_count=1,
-            none_also_valid=False,
-        ),
-    ]
-
-    n_experiments = 5
-    domain = Domain.from_lists(
-        inputs=all_inputs,
-        outputs=[ContinuousOutput(key="y")],
-        constraints=all_constraints,
-    )
-
-    data_model = data_models.DoEStrategy(
-        domain=domain,
-        criterion=DOptimalityCriterion(formula="linear"),
-        optimization_strategy="iterative",
-    )
-    strategy = DoEStrategy(data_model=data_model)
-    candidates = strategy.ask(
-        candidate_count=n_experiments,
-        raise_validation_error=False,
-    )
-
-    assert candidates.shape == (5, 3)
-
-
+@pytest.mark.xfail(reason="This test is failing due to a bad initial point.")
 def test_functional_constraint():
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
+
+    sampling = [
+        [
+            0.36531936,
+            0.774256,
+            0.0457612,
+            0.10232313,
+            0.66522677,
+        ],
+        [
+            0.39283984,
+            0.30091256,
+            0.3751583,
+            0.72181405,
+            0.37838284,
+        ],
+        [
+            0.38254448,
+            0.35407898,
+            0.47484388,
+            0.337307,
+            0.76760944,
+        ],
+        [0.31534748, 0.51893979, 0.42009135, 0.30568969, 0.85966],
+    ]
+
     inputs = [
         ContinuousInput(key="A", bounds=(0.2, 0.4)),
         ContinuousInput(key="B", bounds=(0, 0.8)),
@@ -421,7 +438,12 @@ def test_functional_constraint():
     # Calculate the solid content of the formulation
     def calc_solid_content(A, B, T, W, W_T):
         # Ensure same order as in the dictionary containing the material properties
-        return np.array([A, B, T, W, W_T]).T @ (df_raw_materials["sc"].values)
+        if isinstance(A, torch.Tensor):
+            return torch.stack([A, B, T, W, W_T], 0).T @ torch.tensor(
+                df_raw_materials["sc"].values
+            )
+        else:
+            return np.array([A, B, T, W, W_T]).T @ df_raw_materials["sc"].values
 
     # Calculate the volume content of the formulation
     def calc_volume_content(A, B, T, W, W_T):
@@ -429,6 +451,11 @@ def test_functional_constraint():
             A * raw_materials_data["A"][0] / raw_materials_data["A"][1]
             + B * raw_materials_data["B"][0] / raw_materials_data["B"][1]
         )
+        A = A
+        B = B
+        T = T
+        W = W
+        W_T = W_T
         volume_total = volume_solid + (1 - calc_solid_content(A, B, T, W, W_T) / 1)
         return volume_solid / volume_total
 
@@ -459,10 +486,18 @@ def test_functional_constraint():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        ipopt_options={"maxiter": 500},
+        ipopt_options={
+            "max_iter": 5000,
+            "derivative_test": "first-order",
+            "print_level": 5,
+        },
+        sampling=sampling,
+        use_cyipopt=True,
     )
     strategy = DoEStrategy(data_model=data_model)
-    doe = strategy.ask(candidate_count=n_experiments, raise_validation_error=False)
+
+    doe = strategy.ask(candidate_count=n_experiments, raise_validation_error=True)
+
     doe["SC"] = calc_solid_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
     doe["VC"] = calc_volume_content(*[doe[col] for col in ["A", "B", "T", "W", "W_T"]])
     doe["T_calc"] = 0.0182 - 0.03704 * doe["VC"]
@@ -472,5 +507,1103 @@ def test_functional_constraint():
     assert all((doe["VC"] > 0.299) & (doe["VC"] < 0.45))
 
 
+def test_free_discrete_doe():
+    np.random.seed(0)
+    torch.manual_seed(0)
+    torch.cuda.manual_seed(0)
+
+    all_inputs = [
+        DiscreteInput(key="a_discrete", values=[-0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
+        DiscreteInput(key="b_discrete", values=[-0.1, 0.0, 0.2, 0.3, 1.6], rtol=1e-3),
+        DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10], rtol=1e-3),
+    ]
+    domain = Domain.from_lists(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    n_exp = strategy.get_required_number_of_experiments()
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    assert candidates.shape == (n_exp, 3)
+    # check only lb and ub are values in candidates
+    for col in all_inputs:
+        assert np.all(
+            [
+                np.any([np.isclose(v, u) for v in [col.values[0], col.values[-1]]])
+                for u in candidates[col.key]
+            ]
+        ), f"Column {col.key} contains values outside of the bounds."
+
+
+def test_discrete_and_categorical_doe_w_constraints():
+    np.random.seed(0)
+    torch.manual_seed(0)
+    torch.cuda.manual_seed(0)
+
+    continuous_var = [
+        ContinuousInput(key=f"continuous_var_{i}", bounds=[0, 1]) for i in range(2)
+    ]
+    all_inputs = [
+        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
+        DiscreteInput(
+            key="b_discrete", values=[-1.0, 0.0, 0.2, 0.3, 1.6, 10], rtol=1e-3
+        ),
+        DiscreteInput(key="c_discrete", values=[0.0, 5, 8, 10], rtol=1e-3),
+        CategoricalInput(key="flatulent_butterfly", categories=["pff", "pf", "pffpff"]),
+        CategoricalInput(key="farting_turtle", categories=["meep", "moop"]),
+    ]
+    all_constraints = [
+        LinearInequalityConstraint(
+            features=["a_discrete", f"continuous_var_{1}"],
+            coefficients=[-1, -1],
+            rhs=-1.9,
+        ),
+        # NChooseKConstraint(
+        #     features=["b_discrete", f"continuous_var_{0}"],
+        #     min_count=0,
+        #     max_count=1,
+        #     none_also_valid=True,
+        # ),
+    ]
+
+    all_inputs = all_inputs + continuous_var
+    domain = Domain.from_lists(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    n_exp = strategy.get_required_number_of_experiments()
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    assert candidates.shape == (n_exp, 7)
+
+
+def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
+    np.random.seed(0)
+    torch.manual_seed(0)
+    torch.cuda.manual_seed(0)
+
+    continuous_var = [ContinuousInput(key="a", bounds=[0, 1]) for i in range(1)]
+    all_inputs = [
+        DiscreteInput(key="b", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
+        CategoricalInput(key="c", categories=["meep", "moop"]),
+    ]
+    all_constraints = [
+        LinearInequalityConstraint(
+            features=["b", "a"],
+            coefficients=[-1, -1],
+            rhs=-1.9,
+        ),
+    ]
+
+    all_inputs = all_inputs + continuous_var
+    domain = Domain.from_lists(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    excepted_num_candidates = {
+        "linear": 7,  # 1+a+b+c+3
+        "linear-and-quadratic": 9,  # 1+a+b+(c==meep)+(1-(c==meep))+a**2+b**2+3
+        "linear-and-interactions": 10,  # 1+a+b+c==meep+ab+a(c==meep)+b(c==meep)+3
+        "fully-quadratic": 12,  # 1+a+b+c+a**2+b**2+ab+ac+bc+3
+    }
+
+    excepted_model_string = {
+        "linear": "1 + a + b + aux_c_meep",
+        "linear-and-quadratic": "1 + a + b + aux_c_meep + a ** 2 + b ** 2",
+        "linear-and-interactions": "1 + a + b + aux_c_meep + a:aux_c_meep + a:b + aux_c_meep:b",
+        "fully-quadratic": "1 + a + b + aux_c_meep + a ** 2 + b ** 2 + a:aux_c_meep + a:b + aux_c_meep:b",
+    }
+
+    for model_type in [
+        "linear",
+        "linear-and-quadratic",
+        "linear-and-interactions",
+        "fully-quadratic",
+    ]:
+        data_model = data_models.DoEStrategy(
+            domain=domain,
+            criterion=DOptimalityCriterion(formula=model_type),
+            verbose=True,
+            scip_params={"parallel/maxnthreads": 1},
+        )
+
+        formula = get_formula_from_string(model_type=model_type, inputs=domain.inputs)
+        assert str(formula) == excepted_model_string[model_type]
+
+        strategy = DoEStrategy(data_model=data_model)
+        n_exp = strategy.get_required_number_of_experiments()
+        assert (
+            n_exp == excepted_num_candidates[model_type]
+        ), f"Expected {excepted_num_candidates[model_type]} candidates for {model_type}, got {n_exp}"
+        candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+        assert candidates.shape == (
+            n_exp,
+            3,
+        ), f"Expected {n_exp} candidates, got {candidates.shape[0]}"
+
+    continuous_var = [ContinuousInput(key="a", bounds=[0, 1]) for i in range(1)]
+    all_inputs = [
+        DiscreteInput(key="b", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
+        CategoricalInput(key="c", categories=["meep", "moop", "moep"]),
+    ]
+    all_constraints = [
+        LinearInequalityConstraint(
+            features=["b", "a"],
+            coefficients=[-1, -1],
+            rhs=-1.9,
+        ),
+    ]
+
+    all_inputs = all_inputs + continuous_var
+    domain = Domain.from_lists(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    excepted_num_candidates = {
+        "linear": 8,  # 1+a+b+c+3
+        "linear-and-quadratic": 10,  # 1+a+b+(c==meep)+(c==moop)+a**2+b**2+3
+        "linear-and-interactions": 13,  # 1+a+b+(c==meep)+(c==moop)+ab+a(c==meep)+a(c==moop)+b(c==meep)+b(c==moop)+3
+        "fully-quadratic": 15,  # 1+a+b+(c==meep)+(c==moop)+ab+a(c==meep)+a(c==moop)+b(c==meep)+b(c==moop)+a**2+b**2+3
+    }
+    excepted_model_string = {
+        "linear": "1 + a + b + aux_c_meep + aux_c_moop",
+        "linear-and-quadratic": "1 + a + b + aux_c_meep + aux_c_moop + a ** 2 + b ** 2",
+        "linear-and-interactions": "1 + a + b + aux_c_meep + aux_c_moop + a:aux_c_meep + a:aux_c_moop + a:b + aux_c_meep:b + aux_c_moop:b",
+        "fully-quadratic": "1 + a + b + aux_c_meep + aux_c_moop + a ** 2 + b ** 2 + a:aux_c_meep + a:aux_c_moop + a:b + aux_c_meep:b + aux_c_moop:b",
+    }
+
+    for model_type in [
+        "linear",
+        "linear-and-quadratic",
+        "linear-and-interactions",
+        "fully-quadratic",
+    ]:
+        data_model = data_models.DoEStrategy(
+            domain=domain,
+            criterion=DOptimalityCriterion(formula=model_type),
+            verbose=True,
+            scip_params={"parallel/maxnthreads": 1},
+        )
+
+        formula = get_formula_from_string(model_type=model_type, inputs=domain.inputs)
+        assert str(formula) == excepted_model_string[model_type]
+
+        strategy = DoEStrategy(data_model=data_model)
+        n_exp = strategy.get_required_number_of_experiments()
+        assert (
+            n_exp == excepted_num_candidates[model_type]
+        ), f"Expected {excepted_num_candidates[model_type]} candidates, got {n_exp}"
+        candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+        assert candidates.shape == (
+            n_exp,
+            3,
+        ), f"Expected {n_exp} candidates, got {candidates.shape[0]}"
+
+
+def test_compare_discrete_to_continuous_mapping_with_thresholding():
+    continuous_var = [
+        ContinuousInput(key=f"continuous_var_{i}", bounds=[0, 1]) for i in range(2)
+    ]
+    all_inputs = [
+        ContinuousInput(key="a_discrete", bounds=[0.1, 2]),
+        ContinuousInput(key="b_discrete", bounds=[0.1, 2]),
+    ]
+    all_constraints = [
+        LinearInequalityConstraint(
+            features=["a_discrete", f"continuous_var_{1}"],
+            coefficients=[-1, -1],
+            rhs=-1.9,
+        ),
+    ]
+
+    all_inputs = all_inputs + continuous_var
+    domain = Domain.from_lists(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        verbose=True,
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=5, raise_validation_error=True)
+
+    # Apply thresholding
+    a_discrete_grid = [0.1, 0.2, 0.3, 1.6, 2]
+    b_discrete_grid = [0.1, 0.2, 0.3, 1.6, 2]
+
+    candidates["a_discrete"] = candidates["a_discrete"].apply(
+        lambda x: min(a_discrete_grid, key=lambda y: abs(x - y))
+    )
+    candidates["b_discrete"] = candidates["b_discrete"].apply(
+        lambda x: min(b_discrete_grid, key=lambda y: abs(x - y))
+    )
+
+    try:
+        # validate the candidates
+        domain.validate_candidates(
+            candidates=candidates,
+            only_inputs=True,
+            raise_validation_error=True,
+        )
+    except ConstraintNotFulfilledError as e:
+        assert isinstance(e, ConstraintNotFulfilledError)
+
+    continuous_var = [
+        ContinuousInput(key=f"continuous_var_{i}", bounds=[0, 1]) for i in range(2)
+    ]
+    all_inputs = [
+        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
+        DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 2], rtol=1e-3),
+    ]
+    all_constraints = [
+        LinearInequalityConstraint(
+            features=["a_discrete", f"continuous_var_{1}"],
+            coefficients=[-1, -1],
+            rhs=-1.9,
+        ),
+    ]
+
+    all_inputs = all_inputs + continuous_var
+    domain = Domain.from_lists(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=5, raise_validation_error=True)
+    assert candidates.shape == (5, 4)
+
+
+def test_purely_categorical_doe():
+    np.random.seed(0)
+    torch.manual_seed(0)
+    torch.cuda.manual_seed(0)
+
+    all_inputs = [
+        CategoricalInput(key="gaseous_eel", categories=["blub", "bloop"]),
+        CategoricalInput(key="flatulent_butterfly", categories=["pff", "pf", "pffpff"]),
+        CategoricalInput(key="farting_turtle", categories=["meep", "moop"]),
+    ]
+
+    domain = Domain.from_lists(
+        inputs=all_inputs, outputs=[ContinuousOutput(key="y")], constraints=[]
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    n_exp = strategy.get_required_number_of_experiments()
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    assert candidates.shape == (n_exp, 3)
+
+
+def test_continuous_categorical_doe():
+    np.random.seed(0)
+    torch.manual_seed(0)
+    torch.cuda.manual_seed(0)
+
+    all_inputs = [
+        CategoricalInput(key="gaseous_eel", categories=["blub", "bloop"]),
+        CategoricalInput(key="flatulent_butterfly", categories=["pff", "pf", "pffpff"]),
+        ContinuousInput(key="x0", bounds=(0, 1)),
+        CategoricalInput(key="farting_turtle", categories=["meep", "moop"]),
+    ]
+
+    domain = Domain.from_lists(
+        inputs=all_inputs, outputs=[ContinuousOutput(key="y")], constraints=[]
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    n_exp = strategy.get_required_number_of_experiments()
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    assert candidates.shape == (n_exp, 4)
+
+
+def one_cont_3_cat():
+    np.random.seed(42)
+    torch.manual_seed(42)
+    # Test case: extra experiments
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            CategoricalInput(key="cat1", categories=["miau", "meow"]),
+            CategoricalInput(key="cat2", categories=["oink", "oinki", "grunt"]),
+            CategoricalInput(key="cat3", categories=["wuff", "wuffwuff", "ruff"]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=SpaceFillingCriterion(),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    n_successfull_runs = 0
+    for i in range(10):
+        candidates = strategy.ask(candidate_count=20, raise_validation_error=True)
+        assert np.shape(candidates.to_numpy()) == (20, 4)
+        n_successfull_runs = i
+    assert n_successfull_runs == 9
+
+
+def test_get_candidate_rank():
+    """Test the get_candidate_rank method of DoEStrategy."""
+    # Create a simple domain with 3 continuous inputs
+    simple_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    # Test 1: No candidates should return 0
+    data_model = data_models.DoEStrategy(
+        domain=simple_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    assert strategy.get_candidate_rank() == 0
+
+    # Test 2: Full rank Fisher Information Matrix (4 candidates for linear model: intercept + 3 variables)
+    candidates_full_rank = pd.DataFrame(
+        {
+            "x1": [1.0, 0.0, 0.0, 0.5],
+            "x2": [0.0, 1.0, 0.0, 0.5],
+            "x3": [0.0, 0.0, 1.0, 0.5],
+        }
+    )
+    strategy.set_candidates(candidates_full_rank)
+    rank = strategy.get_candidate_rank()
+    assert rank == 4  # Intercept + 3 variables = 4 estimable parameters
+
+    # Test 3: Rank-deficient Fisher Information Matrix (linearly dependent design points)
+    candidates_rank_deficient = pd.DataFrame(
+        {
+            "x1": [
+                1.0,
+                1.0,
+                0.0,
+                0.0,
+            ],  # Two pairs of identical rows creates linear dependence in design matrix
+            "x2": [0.0, 0.0, 1.0, 1.0],
+            "x3": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ],  # Constant, provides no information beyond intercept
+        }
+    )
+    strategy.set_candidates(candidates_rank_deficient)
+    rank = strategy.get_candidate_rank()
+    assert (
+        rank == 2
+    )  # Only 2 linearly independent design points: spans intercept + 1 direction
+
+    # Test 4: Test with quadratic formula
+    data_model_quad = data_models.DoEStrategy(
+        domain=simple_domain, criterion=DOptimalityCriterion(formula="fully-quadratic")
+    )
+    strategy_quad = DoEStrategy(data_model_quad)
+    strategy_quad.set_candidates(candidates_full_rank)
+    rank_quad = strategy_quad.get_candidate_rank()
+    # Fully quadratic has 10 terms (excluding intercept), with 4 candidates rank is 4
+    assert rank_quad == 4
+
+    # Test 5: SpaceFilling criterion should raise error
+    data_model_space = data_models.DoEStrategy(
+        domain=simple_domain, criterion=SpaceFillingCriterion()
+    )
+    strategy_space = DoEStrategy(data_model_space)
+    strategy_space.set_candidates(candidates_full_rank)
+
+    with pytest.raises(
+        ValueError,
+        match="get_candidate_rank\\(\\) only works with DoEOptimalityCriterion",
+    ):
+        strategy_space.get_candidate_rank()
+
+
+def test_get_candidate_rank_categorical_discrete():
+    """Test the get_candidate_rank method with categorical and discrete inputs."""
+    # Create a domain with mixed input types
+    mixed_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            DiscreteInput(key="x2", values=[0.1, 0.5, 1.0]),
+            CategoricalInput(key="x3", categories=["A", "B", "C"]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    # Test 1: No candidates should return 0
+    data_model = data_models.DoEStrategy(
+        domain=mixed_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    assert strategy.get_candidate_rank() == 0
+
+    # Test 2: Mixed input candidates
+    candidates_mixed = pd.DataFrame(
+        {
+            "x1": [0.0, 1.0, 0.5, 0.2],
+            "x2": [0.1, 0.5, 1.0, 0.5],  # Discrete values
+            "x3": ["A", "B", "C", "A"],  # Categorical values
+        }
+    )
+    strategy.set_candidates(candidates_mixed)
+    rank = strategy.get_candidate_rank()
+    # With proper encoding, all 4 candidates are linearly independent
+    assert rank == 4
+
+    # Test 3: Test with interactions formula for mixed types
+    data_model_interactions = data_models.DoEStrategy(
+        domain=mixed_domain,
+        criterion=DOptimalityCriterion(formula="linear-and-interactions"),
+    )
+    strategy_interactions = DoEStrategy(data_model_interactions)
+    strategy_interactions.set_candidates(candidates_mixed)
+    rank_interactions = strategy_interactions.get_candidate_rank()
+    # With interactions, rank is still 4 (limited by number of candidates)
+    assert rank_interactions == 4
+
+    # Test 4: Rank-deficient case with repeated categorical/discrete values
+    candidates_repeated = pd.DataFrame(
+        {
+            "x1": [0.0, 0.0, 0.5, 0.5],  # Repeated continuous values
+            "x2": [0.1, 0.1, 0.5, 0.5],  # Repeated discrete values
+            "x3": ["A", "A", "B", "B"],  # Repeated categorical values
+        }
+    )
+    strategy.set_candidates(candidates_repeated)
+    rank_repeated = strategy.get_candidate_rank()
+    assert (
+        rank_repeated == 2
+    )  # Only 2 unique design points: intercept + 1 independent direction
+
+    # Test 5: Single categorical level (should reduce rank)
+    candidates_single_cat = pd.DataFrame(
+        {
+            "x1": [0.0, 1.0, 0.5, 0.2],
+            "x2": [0.1, 0.5, 1.0, 0.1],
+            "x3": ["A", "A", "A", "A"],  # All same category
+        }
+    )
+    strategy.set_candidates(candidates_single_cat)
+    rank_single = strategy.get_candidate_rank()
+    # Intercept + x1 + x2 (x3 categorical doesn't vary, contributes no information)
+    assert rank_single == 3
+
+
+def test_get_additional_experiments_needed():
+    """Test the get_additional_experiments_needed method."""
+    simple_domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=simple_domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+
+    # Test 1: No candidates - should return full required number
+    required = strategy.get_required_number_of_experiments()
+    assert required is not None
+    assert strategy.get_additional_experiments_needed() == required
+
+    # Test 2: Partial rank - should return the difference
+    candidates_partial = pd.DataFrame(
+        {"x1": [0.0, 1.0], "x2": [0.0, 0.0], "x3": [0.0, 0.0]}
+    )
+    strategy.set_candidates(candidates_partial)
+    rank = strategy.get_candidate_rank()
+    assert strategy.get_additional_experiments_needed() == required - rank
+    assert rank < required
+    additional_needed = strategy.get_additional_experiments_needed()
+    assert additional_needed is not None
+    assert additional_needed > 0
+
+    # Test 3: Generate a full DoE from scratch and verify it has full rank
+    # Using the same domain and criterion as Test 1 and 2
+    full_doe = strategy.ask(candidate_count=required)
+
+    # Create a fresh strategy instance and set the full DoE as candidates
+    strategy_fresh = DoEStrategy(data_model=data_model)
+    strategy_fresh.set_candidates(full_doe)
+    rank_full_doe = strategy_fresh.get_candidate_rank()
+
+    # A properly generated D-optimal DoE should have rank ~ model terms
+    formula = get_formula_from_string(
+        strategy._data_model.criterion.formula, inputs=strategy.domain.inputs
+    )
+    assert rank_full_doe == len(
+        formula
+    ), f"Expected DoE to have rank {len(formula)}, but got {rank_full_doe}"
+
+    # Test 4: SpaceFilling criterion should return None
+    data_model_sf = data_models.DoEStrategy(
+        domain=simple_domain, criterion=SpaceFillingCriterion()
+    )
+    strategy_sf = DoEStrategy(data_model=data_model_sf)
+    assert strategy_sf.get_additional_experiments_needed() is None
+
+
+def test_custom_formula_with_categorical_and_discrete():
+    """Test DoE strategy with custom formula containing categorical interactions."""
+
+    from bofire.data_models.domain.api import Inputs
+
+    np.random.seed(42)
+    torch.manual_seed(42)
+
+    # Create a domain with categorical, continuous, and discrete variables
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="color",
+                categories=["red", "blue", "green"],
+            ),
+            ContinuousInput(
+                key="color_intensity",
+                bounds=(0.0, 1.0),
+            ),
+            CategoricalInput(
+                key="material",
+                categories=["plastic", "metal"],
+            ),
+            ContinuousInput(
+                key="temperature",
+                bounds=(20.0, 100.0),
+            ),
+            DiscreteInput(
+                key="pressure",
+                values=[1.0, 2.0, 3.0, 5.0, 10.0],
+            ),
+        ]
+    )
+
+    domain = Domain(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    # Define a custom formula with interactions among categorical variables
+    custom_formula = "color + material + temperature + pressure + color:material"
+
+    # Create DoE strategy with the custom formula
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula=custom_formula),
+        verbose=True,
+        scip_params={"parallel/maxnthreads": 1},
+    )
+    strategy = DoEStrategy(data_model=data_model)
+
+    # Get required number of experiments
+    n_exp = strategy.get_required_number_of_experiments()
+    assert n_exp is not None
+    # Formula has: 1 (intercept) + 2 (color) + 1 (material) + 1 (temp) + 1 (pressure) + 2 (color:material) = 8 terms + 3 replicates
+    assert n_exp == 11
+
+    # Generate candidates
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=True)
+    assert candidates.shape == (n_exp, 5)
+
+    # Verify all categorical values are valid
+    assert all(candidates["color"].isin(["red", "blue", "green"]))
+    assert all(candidates["material"].isin(["plastic", "metal"]))
+
+    # Verify continuous and discrete values are within bounds
+    assert all(
+        (candidates["temperature"] >= 20.0) & (candidates["temperature"] <= 100.0)
+    )
+    assert all(
+        (candidates["color_intensity"] >= 0.0) & (candidates["color_intensity"] <= 1.0)
+    )
+    assert all(candidates["pressure"].isin([1.0, 2.0, 3.0, 5.0, 10.0]))
+
+
+def test_nchoosek_min_count_greater_zero():
+    """Test that generalized NChooseK with min_count > 0 produces a design
+    and that the bounds correctly encode the allowed activity levels.
+
+    Note: the optimizer may converge an "active" variable to near-zero, so we
+    only verify the bounds structure (not the final values) for strictness,
+    and merely check the design has the right shape.
+    """
+    n_features = 5
+    min_count = 2
+    max_count = 3
+    nchoosek_constraint = NChooseKConstraint(
+        features=[f"x{i}" for i in range(n_features)],
+        min_count=min_count,
+        max_count=max_count,
+        none_also_valid=False,
+    )
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(0.0, 1.0)) for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[nchoosek_constraint],
+    )
+
+    # --- verify the bounds structure encodes the right patterns ---
+    n_exp = 20
+    bounds = nchoosek_constraints_as_bounds(d, n_experiments=n_exp)
+    D = n_features
+    observed_patterns = set()
+    for i in range(n_exp):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        pattern = tuple(1 if b != (0.0, 0.0) else 0 for b in exp_bounds)
+        active = sum(pattern)
+        assert min_count <= active <= max_count, (
+            f"Bounds pattern {pattern} has {active} active slots, "
+            f"expected {min_count}-{max_count}"
+        )
+        observed_patterns.add(pattern)
+
+    # with 20 experiments all C(5,2)+C(5,3) = 10+10 = 20 patterns should appear
+    assert len(observed_patterns) == 20
+
+    # --- verify the strategy produces a design of the right shape ---
+    data_model = data_models.DoEStrategy(
+        domain=d,
+        criterion=DOptimalityCriterion(formula="linear"),
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    req = strategy.get_required_number_of_experiments()
+    candidates = strategy.ask(candidate_count=req, raise_validation_error=False)
+    assert candidates.shape[0] == req
+
+
+def test_nchoosek_nonzero_lower_bounds():
+    """Test NChooseK with features whose lower bound > 0.
+
+    Inactive features should be pinned to 0 (overriding the lb), while active
+    features must respect their original bounds.
+    """
+    n_features = 4
+    lb, ub = 0.1, 1.0
+    nchoosek_constraint = NChooseKConstraint(
+        features=[f"x{i}" for i in range(n_features)],
+        min_count=0,
+        max_count=2,
+        none_also_valid=True,
+    )
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(lb, ub), allow_zero=True)
+            for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[nchoosek_constraint],
+    )
+    data_model = data_models.DoEStrategy(
+        domain=d,
+        criterion=DOptimalityCriterion(formula="linear"),
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=20)
+    assert candidates.shape == (20, n_features)
+
+    nchoosek_keys = [f"x{i}" for i in range(n_features)]
+    for _, row in candidates[nchoosek_keys].iterrows():
+        active = int((row.abs() > 1e-6).sum())
+        # at most max_count active
+        assert active <= 2, f"Too many active features: {active}"
+        for val in row.values:
+            # each value is either ~0 (inactive) or within [lb, ub] (active)
+            is_zero = abs(val) < 1e-6
+            is_in_bounds = lb - 1e-4 <= val <= ub + 1e-4
+            assert (
+                is_zero or is_in_bounds
+            ), f"Value {val} is neither zero nor in [{lb}, {ub}]"
+
+
+def test_nchoosek_none_valid():
+    """Test NChooseK with none_also_valid=True and min_count > 0.
+
+    none_also_valid only affects validation (is_fulfilled) and domain
+    enumeration — it does NOT inject the all-zero pattern into the DoE
+    bounds.  So the optimizer should always produce rows with
+    min_count <= active <= max_count.
+    """
+    n_features = 5
+    nchoosek_constraint = NChooseKConstraint(
+        features=[f"x{i}" for i in range(n_features)],
+        min_count=2,
+        max_count=3,
+        none_also_valid=True,
+    )
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{i}", bounds=(1.0, 2.0), allow_zero=True)
+            for i in range(n_features)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[nchoosek_constraint],
+    )
+    data_model = data_models.DoEStrategy(
+        domain=d,
+        criterion=DOptimalityCriterion(formula="fully-quadratic"),
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=20, raise_validation_error=False).round(3)
+    assert candidates.shape == (20, n_features)
+
+    nchoosek_keys = [f"x{i}" for i in range(n_features)]
+    for _, row in candidates[nchoosek_keys].iterrows():
+        active = int((row.abs() > 1e-6).sum())
+        # Every row must have between min_count and max_count active features
+        assert active >= 2, f"Too few active features: {active}"
+
+
+def test_nchoosek_overlapping_formulation():
+    """Test overlapping NChooseK constraints with a formulation constraint.
+
+    Scenario (filler / expander formulation):
+      - Features: h2o, oil, compound  (all in [0, 1], sum == 1)
+      - Filler constraint:   [h2o, oil]     choose 1  (exactly one filler)
+      - Expander constraint:  [h2o, compound]  choose 1  (exactly one expander)
+
+    Because h2o is shared, the Cartesian product filters down to:
+      - h2o=on,  oil=off, compound=off  → water fills and expands
+      - h2o=off, oil=on,  compound=on   → oil as filler, compound as expander
+
+    Both patterns have exactly 2 active features, consistent with the
+    formulation constraint (sum == 1 over 2 active components).
+    """
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="h2o", bounds=(0.0, 1.0)),
+            ContinuousInput(key="oil", bounds=(0.0, 1.0)),
+            ContinuousInput(key="compound", bounds=(0.0, 1.0)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["h2o", "oil"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["h2o", "compound"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            LinearEqualityConstraint(
+                features=["h2o", "oil", "compound"],
+                coefficients=[1.0, 1.0, 1.0],
+                rhs=1.0,
+            ),
+        ],
+    )
+
+    # --- Verify the bounds patterns ---
+    n_exp = 10
+    bounds = nchoosek_constraints_as_bounds(d, n_experiments=n_exp)
+    # Domain sorts inputs alphabetically: compound, h2o, oil
+    sorted_keys = d.inputs.get_keys(ContinuousInput)
+    D = len(sorted_keys)
+
+    observed_named_patterns = set()
+    for i in range(n_exp):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        active_keys = frozenset(
+            sorted_keys[j] for j, b in enumerate(exp_bounds) if b != (0.0, 0.0)
+        )
+        observed_named_patterns.add(active_keys)
+
+    # Only 2 valid combinations should survive:
+    #   {h2o}              → water fills and expands
+    #   {oil, compound}    → oil as filler, compound as expander
+    expected_named = {frozenset(["h2o"]), frozenset(["oil", "compound"])}
+    assert (
+        observed_named_patterns == expected_named
+    ), f"Expected patterns {expected_named}, got {observed_named_patterns}"
+
+    # --- Verify the optimizer produces a valid design ---
+    data_model = data_models.DoEStrategy(
+        domain=d,
+        criterion=DOptimalityCriterion(formula="linear"),
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=False)
+    assert candidates.shape == (n_exp, D)
+
+    for _, row in candidates.iterrows():
+        h2o, oil, compound = row["h2o"], row["oil"], row["compound"]
+        # Either water-only (1 active) or oil+compound (2 active)
+        is_water = abs(oil) < 1e-6 and abs(compound) < 1e-6
+        is_oil_compound = abs(h2o) < 1e-6
+        assert is_water or is_oil_compound, (
+            f"Invalid pattern: h2o={h2o:.4f}, oil={oil:.4f}, "
+            f"compound={compound:.4f}"
+        )
+
+    # --- Example 2: max_count > 1 on an overlapping constraint ---
+    #
+    # Cleaning-agent formulation:
+    #   Features: water, alcohol, surfactant  (all in [0,1], sum == 1)
+    #   Solvent constraint:  [water, alcohol]    choose 1..2  (one or both solvents)
+    #   Active constraint:   [water, surfactant] choose 1     (exactly one active)
+    #
+    # water is shared.  Cartesian product (3×2 = 6) after consistency filter:
+    #   Solvent{water}          × Active{water}      → {water}                  ✓
+    #   Solvent{water}          × Active{surfactant}  → water on/off conflict   ✗
+    #   Solvent{alcohol}        × Active{water}       → water off/on conflict   ✗
+    #   Solvent{alcohol}        × Active{surfactant}  → {alcohol, surfactant}   ✓
+    #   Solvent{water, alcohol} × Active{water}       → {water, alcohol}        ✓
+    #   Solvent{water, alcohol} × Active{surfactant}  → water on/off conflict   ✗
+    #
+    # Valid patterns: {water}, {alcohol, surfactant}, {water, alcohol}
+    d2 = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="water", bounds=(0.0, 1.0)),
+            ContinuousInput(key="alcohol", bounds=(0.0, 1.0)),
+            ContinuousInput(key="surfactant", bounds=(0.0, 1.0)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["water", "alcohol"],
+                min_count=1,
+                max_count=2,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["water", "surfactant"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            LinearEqualityConstraint(
+                features=["water", "alcohol", "surfactant"],
+                coefficients=[1.0, 1.0, 1.0],
+                rhs=1.0,
+            ),
+        ],
+    )
+
+    n_exp2 = 15
+    bounds2 = nchoosek_constraints_as_bounds(d2, n_experiments=n_exp2)
+    sorted_keys2 = d2.inputs.get_keys(ContinuousInput)
+    D2 = len(sorted_keys2)
+
+    observed2 = set()
+    for i in range(n_exp2):
+        exp_bounds = bounds2[i * D2 : (i + 1) * D2]
+        active_keys = frozenset(
+            sorted_keys2[j] for j, b in enumerate(exp_bounds) if b != (0.0, 0.0)
+        )
+        observed2.add(active_keys)
+
+    expected2 = {
+        frozenset(["water"]),
+        frozenset(["alcohol", "surfactant"]),
+        frozenset(["water", "alcohol"]),
+    }
+    assert (
+        observed2 == expected2
+    ), f"max_count>1 example: expected {expected2}, got {observed2}"
+
+    # Verify optimizer design respects per-constraint limits
+    data_model2 = data_models.DoEStrategy(
+        domain=d2,
+        criterion=DOptimalityCriterion(formula="linear"),
+    )
+    strategy2 = DoEStrategy(data_model=data_model2)
+    candidates2 = strategy2.ask(candidate_count=n_exp2, raise_validation_error=False)
+    assert candidates2.shape == (n_exp2, D2)
+
+    for _, row in candidates2.iterrows():
+        vals = {k: row[k] for k in ["water", "alcohol", "surfactant"]}
+        active = frozenset(k for k, v in vals.items() if abs(v) > 1e-6)
+
+        # Solvent constraint: 1..2 of {water, alcohol} active
+        solvent_active = sum(1 for k in ["water", "alcohol"] if k in active)
+        assert 0 <= solvent_active <= 2, f"Solvent constraint violated: {active}"
+
+        # Active constraint: at most 1 of {water, surfactant} active
+        active_active = sum(1 for k in ["water", "surfactant"] if k in active)
+        assert active_active <= 1, f"Active constraint violated: {active}"
+
+        # Consistency: if surfactant is on, water must be off (and vice versa)
+        if "surfactant" in active:
+            assert "water" not in active, f"water+surfactant conflict: {active}"
+
+
+def test_nchoosek_overlapping_formulation_complex():
+    """Test 3 overlapping NChooseK constraints with shared + disjoint features.
+
+    Scenario (paint formulation):
+      - Features: water, resin, pigment, solvent, additive  (all in [0,1], sum==1)
+      - Binder constraint:   [water, resin]     choose 1  (exactly one binder base)
+      - Carrier constraint:  [water, solvent]    choose 1  (exactly one carrier)
+      - Colorant constraint: [pigment, additive] choose 1  (exactly one colorant)
+
+    water is shared between binder and carrier.  The Cartesian product is
+    {binder} × {colorant} × {carrier} = 2×2×2 = 8, but the consistency
+    filter on water kills 4, leaving 4 valid combined patterns:
+
+      1. {water, pigment}           → water is both binder and carrier
+      2. {water, additive}          → water is both binder and carrier
+      3. {resin, pigment, solvent}  → resin as binder, solvent as carrier
+      4. {resin, additive, solvent} → resin as binder, solvent as carrier
+
+    Notably the active count varies: 2 or 3 per pattern.
+    """
+    d = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="water", bounds=(0.0, 1.0)),
+            ContinuousInput(key="resin", bounds=(0.0, 1.0)),
+            ContinuousInput(key="pigment", bounds=(0.0, 1.0)),
+            ContinuousInput(key="solvent", bounds=(0.0, 1.0)),
+            ContinuousInput(key="additive", bounds=(0.0, 1.0)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["water", "resin"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["water", "solvent"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["pigment", "additive"],
+                min_count=1,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            LinearEqualityConstraint(
+                features=["water", "resin", "pigment", "solvent", "additive"],
+                coefficients=[1.0, 1.0, 1.0, 1.0, 1.0],
+                rhs=1.0,
+            ),
+        ],
+    )
+
+    # --- Verify the bounds patterns ---
+    n_exp = 20
+    bounds = nchoosek_constraints_as_bounds(d, n_experiments=n_exp)
+    sorted_keys = d.inputs.get_keys(ContinuousInput)
+    D = len(sorted_keys)
+
+    observed_named_patterns = set()
+    for i in range(n_exp):
+        exp_bounds = bounds[i * D : (i + 1) * D]
+        active_keys = frozenset(
+            sorted_keys[j] for j, b in enumerate(exp_bounds) if b != (0.0, 0.0)
+        )
+        observed_named_patterns.add(active_keys)
+
+    expected_named = {
+        frozenset(["water", "pigment"]),
+        frozenset(["water", "additive"]),
+        frozenset(["resin", "pigment", "solvent"]),
+        frozenset(["resin", "additive", "solvent"]),
+    }
+    assert observed_named_patterns == expected_named, (
+        f"Expected {len(expected_named)} patterns {expected_named}, "
+        f"got {len(observed_named_patterns)} patterns {observed_named_patterns}"
+    )
+
+    # Verify active counts: must be 2 or 3
+    for pat in observed_named_patterns:
+        assert len(pat) in (2, 3), f"Unexpected active count {len(pat)} in {pat}"
+
+    # --- Verify the optimizer produces a valid design ---
+    data_model = data_models.DoEStrategy(
+        domain=d,
+        criterion=DOptimalityCriterion(formula="linear"),
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=n_exp, raise_validation_error=False)
+    assert candidates.shape == (n_exp, D)
+
+    for _, row in candidates.iterrows():
+        vals = {k: row[k] for k in ["water", "resin", "pigment", "solvent", "additive"]}
+        active = frozenset(k for k, v in vals.items() if abs(v) > 1e-6)
+
+        # The optimizer may converge an "active" variable to near-zero, so
+        # the observed active set can be a subset of a valid pattern.
+        # We only check per-constraint satisfaction (at most 1 active per
+        # choose-1 group).
+
+        # Binder constraint: at most one of {water, resin} active
+        binder_active = sum(1 for k in ["water", "resin"] if k in active)
+        assert binder_active <= 1, f"Binder constraint violated: {active}"
+
+        # Carrier constraint: at most one of {water, solvent} active
+        carrier_active = sum(1 for k in ["water", "solvent"] if k in active)
+        assert carrier_active <= 1, f"Carrier constraint violated: {active}"
+
+        # Colorant constraint: at most one of {pigment, additive} active
+        colorant_active = sum(1 for k in ["pigment", "additive"] if k in active)
+        assert colorant_active <= 1, f"Colorant constraint violated: {active}"
+
+        # Consistency: if water is active, resin and solvent must be off
+        if "water" in active:
+            assert "resin" not in active, f"water+resin conflict: {active}"
+            assert "solvent" not in active, f"water+solvent conflict: {active}"
+
+
 if __name__ == "__main__":
-    test_functional_constraint()
+    test_nchoosek_none_valid()

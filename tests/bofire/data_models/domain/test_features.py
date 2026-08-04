@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 
 import pytest
-from pydantic.error_wrappers import ValidationError
+from pydantic import ValidationError
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.domain.api import Features, Inputs, Outputs
@@ -211,3 +211,19 @@ def test_exclude_include():
 
     with pytest.raises(ValueError, match="no filter provided"):
         test(includes=None, excludes=None, expected=[if1, if2, if3, if4, if5, if7])
+
+
+@pytest.mark.parametrize(
+    "container",
+    [inputs, outputs, features],
+)
+def test_default_includes_is_the_feature_base_class(container):
+    """Omitting ``includes`` must keep returning everything.
+
+    The default used to be the ``AnyFeature`` union, which Python binds at
+    import time, freezing it before ``register_engineered_feature`` can extend
+    it (issue #794). ``Feature`` is a plain base class, so subclasses
+    registered later are matched by ``isinstance`` without any rebinding.
+    """
+    assert container.get() == container.get(AnyFeature)
+    assert container.get_keys() == container.get_keys(AnyFeature)

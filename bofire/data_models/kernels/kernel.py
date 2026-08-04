@@ -1,10 +1,11 @@
-from typing import List, Optional
+from typing import Any, Optional
 
 from bofire.data_models.base import BaseModel
+from bofire.data_models.types import NonRestrictedFeatureKeys
 
 
 class Kernel(BaseModel):
-    type: str
+    type: Any
 
 
 class AggregationKernel(Kernel):
@@ -12,4 +13,4 @@ class AggregationKernel(Kernel):
 
 
 class FeatureSpecificKernel(Kernel):
-    features: Optional[List[str]] = None
+    features: Optional[NonRestrictedFeatureKeys] = None

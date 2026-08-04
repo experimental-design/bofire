@@ -1,0 +1,65 @@
+---
+title: Custom Sobo Strategy
+jupyter: python3
+---
+
+
+The `CustomSoboStrategy` can be used to design custom objectives or objective combinations for optimizations. In this tutorial notebook, it is shown how to use it to optimize a quantity that depends on a combination of an inferred quantity and one of the inputs.
+
+
+## Imports
+
+```{python}
+import torch
+
+import bofire.strategies.api as strategies
+from bofire.benchmarks.api import Himmelblau
+from bofire.data_models.strategies.api import CustomSoboStrategy
+from bofire.utils.torch_tools import tkwargs
+```
+
+## Setup the optimization
+
+For the optimization, we want to subtract the inferred quantity by the value of feature `x_0`.
+
+```{python}
+benchmark = Himmelblau()
+experiments = benchmark.f(benchmark.domain.inputs.sample(10), return_complete=True)
+
+strategy_data = CustomSoboStrategy(domain=benchmark.domain)
+strategy = strategies.map(strategy_data)
+
+
+# here we find out what is the index of the input feature in the input tensor `X`
+# in the manipulation function below
+feature2index, _ = strategy.domain.inputs._get_transform_info(
+    strategy.input_preprocessing_specs
+)
+feat_idx = feature2index["x_1"][0]
+
+
+# we assign now a torch based function to the strategy which performs the custom manipulation of the objective
+# the signature has to be understood in the following way:
+# - samples: the samples to evaluate the objective on, these are the predicted Y/output values of the model(s)
+# - callables: the botorch callables associated to objectives associated to the features
+#   (have a look at `get_objective_callable` in `bofire/utils/torch_tools.py`)
+# - weights: the weights associated to the objectives
+#   (have a look here: `_callables_and_weights` in `bofire/utils/torch_tools.py`)
+# - X: a tensor of input values associated to the output values  samples, associated to the Y/output values (`samples`)
+
+
+def f(samples, callables, weights, X):
+    val = torch.tensor(0.0).to(**tkwargs)
+    for c, w in zip(callables, weights):
+        val = val + c(samples, None) * w
+    # here, you have to implement the custom manipulation of the objective
+    # in this example, we subtract the value of the first feature from the objective
+    val = val - X[..., feat_idx]
+    return val
+
+
+strategy.f = f
+
+strategy.tell(experiments)
+strategy.ask(1)
+```

@@ -28,6 +28,9 @@ class CloseToTargetObjective(Objective):
     target_value: float
     exponent: float
 
+    def to_description(self) -> str:
+        raise NotImplementedError
+
     def __call__(
         self,
         x: Union[pd.Series, np.ndarray],
@@ -52,6 +55,9 @@ class TargetObjective(Objective, ConstrainedObjective):
     target_value: float
     tolerance: TGe0
     steepness: TGt0
+
+    def to_description(self) -> str:
+        raise NotImplementedError
 
     def __call__(
         self,

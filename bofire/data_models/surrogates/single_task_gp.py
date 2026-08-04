@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Type
+from typing import Literal, Optional, Type, Union
 
 import pandas as pd
 from pydantic import Field
@@ -19,13 +19,15 @@ from bofire.data_models.kernels.api import (
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
-    MBO_LENGTHCALE_PRIOR,
+    MBO_LENGTHSCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
     AnyPrior,
+    AnyPriorConstraint,
+    GreaterThan,
 )
 from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
@@ -44,6 +46,8 @@ class SingleTaskGPHyperconfig(Hyperconfig):
             CategoricalInput(key="ard", categories=["True", "False"]),
         ],
     )
+    lengthscale_constraint: Optional[AnyPriorConstraint] = None
+    outputscale_constraint: Optional[AnyPriorConstraint] = None
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
     hyperstrategy: Literal[
         "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
@@ -53,17 +57,37 @@ class SingleTaskGPHyperconfig(Hyperconfig):
     def _update_hyperparameters(
         surrogate_data: "SingleTaskGPSurrogate",
         hyperparameters: pd.Series,
+        outputscale_constraint: Optional[AnyPriorConstraint] = None,
+        lengthscale_constraint: Optional[AnyPriorConstraint] = None,
     ):
-        def matern_25(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
-            return MaternKernel(nu=2.5, lengthscale_prior=lengthscale_prior, ard=ard)
+        def matern_25(
+            ard: bool,
+            lengthscale_prior: AnyPrior,
+            lengthscale_constraint: Union[AnyPriorConstraint, None],
+        ) -> MaternKernel:
+            return MaternKernel(
+                nu=2.5,
+                lengthscale_prior=lengthscale_prior,
+                lengthscale_constraint=lengthscale_constraint,
+                ard=ard,
+            )
 
-        def matern_15(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
-            return MaternKernel(nu=1.5, lengthscale_prior=lengthscale_prior, ard=ard)
+        def matern_15(
+            ard: bool,
+            lengthscale_prior: AnyPrior,
+            lengthscale_constraint: Union[AnyPriorConstraint, None],
+        ) -> MaternKernel:
+            return MaternKernel(
+                nu=1.5,
+                lengthscale_prior=lengthscale_prior,
+                lengthscale_constraint=lengthscale_constraint,
+                ard=ard,
+            )
 
         if hyperparameters.prior == "mbo":
             noise_prior, lengthscale_prior, outputscale_prior = (
                 MBO_NOISE_PRIOR(),
-                MBO_LENGTHCALE_PRIOR(),
+                MBO_LENGTHSCALE_PRIOR(),
                 MBO_OUTPUTSCALE_PRIOR(),
             )
         elif hyperparameters.prior == "threesix":
@@ -82,22 +106,30 @@ class SingleTaskGPHyperconfig(Hyperconfig):
 
         if hyperparameters.kernel == "rbf":
             base_kernel = RBFKernel(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+                lengthscale_constraint=lengthscale_constraint,
             )
         elif hyperparameters.kernel == "matern_2.5":
             base_kernel = matern_25(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+                lengthscale_constraint=lengthscale_constraint,
             )
         elif hyperparameters.kernel == "matern_1.5":
             base_kernel = matern_15(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+                lengthscale_constraint=lengthscale_constraint,
             )
         else:
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
-        if hyperparameters.scalekernel:
+        if hyperparameters.scalekernel == "True":
             surrogate_data.kernel = ScaleKernel(
-                base_kernel=base_kernel, outputscale_prior=outputscale_prior
+                base_kernel=base_kernel,
+                outputscale_prior=outputscale_prior,
+                outputscale_constraint=outputscale_constraint,
             )
         else:
             surrogate_data.kernel = base_kernel
@@ -113,6 +145,9 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
+    noise_constraint: Optional[AnyPriorConstraint] = Field(
+        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    )
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig(),
     )

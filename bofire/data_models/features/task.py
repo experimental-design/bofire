@@ -1,15 +1,29 @@
-from typing import ClassVar, List, Literal
+from typing import Any, ClassVar, Literal
 
 import numpy as np
 from pydantic import model_validator
 
 from bofire.data_models.features.categorical import CategoricalInput
+from bofire.data_models.features.continuous import ContinuousInput
+from bofire.data_models.features.feature import Input
 
 
-class TaskInput(CategoricalInput):
+class TaskInput(Input):
+    """Abstract base class for task-encoding inputs.
+
+    This class is not directly instantiable and is not part of any
+    ``AnyFeature``/``AnyInput`` union. Use :class:`CategoricalTaskInput` or
+    :class:`ContinuousTaskInput` instead. It exists solely so that strategies
+    can use ``isinstance(feat, TaskInput)`` to detect either flavour.
+    """
+
+    type: Any
+
+
+class CategoricalTaskInput(TaskInput, CategoricalInput):
     order_id: ClassVar[int] = 8
-    type: Literal["TaskInput"] = "TaskInput"
-    fidelities: List[int] = []
+    type: Literal["CategoricalTaskInput"] = "CategoricalTaskInput"
+    fidelities: list[int] = []
 
     @model_validator(mode="after")
     def validate_fidelities(self):
@@ -19,10 +33,15 @@ class TaskInput(CategoricalInput):
                 self.fidelities.append(0)
         if len(self.fidelities) != n_tasks:
             raise ValueError(
-                "Length of fidelity lists must be equal to the number of tasks",
+                "Length of fidelity list must be equal to the number of tasks",
             )
         if list(set(self.fidelities)) != list(range(np.max(self.fidelities) + 1)):
             raise ValueError(
                 "Fidelities must be a list containing integers, starting from 0 and increasing by 1",
             )
         return self
+
+
+class ContinuousTaskInput(TaskInput, ContinuousInput):
+    order_id: ClassVar[int] = 11
+    type: Literal["ContinuousTaskInput"] = "ContinuousTaskInput"  # type: ignore

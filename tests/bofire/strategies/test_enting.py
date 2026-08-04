@@ -31,7 +31,6 @@ from bofire.data_models.features.api import (
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.strategies.api import EntingStrategy
 from bofire.strategies.predictives.enting import domain_to_problem_config
-from tests.bofire.strategies.test_base import domains
 
 
 ENTMOOT_AVAILABLE = importlib.util.find_spec("entmoot") is not None
@@ -60,7 +59,7 @@ def common_args():
 
 @pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
 def test_enting_not_fitted(common_args):
-    data_model = data_models.EntingStrategy(domain=domains[0], **common_args)
+    data_model = data_models.EntingStrategy(domain=Hartmann().domain, **common_args)
     strategy = EntingStrategy(data_model=data_model)
 
     msg = "Uncertainty model needs fit function call before it can predict."
@@ -78,7 +77,7 @@ def test_enting_not_fitted(common_args):
 def test_enting_param_consistency(common_args, params):
     # compare EntingParams objects between entmoot and bofire
     data_model = data_models.EntingStrategy(
-        domain=domains[0],
+        domain=Hartmann().domain,
         **{**common_args, **params},
     )
     strategy = EntingStrategy(data_model=data_model)

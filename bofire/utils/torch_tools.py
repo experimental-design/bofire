@@ -4,19 +4,29 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 import pandas as pd
 import torch
-from botorch.models.transforms.input import InputTransform
+from botorch.models.transforms.input import NumericToCategoricalEncoding
+from botorch.utils.datasets import SupervisedDataset
+from botorch.utils.objective import compute_smoothed_feasibility_indicator
 from torch import Tensor
-from torch.nn import Module
 
-from bofire.data_models.api import AnyObjective, Domain, Outputs
+from bofire.data_models.api import AnyObjective, Domain, Inputs, Outputs
 from bofire.data_models.constraints.api import (
+    Constraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     ProductInequalityConstraint,
 )
-from bofire.data_models.features.api import ContinuousInput, Input
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    CategoricalMolecularInput,
+    ContinuousInput,
+    Input,
+)
+from bofire.data_models.molfeatures.api import AnyMolFeatures
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
@@ -33,6 +43,8 @@ from bofire.data_models.objectives.api import (
     PeakDesirabilityObjective,
     TargetObjective,
 )
+from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.unions import to_list
 from bofire.strategies.strategy import Strategy
 
 
@@ -42,12 +54,43 @@ tkwargs = {
 }
 
 
+def get_torch_bounds_from_domain(
+    domain: Domain,
+    input_preprocessing_specs: InputTransformSpecs,
+    relax_allow_zero: bool = False,
+    reference_experiment: Optional[pd.Series] = None,
+) -> Tensor:
+    """Get the bounds for the optimization problem in the format required by BoTorch.
+
+    Args:
+        domain: Optimization problem definition.
+        input_preprocessing_specs: Per-feature transform specifications.
+        relax_allow_zero: When True, semi-continuous continuous inputs
+            (`allow_zero=True` with positive lower bound) report a relaxed
+            lower bound of 0, exposing the convex relaxation `[0, ub]` to
+            downstream optimisers. Defaults to False.
+        reference_experiment: When provided, returns local bounds centred
+            on this reference (for LSR-BO). Used with the
+            ``local_relative_bounds`` attribute on continuous inputs.
+            Defaults to None (global bounds).
+
+    Returns:
+        A `(2, d)` tensor of lower and upper bounds.
+    """
+    lower, upper = domain.inputs.get_bounds(
+        specs=input_preprocessing_specs,
+        relax_allow_zero=relax_allow_zero,
+        reference_experiment=reference_experiment,
+    )
+    return torch.tensor([lower, upper], **tkwargs)
+
+
 def get_linear_constraints(
     domain: Domain,
     constraint: Union[Type[LinearEqualityConstraint], Type[LinearInequalityConstraint]],
     unit_scaled: bool = False,
 ) -> List[Tuple[Tensor, Tensor, float]]:
-    """Converts linear constraints to the form required by BoTorch.
+    """Converts linear constraints to the form required by BoTorch. For inequality constraints, this is A * x >= b (!).
 
     Args:
         domain: Optimization problem definition.
@@ -69,10 +112,12 @@ def get_linear_constraints(
             idx = domain.inputs.get_keys(Input).index(featkey)
             feat = domain.inputs.get_by_key(featkey)
             if feat.is_fixed():
-                rhs -= feat.fixed_value()[0] * c.coefficients[i]  # type: ignore
+                fixed = feat.fixed_value()
+                assert fixed is not None
+                rhs -= fixed[0] * c.coefficients[i]
             else:
-                lower.append(feat.lower_bound)  # type: ignore
-                upper.append(feat.upper_bound)  # type: ignore
+                lower.append(feat.lower_bound)
+                upper.append(feat.upper_bound)
                 indices.append(idx)
                 coefficients.append(
                     c.coefficients[i],
@@ -242,19 +287,35 @@ def get_product_constraints(
 
 def get_nonlinear_constraints(
     domain: Domain,
+    includes: Optional[List[Type[Constraint]]] = None,
 ) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Returns a list of callable functions that represent the nonlinear constraints
     for the given domain that can be processed by botorch.
 
     Args:
         domain (Domain): The domain for which to generate the nonlinear constraints.
+        includes: List of constraint types to include. Defaults to NChooseK and
+            ProductInequality. To exclude a constraint type, simply omit it
+            from this list (e.g. pass ``[ProductInequalityConstraint]`` to
+            exclude NChooseK).
 
     Returns:
         List[Callable[[Tensor], float]]: A list of callable functions that take a tensor
         as input and return a float value representing the constraint evaluation.
 
     """
-    return get_nchoosek_constraints(domain) + get_product_constraints(domain)
+    includes = includes or [NChooseKConstraint, ProductInequalityConstraint]
+    assert all(
+        (c in (NChooseKConstraint, ProductInequalityConstraint) for c in includes)
+    ), "Only NChooseK and ProductInequality constraints are supported."
+
+    callables = []
+    if NChooseKConstraint in includes:
+        callables += get_nchoosek_constraints(domain)
+    if ProductInequalityConstraint in includes:
+        callables += get_product_constraints(domain)
+
+    return callables
 
 
 def constrained_objective2botorch(
@@ -386,6 +447,38 @@ def get_output_constraints(
         else:
             idx += 1
     return constraints, etas
+
+
+def get_number_of_feasible_solutions(
+    predictions: Tensor,
+    constraints: List[Callable[[Tensor], Tensor]],
+    etas: List[float],
+    threshold=0.9,
+):
+    """Computes the number of feasible candidates based on the constraints and etas
+    and a feasibility threshold.
+
+    Args:
+        predictions: Tensor containing the predictions for which to compute the feasibility.
+        constraints: List of constraint callables.
+        etas: List of eta values for the constraints.
+        X: The samples for which to compute the feasibility.
+        threshold: The threshold for feasibility.
+
+    Returns:
+        Tensor: A tensor indicating the feasibility of each sample.
+
+    """
+
+    feasibilities = compute_smoothed_feasibility_indicator(
+        constraints=constraints,
+        samples=predictions,
+        eta=torch.tensor(etas).to(**tkwargs),
+        log=False,
+        fat=False,  # TODO: add this to _get_objective_and_constraints
+    )
+    count = torch.sum(feasibilities >= threshold).item()
+    return count
 
 
 def get_objective_callable(
@@ -691,7 +784,7 @@ def get_multiplicative_botorch_objective(
         val = torch.tensor(1.0).to(**tkwargs)
         for c, w in zip(callables, weights):
             val = val * c(samples, None) ** w
-        return val  # type: ignore
+        return val
 
     return objective
 
@@ -712,7 +805,7 @@ def get_additive_botorch_objective(
         val = torch.tensor(0.0).to(**tkwargs)
         for c, w in zip(callables, weights):
             val = val + c(samples, None) * w
-        return val  # type: ignore
+        return val
 
     return objective
 
@@ -885,7 +978,7 @@ def get_initial_conditions_generator(
     return generator
 
 
-@torch.jit.script  # type: ignore
+@torch.jit.script
 def interp1d(
     x: torch.Tensor,
     y: torch.Tensor,
@@ -902,7 +995,12 @@ def interp1d(
         torch.Tensor: The interpolated values at the x_new x-coordinates.
 
     """
-    m = (y[1:] - y[:-1]) / (x[1:] - x[:-1])
+    dx = x[1:] - x[:-1]
+
+    # Soft-clamp spacing to avoid numerical blow-ups when x points collide.
+    dx = torch.clamp(dx, min=1e-8)
+
+    m = (y[1:] - y[:-1]) / dx
     b = y[:-1] - (m * x[:-1])
 
     idx = torch.sum(torch.ge(x_new[:, None], x[None, :]), 1) - 1
@@ -913,84 +1011,99 @@ def interp1d(
     return itp
 
 
-class InterpolateTransform(InputTransform, Module):
-    """Botorch input transform that interpolates values between given x and y values."""
+def create_supervised_dataset(
+    inputs: Inputs,
+    outputs: Outputs,
+    experiments: pd.DataFrame,
+    input_preprocessing_specs: InputTransformSpecs,
+    drop_duplicates: bool = True,
+) -> SupervisedDataset:
+    filtered_experiments = outputs.preprocess_experiments_all_valid_outputs(
+        experiments,
+    )
 
-    def __init__(
-        self,
-        new_x: Tensor,
-        idx_x: List[int],
-        idx_y: List[int],
-        prepend_x: Tensor,
-        prepend_y: Tensor,
-        append_x: Tensor,
-        append_y: Tensor,
-        keep_original: bool = False,
-        transform_on_train: bool = True,
-        transform_on_eval: bool = True,
-        transform_on_fantasize: bool = True,
-    ):
-        super().__init__()
-        if len(set(idx_x + idx_y)) != len(idx_x) + len(idx_y):
-            raise ValueError("Indices are not unique.")
+    if drop_duplicates:
+        filtered_experiments = filtered_experiments.drop_duplicates(
+            subset=[var.key for var in inputs.get()],
+            keep="first",
+            inplace=False,
+        )
 
-        self.idx_x = torch.as_tensor(idx_x, dtype=torch.long)
-        self.idx_y = torch.as_tensor(idx_y, dtype=torch.long)
+    transformed = inputs.transform(
+        filtered_experiments,
+        input_preprocessing_specs,
+    )
+    X = torch.from_numpy(transformed.values).to(**tkwargs)
+    # Todo: catch it for categoricals
+    Y = torch.from_numpy(filtered_experiments[outputs.get_keys()]).to(**tkwargs)
 
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
-        self.new_x = new_x
+    return SupervisedDataset(
+        X=X,
+        Y=Y,
+        feature_names=transformed.columns.to_list(),
+        outcome_names=outputs.get_keys(),
+        validate_init=True,
+    )
 
-        self.prepend_x = prepend_x
-        self.prepend_y = prepend_y
-        self.append_x = append_x
-        self.append_y = append_y
 
-        self.keep_original = keep_original
+class Encoder:
+    def __init__(self, encoding: torch.Tensor):
+        self.encoding = encoding
 
-        if len(self.idx_x) + len(self.prepend_x) + len(self.append_x) != len(
-            self.idx_y,
-        ) + len(self.prepend_y) + len(self.append_y):
-            raise ValueError("The number of x and y indices must be equal.")
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:
+        return self.encoding[x]
 
-    def _to(self, X: Tensor) -> None:
-        self.new_x = self.coefficient.to(X)
+    @property
+    def dim(self) -> int:
+        return self.encoding.shape[1]
 
-    def append(self, X: Tensor, values: Tensor) -> Tensor:
-        shape = X.shape
-        values_reshaped = values.view(*([1] * (len(shape) - 1)), -1)
-        values_expanded = values_reshaped.expand(*shape[:-1], -1).to(X)
-        return torch.cat([X, values_expanded], dim=-1)
 
-    def prepend(self, X: Tensor, values: Tensor) -> Tensor:
-        shape = X.shape
-        values_reshaped = values.view(*([1] * (len(shape) - 1)), -1)
-        values_expanded = values_reshaped.expand(*shape[:-1], -1).to(X)
-        return torch.cat([values_expanded, X], dim=-1)
+def get_categorical_encoder(
+    feature: CategoricalInput, transform: Union[CategoricalEncodingEnum, AnyMolFeatures]
+) -> Encoder:
+    """Get the categorical transformer for a given feature."""
+    if isinstance(transform, tuple(to_list(AnyMolFeatures))):
+        assert isinstance(feature, CategoricalMolecularInput)
+        # filter out the highly-correlated descriptors
+        transform.remove_correlated_descriptors(feature.categories)
+        encodings = torch.from_numpy(
+            feature.to_descriptor_encoding(
+                transform, pd.Series(feature.categories)
+            ).values
+        ).to(**tkwargs)
+    elif transform == CategoricalEncodingEnum.ONE_HOT:
+        encodings = torch.from_numpy(
+            feature.to_onehot_encoding(pd.Series(feature.categories)).values
+        ).to(**tkwargs)
+    elif transform == CategoricalEncodingEnum.DESCRIPTOR:
+        assert isinstance(feature, CategoricalDescriptorInput)
+        encodings = torch.from_numpy(
+            feature.to_descriptor_encoding(pd.Series(feature.categories)).values
+        ).to(**tkwargs)
+    else:
+        raise ValueError(
+            f"No categorical transformer found for feature with key: {feature.key} "
+            f"and transform: {transform}"
+        )
+    return Encoder(encodings)
 
-    def transform(self, X: Tensor):
-        shapeX = X.shape
 
-        x = X[..., self.idx_x]
-        x = self.prepend(x, self.prepend_x)
-        x = self.append(x, self.append_x)
-
-        y = X[..., self.idx_y]
-        y = self.prepend(y, self.prepend_y)
-        y = self.append(y, self.append_y)
-
-        if X.dim() == 3:
-            x = x.reshape((shapeX[0] * shapeX[1], x.shape[-1]))
-            y = y.reshape((shapeX[0] * shapeX[1], y.shape[-1]))
-
-        new_x = self.new_x.expand(x.shape[0], -1)
-        new_y = torch.vmap(interp1d)(x, y, new_x)
-
-        if X.dim() == 3:
-            new_y = new_y.reshape((shapeX[0], shapeX[1], new_y.shape[-1]))
-
-        if self.keep_original:
-            return torch.cat([new_y, X], dim=-1)
-
-        return new_y
+def get_NumericToCategorical_input_transform(
+    inputs: Inputs, transform_specs: InputTransformSpecs
+) -> Optional[NumericToCategoricalEncoding]:
+    encoders = {
+        inputs.get_keys().index(feat.key): get_categorical_encoder(
+            feat,
+            transform_specs[feat.key],
+        )
+        for feat in inputs.get(CategoricalInput)
+        if transform_specs.get(feat.key, CategoricalEncodingEnum.ORDINAL)
+        is not CategoricalEncodingEnum.ORDINAL
+    }
+    if len(encoders) > 0:
+        return NumericToCategoricalEncoding(
+            dim=len(inputs.get()),
+            categorical_features={i: enc.dim for i, enc in encoders.items()},
+            encoders=encoders,
+        )
+    return None

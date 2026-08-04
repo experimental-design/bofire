@@ -84,6 +84,11 @@ ipython_config.py
 # pyenv
 .python-version
 
+# Azure related
+*.amltmp
+*.amlignore
+*.gitignore
+
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
 #   However, in case of collaboration, if having platform-specific dependencies or dependencies
@@ -109,6 +114,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+uv.lock
 
 # Spyder project settings
 .spyderproject
@@ -127,6 +133,15 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Quarto
+/.quarto/
+/_site/
+/_freeze/
+*.html
+!docs/javascripts/*.html
+*_files/
+site_libs/
+
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -144,3 +159,10 @@ bofire/version.py
 
 # output files
 notebook_test_stats.csv
+
+**/*.quarto_ipynb
+
+**/.jupyter_cache
+
+# ignore scripts
+scripts/*

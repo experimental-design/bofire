@@ -1,0 +1,333 @@
+---
+title: Model Building with BoFire
+jupyter: python3
+---
+
+
+This notebooks shows how to setup and analyze models trained with BoFire. It is still WIP.
+
+
+## Imports
+
+```{python}
+from pydantic import TypeAdapter
+
+import bofire.surrogates.api as surrogates
+from bofire.benchmarks.multi import CrossCoupling
+from bofire.benchmarks.single import Himmelblau
+from bofire.data_models.domain.api import Outputs
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.surrogates.api import (
+    AnySurrogate,
+    EmpiricalSurrogate,
+    MixedSingleTaskGPSurrogate,
+    RandomForestSurrogate,
+    RegressionMLPEnsemble,
+    SingleTaskGPSurrogate,
+)
+```
+
+## Problem Setup
+
+For didactic purposes, we sample data from a Himmelblau benchmark function and use them to train a SingleTaskGP.
+
+```{python}
+benchmark = Himmelblau()
+samples = benchmark.domain.inputs.sample(n=50)
+experiments = benchmark.f(samples, return_complete=True)
+
+experiments.head(10)
+```
+
+## Model Fitting
+
+```{python}
+input_features = benchmark.domain.inputs
+output_features = benchmark.domain.outputs
+```
+
+```{python}
+input_features.model_dump_json()
+```
+
+```{python}
+output_features.model_dump_json()
+```
+
+### Single Task GP
+
+Generate the json spec
+
+```{python}
+# we setup the data model, here a Single Task GP
+surrogate_data = SingleTaskGPSurrogate(inputs=input_features, outputs=output_features)
+
+# we generate the json spec
+jspec = surrogate_data.model_dump_json()
+
+jspec
+```
+
+Load it from the spec
+
+```{python}
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+```
+
+Map it
+
+```{python}
+surrogate = surrogates.map(surrogate_data)
+```
+
+Fit it. This is not 100% finished. In the future we will call here hyperfit which will return the CV results etc. This has to be finished. So ignore this for now and just call fit.
+
+```{python}
+surrogate.fit(experiments=experiments)
+```
+
+Dump it.
+
+```{python}
+# dump it
+dump = surrogate.dumps()
+```
+
+Make predictions.
+
+```{python}
+# predict with it
+df_predictions = surrogate.predict(experiments)
+# transform to spec
+predictions = surrogate.to_predictions(predictions=df_predictions)
+```
+
+Load again from spec and dump and make predictions.
+
+```{python}
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+surrogate = surrogates.map(surrogate_data)
+surrogate.loads(dump)
+
+# predict with it
+df_predictions2 = surrogate.predict(experiments)
+# transform to spec
+predictions2 = surrogate.to_predictions(predictions=df_predictions2)
+
+# check for equality
+predictions == predictions2
+```
+
+### Random Forest
+
+Generate the json spec
+
+```{python}
+# we setup the data model, here a Single Task GP
+surrogate_data = RandomForestSurrogate(
+    inputs=input_features,
+    outputs=output_features,
+    random_state=42,
+)
+
+# we generate the json spec
+jspec = surrogate_data.model_dump_json()
+
+jspec
+```
+
+```{python}
+# Load it from the spec
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+# Map it
+surrogate = surrogates.map(surrogate_data)
+# Fit it
+surrogate.fit(experiments=experiments)
+# dump it
+dump = surrogate.dumps()
+# predict with it
+df_predictions = surrogate.predict(experiments)
+# transform to spec
+predictions = surrogate.to_predictions(predictions=df_predictions)
+```
+
+```{python}
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+surrogate = surrogates.map(surrogate_data)
+surrogate.loads(dump)
+
+# predict with it
+df_predictions2 = surrogate.predict(experiments)
+# transform to spec
+predictions2 = surrogate.to_predictions(predictions=df_predictions2)
+
+# check for equality
+predictions == predictions2
+```
+
+### MLP Ensemble
+
+Generate the json spec
+
+```{python}
+# we setup the data model, here a Single Task GP
+surrogate_data = RegressionMLPEnsemble(
+    inputs=input_features,
+    outputs=output_features,
+    n_estimators=2,
+)
+
+# we generate the json spec
+jspec = surrogate_data.model_dump_json()
+
+jspec
+```
+
+```{python}
+# Load it from the spec
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+# Map it
+surrogate = surrogates.map(surrogate_data)
+# Fit it
+surrogate.fit(experiments=experiments)
+# dump it
+dump = surrogate.dumps()
+# predict with it
+df_predictions = surrogate.predict(experiments)
+# transform to spec
+predictions = surrogate.to_predictions(predictions=df_predictions)
+```
+
+```{python}
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+surrogate = surrogates.map(surrogate_data)
+surrogate.loads(dump)
+
+# predict with it
+df_predictions2 = surrogate.predict(experiments)
+# transform to spec
+predictions2 = surrogate.to_predictions(predictions=df_predictions2)
+
+# check for equality
+predictions == predictions2
+```
+
+## Empirical Surrogate
+
+The empirical model is special as it has per default no fit and you need cloudpickle. There can be empirical models which implement a fit, but for this they also have to inherit from `Trainable`. The current example is the default without any fit functionality.
+
+```{python}
+from botorch.models.deterministic import DeterministicModel
+from torch import Tensor
+
+
+class HimmelblauModel(DeterministicModel):
+    def __init__(self):
+        super().__init__()
+        self._num_outputs = 1
+
+    def forward(self, X: Tensor) -> Tensor:
+        return (
+            (X[..., 0] ** 2 + X[..., 1] - 11.0) ** 2
+            + (X[..., 0] + X[..., 1] ** 2 - 7.0) ** 2
+        ).unsqueeze(-1)
+```
+
+```{python}
+surrogate_data = EmpiricalSurrogate(
+
+    inputs=input_features,
+    outputs=output_features,
+)
+
+# we generate the json spec
+jspec = surrogate_data.model_dump_json()
+
+jspec
+```
+
+```{python}
+# Load it from the spec
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+# Map it
+surrogate = surrogates.map(surrogate_data)
+# attach the actual model to it
+surrogate.model = HimmelblauModel()
+# dump it
+dump = surrogate.dumps()
+# predict with it
+df_predictions = surrogate.predict(experiments)
+# transform to spec
+predictions = surrogate.to_predictions(predictions=df_predictions)
+```
+
+```{python}
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+surrogate = surrogates.map(surrogate_data)
+surrogate.loads(dump)
+
+# predict with it
+df_predictions2 = surrogate.predict(experiments)
+# transform to spec
+predictions2 = surrogate.to_predictions(predictions=df_predictions2)
+
+# check for equality
+predictions == predictions2
+```
+
+### Mixed GP
+
+Generate data for a mixed problem.
+
+```{python}
+benchmark = CrossCoupling()
+samples = benchmark.domain.inputs.sample(n=50)
+experiments = benchmark.f(samples, return_complete=True)
+
+experiments.head(10)
+```
+
+```{python}
+# we setup the data model, here a Single Task GP
+surrogate_data = MixedSingleTaskGPSurrogate(
+    inputs=benchmark.domain.inputs,
+    outputs=Outputs(features=[benchmark.domain.outputs.features[0]]),
+    categorical_encodings={"catalyst": CategoricalEncodingEnum.ORDINAL},
+)
+
+# we generate the json spec
+jspec = surrogate_data.model_dump_json()
+
+jspec
+```
+
+```{python}
+# Load it from the spec
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+# Map it
+surrogate = surrogates.map(surrogate_data)
+# Fit it
+surrogate.fit(experiments=experiments)
+# dump it
+dump = surrogate.dumps()
+# predict with it
+df_predictions = surrogate.predict(experiments)
+# transform to spec
+predictions = surrogate.to_predictions(predictions=df_predictions)
+```
+
+```{python}
+#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}
+#| tags: []
+surrogate_data = TypeAdapter(AnySurrogate).validate_json(jspec)
+surrogate = surrogates.map(surrogate_data)
+surrogate.loads(dump)
+
+# predict with it
+df_predictions2 = surrogate.predict(experiments)
+# transform to spec
+predictions2 = surrogate.to_predictions(predictions=df_predictions2)
+
+# check for equality
+predictions == predictions2
+```

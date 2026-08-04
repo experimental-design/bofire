@@ -1,0 +1,97 @@
+# data_models.domain.constraints.Constraints { #bofire.data_models.domain.constraints.Constraints }
+
+```python
+data_models.domain.constraints.Constraints()
+```
+
+
+
+## Methods
+
+| Name | Description |
+| --- | --- |
+| [get](#bofire.data_models.domain.constraints.Constraints.get) | Get constraints of the domain |
+| [get_reps_df](#bofire.data_models.domain.constraints.Constraints.get_reps_df) | Provides a tabular overwiev of all constraints within the domain |
+| [is_fulfilled](#bofire.data_models.domain.constraints.Constraints.is_fulfilled) | Check if all constraints are fulfilled on all rows of the provided dataframe |
+| [jacobian](#bofire.data_models.domain.constraints.Constraints.jacobian) | Numerically evaluate the jacobians of all constraints |
+
+### get { #bofire.data_models.domain.constraints.Constraints.get }
+
+```python
+data_models.domain.constraints.Constraints.get(
+    includes=Constraint,
+    excludes=None,
+    exact=False,
+)
+```
+
+Get constraints of the domain
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name     | Type                                                              | Description                                                                                                                                           | Default      |
+|----------|-------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|
+| includes | Union\[Type\[CIncludes\], Sequence\[Type\[CIncludes\]\]\]         | Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.                                                       | `Constraint` |
+| excludes | Optional\[Union\[Type\[CExcludes\], List\[Type\[CExcludes\]\]\]\] | Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.                                             | `None`       |
+| exact    | bool                                                              | Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False. | `False`      |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name        | Type                     | Description                                                   |
+|-------------|--------------------------|---------------------------------------------------------------|
+| Constraints | Constraints\[CIncludes\] | constraints in the domain fitting to the passed requirements. |
+
+### get_reps_df { #bofire.data_models.domain.constraints.Constraints.get_reps_df }
+
+```python
+data_models.domain.constraints.Constraints.get_reps_df()
+```
+
+Provides a tabular overwiev of all constraints within the domain
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                                                      |
+|--------|--------|----------------------------------------------------------------------------------|
+|        |        | pd.DataFrame: DataFrame listing all constraints of the domain with a description |
+
+### is_fulfilled { #bofire.data_models.domain.constraints.Constraints.is_fulfilled }
+
+```python
+data_models.domain.constraints.Constraints.is_fulfilled(experiments, tol=1e-06)
+```
+
+Check if all constraints are fulfilled on all rows of the provided dataframe
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type         | Description                                                                                                          | Default    |
+|-------------|--------------|----------------------------------------------------------------------------------------------------------------------|------------|
+| experiments | pd.DataFrame | Dataframe with data, the constraint validity should be tested on                                                     | _required_ |
+| tol         | float        | tolerance parameter. A constraint is considered as not fulfilled if the violation is larger than tol. Defaults to 0. | `1e-06`    |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name    | Type      | Description                                                      |
+|---------|-----------|------------------------------------------------------------------|
+| Boolean | pd.Series | True if all constraints are fulfilled for all rows, false if not |
+
+### jacobian { #bofire.data_models.domain.constraints.Constraints.jacobian }
+
+```python
+data_models.domain.constraints.Constraints.jacobian(experiments)
+```
+
+Numerically evaluate the jacobians of all constraints
+
+#### Parameters {.doc-section .doc-section-parameters}
+
+| Name        | Type         | Description                                  | Default    |
+|-------------|--------------|----------------------------------------------|------------|
+| experiments | pd.DataFrame | data to evaluate the constraint jacobians on | _required_ |
+
+#### Returns {.doc-section .doc-section-returns}
+
+| Name   | Type   | Description                                      |
+|--------|--------|--------------------------------------------------|
+| list   | list   | A list containing the jacobians as pd.DataFrames |

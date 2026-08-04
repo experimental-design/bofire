@@ -6,10 +6,11 @@ from pydantic import PositiveInt
 import bofire.transforms.api as transforms
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import StepwiseStrategy as data_model
+from bofire.data_models.strategies.stepwise.stepwise import Step
 from bofire.data_models.surrogates.api import BotorchSurrogates as BotorchSurrogateSpecs
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.mapper_actual import map as map_actual
-from bofire.strategies.strategy import Strategy
+from bofire.strategies.strategy import Strategy, make_strategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.transforms.transform import Transform
 
@@ -44,11 +45,13 @@ class StepwiseStrategy(Strategy):
     def get_step(self) -> Tuple[Strategy, Optional[Transform]]:
         """Returns the strategy at the current step and the corresponding transform if given."""
         for i, condition in enumerate(self.conditions):
-            if condition.evaluate(self.domain, experiments=self.experiments):
+            if condition.evaluate(
+                self.strategies[i], self.domain, experiments=self.experiments
+            ):
                 return self.strategies[i], self.transforms[i]
         raise ValueError("No condition could be satisfied.")
 
-    def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:  # type: ignore
+    def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:
         strategy, transform = self.get_step()
 
         candidate_count = candidate_count or 1
@@ -83,7 +86,7 @@ class StepwiseStrategy(Strategy):
     def surrogates_specs(self) -> BotorchSurrogateSpecs:
         strategy, _ = self.get_step()
         try:
-            specs = strategy.surrogate_specs  # type: ignore
+            specs = strategy.surrogate_specs  # ty: ignore[unresolved-attribute]
         except AttributeError:
             raise ValueError("Current Step do not possess any surrogates.")
         return specs
@@ -92,7 +95,53 @@ class StepwiseStrategy(Strategy):
     def surrogates(self) -> BotorchSurrogates:
         strategy, _ = self.get_step()
         try:
-            surrogates = strategy.surrogates  # type: ignore
+            surrogates = strategy.surrogates  # ty: ignore[unresolved-attribute]
         except AttributeError:
             raise ValueError("Current Step do not possess any surrogates.")
         return surrogates
+
+    @classmethod
+    def make(
+        cls, domain: Domain, steps: List[Step] | None = None, seed: int | None = None
+    ):
+        """
+        Create a StepwiseStrategy from a list of steps. Each step is a strategy the runs until a
+        condition is satisfied.  One example of a stepwise strategy is
+        is to start with a few random samples to gather initial data for subsequent Bayesian optimization.
+        An example steps-list for two random experiments followed by a SoboStrategy is:
+
+        ```python
+        from bofire.data_models.strategies.api import (
+            Step,
+            RandomStrategy,
+            SoboStrategy,
+            NumberOfExperimentsCondition,
+            AlwaysTrueCondition
+        )
+        from bofire.stratgies.api import StepwiseStrategy
+        steps = [
+            Step(
+                strategy_data=RandomStrategy(domain=domain),
+                condition=NumberOfExperimentsCondition(n_experiments=2),
+            ),
+            Step(
+                strategy_data=SoboStrategy(domain=domain), condition=AlwaysTrueCondition()
+            )
+        ]
+        stepwise_strategy = StepwiseStrategy.make(domain, steps)
+        ```
+
+        All passed domains need to compatible, i.e.,
+
+        - they have the same number of features,
+        - the same feature keys and
+        - the features with the same key have the same type and categories.
+        - The bounds and allowed categories of the features can vary.
+
+        Further, the data and domain are passed to the next step. They can also
+        be transformed before being passed to the next step.
+        Args:
+            steps: List of steps to be used in the strategy.
+            seed: Seed for random number generation.
+        """
+        return make_strategy(cls, data_model, locals())

@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Annotated, Dict, List, Union
+from typing import Annotated, Dict, List, Tuple, Union
 
 from pydantic import AfterValidator, Field, PositiveInt
 
@@ -73,11 +73,43 @@ def validate_monotonically_increasing(sequence: Sequence[float]) -> Sequence[flo
     return sequence
 
 
+def validate_strictly_increasing(sequence: Sequence[float]) -> Sequence[float]:
+    """Validate that the sequence is strictly increasing.
+
+    Args:
+        sequence: Sequence of values.
+
+    Raises:
+        ValueError: If lower bound is greater or equal to the upper bound.
+
+    Returns:
+        Validated sequence
+
+    """
+    if len(sequence) > 1:
+        if not all(x < y for x, y in zip(sequence, sequence[1:])):
+            raise ValueError("Sequence is not strictly increasing.")
+    return sequence
+
+
 FeatureKeys = Annotated[
     List[str],
     Field(min_length=2),
     AfterValidator(make_unique_validator("Features")),
 ]
+
+OneFeatureKeys = Annotated[
+    List[str],
+    Field(
+        min_length=1,
+    ),
+    AfterValidator(make_unique_validator("Features")),
+]
+
+NonRestrictedFeatureKeys = Annotated[
+    List[str], AfterValidator(make_unique_validator("Features"))
+]
+
 
 CategoryVals = Annotated[
     List[str],
@@ -92,7 +124,7 @@ Descriptors = Annotated[
 ]
 
 Bounds = Annotated[
-    List[float],
+    Union[List[float], Tuple[float, float]],
     Field(min_length=2, max_length=2),
     AfterValidator(validate_monotonically_increasing),
 ]

@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, Literal, Optional, Type, Union
+from typing import Annotated, Any, Dict, List, Literal, Optional, Type, Union
 
 from formulaic import Formula
 from formulaic.errors import FormulaSyntaxError
@@ -6,10 +6,11 @@ from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
-from bofire.data_models.features.api import Feature, MolecularInput
+from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.strategy import Strategy
 from bofire.data_models.types import Bounds
+from bofire.data_models.unions import tagged_union
 
 
 PREDEFINED_MODEL_TYPES = Literal[
@@ -21,22 +22,19 @@ PREDEFINED_MODEL_TYPES = Literal[
 
 
 class OptimalityCriterion(BaseModel):
-    type: str
+    type: Any
     delta: float = 1e-6
     transform_range: Optional[Bounds] = None
 
 
 class SpaceFillingCriterion(OptimalityCriterion):
-    type: Literal["SpaceFillingCriterion"] = "SpaceFillingCriterion"  # type: ignore
+    type: Literal["SpaceFillingCriterion"] = "SpaceFillingCriterion"
     sampling_fraction: Annotated[float, Field(gt=0, lt=1)] = 0.3
 
 
 class DoEOptimalityCriterion(OptimalityCriterion):
-    type: str
-    formula: Union[
-        PREDEFINED_MODEL_TYPES,
-        str,
-    ]
+    type: Any
+    formula: Union[PREDEFINED_MODEL_TYPES, str]
     """
     model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
     are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
@@ -45,7 +43,7 @@ class DoEOptimalityCriterion(OptimalityCriterion):
     @field_validator("formula")
     @classmethod
     def validate_formula(cls, formula: str) -> str:
-        if formula not in PREDEFINED_MODEL_TYPES.__args__:  # type: ignore
+        if formula not in PREDEFINED_MODEL_TYPES.__args__:
             # check that it is a valid formula
             try:
                 Formula(formula)
@@ -55,72 +53,86 @@ class DoEOptimalityCriterion(OptimalityCriterion):
 
 
 class DOptimalityCriterion(DoEOptimalityCriterion):
-    type: Literal["DOptimalityCriterion"] = "DOptimalityCriterion"  # type: ignore
+    type: Literal["DOptimalityCriterion"] = "DOptimalityCriterion"
 
 
 class EOptimalityCriterion(DoEOptimalityCriterion):
-    type: Literal["EOptimalityCriterion"] = "EOptimalityCriterion"  # type: ignore
+    type: Literal["EOptimalityCriterion"] = "EOptimalityCriterion"
 
 
 class AOptimalityCriterion(DoEOptimalityCriterion):
-    type: Literal["AOptimalityCriterion"] = "AOptimalityCriterion"  # type: ignore
+    type: Literal["AOptimalityCriterion"] = "AOptimalityCriterion"
 
 
 class GOptimalityCriterion(DoEOptimalityCriterion):
-    type: Literal["GOptimalityCriterion"] = "GOptimalityCriterion"  # type: ignore
+    type: Literal["GOptimalityCriterion"] = "GOptimalityCriterion"
 
 
 class KOptimalityCriterion(DoEOptimalityCriterion):
-    type: Literal["KOptimalityCriterion"] = "KOptimalityCriterion"  # type: ignore
+    type: Literal["KOptimalityCriterion"] = "KOptimalityCriterion"
 
 
 class IOptimalityCriterion(DoEOptimalityCriterion):
-    type: Literal["IOptimalityCriterion"] = "IOptimalityCriterion"  # type: ignore
+    type: Literal["IOptimalityCriterion"] = "IOptimalityCriterion"
     n_space_filling_points: Optional[int] = None
     ipopt_options: Optional[Dict] = None
 
 
-AnyDoEOptimalityCriterion = Union[
+AnyDoEOptimalityCriterion = tagged_union(
     KOptimalityCriterion,
     GOptimalityCriterion,
     AOptimalityCriterion,
     EOptimalityCriterion,
     DOptimalityCriterion,
     IOptimalityCriterion,
-]
+)
 
-AnyOptimalityCriterion = Union[
-    AnyDoEOptimalityCriterion,
+AnyOptimalityCriterion = tagged_union(
+    KOptimalityCriterion,
+    GOptimalityCriterion,
+    AOptimalityCriterion,
+    EOptimalityCriterion,
+    DOptimalityCriterion,
+    IOptimalityCriterion,
     SpaceFillingCriterion,
-]
+)
 
 
 class DoEStrategy(Strategy):
-    type: Literal["DoEStrategy"] = "DoEStrategy"  # type: ignore
+    type: Literal["DoEStrategy"] = "DoEStrategy"
 
     criterion: AnyOptimalityCriterion = Field(
         default_factory=lambda: DOptimalityCriterion(formula="fully-quadratic")
     )
-    optimization_strategy: Literal[
-        "default",
-        "exhaustive",
-        "branch-and-bound",
-        "partially-random",
-        "relaxed",
-        "iterative",
-    ] = "default"
 
     verbose: bool = False  # get rid of this at a later stage
     ipopt_options: Optional[Dict] = None
+    scip_params: Optional[Dict] = None
+    use_hessian: bool = False
+    use_cyipopt: Optional[bool] = None
+    sampling: Optional[List[List[float]]] = None
+    return_fixed_candidates: bool = False
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    """ Datamodel for strategy for design of experiments. This strategy is used to generate a set of
+    experiments for a given domain.
+
+    Args:
+        criterion: object indicating which criterion function to use.
+        verbose: Should optimization be verbose?
+        ipopt_options: options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+        scip_params: Parameters for SCIP solver used when generating DoEs with discrete variables.
+        use_hessian: If True, the hessian of the objective function is used. Default is False.
+        use_cyipopt: If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
+            If None, cyipopt is used if available.
+        sampling: dataframe containing the initial guess.
+        return_fixed_candidates: Should fixed candidates be also returned?
+    """
+
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return True
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
-        if my_type in [MolecularInput]:
-            return False
         return True
 
     @classmethod

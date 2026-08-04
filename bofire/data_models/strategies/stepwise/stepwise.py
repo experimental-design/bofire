@@ -71,7 +71,7 @@ def validate_domain_compatibility(domain1: Domain, domain2: Domain):
 
 
 class StepwiseStrategy(Strategy):
-    type: Literal["StepwiseStrategy"] = "StepwiseStrategy"  # type: ignore
+    type: Literal["StepwiseStrategy"] = "StepwiseStrategy"
     steps: Annotated[List[Step], Field(min_length=2)]
 
     @model_validator(mode="after")
@@ -90,6 +90,5 @@ class StepwiseStrategy(Strategy):
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
         return True
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+    def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return True

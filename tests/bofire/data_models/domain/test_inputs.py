@@ -5,7 +5,7 @@ import random
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.domain.api import Features, Inputs, Outputs
@@ -17,7 +17,6 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
-    MolecularInput,
 )
 from bofire.data_models.molfeatures.api import (
     Fingerprints,
@@ -58,6 +57,24 @@ RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
                         key="f1",
                         categories=["c11", "c12"],
                     ),
+                    DiscreteInput(
+                        key="f2",
+                        values=[1, 2],
+                    ),
+                ],
+            ),
+            [
+                [("f1", "c11"), ("f1", "c12")],
+                [("f2", 1), ("f2", 2)],
+            ],
+        ),
+        (
+            Inputs(
+                features=[
+                    CategoricalInput(
+                        key="f1",
+                        categories=["c11", "c12"],
+                    ),
                     CategoricalInput(
                         key="f2",
                         categories=["c21", "c22", "c23"],
@@ -79,6 +96,88 @@ RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 def test_inputs_get_categorical_combinations(inputs, data):
     expected = list(itertools.product(*data))
     assert inputs.get_categorical_combinations() == expected
+    assert inputs.get_number_of_categorical_combinations() == len(expected)
+
+
+def test_inputs_get_categorical_combinations_conditional():
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="f1",
+                categories=["c11", "c12"],
+            ),
+            ContinuousInput(key="f2", bounds=(1, 2), allow_zero=True),
+        ],
+    )
+    expected = [
+        (("f1", "c11"), ("f2", 0.0)),
+        (("f1", "c11"),),
+        (("f1", "c12"), ("f2", 0.0)),
+        (("f1", "c12"),),
+    ]
+    assert inputs.get_categorical_combinations() == expected
+    assert inputs.get_number_of_categorical_combinations() == len(expected)
+
+    # check purely continuous
+    continuous_inputs = inputs.get(includes=ContinuousInput)
+    continuous_expected = [
+        (("f2", 0.0),),
+        (),
+    ]
+    assert continuous_inputs.get_categorical_combinations() == continuous_expected
+    assert continuous_inputs.get_number_of_categorical_combinations() == len(
+        continuous_expected
+    )
+
+
+def test_inputs_get_categorical_combinations_exclude_semicontinuous():
+    """`include_semicontinuous=False` must drop the on/off enumeration of
+    semi-continuous features, staying consistent with the flag of the same
+    name on `get_number_of_categorical_combinations`.
+    """
+    inputs = Inputs(
+        features=[
+            CategoricalInput(key="f1", categories=["c11", "c12"]),
+            ContinuousInput(key="f2", bounds=(1, 2), allow_zero=True),
+            ContinuousInput(key="f3", bounds=(1, 2), allow_zero=True),
+        ],
+    )
+    expected = [(("f1", "c11"),), (("f1", "c12"),)]
+    assert inputs.get_categorical_combinations(include_semicontinuous=False) == expected
+    assert inputs.get_number_of_categorical_combinations(
+        include_semicontinuous=False
+    ) == len(expected)
+
+    # the two must agree for both values of the flag
+    for include_semicontinuous in [True, False]:
+        assert len(
+            inputs.get_categorical_combinations(
+                include_semicontinuous=include_semicontinuous
+            )
+        ) == inputs.get_number_of_categorical_combinations(
+            include_semicontinuous=include_semicontinuous
+        )
+
+    # purely continuous: no combinations left at all
+    continuous_inputs = inputs.get(includes=ContinuousInput)
+    assert continuous_inputs.get_categorical_combinations(
+        include_semicontinuous=False
+    ) == [()]
+
+
+def test_inputs_is_fulfilled():
+    inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="f1", categories=["a", "b", "c"], allowed=[True, True, False]
+            ),
+            ContinuousInput(key="f2", bounds=(0, 1)),
+        ]
+    )
+    experiments = pd.DataFrame({"f1": ["a", "a", "b", "c"], "f2": [2.0, 0.1, 0.5, 3.0]})
+    assert_series_equal(
+        inputs.is_fulfilled(experiments), pd.Series([False, True, True, False])
+    )
 
 
 @pytest.mark.parametrize(
@@ -175,6 +274,9 @@ def test_categorical_combinations_of_domain_filtered(inputs, data, include, excl
         inputs.get_categorical_combinations(include=include, exclude=exclude)
         == expected
     )
+    assert inputs.get_number_of_categorical_combinations(
+        include=include, exclude=exclude
+    ) == len(expected)
 
 
 # test features container
@@ -270,7 +372,7 @@ def test_inputs_sample_empty():
     [
         ({"x4": CategoricalEncodingEnum.ONE_HOT}),
         ({"x1": CategoricalEncodingEnum.ONE_HOT}),
-        ({"x2": ScalerEnum.NORMALIZE}),
+        ({"x2": ScalerEnum.STANDARDIZE}),
         ({"x2": CategoricalEncodingEnum.DESCRIPTOR}),
         ({"x1": Fingerprints()}),
         ({"x2": Fragments()}),
@@ -328,17 +430,8 @@ def test_inputs_validate_transform_valid(specs):
 @pytest.mark.parametrize(
     "specs",
     [
-        # ({"x2": CategoricalEncodingEnum.ONE_HOT}),
-        # ({"x3": CategoricalEncodingEnum.DESCRIPTOR}),
-        ({"x4": CategoricalEncodingEnum.ONE_HOT}),
-        ({"x4": ScalerEnum.NORMALIZE}),
+        ({"x4": ScalerEnum.STANDARDIZE}),
         ({"x4": CategoricalEncodingEnum.DESCRIPTOR}),
-        # (
-        #    {
-        #        "x2": CategoricalEncodingEnum.ONE_HOT,
-        #        "x3": CategoricalEncodingEnum.DESCRIPTOR,
-        #    }
-        # ),
     ],
 )
 def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
@@ -352,7 +445,7 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(key="x4", categories=["CC", "CCC"]),
         ],
     )
     with pytest.raises(ValueError):
@@ -399,7 +492,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(key="x4", categories=["CC", "CCC"]),
         ],
     )
     inps._validate_transform_specs(specs)
@@ -508,7 +601,7 @@ def test_inputs_get_transform_info(
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(key="x4", categories=["CC", "CCC"]),
         ],
     )
     features2idx, features2names = inps._get_transform_info(specs)
@@ -742,7 +835,15 @@ def test_inputs_transform_molecular(specs, expected):
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(
+                key="x4",
+                categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+            ),
         ],
     )
     transformed = inps.transform(experiments=experiments, specs=specs)
@@ -1145,7 +1246,7 @@ def test_inputs_get_feature_indices(
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
-            MolecularInput(key="x4"),
+            CategoricalMolecularInput(key="x4", categories=["CC", "CCC"]),
         ],
     )
 
@@ -1156,3 +1257,43 @@ def test_inputs_get_feature_indices(
     assert mol_dims == expected_molecular_indices
     assert ord_dims == expected_continuous_indices
     assert cat_dims == expected_categorical_indices
+
+
+def test_inputs_to_pydantic_model():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            CategoricalInput(key="x2", categories=["a", "b"]),
+        ]
+    )
+    Model = inputs.to_pydantic_model()
+    schema = Model.model_json_schema()
+    assert "x1" in schema["properties"]
+    assert "x2" in schema["properties"]
+    assert schema["properties"]["x1"]["type"] == "number"
+
+
+def test_inputs_to_pydantic_model_validates_bounds():
+    from pydantic import ValidationError
+
+    inputs = Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))])
+    Model = inputs.to_pydantic_model()
+    obj = Model(x=0.5)
+    assert obj.x == 0.5
+    with pytest.raises(ValidationError):
+        Model(x=5.0)
+
+
+def test_inputs_to_pydantic_model_validates_categories():
+    from pydantic import ValidationError
+
+    inputs = Inputs(
+        features=[
+            CategoricalInput(key="c", categories=["a", "b"], allowed=[True, False])
+        ]
+    )
+    Model = inputs.to_pydantic_model()
+    obj = Model(c="a")
+    assert obj.c == "a"
+    with pytest.raises(ValidationError):
+        Model(c="b")

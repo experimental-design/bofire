@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, Literal, Optional
+from typing import Annotated, Any, Dict, Literal, Optional
 
 from pydantic import Field, PositiveFloat
 
@@ -7,15 +7,15 @@ from bofire.data_models.types import IntPowerOfTwo
 
 
 class AcquisitionFunction(BaseModel):
-    type: str
+    type: Any
 
 
 class SingleObjectiveAcquisitionFunction(AcquisitionFunction):
-    type: str
+    type: Any
 
 
 class MultiObjectiveAcquisitionFunction(AcquisitionFunction):
-    type: str
+    type: Any
 
 
 class qNEI(SingleObjectiveAcquisitionFunction):
@@ -28,6 +28,12 @@ class qLogNEI(SingleObjectiveAcquisitionFunction):
     type: Literal["qLogNEI"] = "qLogNEI"
     prune_baseline: bool = True
     n_mc_samples: IntPowerOfTwo = 512
+
+
+class pTS(SingleObjectiveAcquisitionFunction):
+    """Pathwise Thompson Sampling acquisition function."""
+
+    type: Literal["pTS"] = "pTS"
 
 
 class qEI(SingleObjectiveAcquisitionFunction):
@@ -83,7 +89,34 @@ class qLogNEHVI(MultiObjectiveAcquisitionFunction):
     n_mc_samples: IntPowerOfTwo = 512
 
 
+class qMFHVKG(MultiObjectiveAcquisitionFunction):
+    type: Literal["qMFHVKG"] = "qMFHVKG"
+    alpha: Annotated[float, Field(ge=0)] = 0.0
+    num_fantasies: int = 8
+    num_pareto: int = 10
+    n_mc_samples: IntPowerOfTwo = 32
+
+
 class qNegIntPosVar(SingleObjectiveAcquisitionFunction):
     type: Literal["qNegIntPosVar"] = "qNegIntPosVar"
     n_mc_samples: IntPowerOfTwo = 512
     weights: Optional[Dict[str, PositiveFloat]] = Field(default_factory=lambda: None)
+
+
+class qLogPF(SingleObjectiveAcquisitionFunction):
+    """MC based batch LogProbability of Feasibility acquisition function.
+
+    It is used to select the next batch of experiments to maximize the
+    probability of finding feasible solutions with respect to output
+    constraints in the next batch. It can be only used in the SoboStrategy
+    and is especially useful in combination with the FeasibleExperimentCondition
+    within the StepwiseStrategy.
+
+    Attributes:
+        n_mc_samples: Number of Monte Carlo samples to use to
+            approximate the probability of feasibility.
+
+    """
+
+    type: Literal["qLogPF"] = "qLogPF"
+    n_mc_samples: IntPowerOfTwo = 512

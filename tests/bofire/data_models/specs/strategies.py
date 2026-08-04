@@ -1,39 +1,67 @@
 import bofire.data_models.strategies.api as strategies
+import bofire.data_models.strategies.predictives.acqf_optimization
 from bofire.data_models.acquisition_functions.api import (
     qEI,
     qLogNEHVI,
+    qLogPF,
+    qMFHVKG,
     qNegIntPosVar,
     qPI,
 )
 from bofire.data_models.constraints.api import (
+    CategoricalExcludeConstraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    SelectionCondition,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
-from bofire.data_models.enum import CategoricalMethodEnum, SamplingMethodEnum
+from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
+    ContinuousTaskInput,
     DiscreteInput,
-    TaskInput,
 )
-from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
+from bofire.data_models.llm.provider import AnthropicLLMProvider
+from bofire.data_models.objectives.api import (
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
+)
+from bofire.data_models.strategies.api import (
+    AbsoluteMovingReferenceValue,
+    ExplicitReferencePoint,
+    FixedReferenceValue,
+    RelativeMovingReferenceValue,
+    RelativeToMaxMovingReferenceValue,
+)
+from bofire.data_models.strategies.convergence_criteria.api import (
+    HypervolumeImprovementCriterion,
+    ObjectiveImprovementCriterion,
+    ProposalDeviationCriterion,
+)
+from bofire.data_models.surrogates.api import (
+    BotorchSurrogates,
+    LinearDeterministicSurrogate,
+    MultiTaskGPSurrogate,
+)
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
 
 
 specs = Specs([])
-
-
 strategy_commons = {
-    "num_raw_samples": 1024,
-    "num_restarts": 8,
-    "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
-    "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
-    "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
+    "acquisition_optimizer": strategies.BotorchOptimizer(
+        **{
+            "n_raw_samples": 1024,
+            "n_restarts": 8,
+            "maxiter": 2000,
+            "batch_limit": 6,
+        }
+    ),
     "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
     "outlier_detection_specs": None,
     "seed": 42,
@@ -41,8 +69,8 @@ strategy_commons = {
     "frequency_check": 1,
     "frequency_hyperopt": 0,
     "folds": 5,
-    "maxiter": 2000,
-    "batch_limit": 6,
+    "include_infeasible_exps_in_acqf_calc": False,
+    "convergence_criterion": None,
 }
 
 
@@ -59,9 +87,69 @@ specs.add_valid(
     lambda: {
         "domain": domain.valid().obj().model_dump(),
         "acquisition_function": qLogNEHVI().model_dump(),
+        "ref_point": ExplicitReferencePoint(
+            values={
+                "o1": AbsoluteMovingReferenceValue(orient_at_best=False, offset=0.0),
+                "o2": AbsoluteMovingReferenceValue(orient_at_best=False, offset=0.0),
+            }
+        ).model_dump(),
+        **strategy_commons,
+        "convergence_criterion": ProposalDeviationCriterion(
+            threshold=0.001, n_consecutive=2
+        ).model_dump(),
+    },
+)
+
+specs.add_valid(
+    strategies.MoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                    ContinuousOutput(key="beta", objective=MaximizeObjective()),
+                ]
+            ),
+        ).model_dump(),
+        "acquisition_function": qLogNEHVI().model_dump(),
+        "ref_point": ExplicitReferencePoint(
+            values={
+                "alpha": FixedReferenceValue(value=0.5),
+                "beta": AbsoluteMovingReferenceValue(offset=1),
+            }
+        ).model_dump(),
+        **strategy_commons,
+        "convergence_criterion": HypervolumeImprovementCriterion(
+            min_improvement=0.01, n_lookback=5
+        ).model_dump(),
+    },
+)
+
+specs.add_valid(
+    strategies.MoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                    ContinuousOutput(key="beta", objective=MaximizeObjective()),
+                ]
+            ),
+        ).model_dump(),
+        "acquisition_function": qLogNEHVI().model_dump(),
+        "ref_point": ExplicitReferencePoint(
+            values={
+                "alpha": RelativeMovingReferenceValue(scaling=0.5),
+                "beta": RelativeToMaxMovingReferenceValue(scaling=1),
+            }
+        ).model_dump(),
         **strategy_commons,
     },
 )
+
+
 specs.add_invalid(
     strategies.MoboStrategy,
     lambda: {
@@ -83,6 +171,57 @@ specs.add_valid(
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
         ).model_dump(),
         **strategy_commons,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+        "convergence_criterion": ObjectiveImprovementCriterion(
+            min_improvement=0.01, n_lookback=5
+        ).model_dump(),
+    },
+)
+specs.add_valid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        "acquisition_optimizer": strategies.GeneticAlgorithmOptimizer(
+            population_size=4,
+            n_max_gen=1,
+            n_max_evals=20,
+            ga_progress_csv_path="ga_progress_specs.csv",
+        ).model_dump(),
+        "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
+        "outlier_detection_specs": None,
+        "seed": 42,
+        "min_experiments_before_outlier_check": 1,
+        "frequency_check": 1,
+        "frequency_hyperopt": 0,
+        "folds": 5,
+        "include_infeasible_exps_in_acqf_calc": False,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+    },
+)
+specs.add_valid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        "acquisition_optimizer": strategies.GeneticAlgorithmOptimizer(
+            population_size=4,
+            n_max_gen=1,
+            n_max_evals=20,
+            ga_progress_csv_path="ga_progress_specs_2.csv",
+        ).model_dump(),
+        "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
+        "outlier_detection_specs": None,
+        "seed": 42,
+        "min_experiments_before_outlier_check": 1,
+        "frequency_check": 1,
+        "frequency_hyperopt": 0,
+        "folds": 5,
+        "include_infeasible_exps_in_acqf_calc": False,
         "acquisition_function": qPI(tau=0.1).model_dump(),
     },
 )
@@ -197,8 +336,10 @@ specs.add_valid(
         "solver_verbose": False,
         "solver_params": {},
         "kappa_fantasy": 10.0,
+        "convergence_criterion": None,
     },
 )
+
 specs.add_valid(
     strategies.RandomStrategy,
     lambda: {
@@ -209,8 +350,30 @@ specs.add_valid(
         "n_burnin": 1000,
         "n_thinning": 32,
         "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
+        "sampler_kwargs": {},
     },
 )
+
+specs.add_valid(
+    strategies.RandomStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "seed": 42,
+        "fallback_sampling_method": SamplingMethodEnum.SOBOL,
+        "sampler_kwargs": {"scramble": True},
+    },
+)
+
+specs.add_valid(
+    strategies.RandomStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "seed": 42,
+        "fallback_sampling_method": SamplingMethodEnum.LHS,
+        "sampler_kwargs": {"scramble": True, "strength": 2},
+    },
+)
+
 for criterion in [
     strategies.AOptimalityCriterion,
     strategies.DOptimalityCriterion,
@@ -224,41 +387,38 @@ for criterion in [
         "quadratic",
         "fully-quadratic",
     ]:
-        for optimization_strategy in [
-            "default",
-            "exhaustive",
-            "branch-and-bound",
-            "partially-random",
-            "relaxed",
-            "iterative",
-        ]:
+        for use_cyipopt in [True, False, None]:
             specs.add_valid(
                 strategies.DoEStrategy,
-                lambda criterion=criterion,
-                formula=formula,
-                optimization_strategy=optimization_strategy: {
+                lambda criterion=criterion, formula=formula, use_cyipopt=use_cyipopt: {
                     "domain": domain.valid().obj().model_dump(),
-                    "optimization_strategy": optimization_strategy,
                     "verbose": False,
                     "seed": 42,
                     "criterion": criterion(
                         formula=formula, transform_range=None
                     ).model_dump(),
+                    "use_hessian": False,
+                    "use_cyipopt": use_cyipopt,
+                    "return_fixed_candidates": False,
                 },
             )
-specs.add_valid(
-    strategies.DoEStrategy,
-    lambda: {
-        "domain": domain.valid().obj().dict(),
-        "optimization_strategy": "default",
-        "verbose": False,
-        "ipopt_options": {"maxiter": 200, "disp": 0},
-        "criterion": strategies.SpaceFillingCriterion(
-            sampling_fraction=0.3, transform_range=[-1, 1]
-        ).model_dump(),
-        "seed": 42,
-    },
-)
+
+for use_cyipopt in [True, False, None]:
+    specs.add_valid(
+        strategies.DoEStrategy,
+        lambda use_cyipopt=use_cyipopt: {
+            "domain": domain.valid().obj().model_dump(),
+            "verbose": False,
+            "ipopt_options": {"max_iter": 200, "print_level": 0},
+            "criterion": strategies.SpaceFillingCriterion(
+                sampling_fraction=0.3, transform_range=[-1, 1]
+            ).model_dump(),
+            "seed": 42,
+            "use_hessian": False,
+            "use_cyipopt": use_cyipopt,
+            "return_fixed_candidates": False,
+        },
+    )
 
 
 tempdomain = domain.valid().obj()
@@ -274,7 +434,19 @@ specs.add_valid(
             ).model_dump(),
             strategies.Step(
                 strategy_data=strategies.MoboStrategy(
-                    domain=tempdomain, batch_limit=1, acquisition_function=qLogNEHVI()
+                    domain=tempdomain,
+                    acquisition_function=qLogNEHVI(),
+                    acquisition_optimizer=strategies.BotorchOptimizer(batch_limit=1),
+                    ref_point=ExplicitReferencePoint(
+                        values={
+                            "o1": AbsoluteMovingReferenceValue(
+                                orient_at_best=False, offset=0.0
+                            ),
+                            "o2": AbsoluteMovingReferenceValue(
+                                orient_at_best=False, offset=0.0
+                            ),
+                        }
+                    ),
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
             ).model_dump(),
@@ -378,6 +550,7 @@ specs.add_invalid(
     error=ValueError,
     message="`start` is not a valid candidate.",
 )
+
 
 specs.add_invalid(
     strategies.ShortestPathStrategy,
@@ -537,12 +710,102 @@ specs.add_invalid(
                 ],
             ),
         ).model_dump(),
-        "local_search_config": strategies.LSRBO(),
+        "acquisition_optimizer": strategies.BotorchOptimizer(
+            local_search_config=bofire.data_models.strategies.predictives.acqf_optimization.LSRBO(),
+        ),
     },
     error=ValueError,
     message="LSR-BO only supported for linear constraints.",
 )
 
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    CategoricalInput(key="a", categories=["a", "b", "c"]),
+                    CategoricalInput(key="b", categories=["ba", "bb", "bc"]),
+                    ContinuousInput(key="c", bounds=(0, 1)),
+                ]
+            ),
+            outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+            constraints=[
+                CategoricalExcludeConstraint(
+                    features=["a", "b"],
+                    conditions=[
+                        SelectionCondition(selection=["a"]),
+                        SelectionCondition(selection=["ba"]),
+                    ],
+                )
+            ],
+        ),
+        "acquisition_optimizer": strategies.BotorchOptimizer(
+            prefer_exhaustive_search_for_purely_categorical_domains=True,
+        ),
+    },
+    error=ValueError,
+    message="CategoricalExcludeConstraints can only be used for pure categorical/discrete search spaces.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+        ),
+        "acquisition_function": qLogPF(),
+    },
+    error=ValueError,
+    message="At least one constrained objective is required for qLogPF.",
+)
+
+specs.add_invalid(
+    strategies.AdditiveSoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=[
+                ContinuousOutput(
+                    key="alpha", objective=MaximizeSigmoidObjective(tp=1, steepness=100)
+                ),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+            ],
+        ),
+        "acquisition_function": qLogPF(),
+    },
+    error=ValueError,
+    message="qLogPF acquisition function is only allowed in the ´SoboStrategy´.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=[
+                ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+            ],
+        ),
+    },
+    error=ValueError,
+    message="SOBO strategy can only deal with one no-constraint objective.",
+)
 specs.add_invalid(
     strategies.SoboStrategy,
     lambda: {
@@ -560,7 +823,7 @@ specs.add_invalid(
             ),
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
             constraints=Constraints(
-                constraints=[InterpointEqualityConstraint(feature="a")],
+                constraints=[InterpointEqualityConstraint(features=["a"])],
             ),
         ).model_dump(),
     },
@@ -724,7 +987,7 @@ specs.add_invalid(
         "domain": Domain(
             inputs=Inputs(
                 features=[
-                    TaskInput(
+                    CategoricalTaskInput(
                         key="task",
                         categories=["task_1", "task_2"],
                         allowed=[True, True],
@@ -739,7 +1002,7 @@ specs.add_invalid(
                 MultiTaskGPSurrogate(
                     inputs=Inputs(
                         features=[
-                            TaskInput(
+                            CategoricalTaskInput(
                                 key="task",
                                 categories=["task_1", "task_2"],
                                 allowed=[True, True],
@@ -757,13 +1020,13 @@ specs.add_invalid(
 )
 
 specs.add_valid(
-    strategies.MultiFidelityStrategy,
+    strategies.MultiFidelityVarianceBasedStrategy,
     lambda: {
         "domain": Domain(
             inputs=Inputs(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
-                    TaskInput(
+                    CategoricalTaskInput(
                         key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
                     ),
                 ]
@@ -777,7 +1040,7 @@ specs.add_valid(
 )
 
 specs.add_invalid(
-    strategies.MultiFidelityStrategy,
+    strategies.MultiFidelityVarianceBasedStrategy,
     lambda: {
         "domain": Domain(
             inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
@@ -792,13 +1055,13 @@ specs.add_invalid(
 )
 
 specs.add_invalid(
-    strategies.MultiFidelityStrategy,
+    strategies.MultiFidelityVarianceBasedStrategy,
     lambda: {
         "domain": Domain(
             inputs=Inputs(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
-                    TaskInput(
+                    CategoricalTaskInput(
                         key="task", categories=["task_hf", "task_lf"], fidelities=[0, 0]
                     ),
                 ]
@@ -811,4 +1074,190 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Only one task can be the target fidelity",
+)
+
+# LLMStrategy specs — uses a single-objective domain
+_llm_domain = Domain(
+    inputs=Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            CategoricalInput(key="x3", categories=["a", "b", "c"]),
+        ],
+    ),
+    outputs=Outputs(
+        features=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+    ),
+)
+
+specs.add_valid(
+    strategies.LLMStrategy,
+    lambda: {
+        "domain": _llm_domain.model_dump(),
+        "llm": AnthropicLLMProvider(
+            model="claude-sonnet-4-20250514",
+            api_key_env_var="ANTHROPIC_API_KEY",
+        ).model_dump(),
+        "seed": 42,
+        "model_settings": None,
+        "output_retries": 3,
+        "n_recent_experiments": None,
+        "n_top_experiments": None,
+        "system_prompt": None,
+    },
+)
+
+specs.add_valid(
+    strategies.LLMStrategy,
+    lambda: {
+        "domain": _llm_domain.model_dump(),
+        "llm": AnthropicLLMProvider(
+            model="claude-sonnet-4-20250514",
+            api_key_env_var="ANTHROPIC_API_KEY",
+        ).model_dump(),
+        "seed": 42,
+        "model_settings": {
+            "temperature": 0.7,
+            "max_tokens": 4096,
+            "thinking": "medium",
+        },
+        "output_retries": 5,
+        "n_recent_experiments": 10,
+        "n_top_experiments": 5,
+        "system_prompt": "You are a helpful assistant.",
+    },
+)
+
+specs.add_valid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+    },
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    CategoricalTaskInput(
+                        key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
+                    ),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+    },
+    error=ValueError,
+    message="only supports continuous fidelities",
+)
+
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+    },
+    error=ValueError,
+    message="Must provide at least one fidelity",
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+        "fidelity_cost_model_spec": LinearDeterministicSurrogate(
+            inputs=Inputs(
+                features=[ContinuousInput(key="a", bounds=(0, 1))],
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="cost")]),
+            coefficients={"a": 1.0},
+            intercept=1.0,
+        ),
+    },
+    error=ValueError,
+    message="inputs to the cost model are not fidelities",
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityHVKGStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task", bounds=(0, 1)),
+                    ContinuousTaskInput(key="task_other", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qMFHVKG().model_dump(),
+        "fidelity_cost_model_spec": LinearDeterministicSurrogate(
+            inputs=Inputs(
+                features=[ContinuousTaskInput(key="task", bounds=(0, 1))],
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="cost")]),
+            coefficients={"task": 1.0},
+            intercept=1.0,
+        ),
+    },
+    error=ValueError,
+    message="All fidelities should be included in the cost model",
 )

@@ -3,6 +3,7 @@ import random
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.features.api import DiscreteInput
@@ -92,6 +93,15 @@ def test_discrete_input_feature_validate_candidental_invalid(input_feature, valu
         input_feature.validate_candidental(values)
 
 
+def test_discrete_input_is_fulfilled():
+    feature = DiscreteInput(key="a", values=[0, 1, 2])
+    values = pd.Series([-1, 0, 1, 2, 3], index=[0, 1, 2, 3, 10])
+    fulfilled = feature.is_fulfilled(values)
+    assert_series_equal(
+        fulfilled, pd.Series([False, True, True, True, False], index=values.index)
+    )
+
+
 def test_from_continuous():
     d = DiscreteInput(key="d", values=[1, 2, 3])
 
@@ -101,3 +111,14 @@ def test_from_continuous():
     )
     samples = d.from_continuous(continuous_values)
     assert np.all(samples == pd.Series([2, 2, 3, 2]))
+
+
+def test_discrete_input_to_pydantic_field():
+    from typing import Literal
+
+    from bofire.data_models.features.api import DiscreteInput
+
+    feat = DiscreteInput(key="n", values=[1.0, 2.0, 5.0])
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type == Literal[1.0, 2.0, 5.0]
+    assert field_info.description == "Discrete, allowed values: [1.0, 2.0, 5.0]"

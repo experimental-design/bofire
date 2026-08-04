@@ -1,5 +1,5 @@
 import math
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -15,7 +15,7 @@ class InterpointConstraint(Constraint):
     candidates when asking a strategy for returning more than one candidate.
     """
 
-    type: str
+    type: Any
 
 
 class InterpointEqualityConstraint(InterpointConstraint):
@@ -30,8 +30,16 @@ class InterpointEqualityConstraint(InterpointConstraint):
     """
 
     type: Literal["InterpointEqualityConstraint"] = "InterpointEqualityConstraint"
-    feature: str
+    features: Annotated[List[str], Field(min_length=1), Field(max_length=1)]
     multiplicity: Optional[Annotated[int, Field(ge=2)]] = None
+
+    def to_description(self) -> str:
+        raise NotImplementedError
+
+    @property
+    def feature(self) -> str:
+        """Feature to be constrained."""
+        return self.features[0]
 
     def validate_inputs(self, inputs: Inputs):
         if self.feature not in inputs.get_keys(ContinuousInput):
@@ -83,3 +91,6 @@ class InterpointEqualityConstraint(InterpointConstraint):
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         raise NotImplementedError("Method `jacobian` currently not implemented.")
+
+    def hessian(self, experiments: pd.DataFrame) -> Dict[Union[str, int], pd.DataFrame]:
+        raise NotImplementedError("Method `hessian` currently not implemented.")

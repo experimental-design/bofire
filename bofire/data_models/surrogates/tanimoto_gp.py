@@ -1,21 +1,22 @@
-from typing import Literal, Type
+from typing import Literal, Optional, Type
 
-from pydantic import Field, validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.molfeatures.api import (
+    CompositeMolFeatures,
     Fingerprints,
-    FingerprintsFragments,
     Fragments,
 )
 from bofire.data_models.priors.api import (
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
     AnyPrior,
+    AnyPriorConstraint,
+    GreaterThan,
 )
-from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
@@ -31,7 +32,10 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
-    scaler: ScalerEnum = ScalerEnum.IDENTITY
+    noise_constraint: Optional[AnyPriorConstraint] = Field(
+        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    )
+    tanimoto_calculation_mode: Literal["pre_computed", "on_the_fly"] = "pre_computed"
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
@@ -43,17 +47,22 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
         """
         return isinstance(my_type, type(ContinuousOutput))
 
-    # TanimotoGP will be used when at least one of fingerprints, fragments, or fingerprintsfragments are present
-    @validator("input_preprocessing_specs")
-    def validate_moleculars(cls, v, values):
+    @model_validator(mode="after")
+    def validate_moleculars(self):
         """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
         if not any(
             isinstance(value, Fingerprints)
             or isinstance(value, Fragments)
-            or isinstance(value, FingerprintsFragments)
-            for value in v.values()
+            or (
+                isinstance(value, CompositeMolFeatures)
+                and all(
+                    isinstance(feature, (Fingerprints, Fragments))
+                    for feature in value.features
+                )
+            )
+            for value in self.categorical_encodings.values()
         ):
             raise ValueError(
-                "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present.",
+                "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or composite molfeatures containing only fingerprints or fragments are present.",
             )
-        return v
+        return self

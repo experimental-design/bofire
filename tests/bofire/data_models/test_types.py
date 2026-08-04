@@ -6,6 +6,7 @@ from bofire.data_models.types import (
     FeatureKeys,
     make_unique_validator,
     validate_monotonically_increasing,
+    validate_strictly_increasing,
 )
 
 
@@ -36,3 +37,12 @@ def test_validate_bounds():
     assert validate_monotonically_increasing((1.0, 2.0)) == (1.0, 2.0)
     assert validate_monotonically_increasing((1.0, 1.0)) == (1.0, 1.0)
     assert validate_monotonically_increasing((1.0, 2.0, 3.0)) == (1.0, 2.0, 3.0)
+
+
+def test_validate_strictly_increasing():
+    with pytest.raises(ValueError, match="Sequence is not strictly increasing."):
+        validate_strictly_increasing((2.0, 1.0))
+    with pytest.raises(ValueError, match="Sequence is not strictly increasing."):
+        validate_strictly_increasing((1.0, 1.0))
+    assert validate_strictly_increasing((1.0, 2.0)) == (1.0, 2.0)
+    assert validate_strictly_increasing((1.0, 2.0, 3.0)) == (1.0, 2.0, 3.0)

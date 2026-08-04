@@ -7,15 +7,18 @@ from bofire.data_models.api import (
     AnyDataFrame,
     AnyFeature,
     AnyKernel,
+    AnyLLMProvider,
     AnyLocalSearchConfig,
     AnyMolFeatures,
     AnyObjective,
     AnyOutlierDetection,
     AnyPrior,
+    AnyPriorConstraint,
     AnyStrategy,
     AnySurrogate,
     Constraints,
     Domain,
+    EngineeredFeatures,
     Inputs,
     Outputs,
 )
@@ -31,6 +34,12 @@ def test_dataframe_should_be_deserializable(dataframe_spec: Spec):
 def test_prior_should_be_deserializable(prior_spec: Spec):
     obj = prior_spec.obj()
     deserialized = TypeAdapter(AnyPrior).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
+def test_prior_constraint_should_be_deserializable(prior_constraint_spec: Spec):
+    obj = prior_constraint_spec.obj()
+    deserialized = TypeAdapter(AnyPriorConstraint).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
@@ -111,6 +120,14 @@ def test_inputs_should_be_deserializable(inputs_spec: Spec):
     assert obj == deserialized
 
 
+def test_engineered_features_should_be_deserializable(
+    engineered_features_spec: Spec,
+):
+    obj = engineered_features_spec.obj()
+    deserialized = TypeAdapter(EngineeredFeatures).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
 def test_outputs_should_be_deserializable(outputs_spec: Spec):
     obj = outputs_spec.obj()
     deserialized = TypeAdapter(Outputs).validate_python(obj.model_dump())
@@ -126,4 +143,10 @@ def test_constraints_should_be_deserializable(constraints_spec: Spec):
 def test_local_search_config_should_be_deserializable(local_search_config_spec: Spec):
     obj = local_search_config_spec.obj()
     deserialized = TypeAdapter(AnyLocalSearchConfig).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
+def test_llm_should_be_deserializable(llm_spec: Spec):
+    obj = llm_spec.obj()
+    deserialized = TypeAdapter(AnyLLMProvider).validate_python(obj.model_dump())
     assert obj == deserialized

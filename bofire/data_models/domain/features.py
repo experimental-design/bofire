@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import functools
 import itertools
+import operator
 import re
 import warnings
 from collections.abc import Iterator, Sequence
@@ -20,13 +22,14 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, validate_call
+from pydantic import Field, create_model, field_validator, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
 from typing_extensions import Self
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum, SamplingMethodEnum
 from bofire.data_models.features.api import (
+    AnyEngineeredFeature,
     AnyFeature,
     AnyInput,
     AnyOutput,
@@ -34,14 +37,14 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalMolecularInput,
     CategoricalOutput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
+    EngineeredFeature,
     Feature,
     Input,
-    MolecularInput,
     Output,
-    TaskInput,
 )
 from bofire.data_models.features.feature import get_encoded_name
 from bofire.data_models.filters import filter_by_attribute, filter_by_class
@@ -52,6 +55,7 @@ from bofire.data_models.objectives.api import (
     Objective,
 )
 from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.unions import to_list
 
 
 F = TypeVar("F", bound=AnyFeature)
@@ -80,7 +84,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
             raise ValueError("Feature keys are not unique.")
         return features
 
-    def __iter__(self) -> Iterator[F]:  # type: ignore
+    def __iter__(self) -> Iterator[F]:
         return iter(self.features)
 
     def __len__(self):
@@ -97,9 +101,12 @@ class _BaseFeatures(BaseModel, Generic[F]):
         new_feature_seq = list(itertools.chain(self.features, other_feature_seq))
 
         def is_feats_of_type(feats, ftype_collection, ftype_element):
+            # ``ftype_element`` may be a discriminated Annotated[Union[...], Field].
+            # Reduce to a tuple of concrete classes for ``isinstance``.
+            element_classes = tuple(to_list(ftype_element))
             return isinstance(feats, ftype_collection) or (
                 not isinstance(feats, Features)
-                and (len(feats) > 0 and isinstance(feats[0], ftype_element))
+                and (len(feats) > 0 and isinstance(feats[0], element_classes))
             )
 
         def is_infeats(feats):
@@ -108,10 +115,23 @@ class _BaseFeatures(BaseModel, Generic[F]):
         def is_outfeats(feats):
             return is_feats_of_type(feats, Outputs, Output)
 
+        def is_engineeredfeats(feats):
+            # Filter on the base class, mirroring ``is_infeats``/``is_outfeats``.
+            # The ``AnyEngineeredFeature`` union imported here is bound at
+            # import time and would not see registered feature types.
+            return is_feats_of_type(feats, EngineeredFeatures, EngineeredFeature)
+
         if is_infeats(self) and is_infeats(other):
             return Inputs(features=cast(Tuple[AnyInput, ...], new_feature_seq))
         if is_outfeats(self) and is_outfeats(other):
             return Outputs(features=cast(Tuple[AnyOutput, ...], new_feature_seq))
+        if is_engineeredfeats(self) and is_engineeredfeats(other):
+            return EngineeredFeatures(
+                features=cast(
+                    Tuple[AnyEngineeredFeature, ...],
+                    new_feature_seq,
+                ),
+            )
         return Features(features=new_feature_seq)
 
     def get_by_key(self, key: str, use_regex: bool = False) -> F:
@@ -162,7 +182,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Union[Type, List[Type], None] = AnyFeature,  # type: ignore
+        includes: Union[Type, List[Type], None] = Feature,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> Self:
@@ -170,7 +190,8 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
         Args:
             includes: All features in this container that are instances of an
-                include are returned. If None, the include filter is not active.
+                include are returned. Defaults to the ``Feature`` base class,
+                i.e. everything. If None, the include filter is not active.
             excludes: All features in this container that are not instances of
                 an exclude are returned. If None, the exclude filter is not active.
             exact: Boolean to distinguish if only the exact class listed in
@@ -194,7 +215,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type], None] = AnyFeature,  # type: ignore
+        includes: Union[Type, List[Type], None] = Feature,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -202,7 +223,8 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
         Args:
             includes: All features in this container that are instances of an
-                include are returned. If None, the include filter is not active.
+                include are returned. Defaults to the ``Feature`` base class,
+                i.e. everything. If None, the include filter is not active.
             excludes: All features in this container that are not instances of
                 an exclude are returned. If None, the exclude filter is not active.
             exact: Boolean to distinguish if only the exact class listed in
@@ -239,6 +261,82 @@ class Features(_BaseFeatures[AnyFeature]):
     pass
 
 
+class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
+    """Container of engineered (input) features, only engineered features
+    are allowed.
+
+    Engineered features can be used in surrogate models to enhance the
+    learning capabilities.
+
+    Attributes:
+        features: list of the engineered features.
+    """
+
+    type: Literal["EngineeredFeatures"] = "EngineeredFeatures"
+
+    def get_features2idx(self, offset: int = 0) -> Dict[str, Tuple[int, ...]]:
+        """Get a dictionary that maps feature names to indices (used for surrogate
+        building).
+
+        Args:
+            offset: Offset for computing the indices. Defaults to 0.
+
+        Returns:
+            Dictionary mapping feature names to their indices.
+        """
+        features2idx = {}
+        counter = offset
+        for feat in self.get():
+            features2idx[feat.key] = tuple(
+                out_idx + counter for out_idx in range(feat.n_transformed_inputs)
+            )
+            counter += feat.n_transformed_inputs
+        return features2idx
+
+    def get_feature_indices(
+        self,
+        offset: int,
+        feature_keys: List[str],
+    ) -> List[int]:
+        """Get the indices of the specified feature keys.
+
+        Args:
+            offset: Offset for computing the indices.
+            feature_keys: List of feature keys to get the indices for.
+
+        Returns:
+            List of indices for the specified feature keys.
+        """
+        features2idx = self.get_features2idx(offset)
+        return sorted(
+            itertools.chain.from_iterable(
+                [features2idx[feat] for feat in feature_keys]
+            ),
+        )
+
+    def validate_inputs(self, inputs: Inputs):
+        """Validates that the engineered features fit to the original
+        input features.
+
+        Args:
+            inputs: Input features to validate against.
+        """
+        for feat in self.get():
+            feat.validate_features(inputs)
+
+    @property
+    def n_transformed_inputs(self) -> int:
+        """Get the total number of number of created engineered features.
+
+        There could be multiple created engineered features per engineered
+        feature (example: `WeightedSumFeature`).
+
+        Returns:
+            int: Total number of created engineered features.
+        """
+        return sum(feat.n_transformed_inputs for feat in self.get())
+
+
 class Inputs(_BaseFeatures[AnyInput]):
     """Container of input features, only input features are allowed.
 
@@ -247,19 +345,21 @@ class Inputs(_BaseFeatures[AnyInput]):
 
     """
 
-    type: Literal["Inputs"] = "Inputs"  # type: ignore
+    type: Literal["Inputs"] = "Inputs"
 
     @field_validator("features")
     @classmethod
     def validate_only_one_task_input(cls, features: Sequence[AnyInput]):
         filtered = filter_by_class(
             features,
-            includes=TaskInput,
+            includes=CategoricalTaskInput,
             excludes=None,
             exact=False,
         )
         if len(filtered) > 1:
-            raise ValueError(f"Only one `TaskInput` is allowed, got {len(filtered)}.")
+            raise ValueError(
+                f"Only one `CategoricalTaskInput` is allowed, got {len(filtered)}."
+            )
         return features
 
     def get_fixed(self) -> Inputs:
@@ -288,6 +388,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         n: int = 1,
         method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM,
         seed: Optional[int] = None,
+        sampler_kwargs: Optional[Dict] = None,
     ) -> pd.DataFrame:
         """Draw sobol samples
 
@@ -298,6 +399,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                 methods are `UNIFORM`, `SOBOL` and `LHS`. Defaults to `UNIFORM`.
             reference_value
             seed (int, optional): random seed. Defaults to None.
+            sampler_kwargs (Dict, optional): Additional arguments for the sampler. Defaults to None.
 
         Returns:
             pd.DataFrame: Dataframe containing the samples.
@@ -305,6 +407,9 @@ class Inputs(_BaseFeatures[AnyInput]):
         """
         if len(self) == 0:
             return pd.DataFrame()
+
+        if sampler_kwargs is None:
+            sampler_kwargs = {}
 
         if method == SamplingMethodEnum.UNIFORM:
             # we cannot just propagate the provided seed to the sample methods
@@ -325,9 +430,11 @@ class Inputs(_BaseFeatures[AnyInput]):
         if method == SamplingMethodEnum.SOBOL:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                X = Sobol(len(free_features), seed=seed).random(n)
+                X = Sobol(len(free_features), seed=seed, **sampler_kwargs).random(n)
         else:
-            X = LatinHypercube(len(free_features), seed=seed).random(n)
+            X = LatinHypercube(len(free_features), seed=seed, **sampler_kwargs).random(
+                n
+            )
 
         res = []
         for i, feat in enumerate(free_features):
@@ -351,7 +458,9 @@ class Inputs(_BaseFeatures[AnyInput]):
         samples = pd.concat(res, axis=1)
 
         for feat in self.get_fixed():
-            samples[feat.key] = feat.fixed_value()[0]  # type: ignore
+            val = feat.fixed_value()
+            assert val is not None
+            samples[feat.key] = val[0]
 
         return self.validate_candidates(samples)[self.get_keys(Input)]
 
@@ -398,17 +507,88 @@ class Inputs(_BaseFeatures[AnyInput]):
             raise ValueError("there are na values")
         return experiments
 
+    def get_number_of_categorical_combinations(
+        self,
+        include: Union[Type, List[Type]] = Input,
+        exclude: Union[
+            Type, List[Type]
+        ] = None,  # ty: ignore[invalid-parameter-default]
+        include_semicontinuous: bool = True,
+    ) -> int:
+        """Get the total number of unique categorical combinations.
+
+        This is used before generating all of the categorical combinations, which may
+        cause memory issues if there are too many.
+
+        Args:
+            include (Feature, optional): Features to be included. Defaults to Input.
+            exclude (Feature, optional): Features to be excluded, e.g. subclasses
+                of the included features. Defaults to None.
+            include_semicontinuous (bool, optional): When True (default), each
+                semi-continuous feature (`ContinuousInput` with `allow_zero=True`
+                and a positive lower bound, un-fixed) contributes a factor of 2
+                for its on/off enumeration. When False, semi-continuous features
+                are excluded from the count -- useful when the caller handles
+                them via a post-optimisation pruning step rather than by
+                AF-time enumeration.
+        Returns:
+            int: Returns the number of unique combinations of discrete and categorical
+                features.
+        """
+        features = [
+            f
+            for f in self.get(includes=include, excludes=exclude)
+            if (isinstance(f, CategoricalInput) and not f.is_fixed())
+        ]
+        num_cats = [len(f.get_allowed_categories()) for f in features]
+
+        discretes = [
+            f
+            for f in self.get(includes=include, excludes=exclude)
+            if (isinstance(f, DiscreteInput) and not f.is_fixed())
+        ]
+
+        num_discretes = [len(d.values) for d in discretes]
+
+        if include_semicontinuous:
+            conditional_conts = [
+                f
+                for f in self.get(includes=include, excludes=exclude)
+                if (isinstance(f, ContinuousInput) and f.is_semicontinuous)
+            ]
+            # each conditional feature may be 'active' or 'inactive'
+            num_conditional_conts = [2 for _ in conditional_conts]
+        else:
+            num_conditional_conts = []
+
+        num_values = num_cats + num_discretes + num_conditional_conts
+
+        return functools.reduce(operator.mul, num_values, 1)
+
     def get_categorical_combinations(
         self,
         include: Union[Type, List[Type]] = Input,
-        exclude: Union[Type, List[Type]] = None,  # type: ignore
-    ):
+        exclude: Union[
+            Type, List[Type]
+        ] = None,  # ty: ignore[invalid-parameter-default]
+        include_semicontinuous: bool = True,
+    ) -> list[tuple[tuple[str, float] | tuple[str, str], ...]]:
         """Get a list of tuples pairing the feature keys with a list of valid categories
 
         Args:
             include (Feature, optional): Features to be included. Defaults to Input.
             exclude (Feature, optional): Features to be excluded, e.g. subclasses
                 of the included features. Defaults to None.
+            include_semicontinuous (bool, optional): When True (default), each
+                semi-continuous feature (`ContinuousInput` with `allow_zero=True`
+                and a positive lower bound, un-fixed) doubles the number of
+                combinations via its on/off enumeration. When False,
+                semi-continuous features are excluded from the enumeration --
+                useful when the caller handles them via a post-optimisation
+                pruning step rather than by AF-time enumeration. Mirrors the
+                flag of the same name on
+                `get_number_of_categorical_combinations`; the two must be
+                passed the same value to stay consistent.
 
         Returns:
             List[(str, List[str])]: Returns a list of tuples pairing the feature
@@ -420,7 +600,7 @@ class Inputs(_BaseFeatures[AnyInput]):
             for f in self.get(includes=include, excludes=exclude)
             if (isinstance(f, CategoricalInput) and not f.is_fixed())
         ]
-        list_of_lists = [
+        cat_values = [
             [(f.key, cat) for cat in f.get_allowed_categories()] for f in features
         ]
 
@@ -430,11 +610,33 @@ class Inputs(_BaseFeatures[AnyInput]):
             if (isinstance(f, DiscreteInput) and not f.is_fixed())
         ]
 
-        list_of_lists_2 = [[(d.key, v) for v in d.values] for d in discretes]
+        discrete_values = [[(d.key, v) for v in d.values] for d in discretes]
 
-        list_of_lists = list_of_lists + list_of_lists_2
+        cat_and_discrete_values = cat_values + discrete_values
+        all_combos = list(itertools.product(*cat_and_discrete_values))
 
-        return list(itertools.product(*list_of_lists))
+        if include_semicontinuous:
+            conditional_conts = [
+                f
+                for f in self.get(includes=include, excludes=exclude)
+                if (isinstance(f, ContinuousInput) and f.is_semicontinuous)
+            ]
+        else:
+            conditional_conts = []
+
+        conditional_values = [[(d.key, 0.0), (d.key, None)] for d in conditional_conts]
+
+        if conditional_values:
+            # remove any `None`s in the fixed features, as these features should be free
+            all_combos = [
+                combo_cat_discrete
+                + tuple(filter(lambda x: x[1] is not None, combo_conditional))
+                for (combo_cat_discrete, *combo_conditional) in itertools.product(
+                    all_combos, *conditional_values
+                )
+            ]
+
+        return all_combos
 
     # transformation related methods
     def _get_transform_info(
@@ -496,8 +698,10 @@ class Inputs(_BaseFeatures[AnyInput]):
                 )
                 counter += len(feat.descriptors)
             elif isinstance(specs[feat.key], MolFeatures):
-                assert isinstance(feat, MolecularInput)
-                descriptor_names = specs[feat.key].get_descriptor_names()  # type: ignore
+                assert isinstance(feat, CategoricalMolecularInput)
+                descriptor_names = specs[
+                    feat.key
+                ].get_descriptor_names()  # ty: ignore[possibly-missing-attribute]
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(descriptor_names))) + counter).tolist(),
                 )
@@ -545,8 +749,8 @@ class Inputs(_BaseFeatures[AnyInput]):
                 assert isinstance(feat, CategoricalDescriptorInput)
                 transformed.append(feat.to_descriptor_encoding(s))
             elif isinstance(specs[feat.key], MolFeatures):
-                assert isinstance(feat, MolecularInput)
-                transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))  # type: ignore
+                assert isinstance(feat, CategoricalMolecularInput)
+                transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
@@ -593,7 +797,7 @@ class Inputs(_BaseFeatures[AnyInput]):
             elif isinstance(specs[feat.key], MolFeatures):
                 assert isinstance(feat, CategoricalMolecularInput)
                 transformed.append(
-                    feat.from_descriptor_encoding(specs[feat.key], experiments),  # type: ignore
+                    feat.from_descriptor_encoding(specs[feat.key], experiments),
                 )
 
         return pd.concat(transformed, axis=1)
@@ -635,7 +839,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                     raise ValueError(
                         f"Forbidden transform type for feature with key {key}",
                     )
-                if not isinstance(value, tuple(no_enums)):  # type: ignore
+                if not isinstance(value, tuple(no_enums)):
                     raise ValueError(
                         f"Forbidden transform type for feature with key {key}",
                     )
@@ -647,6 +851,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         specs: InputTransformSpecs,
         experiments: Optional[pd.DataFrame] = None,
         reference_experiment: Optional[pd.Series] = None,
+        relax_allow_zero: bool = False,
     ) -> Tuple[List[float], List[float]]:
         """Returns the boundaries of the optimization problem based on the transformations
         defined in the  `specs` dictionary.
@@ -657,10 +862,13 @@ class Inputs(_BaseFeatures[AnyInput]):
             experiments (Optional[pd.DataFrame], optional): Dataframe with input features.
                 If provided the real feature bounds are returned based on both the opt.
                 feature bounds and the extreme points in the dataframe. Defaults to None,
-            reference_experiment (Optional[pd.Serues], optional): If a reference experiment provided,
+            reference_experiment (Optional[pd.Series], optional): If a reference experiment provided,
             then the local bounds based on a local search region are provided as reference to the
                 reference experiment. Currently only supported for continuous inputs.
                 For more details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf. Defaults to None.
+            relax_allow_zero (bool, optional): If True, semi-continuous continuous inputs
+                (`allow_zero=True` with positive lower bound) report a relaxed lower bound of 0.
+                Other input types ignore this flag. Defaults to False.
 
         Raises:
             ValueError: If a feature type is not known.
@@ -683,13 +891,14 @@ class Inputs(_BaseFeatures[AnyInput]):
         for feat in self.get():
             assert isinstance(feat, Input)
             lo, up = feat.get_bounds(
-                transform_type=specs.get(feat.key),  # type: ignore
-                values=experiments[feat.key] if experiments is not None else None,  # type: ignore
+                transform_type=specs.get(feat.key),
+                values=experiments[feat.key] if experiments is not None else None,
                 reference_value=(
                     reference_experiment[feat.key]
                     if reference_experiment is not None
                     else None
                 ),
+                relax_allow_zero=relax_allow_zero,
             )
             lower += lo
             upper += up
@@ -718,6 +927,42 @@ class Inputs(_BaseFeatures[AnyInput]):
             ),
         )
 
+    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
+        """Check if the provided experiments fulfill all constraints defined on the
+        input features itself like the bounds or the allowed categories.
+
+        Args:
+            experiments: Dataframe with input features.
+
+        Returns:
+            Series with boolean values indicating if the experiments fulfill the
+                constraints on the input features.
+
+        """
+        return (
+            pd.concat(
+                [feat.is_fulfilled(experiments[feat.key]) for feat in self.get()],
+                axis=1,
+            )
+            .fillna(True)
+            .all(axis=1)
+        )
+
+    def to_pydantic_model(self, name: str = "CandidatePoint"):
+        """Build a dynamic Pydantic model with one field per input feature.
+
+        Each feature's ``to_pydantic_field()`` determines the field type and
+        constraints (e.g., ge/le for continuous, Literal for categorical).
+
+        Returns:
+            A Pydantic BaseModel subclass with typed fields matching the inputs.
+        """
+        fields = {}
+        for feature in self:
+            field_type, field_info = feature.to_pydantic_field()
+            fields[feature.key] = (field_type, field_info)
+        return create_model(name, **fields)
+
 
 class Outputs(_BaseFeatures[AnyOutput]):
     """Container of output features, only output features are allowed.
@@ -727,7 +972,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
 
     """
 
-    type: Literal["Outputs"] = "Outputs"  # type: ignore
+    type: Literal["Outputs"] = "Outputs"
 
     def get_by_objective(
         self,
@@ -836,7 +1081,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
             [
                 feat(
                     experiments[f"{feat.key}_pred" if predictions else feat.key],
-                    experiments_adapt[feat.key].dropna(),  # type: ignore
+                    experiments_adapt[feat.key].dropna(),
                 )
                 for feat in self.features
                 if feat.objective is not None
@@ -844,10 +1089,10 @@ class Outputs(_BaseFeatures[AnyOutput]):
             ]
             + [
                 (
-                    pd.Series(  # type: ignore
+                    pd.Series(
                         data=feat(
-                            experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
-                            experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
+                            experiments.filter(regex=f"{feat.key}(.*)_prob"),
+                            experiments.filter(regex=f"{feat.key}(.*)_prob"),
                         ),
                         name=f"{feat.key}_pred",
                     )
@@ -897,7 +1142,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
     def validate_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
         for feat in self.get():
             if feat.key not in experiments:
-                raise ValueError(f"no col for input feature `{feat.key}`")
+                raise ValueError(f"no col for output feature `{feat.key}`")
             experiments[feat.key] = feat.validate_experimental(experiments[feat.key])
         experiments = self.add_valid_columns(experiments=experiments)
         return experiments
@@ -917,7 +1162,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
                     [f"{key}_pred", f"{key}_sd"]
                     for key in self.get_keys_by_objective(
                         excludes=Objective,
-                        includes=None,  # type: ignore
+                        includes=None,
                     )
                 ],
             ),
