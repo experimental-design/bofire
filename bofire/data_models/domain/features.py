@@ -41,6 +41,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
+    EngineeredFeature,
     Feature,
     Input,
     Output,
@@ -115,7 +116,10 @@ class _BaseFeatures(BaseModel, Generic[F]):
             return is_feats_of_type(feats, Outputs, Output)
 
         def is_engineeredfeats(feats):
-            return is_feats_of_type(feats, EngineeredFeatures, AnyEngineeredFeature)
+            # Filter on the base class, mirroring ``is_infeats``/``is_outfeats``.
+            # The ``AnyEngineeredFeature`` union imported here is bound at
+            # import time and would not see registered feature types.
+            return is_feats_of_type(feats, EngineeredFeatures, EngineeredFeature)
 
         if is_infeats(self) and is_infeats(other):
             return Inputs(features=cast(Tuple[AnyInput, ...], new_feature_seq))
@@ -178,9 +182,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Union[
-            Type, List[Type], None
-        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
+        includes: Union[Type, List[Type], None] = Feature,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> Self:
@@ -188,7 +190,8 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
         Args:
             includes: All features in this container that are instances of an
-                include are returned. If None, the include filter is not active.
+                include are returned. Defaults to the ``Feature`` base class,
+                i.e. everything. If None, the include filter is not active.
             excludes: All features in this container that are not instances of
                 an exclude are returned. If None, the exclude filter is not active.
             exact: Boolean to distinguish if only the exact class listed in
@@ -212,9 +215,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get_keys(
         self,
-        includes: Union[
-            Type, List[Type], None
-        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
+        includes: Union[Type, List[Type], None] = Feature,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -222,7 +223,8 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
         Args:
             includes: All features in this container that are instances of an
-                include are returned. If None, the include filter is not active.
+                include are returned. Defaults to the ``Feature`` base class,
+                i.e. everything. If None, the include filter is not active.
             excludes: All features in this container that are not instances of
                 an exclude are returned. If None, the exclude filter is not active.
             exact: Boolean to distinguish if only the exact class listed in
