@@ -53,7 +53,6 @@ NUM_FRONT_SAMPLES = 8192 if not SMOKE_TEST else 256
 GA_POPULATION_SIZE = 128 if not SMOKE_TEST else 24
 GA_MAX_GENERATIONS = 150 if not SMOKE_TEST else 5
 GA_MAX_EVALUATIONS = 20_000 if not SMOKE_TEST else 120
-ACQUISITION_GRID_SIZE = 40 if not SMOKE_TEST else 12
 OBJECTIVE_KEYS = ["f1", "f2"]
 HYPERVOLUME_REFERENCE_POINT = {"f1": 140, "f2": 50}
 
@@ -444,72 +443,3 @@ agree but remain far from the reference front, the models are locally accurate
 but have not discovered the correct Pareto region. Agreement among all three
 indicates a good understanding of the trade-off region, but not necessarily of
 the entire input domain.
-
-## Inspect the acquisition function
-
-The default MOBO acquisition function, `qLogNEHVI`, produces one scalar value
-per candidate: its log expected hypervolume improvement. Consequently it has no
-Pareto front of its own. It answers a different question from the GP-mean
-front: **where should we measure next?**
-
-Because BNH has two inputs, we can evaluate this scalar acquisition function on
-a grid and inspect its surface. We also overlay the GP-mean Pareto set and the
-next candidate returned by the MOBO strategy. In higher-dimensional problems,
-one would use slices, projections, or color a finite candidate set instead of
-drawing a full grid.
-
-```{python}
-#| tags: []
-x1_feature = bnh.domain.inputs.get_by_key("x1")
-x2_feature = bnh.domain.inputs.get_by_key("x2")
-x1 = np.linspace(*x1_feature.bounds, ACQUISITION_GRID_SIZE)
-x2 = np.linspace(*x2_feature.bounds, ACQUISITION_GRID_SIZE)
-x1_grid, x2_grid = np.meshgrid(x1, x2)
-acquisition_grid = pd.DataFrame(
-    {"x1": x1_grid.ravel(), "x2": x2_grid.ravel()}
-)
-acquisition_values = mobo_strategy.calc_acquisition(acquisition_grid)
-next_candidate = mobo_strategy.ask(1)
-
-fig, ax = plt.subplots(figsize=(8, 5))
-contours = ax.contourf(
-    x1_grid,
-    x2_grid,
-    acquisition_values.reshape(x1_grid.shape),
-    levels=20,
-    cmap="viridis",
-)
-fig.colorbar(contours, ax=ax, label="qLogNEHVI acquisition value")
-ax.scatter(
-    initial_data.x1,
-    initial_data.x2,
-    s=20,
-    color="white",
-    edgecolor="black",
-    label="Initial observations",
-)
-ax.scatter(
-    gp_inputs.x1,
-    gp_inputs.x2,
-    s=18,
-    color="tab:blue",
-    label="GP mean Pareto set",
-)
-ax.scatter(
-    next_candidate.x1,
-    next_candidate.x2,
-    s=100,
-    marker="*",
-    color="tab:red",
-    label="Next MOBO candidate",
-)
-ax.set_xlabel("x1")
-ax.set_ylabel("x2")
-ax.legend()
-plt.show()
-```
-
-If separate acquisition values were defined for each objective, their
-nondominated set could be studied, but it would be an *acquisition-space*
-trade-off rather than an estimate of the objective Pareto front. The scalar
-qLogNEHVI surface is the more direct diagnostic for the strategy used here.
