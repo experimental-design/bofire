@@ -18,8 +18,6 @@ from typing import (
     TypeVar,
     Union,
     cast,
-    get_args,
-    get_origin,
 )
 
 import numpy as np
@@ -62,38 +60,6 @@ from bofire.data_models.unions import to_list
 
 F = TypeVar("F", bound=AnyFeature)
 FeatureSequence = Sequence[F]
-
-
-class _Unset:
-    """Sentinel for the default ``includes`` filter of ``get``/``get_keys``.
-
-    A distinct sentinel is needed because ``includes=None`` already means "do
-    not filter by class", so it cannot double as "not supplied". This is a
-    class rather than a plain ``object()`` so that it satisfies the ``Type``
-    part of the parameter annotation.
-    """
-
-
-def _element_union(cls: Type["_BaseFeatures"]):
-    """Return the union of feature types *cls* currently accepts.
-
-    Resolved from ``model_fields`` instead of the generic parameter of the
-    class: ``register_engineered_feature`` patches the field annotation in
-    place, so this reflects what the container actually validates, while
-    ``__orig_bases__`` is frozen at class-creation time. Binding the union at
-    import time (as a default argument would) makes newly registered feature
-    types invisible to the filter.
-    """
-    annotation = cls.model_fields["features"].annotation
-    if get_origin(annotation) in (list, tuple, Sequence):
-        args = get_args(annotation)
-        if args:
-            annotation = args[0]
-    if isinstance(annotation, TypeVar):
-        # ``_BaseFeatures`` itself is unparametrized, so its annotation is a
-        # bare TypeVar, which ``isinstance`` cannot consume.
-        return Feature
-    return annotation
 
 
 class _BaseFeatures(BaseModel, Generic[F]):
@@ -216,7 +182,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Union[Type, List[Type], None] = _Unset,
+        includes: Union[Type, List[Type], None] = Feature,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> Self:
@@ -224,9 +190,8 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
         Args:
             includes: All features in this container that are instances of an
-                include are returned. If not provided, the feature types this
-                container accepts are used. If None, the include filter is not
-                active.
+                include are returned. Defaults to the ``Feature`` base class,
+                i.e. everything. If None, the include filter is not active.
             excludes: All features in this container that are not instances of
                 an exclude are returned. If None, the exclude filter is not active.
             exact: Boolean to distinguish if only the exact class listed in
@@ -237,8 +202,6 @@ class _BaseFeatures(BaseModel, Generic[F]):
             List of features in the domain fitting to the passed requirements.
 
         """
-        if includes is _Unset:
-            includes = _element_union(type(self))
         return self.__class__(
             features=sorted(
                 filter_by_class(
@@ -252,7 +215,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type], None] = _Unset,
+        includes: Union[Type, List[Type], None] = Feature,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -260,9 +223,8 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
         Args:
             includes: All features in this container that are instances of an
-                include are returned. If not provided, the feature types this
-                container accepts are used. If None, the include filter is not
-                active.
+                include are returned. Defaults to the ``Feature`` base class,
+                i.e. everything. If None, the include filter is not active.
             excludes: All features in this container that are not instances of
                 an exclude are returned. If None, the exclude filter is not active.
             exact: Boolean to distinguish if only the exact class listed in

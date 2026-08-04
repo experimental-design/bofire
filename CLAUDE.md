@@ -90,6 +90,24 @@ from bofire.strategies.api import SoboStrategy
 from bofire.data_models.acquisition_functions.api import qLogEI
 ```
 
+## Test Style
+
+**Prefer plain test functions over test classes.** Roughly 85% of BoFire's tests are
+module-level `def test_*` functions (~815 functions vs ~150 methods in classes); only
+four files use classes at all (`tests/bofire/test_register.py`,
+`tests/bofire/strategies/test_utils.py`, `tests/bofire/strategies/test_nchoosek_pruning.py`,
+`tests/bofire/utils/test_domain_repair.py`).
+
+Use a function unless you need a shared `pytest.fixture` for setup that several tests
+in the group depend on. When adding to a file that is already consistently class-based,
+follow that file's convention instead — consistency within a file beats the global default.
+
+Prefer `@pytest.mark.parametrize` over near-duplicate test bodies.
+
+**Put tests in the module that matches the code under test.** Tests for feature
+containers belong in `tests/bofire/data_models/domain/test_features.py`, not in
+`tests/bofire/test_register.py` — the latter is for the registration machinery itself.
+
 ## Data Model Testing
 
 Data models use a spec-based parametrized testing system. The infrastructure lives in `tests/bofire/data_models/specs/`.
