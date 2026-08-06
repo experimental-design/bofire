@@ -58,17 +58,18 @@ class BotorchSurrogate(Surrogate):
         molecular (fingerprint) generator, numeric descriptor columns imply a static
         source, and a plain categorical uses the surrogate's non-descriptor fallback.
         """
-        fallbacks = cls._default_plain_categorical_encodings()
-        if not isinstance(feat, CategoricalTaskInput):
+        is_task = isinstance(feat, CategoricalTaskInput)
+        if not is_task:
             if feat.structure is not None:
                 # fingerprint-encode from the structure column, static columns excluded
                 return DescriptorEncoding(columns=[], generators=[Fingerprints()])
             if feat.descriptor_columns():
                 return DescriptorEncoding()  # all numeric descriptor columns
-        for klass in type(feat).__mro__:
-            if klass in fallbacks:
-                return fallbacks[klass]
-        return OneHotEncoding()
+        # look up the fallback by kind, not by exact type, so deprecated subclasses
+        # (CategoricalDescriptorInput, CategoricalMolecularInput) resolve too.
+        fallbacks = cls._default_plain_categorical_encodings()
+        kind = CategoricalTaskInput if is_task else CategoricalInput
+        return fallbacks.get(kind, OneHotEncoding())
 
     @classmethod
     def _generate_default_categorical_encodings(
