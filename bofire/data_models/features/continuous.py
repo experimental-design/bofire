@@ -16,6 +16,18 @@ from bofire.data_models.types import Bounds
 class ContinuousInput(NumericalInput, DescriptorsMixin):
     """Base class for all continuous input features.
 
+    A continuous input is a *single* descriptor component: it has exactly one
+    descriptor level (the feature itself), so each ``descriptors`` column and the
+    ``structure`` column hold exactly one value. This is what lets a continuous
+    feature act as one component of a mixture, blended by a ``WeightedSumFeature``::
+
+        ethanol = ContinuousInput(
+            key="ethanol",
+            bounds=(0, 1),
+            descriptors={"logP": [-0.3], "MW": [46.0]},   # one value per column
+            structure=["CCO"],                            # one SMILES
+        )
+
     Attributes:
         bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.
         stepsize (PositiveFloat, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
@@ -25,6 +37,17 @@ class ContinuousInput(NumericalInput, DescriptorsMixin):
             Useful for features that take values between `bounds`, but can also take a value of 0.
             One may choose to use a conditional kernel for this, if taking a value of 0
             represents a distinct behaviour from non-zero values.
+        descriptors (Dict[str, List[float]], inherited from `DescriptorsMixin`): Numeric
+            property columns, each holding a single value (the one component).
+            Defaults to `{}`.
+        structure (List[str], optional, inherited from `DescriptorsMixin`): A single-element
+            list holding the component's SMILES, fed to descriptor generators on the
+            surrogate side. Defaults to None.
+        unit (str, optional, inherited from `NumericalInput`): The unit of the feature.
+            Defaults to None.
+        key (str, inherited from `Feature`): The unique name of the feature.
+        context (str, optional, inherited from `Feature`): Free-text context for the
+            feature. Defaults to None.
 
     """
 
@@ -32,10 +55,6 @@ class ContinuousInput(NumericalInput, DescriptorsMixin):
     order_id: ClassVar[int] = 1
 
     bounds: Bounds
-
-    # descriptor_levels() -> [self.key]: a single numeric component, inherited from
-    # DescriptorsMixin.
-
     local_relative_bounds: Optional[
         Annotated[List[PositiveFloat], Field(min_length=2, max_length=2)]
     ] = None

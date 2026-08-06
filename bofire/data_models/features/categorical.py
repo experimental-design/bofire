@@ -50,9 +50,32 @@ LLM_ENUM_SCHEMA_THRESHOLD = 32
 class CategoricalInput(Input, DescriptorsMixin):
     """Base class for all categorical input features.
 
+    A categorical input has one descriptor level *per category*, so each
+    ``descriptors`` column and the ``structure`` column hold one value per category,
+    in the same order as ``categories``::
+
+        solvent = CategoricalInput(
+            key="solvent",
+            categories=["water", "ethanol", "thf"],
+            descriptors={"logP": [-1.4, -0.3, 0.5], "MW": [18.0, 46.0, 72.0]},
+            structure=["O", "CCO", "C1CCOC1"],   # one SMILES per category
+        )
+
+    How those descriptors are turned into model columns is *not* fixed here: it is
+    chosen per surrogate via ``categorical_encodings`` (e.g. ``OneHotEncoding`` or a
+    ``DescriptorEncoding`` selecting columns and/or running descriptor generators on
+    ``structure``).
+
     Attributes:
         categories (List[str]): Names of the categories.
         allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
+        descriptors (Dict[str, List[float]], inherited from `DescriptorsMixin`): Numeric
+            property columns, each holding one value per category. Defaults to `{}`.
+        structure (List[str], optional, inherited from `DescriptorsMixin`): SMILES, one per
+            category, fed to descriptor generators on the surrogate side. Defaults to None.
+        key (str, inherited from `Feature`): The unique name of the feature.
+        context (str, optional, inherited from `Feature`): Free-text context for the
+            feature. Defaults to None.
 
     """
 

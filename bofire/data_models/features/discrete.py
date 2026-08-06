@@ -14,9 +14,24 @@ from bofire.data_models.types import DiscreteVals
 class DiscreteInput(NumericalInput, DescriptorsMixin):
     """Feature with discretized ordinal values allowed in the optimization.
 
+    Like `ContinuousInput`, a discrete input is a *single* descriptor component: the
+    allowed ``values`` are not descriptor levels, so each ``descriptors`` column and the
+    ``structure`` column hold exactly one value (a restricted amount of a substance
+    still describes one substance).
+
     Attributes:
         key(str): key of the feature.
         values(List[float]): the discretized allowed values during the optimization.
+        descriptors (Dict[str, List[float]], inherited from `DescriptorsMixin`): Numeric
+            property columns, each holding a single value (the one component).
+            Defaults to `{}`.
+        structure (List[str], optional, inherited from `DescriptorsMixin`): A single-element
+            list holding the component's SMILES, fed to descriptor generators on the
+            surrogate side. Defaults to None.
+        unit (str, optional, inherited from `NumericalInput`): The unit of the feature.
+            Defaults to None.
+        context (str, optional, inherited from `Feature`): Free-text context for the
+            feature. Defaults to None.
 
     """
 
@@ -25,9 +40,6 @@ class DiscreteInput(NumericalInput, DescriptorsMixin):
 
     values: DiscreteVals
     rtol: float = 1e-7
-
-    # descriptor_levels() -> [self.key]: a discrete feature is a single numeric
-    # component (like continuous), inherited from DescriptorsMixin.
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(description=...))`` with allowed values.

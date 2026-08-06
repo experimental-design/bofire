@@ -122,6 +122,21 @@ class DescriptorSpec(BaseModel):
     def _generated_frames(
         self, structures: pd.Series, index: List
     ) -> List[pd.DataFrame]:
+        """Run every generator over ``structures`` and return one frame per generator.
+
+        Args:
+            structures: The structure identifiers (SMILES) to generate descriptors
+                from — one per row of the table being assembled, in ``index`` order.
+                For a categorical that is one SMILES per category; for a weighted sum
+                one SMILES per component feature.
+            index: The row labels to stamp onto each generated frame (categories, or
+                component keys), so the generated columns align with the static ones
+                when they are concatenated.
+
+        Returns:
+            One frame per generator, each indexed by ``index`` with that generator's
+            descriptor names as columns (e.g. ``fingerprint_0 … fingerprint_n``).
+        """
         frames: List[pd.DataFrame] = []
         for generator in self.generators:
             gen_df = generator.get_descriptor_values(structures)
@@ -138,11 +153,50 @@ class DescriptorSpec(BaseModel):
     ) -> pd.DataFrame:
         """Assemble a descriptor table from prepared parts (static ‖ generated).
 
-        Shared by the two scope-specific builders — ``DescriptorEncoding.table`` (one
-        row per category) and ``WeightedSumFeature.component_table`` (one row per
-        component) — which differ only in how they prepare ``index`` / ``static`` /
-        ``structures``. Pure: correlation filtering is applied here when enabled, but
-        no state is written, so the same inputs always yield the same columns.
+        This is the shared core of the two scope-specific builders, which differ *only*
+        in how they prepare the three arguments:
+
+        - ``DescriptorEncoding.table`` (categorical scope) — one row per **category**,
+          because encoding a category means selecting its descriptor row;
+        - ``WeightedSumFeature.component_table`` (continuous scope) — one row per
+          **component feature**, because the model blends component rows by amount
+          (``Σᵢ amountᵢ · rowᵢ``).
+
+        Args:
+            index: Row labels of the assembled table — the feature's categories
+                (categorical) or the component feature keys (continuous). Also used to
+                align the generated frames with the static ones.
+            static: The static numeric descriptor columns already stored on the
+                feature(s), indexed by ``index``, or None when the spec declares no
+                static columns (``columns=[]``, i.e. generators only).
+            structures: The SMILES to run the generators over, one per row of ``index``,
+                or None when the spec declares no generators.
+
+        Returns:
+            The descriptor table: ``index`` as rows, static columns followed by
+            generated columns. When ``filter_descriptors`` is set, correlated and
+            zero-variance columns are dropped from the *combined* block first.
+
+        Example:
+            A categorical solvent with two static columns and 8-bit fingerprints
+            (``DescriptorEncoding(columns=["logP", "MW"], generators=[Fingerprints(n_bits=8)])``)
+            assembles ``index=["water", "ethanol", "thf"]``, the 3x2 ``static`` frame,
+            and ``structures=["O", "CCO", "C1CCOC1"]`` into::
+
+                         logP    MW  fingerprint_0  ...  fingerprint_7
+                water    -1.4  18.0            0.0  ...            0.0
+                ethanol  -0.3  46.0            1.0  ...            1.0
+                thf       0.5  72.0            1.0  ...            1.0
+
+            The same spec on a mixture of three ``ContinuousInput`` components would
+            instead be given ``index=["ethanol", "water", "thf"]`` (one row per
+            component) and produce a table of the same shape with those row labels.
+
+        Note:
+            Pure — correlation filtering happens here when enabled, but no state is
+            written, so the same inputs always yield the same columns. That is what
+            lets ``encode`` and ``decode`` rebuild the table independently and still
+            agree on the filtered column set.
         """
         frames: List[pd.DataFrame] = []
         if static is not None:

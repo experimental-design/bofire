@@ -16,8 +16,6 @@ import bofire.priors.api as priors
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import CategoricalTaskInput
 from bofire.data_models.priors.api import LKJPrior
-
-# from bofire.data_models.descriptor_generators.api import DescriptorGenerator
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.utils.torch_tools import tkwargs

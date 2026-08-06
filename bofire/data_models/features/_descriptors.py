@@ -42,11 +42,56 @@ class DescriptorsMixin(BaseModel):
     """Mixin giving a feature per-level numeric ``descriptors`` and an optional
     ``structure`` column.
 
-    A "level" is a category (categorical), a discrete value (discrete), or the single
-    component (continuous). Each ``descriptors`` column and the ``structure`` column
-    (when set) has one entry per level.
+    A "level" is a row of the feature's descriptor table. Every ``descriptors`` column
+    and the ``structure`` column (when set) has exactly one entry per level, in the
+    order given by :meth:`descriptor_levels`.
 
-    Subclasses must implement :meth:`descriptor_levels`.
+    How many levels a feature has depends on its kind:
+
+    ``CategoricalInput`` — **one level per category**. The feature picks the row of the
+    chosen category (select-row), so each column needs one value per category::
+
+        CategoricalInput(
+            key="solvent",
+            categories=["water", "ethanol", "thf"],
+            descriptors={"logP": [-1.4, -0.3, 0.5], "MW": [18.0, 46.0, 72.0]},
+            structure=["O", "CCO", "C1CCOC1"],
+        )
+        # descriptor_levels() -> ["water", "ethanol", "thf"]   (3 rows)
+
+    ``ContinuousInput`` — **a single level** (the feature itself). It is one *component*
+    of a mixture whose amount weights its descriptor row, so one value per column::
+
+        ContinuousInput(
+            key="ethanol",
+            bounds=(0, 1),
+            descriptors={"logP": [-0.3], "MW": [46.0]},
+            structure=["CCO"],
+        )
+        # descriptor_levels() -> ["ethanol"]                   (1 row)
+
+    ``DiscreteInput`` — **also a single level**, like continuous. A discrete input is one
+    numeric quantity that happens to be restricted to a set of allowed values; the
+    allowed values are *not* descriptor levels (an amount of ethanol restricted to
+    ``[0, 0.5, 1]`` still describes one substance, so it needs one SMILES, not three)::
+
+        DiscreteInput(
+            key="ethanol",
+            values=[0.0, 0.5, 1.0],
+            descriptors={"logP": [-0.3], "MW": [46.0]},
+            structure=["CCO"],
+        )
+        # descriptor_levels() -> ["ethanol"]                   (1 row)
+
+    Subclasses must implement :meth:`descriptor_levels`; the default here is the
+    single-component case, which ``CategoricalInput`` overrides with one row per
+    category.
+
+    Attributes:
+        descriptors: Numeric property columns, one value per level. Defaults to `{}`.
+        structure: Optional structure identifiers (SMILES), one per level, fed to
+            descriptor *generators* (fingerprints, fragments, Mordred) on the surrogate
+            side. Defaults to None.
     """
 
     if TYPE_CHECKING:
