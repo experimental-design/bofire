@@ -15,9 +15,39 @@ class TaskInput(Input):
     ``AnyFeature``/``AnyInput`` union. Use :class:`CategoricalTaskInput` or
     :class:`ContinuousTaskInput` instead. It exists solely so that strategies
     can use ``isinstance(feat, TaskInput)`` to detect either flavour.
+
+    Task inputs carry no descriptor data — see :meth:`validate_no_descriptor_data`.
     """
 
     type: Any
+
+    @model_validator(mode="after")
+    def validate_no_descriptor_data(self):
+        """Reject ``descriptors`` / ``structure`` on a task input.
+
+        A task input is an *index*: it says which task or fidelity an observation came
+        from. The relationship between tasks is something the surrogate **learns** (the
+        inter-task covariance of a ``MultiTaskGP``), not something read off descriptor
+        columns, and no kernel in BoFire consumes task descriptors. Structures are
+        meaningless outright — a task is not a molecule.
+
+        The fields are inherited from ``CategoricalInput`` / ``ContinuousInput``, which
+        do describe real entities; without this guard a surrogate could silently
+        descriptor-encode a task index. Should task descriptors ever be wanted, they
+        should be introduced deliberately, together with a kernel that uses them.
+        """
+        if getattr(self, "descriptors", None):
+            raise ValueError(
+                f"{self.key}: task inputs cannot carry `descriptors`. A task input is "
+                "an index into a set of tasks; inter-task correlation is learned by "
+                "the surrogate, not derived from descriptor columns.",
+            )
+        if getattr(self, "structure", None) is not None:
+            raise ValueError(
+                f"{self.key}: task inputs cannot carry a `structure` column; a task "
+                "is not a molecule.",
+            )
+        return self
 
 
 class CategoricalTaskInput(TaskInput, CategoricalInput):

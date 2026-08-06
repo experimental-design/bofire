@@ -508,3 +508,38 @@ specs.add_invalid(
     error=ValueError,
     message="Fidelities must be a list containing integers, starting from 0 and increasing by 1",
 )
+
+# a task input is an index, not a described entity: the descriptor data it inherits
+# from CategoricalInput / ContinuousInput must be rejected.
+specs.add_invalid(
+    features.CategoricalTaskInput,
+    lambda: {
+        "key": "task",
+        "categories": ["process_1", "process_2"],
+        "descriptors": {"cost": [1.0, 10.0]},
+    },
+    error=ValueError,
+    message="task: task inputs cannot carry `descriptors`.",
+)
+
+specs.add_invalid(
+    features.CategoricalTaskInput,
+    lambda: {
+        "key": "task",
+        "categories": ["process_1", "process_2"],
+        "structure": ["O", "CCO"],
+    },
+    error=ValueError,
+    message="task: task inputs cannot carry a `structure` column",
+)
+
+specs.add_invalid(
+    features.ContinuousTaskInput,
+    lambda: {
+        "key": "fidelity",
+        "bounds": [0.0, 1.0],
+        "descriptors": {"cost": [1.0]},
+    },
+    error=ValueError,
+    message="fidelity: task inputs cannot carry `descriptors`.",
+)

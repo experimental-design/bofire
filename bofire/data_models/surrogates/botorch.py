@@ -54,9 +54,13 @@ class BotorchSurrogate(Surrogate):
     def _resolve_default_categorical_encoding(cls, feat: CategoricalInput):
         """Pick the default encoding for ``feat`` from the descriptor data it carries.
 
-        Task inputs never descriptor-encode. Otherwise a ``structure`` column implies a
-        molecular (fingerprint) generator, numeric descriptor columns imply a static
-        source, and a plain categorical uses the surrogate's non-descriptor fallback.
+        A ``structure`` column implies a molecular (fingerprint) generator, numeric
+        descriptor columns imply a static source, and a plain categorical uses the
+        surrogate's non-descriptor fallback.
+
+        Task inputs never descriptor-encode: they are indices, not described entities,
+        and ``TaskInput.validate_no_descriptor_data`` already guarantees they carry no
+        descriptor data. The check is kept explicit here so the intent is local.
         """
         is_task = isinstance(feat, CategoricalTaskInput)
         if not is_task:
