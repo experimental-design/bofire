@@ -45,9 +45,14 @@ pre-commit run --all-files
 ruff check .
 ruff format .
 
-# Type checking
-ty check bofire
+# Type checking — use the version CI pins, not whatever `uvx ty` resolves to.
+# Look up the pin in .github/workflows/lint.yaml (the `ty==` install), then:
+uvx --from ty==<pinned-version> ty check bofire
 ```
+
+ty is pre-1.0 and its rules tighten fast, so an unpinned run reports a substantially
+different set of diagnostics than CI and will not tell you whether Lint passes. Rule
+configuration lives in `pyproject.toml` under `[tool.ty.rules]` / `[tool.ty.analysis]`.
 
 ## Architecture
 
