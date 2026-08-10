@@ -268,6 +268,32 @@ specs.add_invalid(
     message="Fixed discrete inputs are not supported. Please use a fixed continuous input.",
 )
 
+# A discrete input is a *single* descriptor component (like continuous), so a column
+# must hold one value — not one per allowed discrete value. This pins the semantics:
+# a restricted amount of a substance still describes one substance.
+specs.add_invalid(
+    features.DiscreteInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "values": [1.0, 2.0, 3.0],
+        "descriptors": {"logP": [1.0, 2.0, 3.0]},
+    },
+    error=ValueError,
+    # message is used as a regex, so stop before the "value(s) (one per level)" parens
+    message="descriptor column 'logP' must have 1 value",
+)
+
+specs.add_invalid(
+    features.DiscreteInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "values": [1.0, 2.0, 3.0],
+        "structure": ["O", "CCO", "CCC"],
+    },
+    error=ValueError,
+    message="structure must have 1 value",
+)
+
 
 specs.add_valid(
     features.ContinuousInput,
@@ -303,6 +329,21 @@ specs.add_invalid(
     lambda: {"key": "a", "bounds": [0.5, 0.5], "allow_zero": True},
     error=ValueError,
     message="`allow_zero=True` is not compatible with a positively-fixed feature",
+)
+
+# a continuous input is a single descriptor component: one value per column
+specs.add_invalid(
+    features.ContinuousInput,
+    lambda: {"key": "a", "bounds": [0, 1], "descriptors": {"logP": [1.0, 2.0]}},
+    error=ValueError,
+    message="descriptor column 'logP' must have 1 value",
+)
+
+specs.add_invalid(
+    features.ContinuousInput,
+    lambda: {"key": "a", "bounds": [0, 1], "structure": ["O", "CCO"]},
+    error=ValueError,
+    message="structure must have 1 value",
 )
 
 specs.add_valid(
@@ -364,6 +405,53 @@ specs.add_invalid(
     },
     error=ValueError,
     message="no category is allowed",
+)
+
+# a categorical carries one descriptor row per category: every column and the
+# structure column must have exactly len(categories) entries.
+specs.add_invalid(
+    features.CategoricalInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": ["c1", "c2", "c3"],
+        "descriptors": {"logP": [1.0, 2.0]},
+    },
+    error=ValueError,
+    message="descriptor column 'logP' must have 3 value",
+)
+
+specs.add_invalid(
+    features.CategoricalInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": ["c1", "c2", "c3"],
+        "descriptors": {"logP": [1.0, 2.0, 3.0, 4.0]},
+    },
+    error=ValueError,
+    message="descriptor column 'logP' must have 3 value",
+)
+
+# a correctly-sized column must not mask a wrongly-sized one
+specs.add_invalid(
+    features.CategoricalInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": ["c1", "c2", "c3"],
+        "descriptors": {"logP": [1.0, 2.0, 3.0], "MW": [1.0]},
+    },
+    error=ValueError,
+    message="descriptor column 'MW' must have 3 value",
+)
+
+specs.add_invalid(
+    features.CategoricalInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": ["c1", "c2", "c3"],
+        "structure": ["O", "CCO"],
+    },
+    error=ValueError,
+    message="structure must have 3 value",
 )
 
 
