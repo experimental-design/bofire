@@ -729,7 +729,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 fixed_features_list=self.get_categorical_combinations(domain),
             )
         elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_LIST:
-            n_combos = domain.inputs.get_number_of_categorical_combinations()
+            n_combos = domain.inputs.get_number_of_categorical_combinations(
+                include_semicontinuous=not is_pruning_applicable(domain),
+            )
             return _OptimizeAcqfListInput(
                 acq_function_list=acqfs,
                 bounds=bounds,
@@ -786,7 +788,17 @@ class BotorchOptimizer(AcquisitionOptimizer):
         """
         fixed_basis = self.get_fixed_features(domain=domain)
 
-        combos = domain.inputs.get_categorical_combinations()
+        # Must use the same `include_semicontinuous` value as
+        # `_determine_optimizer`: when pruning is applicable, semi-continuous
+        # features are resolved by the post-AF pruning step, so enumerating
+        # their on/off states here would handle them twice. It would also
+        # produce a `fixed_features_list` in which some entries pin *every*
+        # tensor column while others do not -- `optimize_acqf_mixed` stacks
+        # the per-entry acqf values and the all-fixed shortcut in botorch
+        # collapses the restart dimension, so the stack fails.
+        combos = domain.inputs.get_categorical_combinations(
+            include_semicontinuous=not is_pruning_applicable(domain),
+        )
         # now build up the fixed feature list
         if len(combos) == 1:
             return [fixed_basis]

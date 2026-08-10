@@ -66,6 +66,7 @@ from bofire.data_models.strategies.stepwise.conditions import (
     CombiCondition,
     FeasibleExperimentCondition,
     NumberOfExperimentsCondition,
+    StrategyHasConvergedCondition,
 )
 from bofire.data_models.strategies.stepwise.stepwise import Step, StepwiseStrategy
 from bofire.data_models.strategies.strategy import Strategy

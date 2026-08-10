@@ -39,6 +39,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
+    EngineeredFeature,
     Feature,
     Input,
     Output,
@@ -111,7 +112,10 @@ class _BaseFeatures(BaseModel, Generic[F]):
             return is_feats_of_type(feats, Outputs, Output)
 
         def is_engineeredfeats(feats):
-            return is_feats_of_type(feats, EngineeredFeatures, AnyEngineeredFeature)
+            # Filter on the base class, mirroring ``is_infeats``/``is_outfeats``.
+            # The ``AnyEngineeredFeature`` union imported here is bound at
+            # import time and would not see registered feature types.
+            return is_feats_of_type(feats, EngineeredFeatures, EngineeredFeature)
 
         if is_infeats(self) and is_infeats(other):
             return Inputs(features=cast(Tuple[AnyInput, ...], new_feature_seq))
@@ -174,9 +178,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Union[
-            Type, List[Type], None
-        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
+        includes: Union[Type, List[Type], None] = Feature,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> Self:
@@ -184,7 +186,8 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
         Args:
             includes: All features in this container that are instances of an
-                include are returned. If None, the include filter is not active.
+                include are returned. Defaults to the ``Feature`` base class,
+                i.e. everything. If None, the include filter is not active.
             excludes: All features in this container that are not instances of
                 an exclude are returned. If None, the exclude filter is not active.
             exact: Boolean to distinguish if only the exact class listed in
@@ -208,9 +211,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get_keys(
         self,
-        includes: Union[
-            Type, List[Type], None
-        ] = AnyFeature,  # ty: ignore[invalid-parameter-default]
+        includes: Union[Type, List[Type], None] = Feature,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -218,7 +219,8 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
         Args:
             includes: All features in this container that are instances of an
-                include are returned. If None, the include filter is not active.
+                include are returned. Defaults to the ``Feature`` base class,
+                i.e. everything. If None, the include filter is not active.
             excludes: All features in this container that are not instances of
                 an exclude are returned. If None, the exclude filter is not active.
             exact: Boolean to distinguish if only the exact class listed in
@@ -565,6 +567,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         exclude: Union[
             Type, List[Type]
         ] = None,  # ty: ignore[invalid-parameter-default]
+        include_semicontinuous: bool = True,
     ) -> list[tuple[tuple[str, float] | tuple[str, str], ...]]:
         """Get a list of tuples pairing the feature keys with a list of valid categories
 
@@ -572,6 +575,16 @@ class Inputs(_BaseFeatures[AnyInput]):
             include (Feature, optional): Features to be included. Defaults to Input.
             exclude (Feature, optional): Features to be excluded, e.g. subclasses
                 of the included features. Defaults to None.
+            include_semicontinuous (bool, optional): When True (default), each
+                semi-continuous feature (`ContinuousInput` with `allow_zero=True`
+                and a positive lower bound, un-fixed) doubles the number of
+                combinations via its on/off enumeration. When False,
+                semi-continuous features are excluded from the enumeration --
+                useful when the caller handles them via a post-optimisation
+                pruning step rather than by AF-time enumeration. Mirrors the
+                flag of the same name on
+                `get_number_of_categorical_combinations`; the two must be
+                passed the same value to stay consistent.
 
         Returns:
             List[(str, List[str])]: Returns a list of tuples pairing the feature
@@ -598,11 +611,14 @@ class Inputs(_BaseFeatures[AnyInput]):
         cat_and_discrete_values = cat_values + discrete_values
         all_combos = list(itertools.product(*cat_and_discrete_values))
 
-        conditional_conts = [
-            f
-            for f in self.get(includes=include, excludes=exclude)
-            if (isinstance(f, ContinuousInput) and f.is_semicontinuous)
-        ]
+        if include_semicontinuous:
+            conditional_conts = [
+                f
+                for f in self.get(includes=include, excludes=exclude)
+                if (isinstance(f, ContinuousInput) and f.is_semicontinuous)
+            ]
+        else:
+            conditional_conts = []
 
         conditional_values = [[(d.key, 0.0), (d.key, None)] for d in conditional_conts]
 

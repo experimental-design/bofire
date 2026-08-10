@@ -24,6 +24,9 @@ from bofire.data_models.objectives.api import (
 )
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import QparegoStrategy as DataModel
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.strategies.predictives.botorch import BotorchStrategy
@@ -165,6 +168,7 @@ class QparegoStrategy(BotorchStrategy):
         folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         """
         Creates an instance of the multi-objective strategy ParEGO using the provided configuration parameters.

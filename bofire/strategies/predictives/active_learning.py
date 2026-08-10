@@ -13,6 +13,9 @@ from bofire.data_models.acquisition_functions.api import (
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import RandomStrategy
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy as DataModel,
@@ -93,6 +96,7 @@ class ActiveLearningStrategy(BotorchStrategy):
         acquisition_function: AnyActiveLearningAcquisitionFunction | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ):
         """
         Creates an ActiveLearningStrategy instance. ActiveLearningStrategy that uses an acquisition function which focuses on

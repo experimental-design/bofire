@@ -38,6 +38,11 @@ from bofire.data_models.strategies.api import (
     RelativeMovingReferenceValue,
     RelativeToMaxMovingReferenceValue,
 )
+from bofire.data_models.strategies.convergence_criteria.api import (
+    HypervolumeImprovementCriterion,
+    ObjectiveImprovementCriterion,
+    ProposalDeviationCriterion,
+)
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     LinearDeterministicSurrogate,
@@ -65,6 +70,7 @@ strategy_commons = {
     "frequency_hyperopt": 0,
     "folds": 5,
     "include_infeasible_exps_in_acqf_calc": False,
+    "convergence_criterion": None,
 }
 
 
@@ -88,6 +94,9 @@ specs.add_valid(
             }
         ).model_dump(),
         **strategy_commons,
+        "convergence_criterion": ProposalDeviationCriterion(
+            threshold=0.001, n_consecutive=2
+        ).model_dump(),
     },
 )
 
@@ -111,6 +120,9 @@ specs.add_valid(
             }
         ).model_dump(),
         **strategy_commons,
+        "convergence_criterion": HypervolumeImprovementCriterion(
+            min_improvement=0.01, n_lookback=5
+        ).model_dump(),
     },
 )
 
@@ -159,6 +171,57 @@ specs.add_valid(
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
         ).model_dump(),
         **strategy_commons,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+        "convergence_criterion": ObjectiveImprovementCriterion(
+            min_improvement=0.01, n_lookback=5
+        ).model_dump(),
+    },
+)
+specs.add_valid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        "acquisition_optimizer": strategies.GeneticAlgorithmOptimizer(
+            population_size=4,
+            n_max_gen=1,
+            n_max_evals=20,
+            ga_progress_csv_path="ga_progress_specs.csv",
+        ).model_dump(),
+        "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
+        "outlier_detection_specs": None,
+        "seed": 42,
+        "min_experiments_before_outlier_check": 1,
+        "frequency_check": 1,
+        "frequency_hyperopt": 0,
+        "folds": 5,
+        "include_infeasible_exps_in_acqf_calc": False,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+    },
+)
+specs.add_valid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        "acquisition_optimizer": strategies.GeneticAlgorithmOptimizer(
+            population_size=4,
+            n_max_gen=1,
+            n_max_evals=20,
+            ga_progress_csv_path="ga_progress_specs_2.csv",
+        ).model_dump(),
+        "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
+        "outlier_detection_specs": None,
+        "seed": 42,
+        "min_experiments_before_outlier_check": 1,
+        "frequency_check": 1,
+        "frequency_hyperopt": 0,
+        "folds": 5,
+        "include_infeasible_exps_in_acqf_calc": False,
         "acquisition_function": qPI(tau=0.1).model_dump(),
     },
 )
@@ -273,6 +336,7 @@ specs.add_valid(
         "solver_verbose": False,
         "solver_params": {},
         "kappa_fantasy": 10.0,
+        "convergence_criterion": None,
     },
 )
 
