@@ -44,12 +44,13 @@ def test_engineered_features():
     ):
         engineered_features.validate_inputs(inputs)
 
-    assert engineered_features.get_features2idx(offset=4) == {
+    assert engineered_features.get_features2idx(inputs, offset=4) == {
         "sum1": (4,),
         "w_sum1": (5, 6),
     }
 
     assert engineered_features.get_feature_indices(
+        inputs,
         offset=2,
         feature_keys=[
             "w_sum1",

@@ -169,7 +169,7 @@ def test_map_weighted_sum_feature():
         ],
     )
 
-    assert aggregation.n_transformed_inputs == 2
+    assert len(aggregation.get_names(inputs)) == 2
 
     aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
@@ -218,7 +218,7 @@ def test_map_weighted_mean_feature():
         descriptors=["d1", "d2"],
     )
 
-    assert aggregation.n_transformed_inputs == 2
+    assert len(aggregation.get_names(inputs)) == 2
 
     aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
@@ -296,10 +296,9 @@ def test_map_molecular_weighted_sum_feature():
         correlation_cutoff=1.0,
     )
 
-    # width is resolved (and frozen) once the components are known
     aggregation.validate_features(inputs)
-    # one descriptor is filtered out due to zero variance
-    assert aggregation.n_transformed_inputs == 1
+    # width is resolved against the inputs; one descriptor is filtered out (zero variance)
+    assert len(aggregation.get_names(inputs)) == 1
 
     aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation

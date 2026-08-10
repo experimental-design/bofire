@@ -94,7 +94,7 @@ def get_scaler(
 
     # now we get the engineered feature information
     offset = d
-    efeatures2idx = engineered_features.get_features2idx(offset=offset)
+    efeatures2idx = engineered_features.get_features2idx(inputs, offset=offset)
     for indices in efeatures2idx.values():
         d += len(indices)
 
@@ -112,7 +112,7 @@ def get_scaler(
             feature_keys=continuous_feature_keys,
         )
         engineered_feat_dims = engineered_features.get_feature_indices(
-            offset=offset, feature_keys=engineered_features.get_keys()
+            inputs, offset=offset, feature_keys=engineered_features.get_keys()
         )
 
     else:
@@ -127,6 +127,7 @@ def get_scaler(
             ],
         )
         engineered_feat_dims = engineered_features.get_feature_indices(
+            inputs,
             offset=offset,
             feature_keys=[
                 feat
@@ -236,6 +237,7 @@ def get_input_transform(
             specs=categorical_encodings, feature_keys=inputs.get_keys()
         )
         engineered_idx = engineered_features.get_feature_indices(
+            inputs,
             offset=len(original_idx),
             feature_keys=engineered_features.get_keys(),
         )

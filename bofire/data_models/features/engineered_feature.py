@@ -1,10 +1,11 @@
 import warnings
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal, Optional
+from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
 
 import pandas as pd
-from pydantic import Field, PositiveFloat, PositiveInt, PrivateAttr, model_validator
+from pydantic import Field, PositiveFloat, PositiveInt, model_validator
 
+from bofire.data_models.encodings.naming import get_encoded_name
 from bofire.data_models.features._descriptor_spec import DescriptorSpec
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.features.feature import Feature
@@ -43,10 +44,15 @@ class EngineeredFeature(Feature):
     def _validate_features(self, inputs: "Inputs"):
         pass
 
-    @property
     @abstractmethod
-    def n_transformed_inputs(self) -> int:
-        pass
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        """Names of the columns this feature appends, given the input features.
+
+        Resolved on demand from ``inputs`` rather than stored, mirroring
+        :meth:`CategoricalEncoding.get_names`. The width used for offset bookkeeping is
+        ``len(get_names(inputs))``, so it is always derived from the same data the mapper
+        builds its columns from and cannot go stale.
+        """
 
 
 class SumFeature(EngineeredFeature):
@@ -61,9 +67,8 @@ class SumFeature(EngineeredFeature):
     type: Literal["SumFeature"] = "SumFeature"
     order_id: ClassVar[int] = 0
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return 1
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        return [self.key]
 
 
 class MeanFeature(EngineeredFeature):
@@ -78,9 +83,8 @@ class MeanFeature(EngineeredFeature):
     type: Literal["MeanFeature"] = "MeanFeature"
     order_id: ClassVar[int] = 1
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return 1
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        return [self.key]
 
 
 class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
@@ -101,10 +105,6 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
     type: Literal["WeightedSumFeature"] = "WeightedSumFeature"
     order_id: ClassVar[int] = 2
     normalize: bool = False
-
-    # frozen post-validation descriptor column names; set once by validate_features so
-    # n_transformed_inputs (offset bookkeeping) matches the columns the mapper appends.
-    _resolved_names: Optional[List[str]] = PrivateAttr(None)
 
     @model_validator(mode="before")
     @classmethod
@@ -139,24 +139,25 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
             else None,
         )
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        # width is frozen by validate_features once the components are known; before
-        # that it is only computable feature-free when the static columns are explicit.
-        if self._resolved_names is not None:
-            return len(self._resolved_names)
-        if self.columns is not None:
-            return len(self._check_unique(list(self.columns) + self._generated_names()))
-        return 0
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        """One name per descriptor column of the blended block.
+
+        Only correlation filtering needs the assembled *values* — and therefore the
+        generators (rdkit). Without it the columns are exactly the static and generator
+        names ``_assemble`` concatenates, so they come from metadata alone.
+        """
+        components = [inputs.get_by_key(key) for key in self.features]
+        names = (
+            list(self.component_table(components).columns)
+            if self.filter_descriptors
+            else self.column_names(components[0])
+        )
+        return [get_encoded_name(self.key, name) for name in names]
 
     def validate_features(self, inputs: "Inputs"):
         super().validate_features(inputs)
-        components = [inputs.get_by_key(key) for key in self.features]
-        for component in components:
-            self.validate_for(component)
-        # freeze the final column set from the same table the mapper appends, so
-        # n_transformed_inputs (offset bookkeeping) matches it exactly — filtered or not.
-        self._resolved_names = list(self.component_table(components).columns)
+        for key in self.features:
+            self.validate_for(inputs.get_by_key(key))
 
 
 class WeightedMeanFeature(WeightedSumFeature):
@@ -237,9 +238,8 @@ class ProductFeature(EngineeredFeature):
     order_id: ClassVar[int] = 4
     features: Annotated[List[str], Field(min_length=2)]
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return 1
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        return [self.key]
 
 
 class InterpolateFeature(EngineeredFeature):
@@ -291,9 +291,11 @@ class InterpolateFeature(EngineeredFeature):
             )
         return self
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return self.n_interpolation_points
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        return [
+            get_encoded_name(self.key, str(i))
+            for i in range(self.n_interpolation_points)
+        ]
 
 
 class CloneFeature(EngineeredFeature):
@@ -314,6 +316,5 @@ class CloneFeature(EngineeredFeature):
     order_id: ClassVar[int] = 5
     features: OneFeatureKeys
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return len(self.features)
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        return [get_encoded_name(self.key, key) for key in self.features]

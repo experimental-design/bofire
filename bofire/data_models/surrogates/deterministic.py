@@ -90,8 +90,13 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
     @field_validator("engineered_features")
     @classmethod
     def validate_linear_engineered_features(cls, engineered_features, info):
+        # widths are resolved against the inputs; if those failed to validate this
+        # validator still runs, so bail out rather than raise an unrelated error.
+        if "inputs" not in info.data:
+            return engineered_features
+        inputs = info.data["inputs"]
         for feat in engineered_features.get():
-            if feat.n_transformed_inputs != 1:
+            if len(feat.get_names(inputs)) != 1:
                 raise ValueError(
                     "Only engineered feature that create one output are supported."
                 )

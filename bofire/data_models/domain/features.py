@@ -270,11 +270,16 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
 
     type: Literal["EngineeredFeatures"] = "EngineeredFeatures"
 
-    def get_features2idx(self, offset: int = 0) -> Dict[str, Tuple[int, ...]]:
+    def get_features2idx(
+        self, inputs: Inputs, offset: int = 0
+    ) -> Dict[str, Tuple[int, ...]]:
         """Get a dictionary that maps feature names to indices (used for surrogate
         building).
 
         Args:
+            inputs: The original input features the engineered features are built from;
+                each feature's width is resolved against them (see
+                :meth:`EngineeredFeature.get_names`).
             offset: Offset for computing the indices. Defaults to 0.
 
         Returns:
@@ -283,27 +288,30 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
         features2idx = {}
         counter = offset
         for feat in self.get():
+            width = len(feat.get_names(inputs))
             features2idx[feat.key] = tuple(
-                out_idx + counter for out_idx in range(feat.n_transformed_inputs)
+                out_idx + counter for out_idx in range(width)
             )
-            counter += feat.n_transformed_inputs
+            counter += width
         return features2idx
 
     def get_feature_indices(
         self,
+        inputs: Inputs,
         offset: int,
         feature_keys: List[str],
     ) -> List[int]:
         """Get the indices of the specified feature keys.
 
         Args:
+            inputs: The original input features (see :meth:`get_features2idx`).
             offset: Offset for computing the indices.
             feature_keys: List of feature keys to get the indices for.
 
         Returns:
             List of indices for the specified feature keys.
         """
-        features2idx = self.get_features2idx(offset)
+        features2idx = self.get_features2idx(inputs, offset)
         return sorted(
             itertools.chain.from_iterable(
                 [features2idx[feat] for feat in feature_keys]
@@ -320,17 +328,19 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
         for feat in self.get():
             feat.validate_features(inputs)
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        """Get the total number of number of created engineered features.
+    def transformed_width(self, inputs: Inputs) -> int:
+        """Get the total number of columns created by the engineered features.
 
-        There could be multiple created engineered features per engineered
-        feature (example: `WeightedSumFeature`).
+        There could be multiple created columns per engineered feature (example:
+        `WeightedSumFeature`).
+
+        Args:
+            inputs: The original input features (see :meth:`get_features2idx`).
 
         Returns:
-            int: Total number of created engineered features.
+            int: Total number of created columns.
         """
-        return sum(feat.n_transformed_inputs for feat in self.get())
+        return sum(len(feat.get_names(inputs)) for feat in self.get())
 
 
 class Inputs(_BaseFeatures[AnyInput]):
