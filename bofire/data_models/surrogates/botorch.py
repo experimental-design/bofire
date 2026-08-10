@@ -48,23 +48,25 @@ class BotorchSurrogate(Surrogate):
     def _resolve_default_categorical_encoding(cls, feat: CategoricalInput):
         """Pick the default encoding for ``feat`` from the descriptor data it carries.
 
-        A ``structure`` column implies a molecular (fingerprint) generator, numeric
-        descriptor columns imply a static source, and a plain categorical uses the
-        surrogate's non-descriptor fallback.
-
-        Task inputs never descriptor-encode: they are indices, not described entities,
-        and ``TaskInput.validate_no_descriptor_data`` already guarantees they carry no
-        descriptor data. The check is kept explicit here so the intent is local.
+        A structure implies a molecular (fingerprint) generator alongside any numeric
+        columns, numeric columns alone imply a static source, and a feature with no
+        descriptor block uses the surrogate's non-descriptor fallback.
         """
-        is_task = isinstance(feat, CategoricalTaskInput)
-        if not is_task:
-            if feat.structure is not None:
-                # fingerprint-encode from the structure column, static columns excluded
-                return DescriptorEncoding(columns=[], generators=[Fingerprints()])
-            if feat.descriptor_columns():
-                return DescriptorEncoding()  # all numeric descriptor columns
+        # `descriptors` is None by type on task inputs, so they fall through to the
+        # non-descriptor fallback without needing a special case here.
+        if feat.descriptors is not None:
+            if feat.descriptors.structure is not None:
+                # fingerprint from the structure, *plus* any numeric columns the feature
+                # carries (columns=None means "all of them") — a feature with both must
+                # not silently lose the handcrafted half.
+                return DescriptorEncoding(generators=[Fingerprints()])
+            return DescriptorEncoding()  # all numeric descriptor columns
         fallbacks = cls._default_plain_categorical_encodings()
-        kind = CategoricalTaskInput if is_task else CategoricalInput
+        kind = (
+            CategoricalTaskInput
+            if isinstance(feat, CategoricalTaskInput)
+            else CategoricalInput
+        )
         return fallbacks.get(kind, OneHotEncoding())
 
     @classmethod

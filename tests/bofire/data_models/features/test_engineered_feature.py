@@ -7,6 +7,7 @@ from bofire.data_models.descriptor_generators.api import (
     MordredDescriptors,
 )
 from bofire.data_models.domain.api import Inputs
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     ContinuousInput,
     SumFeature,
@@ -38,7 +39,9 @@ def test_weighted_sum_feature_validation():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key="feat1", bounds=(0, 1), descriptors={"desc1": [0.5], "desc2": [0.5]}
+                key="feat1",
+                bounds=(0, 1),
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc2": [0.5]}),
             ),
             ContinuousInput(key="feat2", bounds=(0, 1)),
         ]
@@ -51,10 +54,14 @@ def test_weighted_sum_feature_validation():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key="feat1", bounds=(0, 1), descriptors={"desc1": [0.5], "desc2": [0.5]}
+                key="feat1",
+                bounds=(0, 1),
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc2": [0.5]}),
             ),
             ContinuousInput(
-                key="feat2", bounds=(0, 1), descriptors={"desc1": [0.5], "desc3": [0.5]}
+                key="feat2",
+                bounds=(0, 1),
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc3": [0.5]}),
             ),
         ]
     )
@@ -74,7 +81,9 @@ def test_weighted_mean_feature_validation():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key="feat1", bounds=(0, 1), descriptors={"desc1": [0.5], "desc2": [0.5]}
+                key="feat1",
+                bounds=(0, 1),
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc2": [0.5]}),
             ),
             ContinuousInput(key="feat2", bounds=(0, 1)),
         ]
@@ -87,10 +96,14 @@ def test_weighted_mean_feature_validation():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key="feat1", bounds=(0, 1), descriptors={"desc1": [0.5], "desc2": [0.5]}
+                key="feat1",
+                bounds=(0, 1),
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc2": [0.5]}),
             ),
             ContinuousInput(
-                key="feat2", bounds=(0, 1), descriptors={"desc1": [0.5], "desc3": [0.5]}
+                key="feat2",
+                bounds=(0, 1),
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc3": [0.5]}),
             ),
         ]
     )
@@ -109,7 +122,9 @@ def test_molecular_weighted_sum_feature_validation():
     )
     inputs = Inputs(
         features=[
-            ContinuousInput(key="m1", bounds=(0, 1), structure=["C"]),
+            ContinuousInput(
+                key="m1", bounds=(0, 1), descriptors=Descriptors(structure=["C"])
+            ),
             ContinuousInput(key="m2", bounds=(0, 1)),
         ]
     )
@@ -118,8 +133,12 @@ def test_molecular_weighted_sum_feature_validation():
 
     inputs = Inputs(
         features=[
-            ContinuousInput(key="m1", bounds=(0, 1), structure=["C"]),
-            ContinuousInput(key="m2", bounds=(0, 1), structure=["CC"]),
+            ContinuousInput(
+                key="m1", bounds=(0, 1), descriptors=Descriptors(structure=["C"])
+            ),
+            ContinuousInput(
+                key="m2", bounds=(0, 1), descriptors=Descriptors(structure=["CC"])
+            ),
         ]
     )
     mol_feature.validate_features(inputs)
@@ -135,7 +154,9 @@ def test_molecular_weighted_mean_feature_validation():
     )
     inputs = Inputs(
         features=[
-            ContinuousInput(key="m1", bounds=(0, 1), structure=["C"]),
+            ContinuousInput(
+                key="m1", bounds=(0, 1), descriptors=Descriptors(structure=["C"])
+            ),
             ContinuousInput(key="m2", bounds=(0, 1)),
         ]
     )
@@ -144,8 +165,12 @@ def test_molecular_weighted_mean_feature_validation():
 
     inputs = Inputs(
         features=[
-            ContinuousInput(key="m1", bounds=(0, 1), structure=["C"]),
-            ContinuousInput(key="m2", bounds=(0, 1), structure=["CC"]),
+            ContinuousInput(
+                key="m1", bounds=(0, 1), descriptors=Descriptors(structure=["C"])
+            ),
+            ContinuousInput(
+                key="m2", bounds=(0, 1), descriptors=Descriptors(structure=["CC"])
+            ),
         ]
     )
     mol_feature.validate_features(inputs)
@@ -154,8 +179,12 @@ def test_molecular_weighted_mean_feature_validation():
 def _molecular_inputs() -> Inputs:
     return Inputs(
         features=[
-            ContinuousInput(key="m1", bounds=(0, 1), structure=["C"]),
-            ContinuousInput(key="m2", bounds=(0, 1), structure=["CC"]),
+            ContinuousInput(
+                key="m1", bounds=(0, 1), descriptors=Descriptors(structure=["C"])
+            ),
+            ContinuousInput(
+                key="m2", bounds=(0, 1), descriptors=Descriptors(structure=["CC"])
+            ),
         ]
     )
 

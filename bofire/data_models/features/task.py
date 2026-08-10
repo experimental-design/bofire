@@ -16,45 +16,25 @@ class TaskInput(Input):
     :class:`ContinuousTaskInput` instead. It exists solely so that strategies
     can use ``isinstance(feat, TaskInput)`` to detect either flavour.
 
-    Task inputs carry no descriptor data — see :meth:`validate_no_descriptor_data`.
+    Task inputs carry no descriptor data: both flavours narrow ``descriptors`` to
+    ``None``, so it cannot be set.
     """
 
     type: Any
 
-    @model_validator(mode="after")
-    def validate_no_descriptor_data(self):
-        """Reject ``descriptors`` / ``structure`` on a task input.
-
-        A task input is an *index*: it says which task or fidelity an observation came
-        from. The relationship between tasks is something the surrogate **learns** (the
-        inter-task covariance of a ``MultiTaskGP``), not something read off descriptor
-        columns, and no kernel in BoFire consumes task descriptors. Structures are
-        meaningless outright — a task is not a molecule.
-
-        The fields are inherited from ``CategoricalInput`` / ``ContinuousInput``, which
-        do describe real entities; without this guard a surrogate could silently
-        descriptor-encode a task index. Should task descriptors ever be wanted, they
-        should be introduced deliberately, together with a kernel that uses them.
-        """
-        # both fields are inherited, so read them defensively; "empty" is `{}` for
-        # descriptors and `None` for structure, and falsy covers either.
-        if getattr(self, "descriptors", None):
-            raise ValueError(
-                f"{self.key}: task inputs cannot carry `descriptors`. A task input is "
-                "an index into a set of tasks; inter-task correlation is learned by "
-                "the surrogate, not derived from descriptor columns.",
-            )
-        if getattr(self, "structure", None):
-            raise ValueError(
-                f"{self.key}: task inputs cannot carry a `structure` column; a task "
-                "is not a molecule.",
-            )
-        return self
-
 
 class CategoricalTaskInput(TaskInput, CategoricalInput):
+    """A categorical index over tasks. Carries no descriptor data.
+
+    A task input says *which* task an observation came from; the relationship between
+    tasks is what the surrogate learns (the inter-task covariance of a ``MultiTaskGP``),
+    not something read off descriptor columns. ``descriptors`` is therefore narrowed to
+    ``None`` — the constraint is in the type, and visible in the schema.
+    """
+
     order_id: ClassVar[int] = 8
     type: Literal["CategoricalTaskInput"] = "CategoricalTaskInput"
+    descriptors: None = None
     fidelities: list[int] = []
 
     @model_validator(mode="after")
@@ -75,5 +55,9 @@ class CategoricalTaskInput(TaskInput, CategoricalInput):
 
 
 class ContinuousTaskInput(TaskInput, ContinuousInput):
+    """A continuous fidelity parameter. Carries no descriptor data (see
+    :class:`CategoricalTaskInput`)."""
+
     order_id: ClassVar[int] = 11
     type: Literal["ContinuousTaskInput"] = "ContinuousTaskInput"  # type: ignore
+    descriptors: None = None

@@ -24,6 +24,7 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -1045,7 +1046,9 @@ def test_get_initial_conditions_generator(sequential: bool):
             CategoricalInput(
                 key="b",
                 categories=["alpha", "beta", "gamma"],
-                descriptors={"omega": [0, 1, 3], "gamma": [4, 5, 6]},
+                descriptors=Descriptors(
+                    columns={"omega": [0, 1, 3], "gamma": [4, 5, 6]}
+                ),
             ),
         ]
     )
@@ -1186,14 +1189,18 @@ def test_interp1d():
             CategoricalInput(
                 key="a",
                 categories=["a", "b", "c"],
-                descriptors={"oscar": [1, 3, 5], "wilde": [2, 4, 6]},
+                descriptors=Descriptors(
+                    columns={"oscar": [1, 3, 5], "wilde": [2, 4, 6]}
+                ),
             ),
             DescriptorEncoding(),
             torch.tensor([[1, 2], [3, 4], [5, 6]]).to(**tkwargs),
         ),
         (
             CategoricalInput(
-                key="a", categories=["CC", "CCC"], structure=["CC", "CCC"]
+                key="a",
+                categories=["CC", "CCC"],
+                descriptors=Descriptors(structure=["CC", "CCC"]),
             ),
             OneHotEncoding(),
             torch.tensor([[1, 0], [0, 1]]).to(**tkwargs),
@@ -1209,7 +1216,11 @@ def test_get_categorical_encoder(feature, transform, expected_encoding):
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_get_categorical_encoder_molecular():
-    feat = CategoricalInput(key="m", categories=["CC", "CCC"], structure=["CC", "CCC"])
+    feat = CategoricalInput(
+        key="m",
+        categories=["CC", "CCC"],
+        descriptors=Descriptors(structure=["CC", "CCC"]),
+    )
     transform = DescriptorEncoding(columns=[], generators=[Fingerprints()])
     expected_encoding = torch.from_numpy(
         transform.encode(feat, pd.Series(feat.categories)).values

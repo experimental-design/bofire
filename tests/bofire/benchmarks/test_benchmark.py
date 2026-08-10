@@ -64,7 +64,7 @@ def test_SyntheticBoTorch():
 def test_FormulationWrapper():
     benchmark = Himmelblau()
     wrapped = FormulationWrapper(benchmark=benchmark, n_filler_features=2)
-    assert not any(f.has_descriptor_data() for f in wrapped.domain.inputs.get())
+    assert all(f.descriptors is None for f in wrapped.domain.inputs.get())
     assert len(wrapped.domain.inputs) == len(benchmark.domain.inputs) + 2
     assert_array_equal(
         wrapped._mins, np.array([benchmark.domain.inputs[0].bounds[0]] * 2)
@@ -129,8 +129,10 @@ def test_formulation_wrapper_latent():
     for i in range(2):
         for j in range(3):
             feat = wrapped.domain.inputs.get_by_key(f"x_{i + 1}_{j}")
-            assert list(feat.descriptors.keys()) == benchmark.domain.inputs.get_keys()
-            flat = [feat.descriptors[name][0] for name in feat.descriptors]
+            assert feat.descriptors.names == benchmark.domain.inputs.get_keys()
+            flat = [
+                feat.descriptors.columns[name][0] for name in feat.descriptors.names
+            ]
             assert flat == [
                 1 if k == i else 0 for k in range(len(benchmark.domain.inputs))
             ]

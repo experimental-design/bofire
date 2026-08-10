@@ -18,6 +18,7 @@ from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
+    Descriptors,
     WeightedSumFeature,
 )
 from bofire.data_models.descriptor_generators.api import MordredDescriptors
@@ -38,7 +39,7 @@ output_key = "MON"
 
 inputs = Inputs(
     features = [
-        ContinuousInput(key=col, bounds=(0, 1), structure=[col])
+        ContinuousInput(key=col, bounds=(0, 1), descriptors=Descriptors(structure=[col]))
         for col in df_experiments.columns
         if col not in ["MON", "Label", "valid_MON"]
     ]

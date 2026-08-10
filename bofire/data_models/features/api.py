@@ -1,3 +1,4 @@
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features._register import register_engineered_feature
 from bofire.data_models.features.categorical import CategoricalInput, CategoricalOutput
 from bofire.data_models.features.continuous import ContinuousInput, ContinuousOutput

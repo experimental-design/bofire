@@ -19,6 +19,7 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalTaskInput,
@@ -389,7 +390,7 @@ def test_inputs_validate_transform_specs_invalid(specs):
             CategoricalInput(
                 key="x3",
                 categories=["apple", "banana"],
-                descriptors={"d1": [1, 3], "d2": [2, 4]},
+                descriptors=Descriptors(columns={"d1": [1, 3], "d2": [2, 4]}),
             ),
         ],
     )
@@ -419,7 +420,7 @@ def test_inputs_validate_transform_valid(specs):
             CategoricalInput(
                 key="x3",
                 categories=["apple", "banana"],
-                descriptors={"d1": [1, 3], "d2": [2, 4]},
+                descriptors=Descriptors(columns={"d1": [1, 3], "d2": [2, 4]}),
             ),
         ],
     )
@@ -441,10 +442,12 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
             CategoricalInput(
                 key="x3",
                 categories=["apple", "banana"],
-                descriptors={"d1": [1, 3], "d2": [2, 4]},
+                descriptors=Descriptors(columns={"d1": [1, 3], "d2": [2, 4]}),
             ),
             CategoricalInput(
-                key="x4", categories=["CC", "CCC"], structure=["CC", "CCC"]
+                key="x4",
+                categories=["CC", "CCC"],
+                descriptors=Descriptors(structure=["CC", "CCC"]),
             ),
         ],
     )
@@ -502,10 +505,12 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
             CategoricalInput(
                 key="x3",
                 categories=["apple", "banana"],
-                descriptors={"d1": [1, 3], "d2": [2, 4]},
+                descriptors=Descriptors(columns={"d1": [1, 3], "d2": [2, 4]}),
             ),
             CategoricalInput(
-                key="x4", categories=["CC", "CCC"], structure=["CC", "CCC"]
+                key="x4",
+                categories=["CC", "CCC"],
+                descriptors=Descriptors(structure=["CC", "CCC"]),
             ),
         ],
     )
@@ -633,10 +638,14 @@ def test_inputs_get_transform_info(
             CategoricalInput(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
-                descriptors={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]},
+                descriptors=Descriptors(
+                    columns={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]}
+                ),
             ),
             CategoricalInput(
-                key="x4", categories=["CC", "CCC"], structure=["CC", "CCC"]
+                key="x4",
+                categories=["CC", "CCC"],
+                descriptors=Descriptors(structure=["CC", "CCC"]),
             ),
         ],
     )
@@ -681,7 +690,9 @@ def test_inputs_transform(specs):
             CategoricalInput(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
-                descriptors={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]},
+                descriptors=Descriptors(
+                    columns={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]}
+                ),
             ),
         ],
     )
@@ -706,12 +717,14 @@ def test_input_reverse_transform_molecular():
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
-                structure=[
-                    "CC(=O)Oc1ccccc1C(=O)O",
-                    "c1ccccc1",
-                    "[CH3][CH2][OH]",
-                    "N[C@](C)(F)C(=O)O",
-                ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             ),
         ],
     )
@@ -894,7 +907,9 @@ def test_inputs_transform_molecular(specs, expected):
             CategoricalInput(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
-                descriptors={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]},
+                descriptors=Descriptors(
+                    columns={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]}
+                ),
             ),
             CategoricalInput(
                 key="x4",
@@ -904,12 +919,14 @@ def test_inputs_transform_molecular(specs, expected):
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
-                structure=[
-                    "CC(=O)Oc1ccccc1C(=O)O",
-                    "c1ccccc1",
-                    "[CH3][CH2][OH]",
-                    "N[C@](C)(F)C(=O)O",
-                ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             ),
         ],
     )
@@ -935,13 +952,13 @@ if5 = specs.features.valid(CategoricalInput).obj(
     key="if5",
     categories=["c1", "c2", "c3"],
     allowed=[True, False, False],
-    descriptors={"d1": [1, 3, 5], "d2": [2, 7, 1]},
+    descriptors=Descriptors(columns={"d1": [1, 3, 5], "d2": [2, 7, 1]}),
 )
 if6 = specs.features.valid(CategoricalInput).obj(
     key="if6",
     categories=["c1", "c2", "c3"],
     allowed=[True, False, False],
-    descriptors={"d1": [1, 3, 5], "d2": [2, 7, 1]},
+    descriptors=Descriptors(columns={"d1": [1, 3, 5], "d2": [2, 7, 1]}),
 )
 
 of1 = specs.features.valid(ContinuousOutput).obj(key="of1")
@@ -1297,10 +1314,14 @@ def test_inputs_get_feature_indices(
             CategoricalInput(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
-                descriptors={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]},
+                descriptors=Descriptors(
+                    columns={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]}
+                ),
             ),
             CategoricalInput(
-                key="x4", categories=["CC", "CCC"], structure=["CC", "CCC"]
+                key="x4",
+                categories=["CC", "CCC"],
+                descriptors=Descriptors(structure=["CC", "CCC"]),
             ),
         ],
     )

@@ -19,7 +19,10 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
-from bofire.data_models.features._descriptors import DescriptorsMixin
+from bofire.data_models.features._descriptors import (
+    Descriptors,
+    validate_descriptors_fit,
+)
 from bofire.data_models.features.feature import Input, Output, TTransform
 from bofire.data_models.objectives.api import AnyCategoricalObjective
 from bofire.data_models.types import CategoryVals
@@ -47,32 +50,32 @@ if TYPE_CHECKING:
 LLM_ENUM_SCHEMA_THRESHOLD = 32
 
 
-class CategoricalInput(Input, DescriptorsMixin):
+class CategoricalInput(Input):
     """Base class for all categorical input features.
 
-    A categorical input has one descriptor level *per category*, so each
-    ``descriptors`` column and the ``structure`` column hold one value per category,
-    in the same order as ``categories``::
+    A categorical input has one descriptor level *per category*, so each column of the
+    optional ``descriptors`` block holds one value per category, in the same order as
+    ``categories``::
 
         solvent = CategoricalInput(
             key="solvent",
             categories=["water", "ethanol", "thf"],
-            descriptors={"logP": [-1.4, -0.3, 0.5], "MW": [18.0, 46.0, 72.0]},
-            structure=["O", "CCO", "C1CCOC1"],   # one SMILES per category
+            descriptors=Descriptors(
+                columns={"logP": [-1.4, -0.3, 0.5], "MW": [18.0, 46.0, 72.0]},
+                structure=["O", "CCO", "C1CCOC1"],   # one SMILES per category
+            ),
         )
 
     How those descriptors are turned into model columns is *not* fixed here: it is
     chosen per surrogate via ``categorical_encodings`` (e.g. ``OneHotEncoding`` or a
     ``DescriptorEncoding`` selecting columns and/or running descriptor generators on
-    ``structure``).
+    the structure).
 
     Attributes:
         categories (List[str]): Names of the categories.
         allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
-        descriptors (Dict[str, List[float]], inherited from `DescriptorsMixin`): Numeric
-            property columns, each holding one value per category. Defaults to `{}`.
-        structure (List[str], optional, inherited from `DescriptorsMixin`): SMILES, one per
-            category, fed to descriptor generators on the surrogate side. Defaults to None.
+        descriptors (Descriptors, optional): Per-category descriptor data — numeric
+            columns and/or a SMILES structure column. Defaults to None.
         key (str, inherited from `Feature`): The unique name of the feature.
         context (str, optional, inherited from `Feature`): Free-text context for the
             feature. Defaults to None.
@@ -84,13 +87,20 @@ class CategoricalInput(Input, DescriptorsMixin):
     order_id: ClassVar[int] = 7
 
     categories: CategoryVals
+    descriptors: Optional[Descriptors] = None
     allowed: Optional[Annotated[List[bool], Field(min_length=2)]] = Field(
         default=None,
         validate_default=True,
     )
 
     def descriptor_levels(self) -> List:
+        """One descriptor row per category."""
         return list(self.categories)
+
+    @model_validator(mode="after")
+    def validate_descriptors(self):
+        validate_descriptors_fit(self.descriptors, self.descriptor_levels())
+        return self
 
     @classmethod
     def from_df(cls, key: str, df: pd.DataFrame) -> "CategoricalInput":
@@ -112,7 +122,9 @@ class CategoricalInput(Input, DescriptorsMixin):
             key=key,
             categories=list(df.index),
             allowed=[True for _ in range(len(df))],
-            descriptors={col: df[col].tolist() for col in df.columns},
+            descriptors=Descriptors(
+                columns={col: df[col].tolist() for col in df.columns}
+            ),
         )
 
     @field_validator("allowed")
@@ -137,8 +149,9 @@ class CategoricalInput(Input, DescriptorsMixin):
 
     def _extra_description_parts(self) -> List[str]:
         """Optional extras appended after the prefix, before context."""
-        if self.descriptors:
-            return [f"descriptors: {list(self.descriptors)}"]
+        # only the numeric columns are worth naming; a structure-only block has none
+        if self.descriptors is not None and self.descriptors.names:
+            return [f"descriptors: {self.descriptors.names}"]
         return []
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
@@ -175,12 +188,12 @@ class CategoricalInput(Input, DescriptorsMixin):
     def valid_transform_types(self) -> List:
         """Valid encoding classes for this feature.
 
-        One-hot and ordinal are always valid; ``DescriptorEncoding`` is valid when
-        the feature carries any descriptor data (numeric columns and/or a structure
-        column), since its source can read either.
+        One-hot and ordinal are always valid; ``DescriptorEncoding`` is valid when the
+        feature carries a descriptor block, since the encoding can read either its
+        numeric columns or its structure.
         """
         types: List = [OneHotEncoding, OrdinalEncoding]
-        if self.descriptors or self.structure is not None:
+        if self.descriptors is not None:
             types.append(DescriptorEncoding)
         return types
 

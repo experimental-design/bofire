@@ -146,7 +146,7 @@ class BotorchStrategy(PredictiveStrategy):
         # descriptor data it turns into continuous columns a plain GP handles. Keyed on
         # the data the feature carries, not on its type.
         if any(
-            not feat.has_descriptor_data()
+            feat.descriptors is None
             for feat in domain.inputs.get(CategoricalInput, exact=False)
             if not isinstance(feat, CategoricalTaskInput)
         ):

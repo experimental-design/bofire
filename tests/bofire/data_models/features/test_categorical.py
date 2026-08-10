@@ -11,6 +11,7 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import CategoricalInput, CategoricalOutput
 from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
 
@@ -379,7 +380,7 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
         key="c",
         categories=feature.categories,
         allowed=feature.allowed,
-        descriptors={"alpha": [1, 3, 5], "beta": [2, 4, 6]},
+        descriptors=Descriptors(columns={"alpha": [1, 3, 5], "beta": [2, 4, 6]}),
     )
     lower, upper = f.get_bounds(transform_type=transform_type, values=values)
     assert np.allclose(lower, expected[0])
@@ -428,7 +429,9 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
                 key="k",
                 categories=["1", "2", "3"],
                 allowed=[True, False, False],
-                descriptors={"alpha": [1, 3, 5], "beta": [2, 4, 6]},
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 3, 5], "beta": [2, 4, 6]}
+                ),
             ),
             expected,
             expected_value,
@@ -561,12 +564,13 @@ def test_descriptor_encoding_filter_prunes_correlated_columns():
     feat = CategoricalInput(
         key="c",
         categories=["a", "b", "c"],
-        # d2 == 2 * d1 (perfectly correlated); d3 is independent.
-        descriptors={
-            "d1": [1.0, 2.0, 3.0],
-            "d2": [2.0, 4.0, 6.0],
-            "d3": [0.0, 1.0, 0.0],
-        },
+        descriptors=Descriptors(
+            columns={
+                "d1": [1.0, 2.0, 3.0],
+                "d2": [2.0, 4.0, 6.0],
+                "d3": [0.0, 1.0, 0.0],
+            }
+        ),
     )
     # without filtering, all three columns are used
     assert DescriptorEncoding().get_names(feat) == ["c_d1", "c_d2", "c_d3"]

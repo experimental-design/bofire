@@ -19,6 +19,7 @@ import bofire.data_models.surrogates.api as data_models
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.encodings.api import OneHotEncoding, OrdinalEncoding
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalTaskInput,
@@ -54,7 +55,7 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
             CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors={"length": [1, 3], "width": [2, 4]},
+                descriptors=Descriptors(columns={"length": [1, 3], "width": [2, 4]}),
             ),
         ],
     )
@@ -136,7 +137,9 @@ def test_BotorchSurrogates_invalid_inputs():
                             CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors={"length": [1, 3], "width": [2, 4]},
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
@@ -157,7 +160,9 @@ def test_BotorchSurrogates_invalid_inputs():
                             CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors={"length": [1, 3], "width": [2, 4]},
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
@@ -197,7 +202,9 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors={"length": [1, 3], "width": [2, 4]},
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
@@ -219,7 +226,9 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors={"length": [1, 3], "width": [2, 4]},
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
@@ -245,7 +254,9 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors={"length": [1, 3], "width": [2, 4]},
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
@@ -267,7 +278,9 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors={"length": [1, 3], "width": [2, 4]},
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
@@ -293,7 +306,9 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors={"length": [1, 3], "width": [2, 4]},
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
@@ -315,7 +330,9 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors={"length": [1, 3], "width": [2, 4]},
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
@@ -351,7 +368,9 @@ def test_botorch_models_check_compatibility(output_scaler):
                 CategoricalInput(
                     key="cat",
                     categories=["apple", "banana"],
-                    descriptors={"length": [1, 3], "width": [2, 4]},
+                    descriptors=Descriptors(
+                        columns={"length": [1, 3], "width": [2, 4]}
+                    ),
                 ),
             ],
         ),
@@ -372,7 +391,9 @@ def test_botorch_models_check_compatibility(output_scaler):
                 CategoricalInput(
                     key="cat",
                     categories=["apple", "banana"],
-                    descriptors={"length": [1, 3], "width": [2, 4]},
+                    descriptors=Descriptors(
+                        columns={"length": [1, 3], "width": [2, 4]}
+                    ),
                 ),
             ],
         ),
@@ -408,7 +429,7 @@ def test_botorch_models_check_compatibility(output_scaler):
             CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors={"length": [1, 3], "width": [2, 4]},
+                descriptors=Descriptors(columns={"length": [1, 3], "width": [2, 4]}),
             ),
         ],
     )
@@ -447,7 +468,7 @@ def test_botorch_models_check_compatibility(output_scaler):
             CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors={"length": [1, 3], "width": [2, 4]},
+                descriptors=Descriptors(columns={"length": [1, 3], "width": [2, 4]}),
             ),
         ],
     )
@@ -486,7 +507,7 @@ def test_botorch_models_check_compatibility(output_scaler):
             CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors={"length": [1, 3], "width": [2, 4]},
+                descriptors=Descriptors(columns={"length": [1, 3], "width": [2, 4]}),
             ),
         ],
     )
@@ -508,7 +529,9 @@ def test_botorch_models_input_preprocessing_specs():
                 CategoricalInput(
                     key="cat",
                     categories=["apple", "banana"],
-                    descriptors={"length": [1, 3], "width": [2, 4]},
+                    descriptors=Descriptors(
+                        columns={"length": [1, 3], "width": [2, 4]}
+                    ),
                 ),
             ],
         ),

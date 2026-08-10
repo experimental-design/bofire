@@ -7,6 +7,7 @@ import pytest
 from pandas.testing import assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import ContinuousInput
 
 
@@ -347,17 +348,29 @@ def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
         (ContinuousInput(key="k", bounds=(1, 2)), False, None),
         (ContinuousInput(key="k", bounds=(2, 3)), False, None),
         (
-            ContinuousInput(key="k", bounds=(1, 1), descriptors={"a": [1], "b": [2]}),
+            ContinuousInput(
+                key="k",
+                bounds=(1, 1),
+                descriptors=Descriptors(columns={"a": [1], "b": [2]}),
+            ),
             True,
             [1],
         ),
         (
-            ContinuousInput(key="k", bounds=(1, 2), descriptors={"a": [1], "b": [2]}),
+            ContinuousInput(
+                key="k",
+                bounds=(1, 2),
+                descriptors=Descriptors(columns={"a": [1], "b": [2]}),
+            ),
             False,
             None,
         ),
         (
-            ContinuousInput(key="k", bounds=(2, 3), descriptors={"a": [1], "b": [2]}),
+            ContinuousInput(
+                key="k",
+                bounds=(2, 3),
+                descriptors=Descriptors(columns={"a": [1], "b": [2]}),
+            ),
             False,
             None,
         ),

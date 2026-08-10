@@ -6,26 +6,32 @@ import pandas as pd
 from pydantic import Field, PositiveFloat, model_validator
 from pydantic.fields import FieldInfo
 
-from bofire.data_models.features._descriptors import DescriptorsMixin
+from bofire.data_models.features._descriptors import (
+    Descriptors,
+    validate_descriptors_fit,
+)
 from bofire.data_models.features.feature import Output, TTransform
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.objectives.api import AnyObjective, MaximizeObjective
 from bofire.data_models.types import Bounds
 
 
-class ContinuousInput(NumericalInput, DescriptorsMixin):
+class ContinuousInput(NumericalInput):
     """Base class for all continuous input features.
 
-    A continuous input is a *single* descriptor component: it has exactly one
-    descriptor level (the feature itself), so each ``descriptors`` column and the
-    ``structure`` column hold exactly one value. This is what lets a continuous
-    feature act as one component of a mixture, blended by a ``WeightedSumFeature``::
+    A continuous input is a *single* descriptor component: it has exactly one descriptor
+    level (the feature itself), so each column of the optional ``descriptors`` block holds
+    exactly one value. This is what lets a continuous feature act as one component of a
+    mixture, blended by a ``WeightedSumFeature`` — on its own the block has no effect on
+    the feature's own encoding::
 
         ethanol = ContinuousInput(
             key="ethanol",
             bounds=(0, 1),
-            descriptors={"logP": [-0.3], "MW": [46.0]},   # one value per column
-            structure=["CCO"],                            # one SMILES
+            descriptors=Descriptors(
+                columns={"logP": [-0.3], "MW": [46.0]},   # one value per column
+                structure=["CCO"],                        # one SMILES
+            ),
         )
 
     Attributes:
@@ -37,12 +43,10 @@ class ContinuousInput(NumericalInput, DescriptorsMixin):
             Useful for features that take values between `bounds`, but can also take a value of 0.
             One may choose to use a conditional kernel for this, if taking a value of 0
             represents a distinct behaviour from non-zero values.
-        descriptors (Dict[str, List[float]], inherited from `DescriptorsMixin`): Numeric
-            property columns, each holding a single value (the one component).
-            Defaults to `{}`.
-        structure (List[str], optional, inherited from `DescriptorsMixin`): A single-element
-            list holding the component's SMILES, fed to descriptor generators on the
-            surrogate side. Defaults to None.
+        descriptors (Descriptors, optional): Descriptor data for the single component —
+            numeric columns holding one value each, and/or a one-element SMILES structure.
+            Consumed by N-arity engineered features, not by this feature's own encoding.
+            Defaults to None.
         unit (str, optional, inherited from `NumericalInput`): The unit of the feature.
             Defaults to None.
         key (str, inherited from `Feature`): The unique name of the feature.
@@ -55,6 +59,7 @@ class ContinuousInput(NumericalInput, DescriptorsMixin):
     order_id: ClassVar[int] = 1
 
     bounds: Bounds
+    descriptors: Optional[Descriptors] = None
     local_relative_bounds: Optional[
         Annotated[List[PositiveFloat], Field(min_length=2, max_length=2)]
     ] = None
@@ -112,6 +117,15 @@ class ContinuousInput(NumericalInput, DescriptorsMixin):
             float,
             Field(ge=lower, le=self.bounds[1], description=" — ".join(desc_parts)),
         )
+
+    def descriptor_levels(self) -> List:
+        """A numeric feature is a single descriptor component, keyed by the feature."""
+        return [self.key]
+
+    @model_validator(mode="after")
+    def validate_descriptors(self):
+        validate_descriptors_fit(self.descriptors, self.descriptor_levels())
+        return self
 
     @model_validator(mode="after")
     def validate_step_size(self):

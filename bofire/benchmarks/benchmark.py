@@ -15,6 +15,7 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
@@ -155,12 +156,14 @@ class FormulationWrapper(Benchmark):
                 else ContinuousInput(
                     key=f"{feat.key}_{i}",
                     bounds=(0, 1 / len(self._benchmark.domain.inputs)),
-                    descriptors={
-                        name: [1.0 if k == j else 0.0]
-                        for k, name in enumerate(
-                            self._benchmark.domain.inputs.get_keys()
-                        )
-                    },
+                    descriptors=Descriptors(
+                        columns={
+                            name: [1.0 if k == j else 0.0]
+                            for k, name in enumerate(
+                                self._benchmark.domain.inputs.get_keys()
+                            )
+                        }
+                    ),
                 )
                 for i in range(self.n_features_per_original_feature)
             ]

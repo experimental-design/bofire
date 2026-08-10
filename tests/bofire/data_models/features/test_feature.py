@@ -4,6 +4,7 @@ import pytest
 from pandas.testing import assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalOutput,
@@ -40,7 +41,7 @@ cont = specs.features.valid(ContinuousInput).obj()
 # them deterministic keys rather than the spec's random uuids.
 cat = specs.features.valid(CategoricalInput).obj(key="cat_a")
 cat_ = specs.features.valid(CategoricalInput).obj(
-    key="cat_b", descriptors={"d1": [1.0, 2.0, 3.0]}
+    key="cat_b", descriptors=Descriptors(columns={"d1": [1.0, 2.0, 3.0]})
 )
 out = specs.features.valid(ContinuousOutput).obj()
 

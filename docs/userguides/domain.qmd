@@ -131,12 +131,14 @@ order of `categories`. For example, the following code defines a new categorical
 variable $x_6$ with values "material_A", "material_B", "material_C".
 
 ```{python}
-from bofire.data_models.features.api import CategoricalInput
+from bofire.data_models.features.api import CategoricalInput, Descriptors
 
 CategoricalInput(
     key="x6",
     categories=["material_A", "material_B", "material_C"],
-    descriptors={"density": [0.1, 0.3, 0.5], "hardness": [0.2, 0.4, 0.6]},
+    descriptors=Descriptors(
+        columns={"density": [0.1, 0.3, 0.5], "hardness": [0.2, 0.4, 0.6]}
+    ),
 )
 
 ```
@@ -148,12 +150,12 @@ model columns. The following code defines a new categorical input variable $x_7$
 only the values "C1CCCCC1", "O1CCOCC1" are allowed.
 
 ```{python}
-from bofire.data_models.features.api import CategoricalInput
+from bofire.data_models.features.api import CategoricalInput, Descriptors
 
 CategoricalInput(
     key="x7",
     categories=["C1CCCCC1", "O1CCOCC1"],
-    structure=["C1CCCCC1", "O1CCOCC1"],
+    descriptors=Descriptors(structure=["C1CCCCC1", "O1CCOCC1"]),
 )
 ```
 
@@ -171,8 +173,8 @@ inputs = Inputs(
     ContinuousInput(key="x2", bounds=[0,1]),
     DiscreteInput(key="x3", values=[0, 0.1, 0.2]),
     CategoricalInput(key="x4", categories=["A", "B", "C"]),
-    CategoricalInput(key="x6", categories=["material_A", "material_B", "material_C"], descriptors={"density": [0.1, 0.3, 0.5], "hardness": [0.2, 0.4, 0.6]}),
-    CategoricalInput(key="x7", categories=["C1CCCCC1", "O1CCOCC1"], structure=["C1CCCCC1", "O1CCOCC1"])])
+    CategoricalInput(key="x6", categories=["material_A", "material_B", "material_C"], descriptors=Descriptors(columns={"density": [0.1, 0.3, 0.5], "hardness": [0.2, 0.4, 0.6]})),
+    CategoricalInput(key="x7", categories=["C1CCCCC1", "O1CCOCC1"], descriptors=Descriptors(structure=["C1CCCCC1", "O1CCOCC1"]))])
 ```
 
 ## Outputs

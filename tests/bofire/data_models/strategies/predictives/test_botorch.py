@@ -1,6 +1,7 @@
 import pytest
 
 from bofire.data_models.domain.api import Domain
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -38,13 +39,17 @@ def test_botorch_strategy():
         # on the type alone used to miss it.
         (
             CategoricalInput(
-                key="c", categories=["a", "b"], descriptors={"d": [1.0, 2.0]}
+                key="c",
+                categories=["a", "b"],
+                descriptors=Descriptors(columns={"d": [1.0, 2.0]}),
             ),
             SingleTaskGPSurrogate,
         ),
         (
             CategoricalInput(
-                key="c", categories=["CCO", "CC"], structure=["CCO", "CC"]
+                key="c",
+                categories=["CCO", "CC"],
+                descriptors=Descriptors(structure=["CCO", "CC"]),
             ),
             SingleTaskGPSurrogate,
         ),

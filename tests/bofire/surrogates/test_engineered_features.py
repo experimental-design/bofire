@@ -7,6 +7,7 @@ import torch
 
 from bofire.data_models.descriptor_generators.api import MordredDescriptors
 from bofire.data_models.domain.api import Inputs
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CloneFeature,
     ContinuousInput,
@@ -128,13 +129,19 @@ def test_map_weighted_sum_feature():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key="x1", bounds=[0, 1], descriptors={"d1": [1], "d2": [2], "d3": [3]}
+                key="x1",
+                bounds=[0, 1],
+                descriptors=Descriptors(columns={"d1": [1], "d2": [2], "d3": [3]}),
             ),
             ContinuousInput(
-                key="x2", bounds=[0, 1], descriptors={"d1": [4], "d2": [5], "d3": [6]}
+                key="x2",
+                bounds=[0, 1],
+                descriptors=Descriptors(columns={"d1": [4], "d2": [5], "d3": [6]}),
             ),
             ContinuousInput(
-                key="x3", bounds=[0, 1], descriptors={"d1": [7], "d2": [8], "d3": [9]}
+                key="x3",
+                bounds=[0, 1],
+                descriptors=Descriptors(columns={"d1": [7], "d2": [8], "d3": [9]}),
             ),
         ]
     )
@@ -171,13 +178,19 @@ def test_map_weighted_mean_feature():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key="x1", bounds=[0, 1], descriptors={"d1": [1], "d2": [2], "d3": [3]}
+                key="x1",
+                bounds=[0, 1],
+                descriptors=Descriptors(columns={"d1": [1], "d2": [2], "d3": [3]}),
             ),
             ContinuousInput(
-                key="x2", bounds=[0, 1], descriptors={"d1": [4], "d2": [5], "d3": [6]}
+                key="x2",
+                bounds=[0, 1],
+                descriptors=Descriptors(columns={"d1": [4], "d2": [5], "d3": [6]}),
             ),
             ContinuousInput(
-                key="x3", bounds=[0, 1], descriptors={"d1": [7], "d2": [8], "d3": [9]}
+                key="x3",
+                bounds=[0, 1],
+                descriptors=Descriptors(columns={"d1": [7], "d2": [8], "d3": [9]}),
             ),
         ]
     )
@@ -207,10 +220,14 @@ def test_map_weighted_mean_feature_zero_weight_sum():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key="x1", bounds=[0, 1], descriptors={"d1": [1], "d2": [2]}
+                key="x1",
+                bounds=[0, 1],
+                descriptors=Descriptors(columns={"d1": [1], "d2": [2]}),
             ),
             ContinuousInput(
-                key="x2", bounds=[0, 1], descriptors={"d1": [3], "d2": [4]}
+                key="x2",
+                bounds=[0, 1],
+                descriptors=Descriptors(columns={"d1": [3], "d2": [4]}),
             ),
         ]
     )
@@ -241,8 +258,12 @@ def test_map_weighted_mean_feature_zero_weight_sum():
 def test_map_molecular_weighted_sum_feature():
     inputs = Inputs(
         features=[
-            ContinuousInput(key="m1", bounds=[0, 1], structure=["C"]),
-            ContinuousInput(key="m2", bounds=[0, 1], structure=["CC"]),
+            ContinuousInput(
+                key="m1", bounds=[0, 1], descriptors=Descriptors(structure=["C"])
+            ),
+            ContinuousInput(
+                key="m2", bounds=[0, 1], descriptors=Descriptors(structure=["CC"])
+            ),
         ]
     )
     molfeatures = MordredDescriptors(descriptors=["NssCH2", "ATSC2d"], ignore_3D=True)
@@ -536,8 +557,12 @@ def test_map_interpolate_feature_3d_input():
 def test_map_molecular_weighted_mean_feature():
     inputs = Inputs(
         features=[
-            ContinuousInput(key="m1", bounds=[0, 1], structure=["C"]),
-            ContinuousInput(key="m2", bounds=[0, 1], structure=["CC"]),
+            ContinuousInput(
+                key="m1", bounds=[0, 1], descriptors=Descriptors(structure=["C"])
+            ),
+            ContinuousInput(
+                key="m2", bounds=[0, 1], descriptors=Descriptors(structure=["CC"])
+            ),
         ]
     )
     molfeatures = MordredDescriptors(descriptors=["NssCH2", "ATSC2d"], ignore_3D=True)

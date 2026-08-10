@@ -9,6 +9,7 @@ from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain import api as domain_api
 from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.features import api as features_api
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate, TanimotoGPSurrogate
 from bofire.surrogates.api import map
 
@@ -24,7 +25,7 @@ def chem_domain_simple() -> tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame]
                 features_api.CategoricalInput(
                     key="molecules",
                     categories=["C(O)O", "O", "CC"],
-                    structure=["C(O)O", "O", "CC"],
+                    descriptors=Descriptors(structure=["C(O)O", "O", "CC"]),
                 )
             ]
         ),

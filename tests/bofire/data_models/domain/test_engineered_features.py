@@ -1,6 +1,7 @@
 import pytest
 
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     ContinuousInput,
     SumFeature,
@@ -12,10 +13,14 @@ def test_engineered_features():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key="feat1", bounds=(0, 1), descriptors={"desc1": [0.5], "desc2": [0.5]}
+                key="feat1",
+                bounds=(0, 1),
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc2": [0.5]}),
             ),
             ContinuousInput(
-                key="feat2", bounds=(0, 1), descriptors={"desc1": [0.3], "desc3": [0.7]}
+                key="feat2",
+                bounds=(0, 1),
+                descriptors=Descriptors(columns={"desc1": [0.3], "desc3": [0.7]}),
             ),
             ContinuousInput(key="feat3", bounds=(0, 1)),
             ContinuousInput(key="feat4", bounds=(0, 1)),

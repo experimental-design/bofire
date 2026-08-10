@@ -13,7 +13,6 @@ from bofire.data_models.types import Bounds, FeatureKeys, OneFeatureKeys
 
 if TYPE_CHECKING:
     from bofire.data_models.domain.api import Inputs
-    from bofire.data_models.features._descriptors import DescriptorsMixin
 
 
 class EngineeredFeature(Feature):
@@ -105,21 +104,21 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
     order_id: ClassVar[int] = 2
     normalize: bool = False
 
-    def component_table(self, features: List["DescriptorsMixin"]) -> pd.DataFrame:
+    def component_table(self, features: List["ContinuousInput"]) -> pd.DataFrame:
         """Descriptor table with one row per component feature (weighted-sum scope).
 
         Index = component feature keys. Generators filter once over the combined
         component structures so every row shares the same (filtered) columns.
         Delegates assembly (and filtering) to :meth:`DescriptorSpec._assemble`.
         """
-        columns = self._static_columns(features[0])
+        columns = self._static_columns(features[0].descriptors)
         index = [feature.key for feature in features]
         return self._assemble(
             index=index,
-            static=pd.concat([f.descriptor_table(columns) for f in features])
+            static=pd.concat([f.descriptors.table([f.key], columns) for f in features])
             if columns
             else None,
-            structures=pd.Series([self._structure(f)[0] for f in features])
+            structures=pd.Series([self._structure(f.descriptors)[0] for f in features])
             if self.generators
             else None,
         )
@@ -135,14 +134,15 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
         names = (
             list(self.component_table(components).columns)
             if self.filter_descriptors
-            else self.column_names(components[0])
+            else self.column_names(components[0].descriptors)
         )
         return [get_encoded_name(self.key, name) for name in names]
 
     def validate_features(self, inputs: "Inputs"):
         super().validate_features(inputs)
         for key in self.features:
-            self.validate_for(inputs.get_by_key(key))
+            feat = inputs.get_by_key(key)
+            self.validate_for(feat.descriptors, feat.key)
 
 
 class ProductFeature(EngineeredFeature):

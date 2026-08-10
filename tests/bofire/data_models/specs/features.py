@@ -196,8 +196,7 @@ specs.add_valid(
         "values": [random.random(), random.random() + 3],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "rtol": 1e-7,
-        "descriptors": {},
-        "structure": None,
+        "descriptors": None,
         "context": None,
     },
 )
@@ -222,11 +221,11 @@ specs.add_invalid(
     lambda: {
         "key": str(uuid.uuid4()),
         "values": [1.0, 2.0, 3.0],
-        "descriptors": {"logP": [1.0, 2.0, 3.0]},
+        "descriptors": {"columns": {"logP": [1.0, 2.0, 3.0]}},
     },
     error=ValueError,
     # message is used as a regex, so stop before the "value(s) (one per level)" parens
-    message="descriptor column 'logP' must have 1 value",
+    message="descriptors must have 1 value",
 )
 
 specs.add_invalid(
@@ -234,10 +233,10 @@ specs.add_invalid(
     lambda: {
         "key": str(uuid.uuid4()),
         "values": [1.0, 2.0, 3.0],
-        "structure": ["O", "CCO", "CCC"],
+        "descriptors": {"structure": ["O", "CCO", "CCC"]},
     },
     error=ValueError,
-    message="structure must have 1 value",
+    message="descriptors must have 1 value",
 )
 
 
@@ -250,8 +249,7 @@ specs.add_valid(
         "local_relative_bounds": None,
         "stepsize": None,
         "allow_zero": False,
-        "descriptors": {},
-        "structure": None,
+        "descriptors": None,
         "context": None,
     },
 )
@@ -280,16 +278,20 @@ specs.add_invalid(
 # a continuous input is a single descriptor component: one value per column
 specs.add_invalid(
     features.ContinuousInput,
-    lambda: {"key": "a", "bounds": [0, 1], "descriptors": {"logP": [1.0, 2.0]}},
+    lambda: {
+        "key": "a",
+        "bounds": [0, 1],
+        "descriptors": {"columns": {"logP": [1.0, 2.0]}},
+    },
     error=ValueError,
-    message="descriptor column 'logP' must have 1 value",
+    message="descriptors must have 1 value",
 )
 
 specs.add_invalid(
     features.ContinuousInput,
-    lambda: {"key": "a", "bounds": [0, 1], "structure": ["O", "CCO"]},
+    lambda: {"key": "a", "bounds": [0, 1], "descriptors": {"structure": ["O", "CCO"]}},
     error=ValueError,
-    message="structure must have 1 value",
+    message="descriptors must have 1 value",
 )
 
 specs.add_valid(
@@ -298,8 +300,7 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "categories": ["c1", "c2", "c3"],
         "allowed": [True, True, False],
-        "descriptors": {},
-        "structure": None,
+        "descriptors": None,
         "context": None,
     },
 )
@@ -344,10 +345,10 @@ specs.add_invalid(
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": ["c1", "c2", "c3"],
-        "descriptors": {"logP": [1.0, 2.0]},
+        "descriptors": {"columns": {"logP": [1.0, 2.0]}},
     },
     error=ValueError,
-    message="descriptor column 'logP' must have 3 value",
+    message="descriptors must have 3 value",
 )
 
 specs.add_invalid(
@@ -355,10 +356,10 @@ specs.add_invalid(
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": ["c1", "c2", "c3"],
-        "descriptors": {"logP": [1.0, 2.0, 3.0, 4.0]},
+        "descriptors": {"columns": {"logP": [1.0, 2.0, 3.0, 4.0]}},
     },
     error=ValueError,
-    message="descriptor column 'logP' must have 3 value",
+    message="descriptors must have 3 value",
 )
 
 # a correctly-sized column must not mask a wrongly-sized one
@@ -367,10 +368,10 @@ specs.add_invalid(
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": ["c1", "c2", "c3"],
-        "descriptors": {"logP": [1.0, 2.0, 3.0], "MW": [1.0]},
+        "descriptors": {"columns": {"logP": [1.0, 2.0, 3.0], "MW": [1.0]}},
     },
     error=ValueError,
-    message="descriptor column 'MW' must have 3 value",
+    message="all descriptor columns and the structure column must have the same",
 )
 
 specs.add_invalid(
@@ -378,10 +379,10 @@ specs.add_invalid(
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": ["c1", "c2", "c3"],
-        "structure": ["O", "CCO"],
+        "descriptors": {"structure": ["O", "CCO"]},
     },
     error=ValueError,
-    message="structure must have 3 value",
+    message="descriptors must have 3 value",
 )
 
 # an empty structure must report the length problem, not blow up in the rdkit probe
@@ -390,10 +391,10 @@ specs.add_invalid(
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": ["c1", "c2", "c3"],
-        "structure": [],
+        "descriptors": {"structure": []},
     },
     error=ValueError,
-    message="structure must have 3 value",
+    message="descriptors must have 3 value",
 )
 
 
@@ -432,8 +433,7 @@ specs.add_valid(
         ],
         "allowed": [True, True, True],
         "fidelities": [0, 1, 2],
-        "descriptors": {},
-        "structure": None,
+        "descriptors": None,
         "context": None,
     },
 )
@@ -447,8 +447,7 @@ specs.add_valid(
         "local_relative_bounds": None,
         "stepsize": None,
         "allow_zero": False,
-        "descriptors": {},
-        "structure": None,
+        "descriptors": None,
         "context": None,
     },
 )
@@ -485,28 +484,17 @@ specs.add_invalid(
     message="Fidelities must be a list containing integers, starting from 0 and increasing by 1",
 )
 
-# a task input is an index, not a described entity: the descriptor data it inherits
-# from CategoricalInput / ContinuousInput must be rejected.
+# a task input is an index, not a described entity: `descriptors` is narrowed to
+# None on both flavours, so the rejection comes from the type itself.
 specs.add_invalid(
     features.CategoricalTaskInput,
     lambda: {
         "key": "task",
         "categories": ["process_1", "process_2"],
-        "descriptors": {"cost": [1.0, 10.0]},
+        "descriptors": {"columns": {"cost": [1.0, 10.0]}},
     },
     error=ValueError,
-    message="task: task inputs cannot carry `descriptors`.",
-)
-
-specs.add_invalid(
-    features.CategoricalTaskInput,
-    lambda: {
-        "key": "task",
-        "categories": ["process_1", "process_2"],
-        "structure": ["O", "CCO"],
-    },
-    error=ValueError,
-    message="task: task inputs cannot carry a `structure` column",
+    message="Input should be None",
 )
 
 specs.add_invalid(
@@ -514,19 +502,8 @@ specs.add_invalid(
     lambda: {
         "key": "fidelity",
         "bounds": [0.0, 1.0],
-        "descriptors": {"cost": [1.0]},
+        "descriptors": {"columns": {"cost": [1.0]}},
     },
     error=ValueError,
-    message="fidelity: task inputs cannot carry `descriptors`.",
-)
-
-specs.add_invalid(
-    features.ContinuousTaskInput,
-    lambda: {
-        "key": "fidelity",
-        "bounds": [0.0, 1.0],
-        "structure": ["CCO"],
-    },
-    error=ValueError,
-    message="fidelity: task inputs cannot carry a `structure` column",
+    message="Input should be None",
 )

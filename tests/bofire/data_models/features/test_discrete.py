@@ -6,6 +6,7 @@ import pytest
 from pandas.testing import assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import DiscreteInput
 
 
@@ -132,12 +133,16 @@ def test_discrete_input_is_single_component_for_descriptors():
 
     # a single-row descriptor / structure is valid (a discrete amount of one molecule)
     feat = DiscreteInput(
-        key="eq", values=[1.0, 2.0, 3.0], descriptors={"mw": [46.0]}, structure=["CCO"]
+        key="eq",
+        values=[1.0, 2.0, 3.0],
+        descriptors=Descriptors(columns={"mw": [46.0]}, structure=["CCO"]),
     )
     assert feat.descriptor_levels() == ["eq"]
 
     # a per-value (length-3) descriptor column is rejected
     with pytest.raises(ValueError, match="must have 1 value"):
         DiscreteInput(
-            key="eq", values=[1.0, 2.0, 3.0], descriptors={"mw": [1.0, 2.0, 3.0]}
+            key="eq",
+            values=[1.0, 2.0, 3.0],
+            descriptors=Descriptors(columns={"mw": [1.0, 2.0, 3.0]}),
         )

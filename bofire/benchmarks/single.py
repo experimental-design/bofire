@@ -12,6 +12,7 @@ from scipy.stats import dirichlet, multivariate_normal, random_correlation
 from bofire.benchmarks.benchmark import Benchmark
 from bofire.data_models.constraints.api import NChooseKConstraint
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalTaskInput,
@@ -95,7 +96,9 @@ class Ackley(Benchmark):
                 CategoricalInput(
                     key="descriptor",
                     categories=[str(x) for x in range(self.num_categories)],
-                    descriptors={"d1": [x * 2 for x in range(self.num_categories)]},
+                    descriptors=Descriptors(
+                        columns={"d1": [x * 2 for x in range(self.num_categories)]}
+                    ),
                 ),
             )
 

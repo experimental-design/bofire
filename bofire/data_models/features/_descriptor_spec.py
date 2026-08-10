@@ -18,17 +18,14 @@ Correlation-based decorrelation (opt-in via ``filter_descriptors``) is applied a
 there is no mutable state on the generators or the spec.
 """
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import List, Optional
 
 import pandas as pd
 from pydantic import Field
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.descriptor_generators.api import AnyDescriptorGenerator
-
-
-if TYPE_CHECKING:
-    from bofire.data_models.features._descriptors import DescriptorsMixin
+from bofire.data_models.features._descriptors import Descriptors
 
 
 def filter_correlated(df: pd.DataFrame, cutoff: float) -> pd.DataFrame:
@@ -79,15 +76,15 @@ class DescriptorSpec(BaseModel):
 
     # -- column resolution ---------------------------------------------------------
 
-    def _static_columns(self, feature: "DescriptorsMixin") -> List[str]:
-        available = feature.descriptor_columns()
+    def _static_columns(self, descriptors: Optional[Descriptors]) -> List[str]:
+        available = descriptors.names if descriptors is not None else []
         if self.columns is None:
             return available
         missing = [c for c in self.columns if c not in available]
         if missing:
             raise ValueError(
-                f"{feature.key}: descriptor columns {missing} are not available as "
-                f"numeric descriptors. Available: {sorted(available)}.",
+                f"descriptor columns {missing} are not available as numeric "
+                f"descriptors. Available: {sorted(available)}.",
             )
         return list(self.columns)
 
@@ -98,15 +95,15 @@ class DescriptorSpec(BaseModel):
             for name in generator.get_descriptor_names()
         ]
 
-    def column_names(self, feature: "DescriptorsMixin") -> List[str]:
-        """Declared (pre-filter) descriptor column names for a feature.
+    def column_names(self, descriptors: Optional[Descriptors]) -> List[str]:
+        """Declared (pre-filter) descriptor column names for a descriptor block.
 
-        Static columns resolved against the feature, followed by generator columns.
-        Always returns a list (a feature is required); post-filter names, when
-        ``filter_descriptors`` is set, are the columns of an assembled table.
+        Static columns resolved against the block, followed by generator columns. The
+        post-filter names, when ``filter_descriptors`` is set, are the columns of an
+        assembled table.
         """
         return self._check_unique(
-            self._static_columns(feature) + self._generated_names()
+            self._static_columns(descriptors) + self._generated_names()
         )
 
     def _check_unique(self, names: List[str]) -> List[str]:
@@ -213,21 +210,28 @@ class DescriptorSpec(BaseModel):
 
     # -- validation ----------------------------------------------------------------
 
-    def _structure(self, feature: "DescriptorsMixin") -> List[str]:
-        if feature.structure is None:
+    def _structure(self, descriptors: Optional[Descriptors]) -> List[str]:
+        if descriptors is None or descriptors.structure is None:
             raise ValueError(
-                f"{feature.key}: has no `structure` column, but the descriptor spec "
-                "declares generators that need one.",
+                "has no `structure` column, but the descriptor spec declares "
+                "generators that need one.",
             )
-        return [str(s) for s in feature.structure]
+        return [str(value) for value in descriptors.structure]
 
-    def validate_for(self, feature: "DescriptorsMixin") -> None:
-        """Validate ``feature`` carries the data this spec needs (no generation)."""
-        static_cols = self._static_columns(feature)
-        if self.generators:
-            self._structure(feature)
+    def validate_for(self, descriptors: Optional[Descriptors], key: str) -> None:
+        """Validate that ``descriptors`` carries the data this spec needs.
+
+        Pure metadata: no generation happens here. ``key`` is only used to name the
+        offending feature in error messages.
+        """
+        try:
+            static_cols = self._static_columns(descriptors)
+            if self.generators:
+                self._structure(descriptors)
+        except ValueError as err:
+            raise ValueError(f"{key}: {err}") from err
         if not static_cols and not self.generators:
             raise ValueError(
-                f"{feature.key}: descriptor spec produces no columns (no static "
-                "descriptor columns and no generators).",
+                f"{key}: descriptor spec produces no columns (no static descriptor "
+                "columns and no generators).",
             )

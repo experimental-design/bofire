@@ -31,7 +31,7 @@ class DescriptorEncoding(CategoricalEncoding, DescriptorSpec):
     type: Literal["DescriptorEncoding"] = "DescriptorEncoding"
 
     def validate_for_feature(self, feature: "CategoricalInput") -> None:
-        self.validate_for(feature)
+        self.validate_for(feature.descriptors, feature.key)
 
     def table(self, feature: "CategoricalInput") -> pd.DataFrame:
         """Per-category descriptor table (select-row scope): one row per category.
@@ -39,12 +39,17 @@ class DescriptorEncoding(CategoricalEncoding, DescriptorSpec):
         Index = the feature's categories; columns = static columns ‖ generated columns.
         Delegates assembly (and filtering) to :meth:`DescriptorSpec._assemble`.
         """
-        columns = self._static_columns(feature)
+        descriptors = feature.descriptors
+        columns = self._static_columns(descriptors)
         index = feature.descriptor_levels()
         return self._assemble(
             index=index,
-            static=feature.descriptor_table(columns) if columns else None,
-            structures=pd.Series(self._structure(feature)) if self.generators else None,
+            static=descriptors.table(index, columns)
+            if columns and descriptors is not None
+            else None,
+            structures=pd.Series(self._structure(descriptors))
+            if self.generators
+            else None,
         )
 
     def get_names(self, feature: "CategoricalInput") -> List[str]:
@@ -52,7 +57,7 @@ class DescriptorEncoding(CategoricalEncoding, DescriptorSpec):
         if self.filter_descriptors:
             names = list(self.table(feature).columns)
         else:
-            names = self.column_names(feature)
+            names = self.column_names(feature.descriptors)
         return [get_encoded_name(feature.key, d) for d in names]
 
     def encode(self, feature: "CategoricalInput", values: pd.Series) -> pd.DataFrame:

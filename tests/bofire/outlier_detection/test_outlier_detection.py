@@ -5,6 +5,7 @@ import pytest
 import bofire.data_models.outlier_detection.api as data_models
 import bofire.outlier_detection.api as mapper
 from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -273,7 +274,9 @@ def test_outlier_detectors_check_compatibility():
                     CategoricalInput(
                         key="cat",
                         categories=["apple", "banana"],
-                        descriptors={"length": [1, 3], "width": [2, 4]},
+                        descriptors=Descriptors(
+                            columns={"length": [1, 3], "width": [2, 4]}
+                        ),
                     ),
                 ],
             ),
@@ -295,7 +298,9 @@ def test_outlier_detectors_check_compatibility():
                     CategoricalInput(
                         key="cat",
                         categories=["apple", "banana"],
-                        descriptors={"length": [1, 3], "width": [2, 4]},
+                        descriptors=Descriptors(
+                            columns={"length": [1, 3], "width": [2, 4]}
+                        ),
                     ),
                 ],
             ),
@@ -334,7 +339,7 @@ def test_outlier_detectors_check_compatibility():
             CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors={"length": [1, 3], "width": [2, 4]},
+                descriptors=Descriptors(columns={"length": [1, 3], "width": [2, 4]}),
             ),
         ],
     )
@@ -373,7 +378,7 @@ def test_outlier_detectors_check_compatibility():
             CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors={"length": [1, 3], "width": [2, 4]},
+                descriptors=Descriptors(columns={"length": [1, 3], "width": [2, 4]}),
             ),
         ],
     )
@@ -412,7 +417,7 @@ def test_outlier_detectors_check_compatibility():
             CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors={"length": [1, 3], "width": [2, 4]},
+                descriptors=Descriptors(columns={"length": [1, 3], "width": [2, 4]}),
             ),
         ],
     )

@@ -2,16 +2,19 @@ from typing import ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic.fields import FieldInfo
 
-from bofire.data_models.features._descriptors import DescriptorsMixin
+from bofire.data_models.features._descriptors import (
+    Descriptors,
+    validate_descriptors_fit,
+)
 from bofire.data_models.features.feature import TTransform
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.types import DiscreteVals
 
 
-class DiscreteInput(NumericalInput, DescriptorsMixin):
+class DiscreteInput(NumericalInput):
     """Feature with discretized ordinal values allowed in the optimization.
 
     Like `ContinuousInput`, a discrete input is a *single* descriptor component: the
@@ -22,12 +25,9 @@ class DiscreteInput(NumericalInput, DescriptorsMixin):
     Attributes:
         key(str): key of the feature.
         values(List[float]): the discretized allowed values during the optimization.
-        descriptors (Dict[str, List[float]], inherited from `DescriptorsMixin`): Numeric
-            property columns, each holding a single value (the one component).
-            Defaults to `{}`.
-        structure (List[str], optional, inherited from `DescriptorsMixin`): A single-element
-            list holding the component's SMILES, fed to descriptor generators on the
-            surrogate side. Defaults to None.
+        descriptors (Descriptors, optional): Descriptor data for the single component —
+            numeric columns holding one value each, and/or a one-element SMILES structure.
+            Defaults to None.
         unit (str, optional, inherited from `NumericalInput`): The unit of the feature.
             Defaults to None.
         context (str, optional, inherited from `Feature`): Free-text context for the
@@ -39,7 +39,17 @@ class DiscreteInput(NumericalInput, DescriptorsMixin):
     order_id: ClassVar[int] = 3
 
     values: DiscreteVals
+    descriptors: Optional[Descriptors] = None
     rtol: float = 1e-7
+
+    def descriptor_levels(self) -> List:
+        """A numeric feature is a single descriptor component, keyed by the feature."""
+        return [self.key]
+
+    @model_validator(mode="after")
+    def validate_descriptors(self):
+        validate_descriptors_fit(self.descriptors, self.descriptor_levels())
+        return self
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(description=...))`` with allowed values.

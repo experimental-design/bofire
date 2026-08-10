@@ -18,6 +18,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.enum import SamplingMethodEnum
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -45,7 +46,7 @@ if5 = CategoricalInput(key="if5", categories=["A", "B"], allowed=[True, False])
 if6 = CategoricalInput(
     key="if6",
     categories=["A", "B", "C"],
-    descriptors={"d1": [1, 3, 5], "d2": [2, 7, 1]},
+    descriptors=Descriptors(columns={"d1": [1, 3, 5], "d2": [2, 7, 1]}),
 )
 if7 = DiscreteInput(key="if7", values=[0, 1, 5])
 

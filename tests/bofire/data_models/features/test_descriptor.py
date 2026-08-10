@@ -7,6 +7,7 @@ from pandas.testing import assert_frame_equal
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.encodings.api import DescriptorEncoding
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 
 
@@ -42,7 +43,9 @@ def test_categorical_descriptor_to_descriptor_encoding(
     c = CategoricalInput(
         key=key,
         categories=categories,
-        descriptors={descriptors[0]: [1, 3, 5], descriptors[1]: [2, 4, 6]},
+        descriptors=Descriptors(
+            columns={descriptors[0]: [1, 3, 5], descriptors[1]: [2, 4, 6]}
+        ),
     )
     samples = pd.Series(samples_in)
     t_samples = DescriptorEncoding().encode(c, samples)
@@ -73,7 +76,9 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
     c1 = CategoricalInput(
         key=key,
         categories=categories,
-        descriptors={descriptors[0]: [1, 3, 5], descriptors[1]: [2, 4, 6]},
+        descriptors=Descriptors(
+            columns={descriptors[0]: [1, 3, 5], descriptors[1]: [2, 4, 6]}
+        ),
     )
     descriptor_values = pd.DataFrame(
         columns=[f"{key}_{des_str}" for des_str in descriptors] + ["misc"],
@@ -86,7 +91,9 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
     c2 = CategoricalInput(
         key=key,
         categories=categories,
-        descriptors={descriptors[0]: [1, 3, 5], descriptors[1]: [2, 4, 6]},
+        descriptors=Descriptors(
+            columns={descriptors[0]: [1, 3, 5], descriptors[1]: [2, 4, 6]}
+        ),
         allowed=[False, True, True],
     )
 
@@ -103,7 +110,7 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
                 key="if1",
                 categories=["a", "b"],
                 allowed=[True, True],
-                descriptors={"alpha": [1, 3], "beta": [2, 4]},
+                descriptors=Descriptors(columns={"alpha": [1, 3], "beta": [2, 4]}),
             ),
             ([1, 2], [3, 4]),
             ([1, 2], [3, 4]),
@@ -113,7 +120,9 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
                 key="if2",
                 categories=["a", "b", "c"],
                 allowed=[True, False, True],
-                descriptors={"alpha": [1, 3, 1], "beta": [2, 4, 5]},
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 3, 1], "beta": [2, 4, 5]}
+                ),
             ),
             ([1, 2], [3, 5]),
             ([1, 2], [1, 5]),
@@ -193,7 +202,7 @@ def test_categorical_descriptor_feature_get_bounds(
             specs.features.valid(CategoricalInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[False, True, True],
-                descriptors={"d1": [1, 3, 3], "d2": [2, 7, 1]},
+                descriptors=Descriptors(columns={"d1": [1, 3, 3], "d2": [2, 7, 1]}),
             ),
             pd.Series(["c2", "c3"]),
             False,
@@ -233,7 +242,7 @@ def test_categorical_descriptor_input_feature_validate_valid(
             specs.features.valid(CategoricalInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
-                descriptors={"d1": [1, 3, 5], "d2": [2, 7, 1]},
+                descriptors=Descriptors(columns={"d1": [1, 3, 5], "d2": [2, 7, 1]}),
             ),
             pd.Series(["c1", "c1"]),
             True,
@@ -242,7 +251,7 @@ def test_categorical_descriptor_input_feature_validate_valid(
             specs.features.valid(CategoricalInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[False, True, True],
-                descriptors={"d1": [1, 3, 3], "d2": [2, 7, 1]},
+                descriptors=Descriptors(columns={"d1": [1, 3, 3], "d2": [2, 7, 1]}),
             ),
             pd.Series(["c2", "c3"]),
             True,
@@ -292,11 +301,13 @@ def test_categorical_descriptor_input_feature_as_dataframe(
     f = CategoricalInput(
         key="k",
         categories=categories,
-        descriptors={
-            name: [row[j] for row in values] for j, name in enumerate(descriptors)
-        },
+        descriptors=Descriptors(
+            columns={
+                name: [row[j] for row in values] for j, name in enumerate(descriptors)
+            }
+        ),
     )
-    df = f.descriptor_table(f.descriptor_columns())
+    df = f.descriptors.table(f.descriptor_levels())
     assert len(df.columns) == len(descriptors)
     assert len(df) == len(categories)
     assert df.values.tolist() == values
@@ -313,9 +324,11 @@ def test_continuous_descriptor_input_feature_as_dataframe(descriptors, values):
     f = ContinuousInput(
         key="k",
         bounds=(1, 2),
-        descriptors={name: [values[j]] for j, name in enumerate(descriptors)},
+        descriptors=Descriptors(
+            columns={name: [values[j]] for j, name in enumerate(descriptors)}
+        ),
     )
-    df = f.descriptor_table(f.descriptor_columns())
+    df = f.descriptors.table(f.descriptor_levels())
     assert len(df.columns) == len(descriptors)
     assert len(df) == 1
     assert df.values.tolist()[0] == values
@@ -349,15 +362,18 @@ def test_categorical_descriptor_input_feature_from_dataframe(
     )
     f = CategoricalInput.from_df("k", df)
     assert f.categories == categories
-    assert f.descriptor_columns() == descriptors
-    assert f.descriptor_table(descriptors).values.tolist() == values
+    assert f.descriptors.names == descriptors
+    assert (
+        f.descriptors.table(f.descriptor_levels(), descriptors).values.tolist()
+        == values
+    )
 
 
 def test_categorical_descriptor_input_to_pydantic_field():
     feat = CategoricalInput(
         key="cat",
         categories=["a", "b"],
-        descriptors={"d1": [1.0, 3.0], "d2": [2.0, 4.0]},
+        descriptors=Descriptors(columns={"d1": [1.0, 3.0], "d2": [2.0, 4.0]}),
     )
     _, field_info = feat.to_pydantic_field()
     assert (
@@ -367,7 +383,9 @@ def test_categorical_descriptor_input_to_pydantic_field():
 
 
 def test_continuous_descriptor_input_to_pydantic_field():
-    feat = ContinuousInput(key="x", bounds=(0, 1), descriptors={"d1": [0.5]})
+    feat = ContinuousInput(
+        key="x", bounds=(0, 1), descriptors=Descriptors(columns={"d1": [0.5]})
+    )
     field_type, field_info = feat.to_pydantic_field()
     assert field_type is float
     # the deprecated shim is now a plain ContinuousInput; the descriptor table no
@@ -384,10 +402,39 @@ def test_categorical_descriptor_input_to_pydantic_field_falls_back_above_thresho
     feat = CategoricalInput(
         key="big",
         categories=categories,
-        descriptors={"d1": [float(i) for i in range(n)]},
+        descriptors=Descriptors(columns={"d1": [float(i) for i in range(n)]}),
     )
     field_type, field_info = feat.to_pydantic_field()
     assert field_type is str
     # description still lists the categories (via the prefix)
     assert "c0" in field_info.description
     assert f"c{n - 1}" in field_info.description
+
+
+@pytest.mark.parametrize(
+    "descriptors, expected_columns, expected_generators",
+    [
+        # a structure alone auto-enables fingerprints
+        (Descriptors(structure=["CCO", "CC"]), None, ["Fingerprints"]),
+        # numeric columns alone use a static encoding
+        (Descriptors(columns={"logP": [-0.3, 1.8]}), None, []),
+        # both: the handcrafted columns must survive alongside the fingerprints.
+        # This used to resolve to columns=[], silently dropping them.
+        (
+            Descriptors(columns={"logP": [-0.3, 1.8]}, structure=["CCO", "CC"]),
+            None,
+            ["Fingerprints"],
+        ),
+    ],
+    ids=["structure-only", "columns-only", "both"],
+)
+def test_default_encoding_keeps_all_descriptor_data(
+    descriptors, expected_columns, expected_generators
+):
+    from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+
+    feat = CategoricalInput(key="c", categories=["CCO", "CC"], descriptors=descriptors)
+    encoding = SingleTaskGPSurrogate._resolve_default_categorical_encoding(feat)
+    # columns=None means "every numeric column the feature carries"
+    assert encoding.columns == expected_columns
+    assert [type(g).__name__ for g in encoding.generators] == expected_generators

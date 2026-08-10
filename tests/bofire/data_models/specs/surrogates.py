@@ -6,6 +6,7 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalOutput,
@@ -714,7 +715,7 @@ specs.add_valid(
                 CategoricalInput(
                     key="mol1",
                     categories=["C", "CC", "CCC"],
-                    structure=["C", "CC", "CCC"],
+                    descriptors=Descriptors(structure=["C", "CC", "CCC"]),
                 ),
             ],
         ).model_dump(),

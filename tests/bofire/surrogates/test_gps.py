@@ -30,6 +30,7 @@ from bofire.data_models.descriptor_generators.api import (
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.encodings.api import DescriptorEncoding, OrdinalEncoding
 from bofire.data_models.enum import RegressionMetricsEnum
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -270,12 +271,14 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
-                structure=[
-                    "CC(=O)Oc1ccccc1C(=O)O",
-                    "c1ccccc1",
-                    "[CH3][CH2][OH]",
-                    "N[C@](C)(F)C(=O)O",
-                ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             )
         ]
     )
@@ -514,12 +517,14 @@ def test_SingleTaskGPModel_mixed_features():
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
-                structure=[
-                    "CC(=O)Oc1ccccc1C(=O)O",
-                    "c1ccccc1",
-                    "[CH3][CH2][OH]",
-                    "N[C@](C)(F)C(=O)O",
-                ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             ),
         ],
     )
@@ -854,12 +859,14 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
-                structure=[
-                    "CC(=O)Oc1ccccc1C(=O)O",
-                    "c1ccccc1",
-                    "[CH3][CH2][OH]",
-                    "N[C@](C)(F)C(=O)O",
-                ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             ),
             CategoricalInput(key="x_cat", categories=["a", "b"]),
         ],

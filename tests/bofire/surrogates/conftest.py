@@ -3,6 +3,7 @@ import pytest
 
 from bofire.data_models.domain import api as domain_api
 from bofire.data_models.features import api as features_api
+from bofire.data_models.features._descriptors import Descriptors
 
 
 @pytest.fixture
@@ -13,7 +14,9 @@ def chem_domain_simple() -> tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame]
         inputs=domain_api.Inputs(
             features=[
                 features_api.CategoricalInput(
-                    key="molecules", categories=mols1, structure=list(mols1)
+                    key="molecules",
+                    categories=mols1,
+                    descriptors=Descriptors(structure=list(mols1)),
                 )
             ]
         ),

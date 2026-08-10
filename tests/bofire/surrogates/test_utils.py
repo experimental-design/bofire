@@ -22,6 +22,7 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -156,7 +157,7 @@ def test_get_scaler(
             CategoricalInput(
                 key="x_desc",
                 categories=["alpha", "beta"],
-                descriptors={"oskar": [1, 6], "wilde": [3, 8]},
+                descriptors=Descriptors(columns={"oskar": [1, 6], "wilde": [3, 8]}),
             ),
         ],
     )
@@ -322,12 +323,14 @@ def test_get_scaler_molecular(
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
-                structure=[
-                    "CC(=O)Oc1ccccc1C(=O)O",
-                    "c1ccccc1",
-                    "[CH3][CH2][OH]",
-                    "N[C@](C)(F)C(=O)O",
-                ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             )
         ],
     )
@@ -358,7 +361,9 @@ def test_get_scaler_engineered_features():
             ContinuousInput(
                 key=f"x_{i + 1}",
                 bounds=(0, 5),
-                descriptors={"d1": [1.0], "d2": [2.0], "d3": [3.0]},
+                descriptors=Descriptors(
+                    columns={"d1": [1.0], "d2": [2.0], "d3": [3.0]}
+                ),
             )
             for i in range(2)
         ]
@@ -546,7 +551,9 @@ def test_get_feature_keys(
             CategoricalInput(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
-                descriptors={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]},
+                descriptors=Descriptors(
+                    columns={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]}
+                ),
             ),
             CategoricalInput(
                 key="x4",
@@ -556,12 +563,14 @@ def test_get_feature_keys(
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
-                structure=[
-                    "CC(=O)Oc1ccccc1C(=O)O",
-                    "c1ccccc1",
-                    "[CH3][CH2][OH]",
-                    "N[C@](C)(F)C(=O)O",
-                ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             ),
         ],
     )

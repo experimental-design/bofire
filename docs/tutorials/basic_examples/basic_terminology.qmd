@@ -27,6 +27,7 @@ We also support a range of specialized inputs that make defining your experiment
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
+    Descriptors,
     DiscreteInput,
 )
 
@@ -49,10 +50,12 @@ x5 = CategoricalInput(
 x6 = CategoricalInput(
     key="solvent",
     categories=["water", "methanol", "ethanol"],
-    descriptors={
-        "viscosity (mPa s)": [1.0, 0.59, 1.2],
-        "density (kg/m3)": [997, 792, 789],
-    },
+    descriptors=Descriptors(
+        columns={
+            "viscosity (mPa s)": [1.0, 0.59, 1.2],
+            "density (kg/m3)": [997, 792, 789],
+        }
+    ),
 )
 ```
 

@@ -15,10 +15,10 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 
   | removed | replacement |
   |---|---|
-  | `CategoricalDescriptorInput(categories=C, descriptors=[n…], values=[[row]…])` | `CategoricalInput(categories=C, descriptors={n: [row[j] for row in values]})` |
-  | `ContinuousDescriptorInput(descriptors=[n…], values=[v…])` | `ContinuousInput(descriptors={n: [v]})` |
-  | `CategoricalMolecularInput(categories=S)` | `CategoricalInput(categories=S, structure=S)` |
-  | `ContinuousMolecularInput(molecule=m)` | `ContinuousInput(structure=[m])` |
+  | `CategoricalDescriptorInput(categories=C, descriptors=[n…], values=[[row]…])` | `CategoricalInput(categories=C, descriptors=Descriptors(columns={n: [row[j] for row in values]}))` |
+  | `ContinuousDescriptorInput(descriptors=[n…], values=[v…])` | `ContinuousInput(descriptors=Descriptors(columns={n: [v]}))` |
+  | `CategoricalMolecularInput(categories=S)` | `CategoricalInput(categories=S, descriptors=Descriptors(structure=S))` |
+  | `ContinuousMolecularInput(molecule=m)` | `ContinuousInput(descriptors=Descriptors(structure=[m]))` |
   | `WeightedMeanFeature(…)` | `WeightedSumFeature(…, normalize=True)` |
   | `MolecularWeightedSumFeature(molfeatures=g)` | `WeightedSumFeature(columns=[], generators=[g])` |
   | `MolecularWeightedMeanFeature(molfeatures=g)` | `WeightedSumFeature(columns=[], generators=[g], normalize=True)` |
@@ -30,7 +30,20 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - **Breaking**: transformed column order changes for domains that mix descriptor- or structure-carrying features with plain ones. The removed classes occupied `order_id`s 2/4/5/6, interleaved among the survivors; their features now sort as plain `CategoricalInput`/`ContinuousInput` (7/1). Feature *values* are unaffected — only the column positions. Code that indexes transformed tensors positionally should be rechecked; code that goes through `Inputs.get_feature_indices` / `_get_transform_info` needs no change.
 - `CategoricalDescriptorInput.from_df` moved to `CategoricalInput.from_df`.
 
+- **Breaking**: descriptor data is now a composed `Descriptors` value object rather than two flat fields mixed into each feature. `feature.descriptors` is `Optional[Descriptors]` holding `columns` and `structure`; `DescriptorsMixin` is gone. This removes the mixin's reach into its host (it needed a phantom `key` field), keeps the descriptor machinery free of any knowledge of features, and fixes an MRO artifact where `descriptors`/`structure` led every serialized feature ahead of `type` and `key`.
+
+  | before | after |
+  |---|---|
+  | `feature.descriptors` (a dict) | `feature.descriptors.columns` |
+  | `feature.structure` | `feature.descriptors.structure` |
+  | `feature.descriptor_columns()` | `feature.descriptors.names` |
+  | `feature.descriptor_table(cols)` | `feature.descriptors.table(feature.descriptor_levels(), cols)` |
+  | `feature.has_descriptor_data()` | `feature.descriptors is not None` |
+
+- **Breaking**: `CategoricalTaskInput` and `ContinuousTaskInput` narrow `descriptors` to `None` — a task input is an index, not a described entity, so the constraint is now in the type and visible in the schema instead of a runtime validator.
+
 ### Fixed
+- **A categorical carrying both a `structure` and numeric descriptor columns no longer silently drops the numeric ones** when its encoding is defaulted. It previously resolved to `DescriptorEncoding(columns=[], generators=[Fingerprints()])`; it now keeps both, which is what "handcrafted *and* molecular descriptors on one feature" is meant to deliver.
 - Pin `pydantic-ai<2.0.0` to avoid breaking API changes introduced in pydantic-ai 2.0.0 (`output_retries` removed, `OpenAIModel` moved).
 - `WeightedSumFeature.validate_features` no longer generates descriptor values, so `bofire.data_models` stays usable without the optional `cheminfo` extra.
 - The default surrogate is chosen from the descriptor data a categorical carries rather than from its type, so a `CategoricalInput` with a `descriptors` table no longer selects `MixedSingleTaskGPSurrogate` (which rejects it).

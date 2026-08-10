@@ -5,6 +5,7 @@ from sklearn.model_selection import GroupShuffleSplit, KFold, StratifiedKFold
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -58,7 +59,9 @@ def test_model_cross_validate_descriptor():
             CategoricalInput(
                 key="x_3",
                 categories=["a", "b", "c"],
-                descriptors={"alpha": [1, 2, 3], "beta": [3, 2, 1]},
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 2, 3], "beta": [3, 2, 1]}
+                ),
             ),
         ],
     )
@@ -312,7 +315,9 @@ def test_model_cross_validate_stratified(random_state):
             CategoricalInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors={"alpha": [1, 2, 3], "beta": [3, 2, 1]},
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 2, 3], "beta": [3, 2, 1]}
+                ),
             ),
         ],
     )
@@ -396,7 +401,9 @@ def test_model_cross_validate_stratified_invalid_feature_name():
             CategoricalInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors={"alpha": [1, 2, 3], "beta": [3, 2, 1]},
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 2, 3], "beta": [3, 2, 1]}
+                ),
             ),
         ],
     )
@@ -451,7 +458,9 @@ def test_model_cross_validate_stratified_invalid_feature_type(key):
             CategoricalInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors={"alpha": [1, 2, 3], "beta": [3, 2, 1]},
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 2, 3], "beta": [3, 2, 1]}
+                ),
             ),
         ],
     )
@@ -507,7 +516,9 @@ def test_model_cross_validate_groupfold(random_state):
             CategoricalInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors={"alpha": [1, 2, 3], "beta": [3, 2, 1]},
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 2, 3], "beta": [3, 2, 1]}
+                ),
             ),
         ],
     )
