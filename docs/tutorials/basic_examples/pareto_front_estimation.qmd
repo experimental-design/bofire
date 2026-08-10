@@ -151,6 +151,14 @@ changes:
 - `benchmark_objectives` evaluates the known benchmark functions,
 - `gp_mean_objectives` evaluates the fitted GP posterior means.
 
+**Why `optimization_direction="min"` when the domain already defines objectives?**
+The GA does not read the BoFire domain's objective directions. Instead, it
+treats the returned objective vectors as raw values to be optimized in a single
+uniform sense (all minimized or all maximized). If your problem mixes
+minimization and maximization objectives, you must flip or transform the
+relevant columns inside your objective callable so that the returned array has
+a consistent optimization sense matching `optimization_direction`.
+
 ```{python}
 #| tags: []
 def stack_individuals(individuals: list[pd.DataFrame]) -> pd.DataFrame:
