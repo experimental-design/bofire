@@ -31,12 +31,14 @@ def n_bits(request) -> int:
 
 @pytest.fixture(params=["Figerprints", "Fragments", "Composite"])
 def mol_feature_data_model(request, n_bits):
-    # bare molfeatures migrate to a DescriptorEncoding; the composite (two generators
-    # on one structure column) is expressed directly as a DescriptorEncoding.
+    # a generator is applied through a DescriptorEncoding; the composite case is two
+    # generators on one structure column.
     if request.param == "Figerprints":
-        return Fingerprints(bond_radius=3, n_bits=n_bits)
+        return DescriptorEncoding(
+            columns=[], generators=[Fingerprints(bond_radius=3, n_bits=n_bits)]
+        )
     elif request.param == "Fragments":
-        return Fragments()
+        return DescriptorEncoding(columns=[], generators=[Fragments()])
     elif request.param == "Composite":
         return DescriptorEncoding(
             columns=[],
@@ -101,7 +103,11 @@ def test_passing_of_tanimoto_sim_matrices(
         inputs=domain.inputs,
         outputs=domain.outputs,
         tanimoto_calculation_mode="pre_computed",
-        categorical_encodings={domain.inputs.get_keys()[0]: Fingerprints()},
+        categorical_encodings={
+            domain.inputs.get_keys()[0]: DescriptorEncoding(
+                columns=[], generators=[Fingerprints()]
+            )
+        },
     )
 
     strategy_data_model = strategies_api.SoboStrategy(
@@ -154,7 +160,9 @@ def test_noise_prior_registered_for_tanimoto_gp(chem_domain_simple):
             inputs=domain.inputs,
             outputs=domain.outputs,
             noise_prior=GammaPrior(concentration=1.1, rate=0.001),
-            categorical_encodings={"molecules": Fingerprints()},
+            categorical_encodings={
+                "molecules": DescriptorEncoding(columns=[], generators=[Fingerprints()])
+            },
         )
     )
     surrogate.fit(experiments)

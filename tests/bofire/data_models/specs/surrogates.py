@@ -8,7 +8,6 @@ from bofire.data_models.encodings.api import (
 )
 from bofire.data_models.features.api import (
     CategoricalInput,
-    CategoricalMolecularInput,
     CategoricalOutput,
     CategoricalTaskInput,
     CloneFeature,
@@ -712,7 +711,11 @@ specs.add_valid(
     lambda: {
         "inputs": Inputs(
             features=[
-                CategoricalMolecularInput(key="mol1", categories=["C", "CC", "CCC"]),
+                CategoricalInput(
+                    key="mol1",
+                    categories=["C", "CC", "CCC"],
+                    structure=["C", "CC", "CCC"],
+                ),
             ],
         ).model_dump(),
         "outputs": Outputs(

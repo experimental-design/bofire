@@ -7,7 +7,7 @@ import pytest
 from pandas.testing import assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
-from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
+from bofire.data_models.features.api import ContinuousInput
 
 
 def test_continuous_input_invalid_stepsize():
@@ -347,32 +347,17 @@ def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
         (ContinuousInput(key="k", bounds=(1, 2)), False, None),
         (ContinuousInput(key="k", bounds=(2, 3)), False, None),
         (
-            ContinuousDescriptorInput(
-                key="k",
-                bounds=(1, 1),
-                descriptors=["a", "b"],
-                values=[1, 2],
-            ),
+            ContinuousInput(key="k", bounds=(1, 1), descriptors={"a": [1], "b": [2]}),
             True,
             [1],
         ),
         (
-            ContinuousDescriptorInput(
-                key="k",
-                bounds=(1, 2),
-                descriptors=["a", "b"],
-                values=[1, 2],
-            ),
+            ContinuousInput(key="k", bounds=(1, 2), descriptors={"a": [1], "b": [2]}),
             False,
             None,
         ),
         (
-            ContinuousDescriptorInput(
-                key="k",
-                bounds=(2, 3),
-                descriptors=["a", "b"],
-                values=[1, 2],
-            ),
+            ContinuousInput(key="k", bounds=(2, 3), descriptors={"a": [1], "b": [2]}),
             False,
             None,
         ),

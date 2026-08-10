@@ -13,7 +13,6 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
@@ -28,7 +27,9 @@ from bofire.data_models.features.api import (
 
 if1 = specs.features.valid(ContinuousInput).obj(key="cont")
 if2 = specs.features.valid(CategoricalInput).obj(key="cat")
-if3 = specs.features.valid(CategoricalDescriptorInput).obj(key="cat_")
+if3 = specs.features.valid(CategoricalInput).obj(
+    key="cat_", descriptors={"d1": [1.0, 2.0, 3.0]}
+)
 if4 = specs.features.valid(CategoricalInput).obj(
     key="cat2",
     allowed=[True, True, False],

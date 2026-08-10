@@ -144,9 +144,7 @@ class BotorchStrategy(PredictiveStrategy):
 
         # A categorical needs the mixed GP only if it is *not* descriptor-encoded: with
         # descriptor data it turns into continuous columns a plain GP handles. Keyed on
-        # the data, not the type — a plain `CategoricalInput` carrying a `descriptors`
-        # table is the canonical form of what `CategoricalDescriptorInput` used to be,
-        # and the old `exact=True` check silently excluded only the latter.
+        # the data the feature carries, not on its type.
         if any(
             not feat.has_descriptor_data()
             for feat in domain.inputs.get(CategoricalInput, exact=False)

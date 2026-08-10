@@ -8,13 +8,8 @@ from bofire.data_models.descriptor_generators.api import (
 )
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import (
-    ContinuousDescriptorInput,
     ContinuousInput,
-    ContinuousMolecularInput,
-    MolecularWeightedMeanFeature,
-    MolecularWeightedSumFeature,
     SumFeature,
-    WeightedMeanFeature,
     WeightedSumFeature,
 )
 
@@ -38,15 +33,12 @@ def test_engineered_feature_validation():
 
 def test_weighted_sum_feature_validation():
     weighted_sum_feature = WeightedSumFeature(
-        key="w_sum1", features=["feat1", "feat2"], descriptors=["desc1", "desc2"]
+        key="w_sum1", features=["feat1", "feat2"], columns=["desc1", "desc2"]
     )
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
-                key="feat1",
-                bounds=(0, 1),
-                descriptors=["desc1", "desc2"],
-                values=[0.5, 0.5],
+            ContinuousInput(
+                key="feat1", bounds=(0, 1), descriptors={"desc1": [0.5], "desc2": [0.5]}
             ),
             ContinuousInput(key="feat2", bounds=(0, 1)),
         ]
@@ -58,17 +50,11 @@ def test_weighted_sum_feature_validation():
 
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
-                key="feat1",
-                bounds=(0, 1),
-                descriptors=["desc1", "desc2"],
-                values=[0.5, 0.5],
+            ContinuousInput(
+                key="feat1", bounds=(0, 1), descriptors={"desc1": [0.5], "desc2": [0.5]}
             ),
-            ContinuousDescriptorInput(
-                key="feat2",
-                bounds=(0, 1),
-                descriptors=["desc1", "desc3"],
-                values=[0.5, 0.5],
+            ContinuousInput(
+                key="feat2", bounds=(0, 1), descriptors={"desc1": [0.5], "desc3": [0.5]}
             ),
         ]
     )
@@ -79,16 +65,16 @@ def test_weighted_sum_feature_validation():
 
 
 def test_weighted_mean_feature_validation():
-    weighted_mean_feature = WeightedMeanFeature(
-        key="w_mean1", features=["feat1", "feat2"], descriptors=["desc1", "desc2"]
+    weighted_mean_feature = WeightedSumFeature(
+        key="w_mean1",
+        features=["feat1", "feat2"],
+        columns=["desc1", "desc2"],
+        normalize=True,
     )
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
-                key="feat1",
-                bounds=(0, 1),
-                descriptors=["desc1", "desc2"],
-                values=[0.5, 0.5],
+            ContinuousInput(
+                key="feat1", bounds=(0, 1), descriptors={"desc1": [0.5], "desc2": [0.5]}
             ),
             ContinuousInput(key="feat2", bounds=(0, 1)),
         ]
@@ -100,17 +86,11 @@ def test_weighted_mean_feature_validation():
 
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
-                key="feat1",
-                bounds=(0, 1),
-                descriptors=["desc1", "desc2"],
-                values=[0.5, 0.5],
+            ContinuousInput(
+                key="feat1", bounds=(0, 1), descriptors={"desc1": [0.5], "desc2": [0.5]}
             ),
-            ContinuousDescriptorInput(
-                key="feat2",
-                bounds=(0, 1),
-                descriptors=["desc1", "desc3"],
-                values=[0.5, 0.5],
+            ContinuousInput(
+                key="feat2", bounds=(0, 1), descriptors={"desc1": [0.5], "desc3": [0.5]}
             ),
         ]
     )
@@ -121,14 +101,15 @@ def test_weighted_mean_feature_validation():
 
 
 def test_molecular_weighted_sum_feature_validation():
-    mol_feature = MolecularWeightedSumFeature(
+    mol_feature = WeightedSumFeature(
         key="mw_sum1",
         features=["m1", "m2"],
-        molfeatures=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+        columns=[],
+        generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
     )
     inputs = Inputs(
         features=[
-            ContinuousMolecularInput(key="m1", bounds=(0, 1), molecule="C"),
+            ContinuousInput(key="m1", bounds=(0, 1), structure=["C"]),
             ContinuousInput(key="m2", bounds=(0, 1)),
         ]
     )
@@ -137,22 +118,24 @@ def test_molecular_weighted_sum_feature_validation():
 
     inputs = Inputs(
         features=[
-            ContinuousMolecularInput(key="m1", bounds=(0, 1), molecule="C"),
-            ContinuousMolecularInput(key="m2", bounds=(0, 1), molecule="CC"),
+            ContinuousInput(key="m1", bounds=(0, 1), structure=["C"]),
+            ContinuousInput(key="m2", bounds=(0, 1), structure=["CC"]),
         ]
     )
     mol_feature.validate_features(inputs)
 
 
 def test_molecular_weighted_mean_feature_validation():
-    mol_feature = MolecularWeightedMeanFeature(
+    mol_feature = WeightedSumFeature(
         key="mw_mean1",
         features=["m1", "m2"],
-        molfeatures=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+        columns=[],
+        generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
+        normalize=True,
     )
     inputs = Inputs(
         features=[
-            ContinuousMolecularInput(key="m1", bounds=(0, 1), molecule="C"),
+            ContinuousInput(key="m1", bounds=(0, 1), structure=["C"]),
             ContinuousInput(key="m2", bounds=(0, 1)),
         ]
     )
@@ -161,8 +144,8 @@ def test_molecular_weighted_mean_feature_validation():
 
     inputs = Inputs(
         features=[
-            ContinuousMolecularInput(key="m1", bounds=(0, 1), molecule="C"),
-            ContinuousMolecularInput(key="m2", bounds=(0, 1), molecule="CC"),
+            ContinuousInput(key="m1", bounds=(0, 1), structure=["C"]),
+            ContinuousInput(key="m2", bounds=(0, 1), structure=["CC"]),
         ]
     )
     mol_feature.validate_features(inputs)

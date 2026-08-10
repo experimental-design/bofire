@@ -15,7 +15,6 @@ from bofire.benchmarks.api import (
 from bofire.benchmarks.multi import ZDT1
 from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.constraints.api import LinearInequalityConstraint
-from bofire.data_models.features.api import ContinuousDescriptorInput
 from bofire.data_models.objectives.api import MinimizeObjective
 from bofire.data_models.strategies.api import RandomStrategy
 
@@ -65,7 +64,7 @@ def test_SyntheticBoTorch():
 def test_FormulationWrapper():
     benchmark = Himmelblau()
     wrapped = FormulationWrapper(benchmark=benchmark, n_filler_features=2)
-    assert len(wrapped.domain.inputs.get(ContinuousDescriptorInput)) == 0
+    assert not any(f.has_descriptor_data() for f in wrapped.domain.inputs.get())
     assert len(wrapped.domain.inputs) == len(benchmark.domain.inputs) + 2
     assert_array_equal(
         wrapped._mins, np.array([benchmark.domain.inputs[0].bounds[0]] * 2)

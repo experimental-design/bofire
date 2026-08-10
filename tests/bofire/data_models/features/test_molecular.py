@@ -11,10 +11,7 @@ from bofire.data_models.descriptor_generators.api import (
     MordredDescriptors,
 )
 from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
-from bofire.data_models.features.molecular import (
-    CategoricalMolecularInput,
-    ContinuousMolecularInput,
-)
+from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
@@ -103,7 +100,9 @@ INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
 def test_categorical_molecular_input_to_descriptor_encoding(
     key, transform_type, values
 ):
-    input_feature = CategoricalMolecularInput(key=key, categories=VALID_SMILES.tolist())
+    input_feature = CategoricalInput(
+        key=key, categories=VALID_SMILES.tolist(), structure=list(VALID_SMILES.tolist())
+    )
 
     encoded = DescriptorEncoding(columns=[], generators=[transform_type]).encode(
         input_feature, VALID_SMILES
@@ -116,21 +115,24 @@ def test_categorical_molecular_input_to_descriptor_encoding(
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_categorical_molecular_input_invalid_smiles():
     with pytest.raises(ValueError, match="abcd is not a valid smiles string."):
-        CategoricalMolecularInput(
+        CategoricalInput(
             key="a",
             categories=["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"],
+            structure=["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"],
         )
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_continous_molecular_input_valid_smiles():
     with pytest.raises(ValueError, match="abc is not a valid smiles string"):
-        ContinuousMolecularInput(key="a", bounds=[0, 1], molecule="abc")
+        ContinuousInput(key="a", bounds=[0, 1], structure=["abc"])
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_categorical_molecular_input_valid_smiles():
-    CategoricalMolecularInput(key="a", categories=VALID_SMILES.tolist())
+    CategoricalInput(
+        key="a", categories=VALID_SMILES.tolist(), structure=list(VALID_SMILES.tolist())
+    )
 
 
 @pytest.mark.parametrize(
@@ -144,7 +146,11 @@ def test_categorical_molecular_input_valid_smiles():
 )
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_categorical_molecular_input_from_descriptor_encoding(key):
-    feat = CategoricalMolecularInput(key=key, categories=VALID_SMILES.to_list())
+    feat = CategoricalInput(
+        key=key,
+        categories=VALID_SMILES.to_list(),
+        structure=list(VALID_SMILES.to_list()),
+    )
     values = pd.Series(data=["c1ccccc1", "[CH3][CH2][OH]"], name=key)
     for transform_type in [
         Fingerprints(),
@@ -162,10 +168,11 @@ def test_categorical_molecular_input_from_descriptor_encoding(key):
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_categorical_molecular_input_get_bounds():
     # first test with onehot
-    feat = CategoricalMolecularInput(
+    feat = CategoricalInput(
         key="a",
         categories=VALID_SMILES.to_list(),
         allowed=[True, True, True, True],
+        structure=list(VALID_SMILES.to_list()),
     )
     lower, upper = feat.get_bounds(
         transform_type=OneHotEncoding(),
@@ -174,10 +181,11 @@ def test_categorical_molecular_input_get_bounds():
     assert lower == [0 for _ in range(len(feat.categories))]
     assert upper == [1 for _ in range(len(feat.categories))]
     # now test it with descriptors,
-    feat = CategoricalMolecularInput(
+    feat = CategoricalInput(
         key="a",
         categories=VALID_SMILES.to_list(),
         allowed=[True, True, False, False],
+        structure=list(VALID_SMILES.to_list()),
     )
     lower, upper = DescriptorEncoding(
         columns=[],
@@ -211,7 +219,9 @@ def test_categorical_molecular_input_get_bounds():
 def test_categorical_molecular_input_to_pydantic_field():
     from typing import Literal
 
-    feat = CategoricalMolecularInput(key="mol", categories=["CCO", "CC"])
+    feat = CategoricalInput(
+        key="mol", categories=["CCO", "CC"], structure=["CCO", "CC"]
+    )
     field_type, field_info = feat.to_pydantic_field()
     assert field_type == Literal["CCO", "CC"]
     # SMILES now live in the explicit `structure` field, not the descriptor table,
@@ -224,7 +234,7 @@ def test_categorical_molecular_input_to_pydantic_field_falls_back_above_threshol
 
     # Generate enough distinct SMILES by varying alkane chain length
     smiles = ["C" * (i + 1) for i in range(LLM_ENUM_SCHEMA_THRESHOLD + 1)]
-    feat = CategoricalMolecularInput(key="mol", categories=smiles)
+    feat = CategoricalInput(key="mol", categories=smiles, structure=list(smiles))
     field_type, field_info = feat.to_pydantic_field()
     assert field_type is str
     # description still lists the SMILES so the LLM has guidance
@@ -233,7 +243,7 @@ def test_categorical_molecular_input_to_pydantic_field_falls_back_above_threshol
 
 
 def test_continuous_molecular_input_to_pydantic_field():
-    feat = ContinuousMolecularInput(key="conc", molecule="CCO", bounds=(0.0, 1.0))
+    feat = ContinuousInput(key="conc", bounds=(0.0, 1.0), structure=["CCO"])
     _, field_info = feat.to_pydantic_field()
     # the deprecated shim is now a plain ContinuousInput carrying a `smiles`
     # descriptor column; the SMILES no longer surfaces in the field description.

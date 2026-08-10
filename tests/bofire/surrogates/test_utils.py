@@ -23,10 +23,7 @@ from bofire.data_models.encodings.api import (
     OrdinalEncoding,
 )
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
-    CategoricalMolecularInput,
-    ContinuousDescriptorInput,
     ContinuousInput,
     MeanFeature,
     SumFeature,
@@ -84,7 +81,9 @@ def test_get_scaler_none():
                 "x_desc": DescriptorEncoding(),
             },
             Normalize,
-            torch.tensor([0, 1, 2, 3], dtype=torch.int64),
+            # x_desc is a plain CategoricalInput now, so it sorts after x_cat and its
+            # descriptor columns land at 4/5 rather than 2/3.
+            torch.tensor([0, 1, 4, 5], dtype=torch.int64),
             None,
             None,
         ),
@@ -106,7 +105,9 @@ def test_get_scaler_none():
                 "x_desc": DescriptorEncoding(),
             },
             InputStandardize,
-            torch.tensor([0, 1, 2, 3], dtype=torch.int64),
+            # x_desc is a plain CategoricalInput now, so it sorts after x_cat and its
+            # descriptor columns land at 4/5 rather than 2/3.
+            torch.tensor([0, 1, 4, 5], dtype=torch.int64),
             None,
             None,
         ),
@@ -152,11 +153,10 @@ def test_get_scaler(
         ]
         + [
             CategoricalInput(key="x_cat", categories=["mama", "papa"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="x_desc",
                 categories=["alpha", "beta"],
-                descriptors=["oskar", "wilde"],
-                values=[[1, 3], [6, 8]],
+                descriptors={"oskar": [1, 6], "wilde": [3, 8]},
             ),
         ],
     )
@@ -314,9 +314,15 @@ def test_get_scaler_molecular(
             for i in range(2)
         ]
         + [
-            CategoricalMolecularInput(
+            CategoricalInput(
                 key="x_mol",
                 categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+                structure=[
                     "CC(=O)Oc1ccccc1C(=O)O",
                     "c1ccccc1",
                     "[CH3][CH2][OH]",
@@ -349,11 +355,10 @@ def test_get_scaler_molecular(
 def test_get_scaler_engineered_features():
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key=f"x_{i + 1}",
                 bounds=(0, 5),
-                descriptors=["d1", "d2", "d3"],
-                values=[1.0, 2.0, 3.0],
+                descriptors={"d1": [1.0], "d2": [2.0], "d3": [3.0]},
             )
             for i in range(2)
         ]
@@ -364,7 +369,7 @@ def test_get_scaler_engineered_features():
             SumFeature(key="sum", features=["x_1", "x_2"]),
             MeanFeature(key="mean", features=["x_1", "x_2"]),
             WeightedSumFeature(
-                key="weighted_sum", features=["x_1", "x_2"], descriptors=["d1", "d3"]
+                key="weighted_sum", features=["x_1", "x_2"], columns=["d1", "d3"]
             ),
         ],
     )
@@ -538,15 +543,20 @@ def test_get_feature_keys(
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
-                descriptors=["d1", "d2"],
-                values=[[1, 2], [3, 4], [5, 6], [7, 8]],
+                descriptors={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]},
             ),
-            CategoricalMolecularInput(
+            CategoricalInput(
                 key="x4",
                 categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+                structure=[
                     "CC(=O)Oc1ccccc1C(=O)O",
                     "c1ccccc1",
                     "[CH3][CH2][OH]",

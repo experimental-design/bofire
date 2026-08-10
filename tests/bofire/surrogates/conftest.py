@@ -12,8 +12,8 @@ def chem_domain_simple() -> tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame]
     domain = domain_api.Domain(
         inputs=domain_api.Inputs(
             features=[
-                features_api.CategoricalMolecularInput(
-                    key="molecules", categories=mols1
+                features_api.CategoricalInput(
+                    key="molecules", categories=mols1, structure=list(mols1)
                 )
             ]
         ),

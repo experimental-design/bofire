@@ -30,7 +30,7 @@ from bofire.data_models.acquisition_functions.api import qLogEI
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.descriptor_generators.api import Fingerprints, Fragments
 from bofire.data_models.encodings.api import DescriptorEncoding
-from bofire.data_models.features.api import CategoricalMolecularInput, ContinuousOutput
+from bofire.data_models.features.api import CategoricalInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import RandomStrategy, SoboStrategy
 from bofire.data_models.surrogates.api import BotorchSurrogates, TanimotoGPSurrogate
@@ -60,9 +60,12 @@ main_file[benchmark["input"]] = df[benchmark["input"]].drop(nan_indices).to_list
 main_file[benchmark["output"]] = (
     df[benchmark["output"]].dropna().to_numpy().reshape(-1, 1)
 )
-input_feature = CategoricalMolecularInput(
+smiles = list(set(main_file[benchmark["input"]].to_list()))
+input_feature = CategoricalInput(
     key=benchmark["input"],
-    categories=list(set(main_file[benchmark["input"]].to_list())),
+    categories=smiles,
+    # the categories *are* SMILES, so they double as the structure column
+    structure=smiles,
 )
 objective = MaximizeObjective(
     w=1.0,

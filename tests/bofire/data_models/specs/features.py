@@ -2,7 +2,6 @@ import random
 import uuid
 
 import bofire.data_models.features.api as features
-from bofire.data_models.descriptor_generators.api import MordredDescriptors
 from bofire.data_models.objectives.api import (
     ConstrainedCategoricalObjective,
     MaximizeObjective,
@@ -73,40 +72,6 @@ specs.add_valid(
 )
 
 specs.add_valid(
-    features.WeightedMeanFeature,
-    lambda: {
-        "key": str(uuid.uuid4()),
-        "features": ["a", "b", "c"],
-        "columns": ["alpha", "beta"],
-        "generators": [],
-        "filter_descriptors": False,
-        "correlation_cutoff": 0.95,
-        "normalize": True,
-        "keep_features": True,
-        "context": None,
-    },
-)
-
-specs.add_valid(
-    features.MolecularWeightedSumFeature,
-    lambda: {
-        "key": str(uuid.uuid4()),
-        "features": ["a", "b", "c"],
-        "columns": None,
-        "generators": [
-            MordredDescriptors(
-                descriptors=["NssCH2", "ATSC2d"], ignore_3D=True
-            ).model_dump()
-        ],
-        "filter_descriptors": False,
-        "correlation_cutoff": 0.95,
-        "normalize": False,
-        "keep_features": True,
-        "context": None,
-    },
-)
-
-specs.add_valid(
     features.InterpolateFeature,
     lambda: {
         "key": str(uuid.uuid4()),
@@ -122,25 +87,6 @@ specs.add_valid(
         "append_y": [],
         "normalize_y": 1.0,
         "normalize_x": False,
-        "context": None,
-    },
-)
-
-specs.add_valid(
-    features.MolecularWeightedMeanFeature,
-    lambda: {
-        "key": str(uuid.uuid4()),
-        "features": ["a", "b", "c"],
-        "columns": None,
-        "generators": [
-            MordredDescriptors(
-                descriptors=["NssCH2", "ATSC2d"], ignore_3D=True
-            ).model_dump()
-        ],
-        "filter_descriptors": False,
-        "correlation_cutoff": 0.95,
-        "normalize": True,
-        "keep_features": True,
         "context": None,
     },
 )
@@ -347,22 +293,6 @@ specs.add_invalid(
 )
 
 specs.add_valid(
-    features.ContinuousDescriptorInput,
-    lambda: {
-        "key": str(uuid.uuid4()),
-        "bounds": [3, 5.3],
-        # legacy descriptors/values are migrated to the new `descriptors` table
-        # (single-element columns), which is the canonical (re-emitted) shape.
-        "descriptors": {"d1": [1.0], "d2": [2.0]},
-        "structure": None,
-        "unit": random.choice(["°C", "mg", "mmol/l", None]),
-        "local_relative_bounds": None,
-        "stepsize": None,
-        "allow_zero": False,
-        "context": None,
-    },
-)
-specs.add_valid(
     features.CategoricalInput,
     lambda: {
         "key": str(uuid.uuid4()),
@@ -468,19 +398,6 @@ specs.add_invalid(
 
 
 specs.add_valid(
-    features.CategoricalDescriptorInput,
-    lambda: {
-        "key": str(uuid.uuid4()),
-        "categories": ["c1", "c2", "c3"],
-        "allowed": [True, True, False],
-        # legacy descriptors/values are migrated to the new `descriptors` table,
-        # which is the canonical (re-emitted) shape.
-        "descriptors": {"d1": [1.0, 3.0, 5.0], "d2": [2.0, 7.0, 1.0]},
-        "structure": None,
-        "context": None,
-    },
-)
-specs.add_valid(
     features.ContinuousOutput,
     lambda: {
         "key": str(uuid.uuid4()),
@@ -499,47 +416,6 @@ specs.add_valid(
             categories=["a", "b", "c"],
             desirability=[True, True, False],
         ).model_dump(),
-        "context": None,
-    },
-)
-
-
-specs.add_valid(
-    features.CategoricalMolecularInput,
-    lambda: {
-        "key": str(uuid.uuid4()),
-        "categories": [
-            "CC(=O)Oc1ccccc1C(=O)O",
-            "c1ccccc1",
-            "[CH3][CH2][OH]",
-            "N[C@](C)(F)C(=O)O",
-        ],
-        "allowed": [True, True, True, True],
-        "descriptors": {},
-        # SMILES categories are mirrored into the explicit `structure` field.
-        "structure": [
-            "CC(=O)Oc1ccccc1C(=O)O",
-            "c1ccccc1",
-            "[CH3][CH2][OH]",
-            "N[C@](C)(F)C(=O)O",
-        ],
-        "context": None,
-    },
-)
-
-
-specs.add_valid(
-    features.ContinuousMolecularInput,
-    lambda: {
-        "key": str(uuid.uuid4()),
-        "descriptors": {},
-        # legacy `molecule` is mirrored into the explicit `structure` field.
-        "structure": ["CC"],
-        "bounds": [0.0, 1.0],
-        "allow_zero": False,
-        "unit": random.choice(["°C", "mg", "mmol/l", None]),
-        "local_relative_bounds": None,
-        "stepsize": None,
         "context": None,
     },
 )

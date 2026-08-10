@@ -10,11 +10,8 @@ from bofire.data_models.features.api import (
     EngineeredFeature,
     InterpolateFeature,
     MeanFeature,
-    MolecularWeightedMeanFeature,
-    MolecularWeightedSumFeature,
     ProductFeature,
     SumFeature,
-    WeightedMeanFeature,
     WeightedSumFeature,
 )
 from bofire.data_models.types import InputTransformSpecs
@@ -244,9 +241,6 @@ AGGREGATE_MAP: Dict[Type[EngineeredFeature], Callable] = {
     ProductFeature: map_product_feature,
     MeanFeature: map_mean_feature,
     WeightedSumFeature: map_weighted_feature,
-    WeightedMeanFeature: map_weighted_feature,
-    MolecularWeightedSumFeature: map_weighted_feature,
-    MolecularWeightedMeanFeature: map_weighted_feature,
     InterpolateFeature: map_interpolate_feature,
     CloneFeature: map_clone_feature,
 }

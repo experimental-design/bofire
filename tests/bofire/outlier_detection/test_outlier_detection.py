@@ -6,7 +6,6 @@ import bofire.data_models.outlier_detection.api as data_models
 import bofire.outlier_detection.api as mapper
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
@@ -271,11 +270,10 @@ def test_outlier_detectors_check_compatibility():
                     for i in range(3)
                 ]
                 + [
-                    CategoricalDescriptorInput(
+                    CategoricalInput(
                         key="cat",
                         categories=["apple", "banana"],
-                        descriptors=["length", "width"],
-                        values=[[1, 2], [3, 4]],
+                        descriptors={"length": [1, 3], "width": [2, 4]},
                     ),
                 ],
             ),
@@ -294,11 +292,10 @@ def test_outlier_detectors_check_compatibility():
                     for i in range(2)
                 ]
                 + [
-                    CategoricalDescriptorInput(
+                    CategoricalInput(
                         key="cat",
                         categories=["apple", "banana"],
-                        descriptors=["length", "width"],
-                        values=[[1, 2], [3, 4]],
+                        descriptors={"length": [1, 3], "width": [2, 4]},
                     ),
                 ],
             ),
@@ -334,11 +331,10 @@ def test_outlier_detectors_check_compatibility():
             for i in range(4)
         ]
         + [
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
+                descriptors={"length": [1, 3], "width": [2, 4]},
             ),
         ],
     )
@@ -374,11 +370,10 @@ def test_outlier_detectors_check_compatibility():
             for i in range(3)
         ]
         + [
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
+                descriptors={"length": [1, 3], "width": [2, 4]},
             ),
         ],
     )
@@ -414,11 +409,10 @@ def test_outlier_detectors_check_compatibility():
             for i in range(3)
         ]
         + [
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
+                descriptors={"length": [1, 3], "width": [2, 4]},
             ),
         ],
     )

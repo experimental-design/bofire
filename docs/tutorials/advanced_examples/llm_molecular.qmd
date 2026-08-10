@@ -35,7 +35,7 @@ from io import StringIO
 from bofire.benchmarks.data.photoswitches import EXPERIMENTS
 from bofire.benchmarks.LookupTableBenchmark import LookupTableBenchmark
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import CategoricalMolecularInput, ContinuousOutput
+from bofire.data_models.features.api import CategoricalInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective
 
 INPUT_KEY = "Molecule"
@@ -48,9 +48,10 @@ all_experiments = all_experiments.loc[all_experiments[OUTPUT_KEY].notnull()]
 
 domain = Domain.from_lists(
     inputs=[
-        CategoricalMolecularInput(
+        CategoricalInput(
             key=INPUT_KEY,
             categories=all_experiments[INPUT_KEY].to_list(),
+            structure=all_experiments[INPUT_KEY].to_list(),
         ),
     ],
     outputs=[ContinuousOutput(key=OUTPUT_KEY, objective=MaximizeObjective(w=1.0))],

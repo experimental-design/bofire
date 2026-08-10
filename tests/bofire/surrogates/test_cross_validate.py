@@ -6,7 +6,6 @@ import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
@@ -56,11 +55,10 @@ def test_model_cross_validate_descriptor():
             for i in range(2)
         ]
         + [
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="x_3",
                 categories=["a", "b", "c"],
-                descriptors=["alpha", "beta"],
-                values=[[1, 3], [2, 2], [3, 1]],
+                descriptors={"alpha": [1, 2, 3], "beta": [3, 2, 1]},
             ),
         ],
     )
@@ -311,11 +309,10 @@ def test_model_cross_validate_stratified(random_state):
         ]
         + [
             CategoricalInput(key="cat_x_3", categories=["category1", "category2"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors=["alpha", "beta"],
-                values=[[1, 3], [2, 2], [3, 1]],
+                descriptors={"alpha": [1, 2, 3], "beta": [3, 2, 1]},
             ),
         ],
     )
@@ -396,11 +393,10 @@ def test_model_cross_validate_stratified_invalid_feature_name():
         ]
         + [
             CategoricalInput(key="cat_x_3", categories=["category1", "category2"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors=["alpha", "beta"],
-                values=[[1, 3], [2, 2], [3, 1]],
+                descriptors={"alpha": [1, 2, 3], "beta": [3, 2, 1]},
             ),
         ],
     )
@@ -452,11 +448,10 @@ def test_model_cross_validate_stratified_invalid_feature_type(key):
         ]
         + [
             CategoricalInput(key="cat_x_3", categories=["category1", "category2"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors=["alpha", "beta"],
-                values=[[1, 3], [2, 2], [3, 1]],
+                descriptors={"alpha": [1, 2, 3], "beta": [3, 2, 1]},
             ),
         ],
     )
@@ -509,11 +504,10 @@ def test_model_cross_validate_groupfold(random_state):
         ]
         + [
             CategoricalInput(key="cat_x_3", categories=["category1", "category2"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors=["alpha", "beta"],
-                values=[[1, 3], [2, 2], [3, 1]],
+                descriptors={"alpha": [1, 2, 3], "beta": [3, 2, 1]},
             ),
         ],
     )

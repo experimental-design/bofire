@@ -20,9 +20,8 @@ from bofire.data_models.encodings.api import (
     OrdinalEncoding,
 )
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
-    CategoricalMolecularInput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
@@ -193,11 +192,9 @@ def test_inputs_is_fulfilled():
                         key="f1",
                         categories=["c11", "c12"],
                     ),
-                    CategoricalDescriptorInput(
+                    CategoricalTaskInput(
                         key="f2",
                         categories=["c21", "c22"],
-                        descriptors=["d21", "d22"],
-                        values=[[1, 2], [3, 4]],
                     ),
                 ],
             ),
@@ -205,7 +202,7 @@ def test_inputs_is_fulfilled():
                 [("f1", "c11"), ("f1", "c12")],
             ],
             CategoricalInput,
-            CategoricalDescriptorInput,
+            CategoricalTaskInput,
         ),
         (
             Inputs(
@@ -214,17 +211,15 @@ def test_inputs_is_fulfilled():
                         key="f1",
                         categories=["c11", "c12"],
                     ),
-                    CategoricalDescriptorInput(
+                    CategoricalTaskInput(
                         key="f2",
                         categories=["c21", "c22"],
-                        descriptors=["d21", "d22"],
-                        values=[[1, 2], [3, 4]],
                     ),
                 ],
             ),
             [
-                [("f2", "c21"), ("f2", "c22")],
                 [("f1", "c11"), ("f1", "c12")],
+                [("f2", "c21"), ("f2", "c22")],
             ],
             CategoricalInput,
             None,
@@ -236,18 +231,16 @@ def test_inputs_is_fulfilled():
                         key="f1",
                         categories=["c11", "c12"],
                     ),
-                    CategoricalDescriptorInput(
+                    CategoricalTaskInput(
                         key="f2",
                         categories=["c21", "c22"],
-                        descriptors=["d21", "d22"],
-                        values=[[1, 2], [3, 4]],
                     ),
                 ],
             ),
             [
                 [("f2", "c21"), ("f2", "c22")],
             ],
-            CategoricalDescriptorInput,
+            CategoricalTaskInput,
             None,
         ),
         (
@@ -257,16 +250,14 @@ def test_inputs_is_fulfilled():
                         key="f1",
                         categories=["c11", "c12"],
                     ),
-                    CategoricalDescriptorInput(
+                    CategoricalTaskInput(
                         key="f2",
                         categories=["c21", "c22"],
-                        descriptors=["d21", "d22"],
-                        values=[[1, 2], [3, 4]],
                     ),
                 ],
             ),
             [],
-            CategoricalDescriptorInput,
+            CategoricalTaskInput,
             CategoricalInput,
         ),
     ],
@@ -377,10 +368,17 @@ def test_inputs_sample_empty():
         ({"x1": OneHotEncoding()}),
         ({"x2": ScalerEnum.STANDARDIZE}),
         ({"x2": DescriptorEncoding()}),
-        ({"x1": Fingerprints()}),
-        ({"x2": Fragments()}),
-        ({"x3": Fingerprints()}),
-        ({"x3": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])}),
+        ({"x1": DescriptorEncoding(columns=[], generators=[Fingerprints()])}),
+        ({"x2": DescriptorEncoding(columns=[], generators=[Fragments()])}),
+        ({"x3": DescriptorEncoding(columns=[], generators=[Fingerprints()])}),
+        (
+            {
+                "x3": DescriptorEncoding(
+                    columns=[],
+                    generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
+                )
+            }
+        ),
     ],
 )
 def test_inputs_validate_transform_specs_invalid(specs):
@@ -388,11 +386,10 @@ def test_inputs_validate_transform_specs_invalid(specs):
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="x3",
                 categories=["apple", "banana"],
-                descriptors=["d1", "d2"],
-                values=[[1, 2], [3, 4]],
+                descriptors={"d1": [1, 3], "d2": [2, 4]},
             ),
         ],
     )
@@ -419,11 +416,10 @@ def test_inputs_validate_transform_valid(specs):
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="x3",
                 categories=["apple", "banana"],
-                descriptors=["d1", "d2"],
-                values=[[1, 2], [3, 4]],
+                descriptors={"d1": [1, 3], "d2": [2, 4]},
             ),
         ],
     )
@@ -442,13 +438,14 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="x3",
                 categories=["apple", "banana"],
-                descriptors=["d1", "d2"],
-                values=[[1, 2], [3, 4]],
+                descriptors={"d1": [1, 3], "d2": [2, 4]},
             ),
-            CategoricalMolecularInput(key="x4", categories=["CC", "CCC"]),
+            CategoricalInput(
+                key="x4", categories=["CC", "CCC"], structure=["CC", "CCC"]
+            ),
         ],
     )
     with pytest.raises(ValueError):
@@ -502,13 +499,14 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="x3",
                 categories=["apple", "banana"],
-                descriptors=["d1", "d2"],
-                values=[[1, 2], [3, 4]],
+                descriptors={"d1": [1, 3], "d2": [2, 4]},
             ),
-            CategoricalMolecularInput(key="x4", categories=["CC", "CCC"]),
+            CategoricalInput(
+                key="x4", categories=["CC", "CCC"], structure=["CC", "CCC"]
+            ),
         ],
     )
     inps._validate_transform_specs(specs)
@@ -527,9 +525,9 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
             },
             {
                 "x1": (0,),
-                "x2": (2050, 2051, 2052),
-                "x3": (2049,),
-                "x4": tuple(range(1, 1 + 2048)),
+                "x2": (1, 2, 3),
+                "x3": (4,),
+                "x4": tuple(range(5, 5 + 2048)),
             },
             {
                 "x1": ("x1",),
@@ -550,7 +548,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
                     ],
                 ),
             },
-            {"x1": (0,), "x2": (4, 5), "x3": (3,), "x4": (1, 2)},
+            {"x1": (0,), "x2": (1, 2), "x3": (3,), "x4": (4, 5)},
             {
                 "x1": ("x1",),
                 "x2": ("x2_banana", "x2_orange"),
@@ -571,9 +569,9 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
             },
             {
                 "x1": (0,),
-                "x2": (2052,),
-                "x3": (2051,),
-                "x4": tuple(range(1, 2048 + 2 + 1)),
+                "x2": (1,),
+                "x3": (2,),
+                "x4": tuple(range(3, 3 + 2048 + 2)),
             },
             {
                 "x1": ("x1",),
@@ -593,7 +591,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
                     generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
                 ),
             },
-            {"x1": (0,), "x2": (7,), "x3": (3, 4, 5, 6), "x4": (1, 2)},
+            {"x1": (0,), "x2": (1,), "x3": (2, 3, 4, 5), "x4": (6, 7)},
             {
                 "x1": ("x1",),
                 "x2": ("x2",),
@@ -610,7 +608,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
                     generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
                 ),
             },
-            {"x1": (0,), "x2": (5, 6, 7), "x3": (3, 4), "x4": (1, 2)},
+            {"x1": (0,), "x2": (1, 2, 3), "x3": (4, 5), "x4": (6, 7)},
             {
                 "x1": ("x1",),
                 "x2": ("x2_apple", "x2_banana", "x2_orange"),
@@ -632,13 +630,14 @@ def test_inputs_get_transform_info(
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
-                descriptors=["d1", "d2"],
-                values=[[1, 2], [3, 4], [5, 6], [7, 8]],
+                descriptors={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]},
             ),
-            CategoricalMolecularInput(key="x4", categories=["CC", "CCC"]),
+            CategoricalInput(
+                key="x4", categories=["CC", "CCC"], structure=["CC", "CCC"]
+            ),
         ],
     )
     features2idx, features2names = inps._get_transform_info(specs)
@@ -679,11 +678,10 @@ def test_inputs_transform(specs):
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
-                descriptors=["d1", "d2"],
-                values=[[1, 2], [3, 4], [5, 6], [7, 8]],
+                descriptors={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]},
             ),
         ],
     )
@@ -700,9 +698,15 @@ def test_input_reverse_transform_molecular():
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
-            CategoricalMolecularInput(
+            CategoricalInput(
                 key="x3",
                 categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+                structure=[
                     "CC(=O)Oc1ccccc1C(=O)O",
                     "c1ccccc1",
                     "[CH3][CH2][OH]",
@@ -887,15 +891,20 @@ def test_inputs_transform_molecular(specs, expected):
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
-                descriptors=["d1", "d2"],
-                values=[[1, 2], [3, 4], [5, 6], [7, 8]],
+                descriptors={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]},
             ),
-            CategoricalMolecularInput(
+            CategoricalInput(
                 key="x4",
                 categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+                structure=[
                     "CC(=O)Oc1ccccc1C(=O)O",
                     "c1ccccc1",
                     "[CH3][CH2][OH]",
@@ -905,7 +914,9 @@ def test_inputs_transform_molecular(specs, expected):
         ],
     )
     transformed = inps.transform(experiments=experiments, specs=specs)
-    assert_frame_equal(transformed, pd.DataFrame.from_dict(expected))
+    # check_like: this test is about the transformed *values*; the column order is
+    # covered explicitly by test_inputs_get_transform_info.
+    assert_frame_equal(transformed, pd.DataFrame.from_dict(expected), check_like=True)
 
 
 if1 = specs.features.valid(ContinuousInput).obj(key="if1")
@@ -920,27 +931,17 @@ if4 = specs.features.valid(CategoricalInput).obj(
     categories=["c1", "c2", "c3"],
     allowed=[True, False, False],
 )
-if5 = specs.features.valid(CategoricalDescriptorInput).obj(
+if5 = specs.features.valid(CategoricalInput).obj(
     key="if5",
     categories=["c1", "c2", "c3"],
     allowed=[True, False, False],
-    descriptors=["d1", "d2"],
-    values=[
-        [1, 2],
-        [3, 7],
-        [5, 1],
-    ],
+    descriptors={"d1": [1, 3, 5], "d2": [2, 7, 1]},
 )
-if6 = specs.features.valid(CategoricalDescriptorInput).obj(
+if6 = specs.features.valid(CategoricalInput).obj(
     key="if6",
     categories=["c1", "c2", "c3"],
     allowed=[True, False, False],
-    descriptors=["d1", "d2"],
-    values=[
-        [1, 2],
-        [3, 7],
-        [5, 1],
-    ],
+    descriptors={"d1": [1, 3, 5], "d2": [2, 7, 1]},
 )
 
 of1 = specs.features.valid(ContinuousOutput).obj(key="of1")
@@ -968,7 +969,7 @@ inputs2 = Inputs(
                 "if3": OneHotEncoding(),
                 "if5": DescriptorEncoding(),
             },
-            [[3, 1, 2, 0, 0, 0], [5.3, 1, 2, 1, 1, 1]],
+            [[3, 0, 0, 0, 1, 2], [5.3, 1, 1, 1, 1, 2]],
         ),
         (
             inputs1,
@@ -976,7 +977,7 @@ inputs2 = Inputs(
                 "if3": OneHotEncoding(drop_first=True),
                 "if5": DescriptorEncoding(),
             },
-            [[3, 1, 2, 0, 0], [5.3, 1, 2, 1, 1]],
+            [[3, 0, 0, 1, 2], [5.3, 1, 1, 1, 2]],
         ),
         (
             inputs1,
@@ -992,7 +993,7 @@ inputs2 = Inputs(
                 "if3": OneHotEncoding(),
                 "if5": OneHotEncoding(),
             },
-            [[3, 0, 0, 0, 0, 0, 0], [5.3, 1, 0, 0, 1, 1, 1]],
+            [[3, 0, 0, 0, 0, 0, 0], [5.3, 1, 1, 1, 1, 0, 0]],
         ),
         (
             inputs1,
@@ -1000,7 +1001,7 @@ inputs2 = Inputs(
                 "if3": OrdinalEncoding(),
                 "if5": DescriptorEncoding(),
             },
-            [[3, 1, 2, 0], [5.3, 1, 2, 2]],
+            [[3, 0, 1, 2], [5.3, 2, 1, 2]],
         ),
         (
             inputs1,
@@ -1020,21 +1021,8 @@ inputs2 = Inputs(
                 "if6": DescriptorEncoding(),
             },
             [
-                [3, 3, 1, 2, 1, 2, 0, 0, 0, 0, 0, 0],
-                [
-                    5.3,
-                    3,
-                    1,
-                    2,
-                    1,
-                    2,
-                    1,
-                    1,
-                    1,
-                    1,
-                    0,
-                    0,
-                ],
+                [3, 3, 0, 0, 0, 0, 0, 0, 1, 2, 1, 2],
+                [5.3, 3, 1, 1, 1, 1, 0, 0, 1, 2, 1, 2],
             ],
         ),
         (
@@ -1047,7 +1035,7 @@ inputs2 = Inputs(
             },
             [
                 [3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [5.3, 3, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0],
+                [5.3, 3, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0],
             ],
         ),
         (
@@ -1059,17 +1047,8 @@ inputs2 = Inputs(
                 "if6": DescriptorEncoding(),
             },
             [
-                [
-                    3,
-                    3,
-                    1,
-                    2,
-                    1,
-                    2,
-                    0,
-                    0,
-                ],
-                [5.3, 3, 1, 2, 1, 2, 2, 2],
+                [3, 3, 0, 0, 1, 2, 1, 2],
+                [5.3, 3, 2, 2, 1, 2, 1, 2],
             ],
         ),
         (
@@ -1091,18 +1070,8 @@ inputs2 = Inputs(
                 "if6": DescriptorEncoding(),
             },
             [
-                [3.0, 3.0, 0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 0.0],
-                [
-                    5.3,
-                    3.0,
-                    2.0,
-                    1.0,
-                    2.0,
-                    2.0,
-                    1.0,
-                    0.0,
-                    0.0,
-                ],
+                [3.0, 3.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0],
+                [5.3, 3.0, 2.0, 1.0, 0.0, 0.0, 2.0, 1.0, 2.0],
             ],
         ),
     ],
@@ -1185,20 +1154,23 @@ def test_inputs_get_bounds_fit():
         },
         experiments=experiments,
     )
+    # layout is if1, if2, if3_c1..c3, if4_c1..c3, if5_d1, if5_d2, if6_d1, if6_d2
+    d1, d2 = -4, -3  # if5's two descriptor columns
+    oh1, oh2 = -6, -5  # if4's two disallowed one-hot columns
     # check difference in descriptors
-    assert opt_bounds[0][-8] == 1
-    assert opt_bounds[1][-8] == 1
-    assert opt_bounds[0][-7] == 2
-    assert opt_bounds[1][-7] == 2
-    assert fit_bounds[0][-8] == 1
-    assert fit_bounds[0][-7] == 1
-    assert fit_bounds[1][-8] == 5
-    assert fit_bounds[1][-7] == 7
+    assert opt_bounds[0][d1] == 1
+    assert opt_bounds[1][d1] == 1
+    assert opt_bounds[0][d2] == 2
+    assert opt_bounds[1][d2] == 2
+    assert fit_bounds[0][d1] == 1
+    assert fit_bounds[0][d2] == 1
+    assert fit_bounds[1][d1] == 5
+    assert fit_bounds[1][d2] == 7
     # check difference in onehots
-    assert opt_bounds[1][-1] == 0
-    assert opt_bounds[1][-2] == 0
-    assert fit_bounds[1][-1] == 1
-    assert fit_bounds[1][-2] == 1
+    assert opt_bounds[1][oh1] == 0
+    assert opt_bounds[1][oh2] == 0
+    assert fit_bounds[1][oh1] == 1
+    assert fit_bounds[1][oh2] == 1
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
@@ -1217,8 +1189,8 @@ def test_inputs_get_bounds_fit():
             ["x2", "x3"],
             ["x4"],
             [0],
-            [3, 4, 5, 6, 7, 8, 9],
-            [1, 2],
+            [1, 2, 3, 4, 5, 6, 7],
+            [8, 9],
         ),
         (
             {
@@ -1237,8 +1209,8 @@ def test_inputs_get_bounds_fit():
             ["x2", "x3"],
             ["x4"],
             [0],
-            [3, 4, 5, 6, 7, 8, 9],
-            [1, 2],
+            [1, 2, 3, 4, 5, 6, 7],
+            [8, 9],
         ),
         (
             {
@@ -1252,8 +1224,8 @@ def test_inputs_get_bounds_fit():
             ["x1", "x4"],
             ["x2", "x3"],
             [],
-            [0, 1, 2],
-            [3, 4, 5, 6, 7, 8, 9],
+            [0, 8, 9],
+            [1, 2, 3, 4, 5, 6, 7],
             [],
         ),
         (
@@ -1267,9 +1239,9 @@ def test_inputs_get_bounds_fit():
             ["x1", "x3"],
             ["x2"],
             ["x4"],
-            [0, 3, 4],
-            [5, 6, 7],
-            [1, 2],
+            [0, 4, 5],
+            [1, 2, 3],
+            [6, 7],
         ),
         (
             {
@@ -1287,9 +1259,9 @@ def test_inputs_get_bounds_fit():
             ["x1", "x3"],
             ["x2"],
             ["x4"],
-            [0, 3, 4],
-            [5, 6, 7],
-            [1, 2],
+            [0, 4, 5],
+            [1, 2, 3],
+            [6, 7],
         ),
         (
             {
@@ -1303,8 +1275,8 @@ def test_inputs_get_bounds_fit():
             ["x1", "x3", "x4"],
             ["x2"],
             [],
-            [0, 1, 2, 3, 4],
-            [5, 6, 7],
+            [0, 4, 5, 6, 7],
+            [1, 2, 3],
             [],
         ),
     ],
@@ -1322,13 +1294,14 @@ def test_inputs_get_feature_indices(
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
-                descriptors=["d1", "d2"],
-                values=[[1, 2], [3, 4], [5, 6], [7, 8]],
+                descriptors={"d1": [1, 3, 5, 7], "d2": [2, 4, 6, 8]},
             ),
-            CategoricalMolecularInput(key="x4", categories=["CC", "CCC"]),
+            CategoricalInput(
+                key="x4", categories=["CC", "CCC"], structure=["CC", "CCC"]
+            ),
         ],
     )
 

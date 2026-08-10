@@ -1,4 +1,3 @@
-import warnings
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
 
@@ -106,20 +105,6 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
     order_id: ClassVar[int] = 2
     normalize: bool = False
 
-    @model_validator(mode="before")
-    @classmethod
-    def _migrate_legacy_descriptors(cls, data):
-        # legacy shape: descriptors=[names] (static) -> columns=[names]
-        if isinstance(data, dict) and "columns" not in data and "descriptors" in data:
-            warnings.warn(
-                "`descriptors=` on WeightedSumFeature is deprecated; use "
-                "`columns=[...]` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            data["columns"] = data.pop("descriptors")
-        return data
-
     def component_table(self, features: List["DescriptorsMixin"]) -> pd.DataFrame:
         """Descriptor table with one row per component feature (weighted-sum scope).
 
@@ -158,69 +143,6 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
         super().validate_features(inputs)
         for key in self.features:
             self.validate_for(inputs.get_by_key(key))
-
-
-class WeightedMeanFeature(WeightedSumFeature):
-    """Deprecated. Use :class:`WeightedSumFeature` with ``normalize=True``."""
-
-    type: Literal["WeightedMeanFeature"] = "WeightedMeanFeature"
-    order_id: ClassVar[int] = 6
-
-    @model_validator(mode="before")
-    @classmethod
-    def _migrate_mean(cls, data):
-        if isinstance(data, dict):
-            warnings.warn(
-                "`WeightedMeanFeature` is deprecated, use "
-                "`WeightedSumFeature(normalize=True)` instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            data.setdefault("normalize", True)
-        return data
-
-
-class MolecularWeightedSumFeature(WeightedSumFeature):
-    """Deprecated. Use :class:`WeightedSumFeature` with ``generators=[...]``."""
-
-    type: Literal["MolecularWeightedSumFeature"] = "MolecularWeightedSumFeature"
-    order_id: ClassVar[int] = 3
-
-    @model_validator(mode="before")
-    @classmethod
-    def _migrate_molecular(cls, data):
-        if (
-            isinstance(data, dict)
-            and "generators" not in data
-            and "molfeatures" in data
-        ):
-            warnings.warn(
-                "`MolecularWeightedSumFeature` is deprecated, use "
-                "`WeightedSumFeature(generators=[...])`.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            mol = data.pop("molfeatures")
-            if isinstance(mol, dict) and mol.get("type") == "CompositeMolFeatures":
-                data["generators"] = mol["features"]
-            else:
-                data["generators"] = [mol]
-        return data
-
-
-class MolecularWeightedMeanFeature(MolecularWeightedSumFeature):
-    """Deprecated. Use :class:`WeightedSumFeature` with ``generators=...`` and
-    ``normalize=True``."""
-
-    type: Literal["MolecularWeightedMeanFeature"] = "MolecularWeightedMeanFeature"
-    order_id: ClassVar[int] = 7
-
-    @model_validator(mode="before")
-    @classmethod
-    def _migrate_mean(cls, data):
-        if isinstance(data, dict):
-            data.setdefault("normalize", True)
-        return data
 
 
 class ProductFeature(EngineeredFeature):

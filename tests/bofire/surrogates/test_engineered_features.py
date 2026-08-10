@@ -9,16 +9,11 @@ from bofire.data_models.descriptor_generators.api import MordredDescriptors
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import (
     CloneFeature,
-    ContinuousDescriptorInput,
     ContinuousInput,
-    ContinuousMolecularInput,
     InterpolateFeature,
     MeanFeature,
-    MolecularWeightedMeanFeature,
-    MolecularWeightedSumFeature,
     ProductFeature,
     SumFeature,
-    WeightedMeanFeature,
     WeightedSumFeature,
 )
 from bofire.surrogates.engineered_features import (
@@ -132,38 +127,21 @@ def test_map_product_feature(features, expected_idx):
 def test_map_weighted_sum_feature():
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
-                key="x1",
-                bounds=[0, 1],
-                descriptors=["d1", "d2", "d3"],
-                values=[1, 2, 3],
+            ContinuousInput(
+                key="x1", bounds=[0, 1], descriptors={"d1": [1], "d2": [2], "d3": [3]}
             ),
-            ContinuousDescriptorInput(
-                key="x2",
-                bounds=[0, 1],
-                descriptors=["d1", "d2", "d3"],
-                values=[4, 5, 6],
+            ContinuousInput(
+                key="x2", bounds=[0, 1], descriptors={"d1": [4], "d2": [5], "d3": [6]}
             ),
-            ContinuousDescriptorInput(
-                key="x3",
-                bounds=[0, 1],
-                descriptors=[
-                    "d1",
-                    "d2",
-                    "d3",
-                ],
-                values=[
-                    7,
-                    8,
-                    9,
-                ],
+            ContinuousInput(
+                key="x3", bounds=[0, 1], descriptors={"d1": [7], "d2": [8], "d3": [9]}
             ),
         ]
     )
     aggregation = WeightedSumFeature(
         key="agg1",
         features=["x1", "x2", "x3"],
-        descriptors=[
+        columns=[
             "d1",
             "d2",
         ],
@@ -192,30 +170,19 @@ def test_map_weighted_sum_feature():
 def test_map_weighted_mean_feature():
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
-                key="x1",
-                bounds=[0, 1],
-                descriptors=["d1", "d2", "d3"],
-                values=[1, 2, 3],
+            ContinuousInput(
+                key="x1", bounds=[0, 1], descriptors={"d1": [1], "d2": [2], "d3": [3]}
             ),
-            ContinuousDescriptorInput(
-                key="x2",
-                bounds=[0, 1],
-                descriptors=["d1", "d2", "d3"],
-                values=[4, 5, 6],
+            ContinuousInput(
+                key="x2", bounds=[0, 1], descriptors={"d1": [4], "d2": [5], "d3": [6]}
             ),
-            ContinuousDescriptorInput(
-                key="x3",
-                bounds=[0, 1],
-                descriptors=["d1", "d2", "d3"],
-                values=[7, 8, 9],
+            ContinuousInput(
+                key="x3", bounds=[0, 1], descriptors={"d1": [7], "d2": [8], "d3": [9]}
             ),
         ]
     )
-    aggregation = WeightedMeanFeature(
-        key="agg1",
-        features=["x1", "x2", "x3"],
-        descriptors=["d1", "d2"],
+    aggregation = WeightedSumFeature(
+        key="agg1", features=["x1", "x2", "x3"], columns=["d1", "d2"], normalize=True
     )
 
     assert len(aggregation.get_names(inputs)) == 2
@@ -239,24 +206,16 @@ def test_map_weighted_mean_feature():
 def test_map_weighted_mean_feature_zero_weight_sum():
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
-                key="x1",
-                bounds=[0, 1],
-                descriptors=["d1", "d2"],
-                values=[1, 2],
+            ContinuousInput(
+                key="x1", bounds=[0, 1], descriptors={"d1": [1], "d2": [2]}
             ),
-            ContinuousDescriptorInput(
-                key="x2",
-                bounds=[0, 1],
-                descriptors=["d1", "d2"],
-                values=[3, 4],
+            ContinuousInput(
+                key="x2", bounds=[0, 1], descriptors={"d1": [3], "d2": [4]}
             ),
         ]
     )
-    aggregation = WeightedMeanFeature(
-        key="agg1",
-        features=["x1", "x2"],
-        descriptors=["d1", "d2"],
+    aggregation = WeightedSumFeature(
+        key="agg1", features=["x1", "x2"], columns=["d1", "d2"], normalize=True
     )
     aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
@@ -282,18 +241,19 @@ def test_map_weighted_mean_feature_zero_weight_sum():
 def test_map_molecular_weighted_sum_feature():
     inputs = Inputs(
         features=[
-            ContinuousMolecularInput(key="m1", bounds=[0, 1], molecule="C"),
-            ContinuousMolecularInput(key="m2", bounds=[0, 1], molecule="CC"),
+            ContinuousInput(key="m1", bounds=[0, 1], structure=["C"]),
+            ContinuousInput(key="m2", bounds=[0, 1], structure=["CC"]),
         ]
     )
     molfeatures = MordredDescriptors(descriptors=["NssCH2", "ATSC2d"], ignore_3D=True)
     # opt into correlation filtering on the feature (default is off)
-    aggregation = MolecularWeightedSumFeature(
+    aggregation = WeightedSumFeature(
         key="agg1",
         features=["m1", "m2"],
-        molfeatures=molfeatures,
         filter_descriptors=True,
         correlation_cutoff=1.0,
+        columns=[],
+        generators=[molfeatures],
     )
 
     aggregation.validate_features(inputs)
@@ -576,16 +536,18 @@ def test_map_interpolate_feature_3d_input():
 def test_map_molecular_weighted_mean_feature():
     inputs = Inputs(
         features=[
-            ContinuousMolecularInput(key="m1", bounds=[0, 1], molecule="C"),
-            ContinuousMolecularInput(key="m2", bounds=[0, 1], molecule="CC"),
+            ContinuousInput(key="m1", bounds=[0, 1], structure=["C"]),
+            ContinuousInput(key="m2", bounds=[0, 1], structure=["CC"]),
         ]
     )
     molfeatures = MordredDescriptors(descriptors=["NssCH2", "ATSC2d"], ignore_3D=True)
     # no filtering (default): both descriptor columns are kept
-    aggregation = MolecularWeightedMeanFeature(
+    aggregation = WeightedSumFeature(
         key="agg1",
         features=["m1", "m2"],
-        molfeatures=molfeatures,
+        columns=[],
+        generators=[molfeatures],
+        normalize=True,
     )
 
     aggregator = map_weighted_feature(

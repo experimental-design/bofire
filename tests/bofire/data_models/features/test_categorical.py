@@ -11,11 +11,7 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
-from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
-    CategoricalInput,
-    CategoricalOutput,
-)
+from bofire.data_models.features.api import CategoricalInput, CategoricalOutput
 from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
 
 
@@ -379,12 +375,11 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
     assert np.allclose(lower, expected[0])
     assert np.allclose(upper, expected[1])
     # test the same for the categorical with descriptor
-    f = CategoricalDescriptorInput(
+    f = CategoricalInput(
         key="c",
         categories=feature.categories,
         allowed=feature.allowed,
-        descriptors=["alpha", "beta"],
-        values=[[1, 2], [3, 4], [5, 6]],
+        descriptors={"alpha": [1, 3, 5], "beta": [2, 4, 6]},
     )
     lower, upper = f.get_bounds(transform_type=transform_type, values=values)
     assert np.allclose(lower, expected[0])
@@ -429,12 +424,11 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
     ]
     + [
         (
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="k",
                 categories=["1", "2", "3"],
                 allowed=[True, False, False],
-                descriptors=["alpha", "beta"],
-                values=[[1, 2], [3, 4], [5, 6]],
+                descriptors={"alpha": [1, 3, 5], "beta": [2, 4, 6]},
             ),
             expected,
             expected_value,
@@ -579,16 +573,3 @@ def test_descriptor_encoding_filter_prunes_correlated_columns():
     # with filtering, the collinear d2 is dropped (the earlier d1 is kept)
     filtered = DescriptorEncoding(filter_descriptors=True).get_names(feat)
     assert filtered == ["c_d1", "c_d3"]
-
-
-def test_legacy_smiles_descriptor_migrates_to_structure():
-    """Old dumps stored SMILES as a `smiles` descriptor column; it moves to `structure`."""
-    from bofire.data_models.features.api import CategoricalInput
-
-    feat = CategoricalInput(
-        key="c",
-        categories=["a", "b"],
-        descriptors={"smiles": ["O", "CCO"], "mw": [18.0, 46.0]},
-    )
-    assert feat.structure == ["O", "CCO"]
-    assert list(feat.descriptors) == ["mw"]  # smiles no longer a descriptor column

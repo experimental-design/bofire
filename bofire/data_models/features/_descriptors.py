@@ -116,17 +116,6 @@ class DescriptorsMixin(BaseModel):
         """
         return [self.key]
 
-    @model_validator(mode="before")
-    @classmethod
-    def _migrate_legacy_smiles(cls, data):
-        """Back-compat: old dumps stored SMILES as a ``"smiles"`` descriptor column."""
-        if isinstance(data, dict) and isinstance(data.get("descriptors"), dict):
-            descriptors = dict(data["descriptors"])
-            if "smiles" in descriptors and data.get("structure") is None:
-                data = {**data, "structure": descriptors.pop("smiles")}
-                data["descriptors"] = descriptors
-        return data
-
     @field_validator("descriptors")
     @classmethod
     def _coerce_descriptors(cls, descriptors):
@@ -168,10 +157,7 @@ class DescriptorsMixin(BaseModel):
 
         True when it has numeric descriptor columns and/or a structure column, i.e. when
         it can be descriptor-encoded rather than treated as a plain set of levels. This
-        is a property of the *data*, not of the class: a plain ``CategoricalInput`` with
-        a ``descriptors`` table is descriptor-carrying, which is what the deprecated
-        ``CategoricalDescriptorInput`` / ``CategoricalMolecularInput`` types used to
-        signal by their type alone.
+        is a property of the *data*, not of the class.
         """
         return bool(self.descriptors) or self.structure is not None
 

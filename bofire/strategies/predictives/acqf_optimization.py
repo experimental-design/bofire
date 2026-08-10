@@ -835,7 +835,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
     and selection.
 
     - `CategoricalInput` variables, which are treated as one-hot-encoded columns by the model and the acquisition functions, are turned into categorical variables for the GA optimization. In the objective function, these categorical variables are transformed to one-hot-encoded tensors. The object `BofireDomainMixedVars` handles this conversion.
-    - `CategoricalDescriptorInput` is also transformed in to a categorical pymoo variable, but transformed into the descriptor space
+    - A `CategoricalInput` carrying descriptor data is also transformed into a categorical pymoo variable, but transformed into the descriptor space
     - `DiscreteInput` will be converted to an pymoo Integer.
 
     All transformations are handled in the helper class `BofireDomainMixedVars`

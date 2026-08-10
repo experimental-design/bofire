@@ -23,16 +23,6 @@ smiles = [
 VALID_SMILES = pd.Series(smiles)
 
 
-def test_legacy_filter_fields_are_dropped_with_warning():
-    """Correlation filtering moved to the descriptor encoding/feature; old generator
-    dumps carrying the filter fields still load (fields popped, with a warning)."""
-    with pytest.warns(DeprecationWarning):
-        fp = Fingerprints(n_bits=32, filter_descriptors=True, correlation_cutoff=0.9)
-    dump = fp.model_dump()
-    assert "filter_descriptors" not in dump
-    assert "correlation_cutoff" not in dump
-
-
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_fragments():
     from rdkit.Chem import Descriptors

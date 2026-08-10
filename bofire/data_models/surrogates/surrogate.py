@@ -1,8 +1,7 @@
-import warnings
 from abc import abstractmethod
 from typing import Any, Optional, Type
 
-from pydantic import field_validator, model_validator
+from pydantic import field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
@@ -16,22 +15,6 @@ class Surrogate(BaseModel):
     inputs: Inputs
     outputs: Outputs
     dump: Optional[str] = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def _drop_legacy_input_preprocessing_specs(cls, data):
-        """``input_preprocessing_specs`` is now derived (ordinal for every categorical);
-        drop it from old dumps / calls so they still load."""
-        if isinstance(data, dict) and "input_preprocessing_specs" in data:
-            warnings.warn(
-                "`input_preprocessing_specs` is deprecated and ignored: categoricals are "
-                "always ordinal-encoded before the model, and the in-model encoding is set "
-                "via `categorical_encodings`.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            data = {k: v for k, v in data.items() if k != "input_preprocessing_specs"}
-        return data
 
     @property
     def input_preprocessing_specs(self) -> InputTransformSpecs:

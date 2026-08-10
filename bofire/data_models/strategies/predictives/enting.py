@@ -9,7 +9,6 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
 )
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
@@ -68,7 +67,6 @@ class EntingStrategy(PredictiveStrategy):
         return my_type in [
             CategoricalInput,
             DiscreteInput,
-            CategoricalDescriptorInput,
             ContinuousInput,
             ContinuousOutput,
         ]

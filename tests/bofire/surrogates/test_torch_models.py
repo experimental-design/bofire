@@ -20,7 +20,6 @@ import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.encodings.api import OneHotEncoding, OrdinalEncoding
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     CategoricalTaskInput,
     ContinuousInput,
@@ -52,11 +51,10 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
         ]
         + [
             CategoricalInput(key="x_cat", categories=["mama", "papa"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
+                descriptors={"length": [1, 3], "width": [2, 4]},
             ),
         ],
     )
@@ -135,11 +133,10 @@ def test_BotorchSurrogates_invalid_inputs():
                             for i in range(3)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors={"length": [1, 3], "width": [2, 4]},
                             ),
                         ],
                     ),
@@ -157,11 +154,10 @@ def test_BotorchSurrogates_invalid_inputs():
                             for i in range(2)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors={"length": [1, 3], "width": [2, 4]},
                             ),
                         ],
                     ),
@@ -198,11 +194,10 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             for i in range(3)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors={"length": [1, 3], "width": [2, 4]},
                             ),
                         ],
                     ),
@@ -221,11 +216,10 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             for i in range(2)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors={"length": [1, 3], "width": [2, 4]},
                             ),
                         ],
                     ),
@@ -248,11 +242,10 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             for i in range(3)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors={"length": [1, 3], "width": [2, 4]},
                             ),
                         ],
                     ),
@@ -271,11 +264,10 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             for i in range(2)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors={"length": [1, 3], "width": [2, 4]},
                             ),
                         ],
                     ),
@@ -298,11 +290,10 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             for i in range(3)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors={"length": [1, 3], "width": [2, 4]},
                             ),
                         ],
                     ),
@@ -321,11 +312,10 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             for i in range(2)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors={"length": [1, 3], "width": [2, 4]},
                             ),
                         ],
                     ),
@@ -358,11 +348,10 @@ def test_botorch_models_check_compatibility(output_scaler):
                 for i in range(3)
             ]
             + [
-                CategoricalDescriptorInput(
+                CategoricalInput(
                     key="cat",
                     categories=["apple", "banana"],
-                    descriptors=["length", "width"],
-                    values=[[1, 2], [3, 4]],
+                    descriptors={"length": [1, 3], "width": [2, 4]},
                 ),
             ],
         ),
@@ -380,11 +369,10 @@ def test_botorch_models_check_compatibility(output_scaler):
                 for i in range(2)
             ]
             + [
-                CategoricalDescriptorInput(
+                CategoricalInput(
                     key="cat",
                     categories=["apple", "banana"],
-                    descriptors=["length", "width"],
-                    values=[[1, 2], [3, 4]],
+                    descriptors={"length": [1, 3], "width": [2, 4]},
                 ),
             ],
         ),
@@ -417,11 +405,10 @@ def test_botorch_models_check_compatibility(output_scaler):
             for i in range(4)
         ]
         + [
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
+                descriptors={"length": [1, 3], "width": [2, 4]},
             ),
         ],
     )
@@ -457,11 +444,10 @@ def test_botorch_models_check_compatibility(output_scaler):
             for i in range(3)
         ]
         + [
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
+                descriptors={"length": [1, 3], "width": [2, 4]},
             ),
         ],
     )
@@ -497,11 +483,10 @@ def test_botorch_models_check_compatibility(output_scaler):
             for i in range(3)
         ]
         + [
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
+                descriptors={"length": [1, 3], "width": [2, 4]},
             ),
         ],
     )
@@ -520,11 +505,10 @@ def test_botorch_models_input_preprocessing_specs():
                 for i in range(3)
             ]
             + [
-                CategoricalDescriptorInput(
+                CategoricalInput(
                     key="cat",
                     categories=["apple", "banana"],
-                    descriptors=["length", "width"],
-                    values=[[1, 2], [3, 4]],
+                    descriptors={"length": [1, 3], "width": [2, 4]},
                 ),
             ],
         ),
@@ -556,26 +540,6 @@ def test_botorch_models_input_preprocessing_specs():
         "cat": OrdinalEncoding(),
         "cat2": OrdinalEncoding(),
     }
-
-
-def test_legacy_input_preprocessing_specs_is_dropped():
-    """`input_preprocessing_specs` is derived now; a legacy value is dropped (with a
-    warning) and does not appear in the dump."""
-    inputs = Inputs(
-        features=[
-            ContinuousInput(key="x", bounds=(0, 1)),
-            CategoricalInput(key="c", categories=["a", "b"]),
-        ]
-    )
-    outputs = Outputs(features=[ContinuousOutput(key="y")])
-    with pytest.warns(DeprecationWarning):
-        surrogate = data_models.SingleTaskGPSurrogate(
-            inputs=inputs,
-            outputs=outputs,
-            input_preprocessing_specs={"c": OneHotEncoding()},  # ignored
-        )
-    assert "input_preprocessing_specs" not in surrogate.model_dump()
-    assert surrogate.input_preprocessing_specs == {"c": OrdinalEncoding()}
 
 
 def test_botorch_models_invalid_compatibilize():

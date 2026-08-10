@@ -7,11 +7,7 @@ from pandas.testing import assert_frame_equal
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.encodings.api import DescriptorEncoding
-from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
-    CategoricalInput,
-    ContinuousDescriptorInput,
-)
+from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 
 
 @pytest.mark.parametrize(
@@ -43,11 +39,10 @@ def test_categorical_descriptor_to_descriptor_encoding(
     samples_in,
     descriptors,
 ):
-    c = CategoricalDescriptorInput(
+    c = CategoricalInput(
         key=key,
         categories=categories,
-        descriptors=descriptors,
-        values=[[1, 2], [3, 4], [5, 6]],
+        descriptors={descriptors[0]: [1, 3, 5], descriptors[1]: [2, 4, 6]},
     )
     samples = pd.Series(samples_in)
     t_samples = DescriptorEncoding().encode(c, samples)
@@ -75,11 +70,10 @@ def test_categorical_descriptor_to_descriptor_encoding(
     ],
 )
 def test_categorical_descriptor_from_descriptor_encoding(key, categories, descriptors):
-    c1 = CategoricalDescriptorInput(
+    c1 = CategoricalInput(
         key=key,
         categories=categories,
-        descriptors=descriptors,
-        values=[[1, 2], [3, 4], [5, 6]],
+        descriptors={descriptors[0]: [1, 3, 5], descriptors[1]: [2, 4, 6]},
     )
     descriptor_values = pd.DataFrame(
         columns=[f"{key}_{des_str}" for des_str in descriptors] + ["misc"],
@@ -89,11 +83,10 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
     print(samples)
     assert np.all(samples == pd.Series([categories[0], categories[1]]))
 
-    c2 = CategoricalDescriptorInput(
+    c2 = CategoricalInput(
         key=key,
         categories=categories,
-        descriptors=descriptors,
-        values=[[1, 2], [3, 4], [5, 6]],
+        descriptors={descriptors[0]: [1, 3, 5], descriptors[1]: [2, 4, 6]},
         allowed=[False, True, True],
     )
 
@@ -106,23 +99,21 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
     "input_feature, expected_with_values, expected",
     [
         (
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="if1",
                 categories=["a", "b"],
                 allowed=[True, True],
-                descriptors=["alpha", "beta"],
-                values=[[1, 2], [3, 4]],
+                descriptors={"alpha": [1, 3], "beta": [2, 4]},
             ),
             ([1, 2], [3, 4]),
             ([1, 2], [3, 4]),
         ),
         (
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="if2",
                 categories=["a", "b", "c"],
                 allowed=[True, False, True],
-                descriptors=["alpha", "beta"],
-                values=[[1, 2], [3, 4], [1, 5]],
+                descriptors={"alpha": [1, 3, 1], "beta": [2, 4, 5]},
             ),
             ([1, 2], [3, 5]),
             ([1, 2], [1, 5]),
@@ -161,21 +152,21 @@ def test_categorical_descriptor_feature_get_bounds(
     "input_feature, values, strict",
     [
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            specs.features.valid(CategoricalInput).obj(
                 categories=["c1", "c2", "c3"],
             ),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             True,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            specs.features.valid(CategoricalInput).obj(
                 categories=["c1", "c2", "c3"],
             ),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             False,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            specs.features.valid(CategoricalInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
             ),
@@ -183,7 +174,7 @@ def test_categorical_descriptor_feature_get_bounds(
             True,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            specs.features.valid(CategoricalInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
             ),
@@ -191,7 +182,7 @@ def test_categorical_descriptor_feature_get_bounds(
             False,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            specs.features.valid(CategoricalInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
             ),
@@ -199,21 +190,16 @@ def test_categorical_descriptor_feature_get_bounds(
             False,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            specs.features.valid(CategoricalInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[False, True, True],
-                descriptors=["d1", "d2"],
-                values=[
-                    [1, 2],
-                    [3, 7],
-                    [3, 1],
-                ],
+                descriptors={"d1": [1, 3, 3], "d2": [2, 7, 1]},
             ),
             pd.Series(["c2", "c3"]),
             False,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            specs.features.valid(CategoricalInput).obj(
                 categories=["1", "2", "3"],
                 allowed=[True, False, False],
             ),
@@ -234,39 +220,29 @@ def test_categorical_descriptor_input_feature_validate_valid(
     "input_feature, values, strict",
     [
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(),
+            specs.features.valid(CategoricalInput).obj(),
             pd.Series(["c1", "c4"]),
             True,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(),
+            specs.features.valid(CategoricalInput).obj(),
             pd.Series(["c1", "c4"]),
             False,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            specs.features.valid(CategoricalInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
-                descriptors=["d1", "d2"],
-                values=[
-                    [1, 2],
-                    [3, 7],
-                    [5, 1],
-                ],
+                descriptors={"d1": [1, 3, 5], "d2": [2, 7, 1]},
             ),
             pd.Series(["c1", "c1"]),
             True,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            specs.features.valid(CategoricalInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[False, True, True],
-                descriptors=["d1", "d2"],
-                values=[
-                    [1, 2],
-                    [3, 7],
-                    [3, 1],
-                ],
+                descriptors={"d1": [1, 3, 3], "d2": [2, 7, 1]},
             ),
             pd.Series(["c2", "c3"]),
             True,
@@ -313,11 +289,12 @@ def test_categorical_descriptor_input_feature_as_dataframe(
     descriptors,
     values,
 ):
-    f = CategoricalDescriptorInput(
+    f = CategoricalInput(
         key="k",
         categories=categories,
-        descriptors=descriptors,
-        values=values,
+        descriptors={
+            name: [row[j] for row in values] for j, name in enumerate(descriptors)
+        },
     )
     df = f.descriptor_table(f.descriptor_columns())
     assert len(df.columns) == len(descriptors)
@@ -333,11 +310,10 @@ def test_categorical_descriptor_input_feature_as_dataframe(
     ],
 )
 def test_continuous_descriptor_input_feature_as_dataframe(descriptors, values):
-    f = ContinuousDescriptorInput(
+    f = ContinuousInput(
         key="k",
         bounds=(1, 2),
-        descriptors=descriptors,
-        values=values,
+        descriptors={name: [values[j]] for j, name in enumerate(descriptors)},
     )
     df = f.descriptor_table(f.descriptor_columns())
     assert len(df.columns) == len(descriptors)
@@ -371,18 +347,17 @@ def test_categorical_descriptor_input_feature_from_dataframe(
         orient="index",
         columns=descriptors,
     )
-    f = CategoricalDescriptorInput.from_df("k", df)
+    f = CategoricalInput.from_df("k", df)
     assert f.categories == categories
     assert f.descriptor_columns() == descriptors
     assert f.descriptor_table(descriptors).values.tolist() == values
 
 
 def test_categorical_descriptor_input_to_pydantic_field():
-    feat = CategoricalDescriptorInput(
+    feat = CategoricalInput(
         key="cat",
         categories=["a", "b"],
-        descriptors=["d1", "d2"],
-        values=[[1.0, 2.0], [3.0, 4.0]],
+        descriptors={"d1": [1.0, 3.0], "d2": [2.0, 4.0]},
     )
     _, field_info = feat.to_pydantic_field()
     assert (
@@ -392,14 +367,7 @@ def test_categorical_descriptor_input_to_pydantic_field():
 
 
 def test_continuous_descriptor_input_to_pydantic_field():
-    from bofire.data_models.features.api import ContinuousDescriptorInput
-
-    feat = ContinuousDescriptorInput(
-        key="x",
-        bounds=(0, 1),
-        descriptors=["d1"],
-        values=[0.5],
-    )
+    feat = ContinuousInput(key="x", bounds=(0, 1), descriptors={"d1": [0.5]})
     field_type, field_info = feat.to_pydantic_field()
     assert field_type is float
     # the deprecated shim is now a plain ContinuousInput; the descriptor table no
@@ -413,12 +381,10 @@ def test_categorical_descriptor_input_to_pydantic_field_falls_back_above_thresho
     n = LLM_ENUM_SCHEMA_THRESHOLD + 1
     categories = [f"c{i}" for i in range(n)]
     # distinct values per category so the per-descriptor variance validator passes
-    values = [[float(i)] for i in range(n)]
-    feat = CategoricalDescriptorInput(
+    feat = CategoricalInput(
         key="big",
         categories=categories,
-        descriptors=["d1"],
-        values=values,
+        descriptors={"d1": [float(i) for i in range(n)]},
     )
     field_type, field_info = feat.to_pydantic_field()
     assert field_type is str

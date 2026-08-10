@@ -1,9 +1,8 @@
-import warnings
 from abc import abstractmethod
 from typing import Annotated, Any, List, Literal, Optional
 
 import pandas as pd
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.descriptor_generators import names
@@ -25,28 +24,6 @@ class DescriptorGenerator(BaseModel):
     """
 
     type: Any
-
-    @model_validator(mode="before")
-    @classmethod
-    def _drop_legacy_fields(cls, data):
-        """Drop fields that moved elsewhere so old dumps still load (``extra="forbid"``).
-
-        ``filter_descriptors`` / ``correlation_cutoff`` moved to the consuming descriptor
-        encoding/feature; ``reads`` (structure kind) is gone now that only SMILES is
-        supported (it returns as a field on ``structure`` if other languages are added).
-        """
-        legacy = ("filter_descriptors", "correlation_cutoff", "reads")
-        if isinstance(data, dict) and any(k in data for k in legacy):
-            if "filter_descriptors" in data or "correlation_cutoff" in data:
-                warnings.warn(
-                    "`filter_descriptors` / `correlation_cutoff` moved off the descriptor "
-                    "generator to the descriptor encoding/feature; the values on the "
-                    "generator are ignored.",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-            data = {k: v for k, v in data.items() if k not in legacy}
-        return data
 
     @abstractmethod
     def get_descriptor_names(self) -> List[str]:

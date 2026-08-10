@@ -3,7 +3,6 @@ from pydantic import Field, field_validator, model_validator
 from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain.api import EngineeredFeatures
 from bofire.data_models.domain.features import Inputs
-from bofire.data_models.encodings._migrate import migrate_legacy_encodings
 from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
 from bofire.data_models.features.api import CategoricalInput, CategoricalTaskInput
 from bofire.data_models.surrogates.surrogate import Surrogate
@@ -30,11 +29,6 @@ class BotorchSurrogate(Surrogate):
     engineered_features: EngineeredFeatures = Field(
         default_factory=lambda: EngineeredFeatures()
     )
-
-    @field_validator("categorical_encodings", mode="before")
-    @classmethod
-    def migrate_legacy_categorical_encodings(cls, v):
-        return migrate_legacy_encodings(v)
 
     @classmethod
     def _default_plain_categorical_encodings(cls) -> dict:
@@ -69,8 +63,6 @@ class BotorchSurrogate(Surrogate):
                 return DescriptorEncoding(columns=[], generators=[Fingerprints()])
             if feat.descriptor_columns():
                 return DescriptorEncoding()  # all numeric descriptor columns
-        # look up the fallback by kind, not by exact type, so deprecated subclasses
-        # (CategoricalDescriptorInput, CategoricalMolecularInput) resolve too.
         fallbacks = cls._default_plain_categorical_encodings()
         kind = CategoricalTaskInput if is_task else CategoricalInput
         return fallbacks.get(kind, OneHotEncoding())

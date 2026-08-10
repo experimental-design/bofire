@@ -34,7 +34,7 @@ def test_botorch_strategy():
             MixedSingleTaskGPSurrogate,
         ),
         # descriptor data makes it continuous columns, so a plain GP suffices. This is
-        # the canonical form of the deprecated `CategoricalDescriptorInput`; selecting
+        # the canonical form of a descriptor-carrying categorical; selecting
         # on the type alone used to miss it.
         (
             CategoricalInput(
