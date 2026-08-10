@@ -643,3 +643,14 @@ specs.add_invalid(
     error=ValueError,
     message="fidelity: task inputs cannot carry `descriptors`.",
 )
+
+specs.add_invalid(
+    features.ContinuousTaskInput,
+    lambda: {
+        "key": "fidelity",
+        "bounds": [0.0, 1.0],
+        "structure": ["CCO"],
+    },
+    error=ValueError,
+    message="fidelity: task inputs cannot carry a `structure` column",
+)
