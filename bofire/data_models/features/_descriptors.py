@@ -163,6 +163,18 @@ class DescriptorsMixin(BaseModel):
         """Names of the numeric descriptor columns."""
         return list(self.descriptors.keys())
 
+    def has_descriptor_data(self) -> bool:
+        """Whether the feature carries descriptor data of any kind.
+
+        True when it has numeric descriptor columns and/or a structure column, i.e. when
+        it can be descriptor-encoded rather than treated as a plain set of levels. This
+        is a property of the *data*, not of the class: a plain ``CategoricalInput`` with
+        a ``descriptors`` table is descriptor-carrying, which is what the deprecated
+        ``CategoricalDescriptorInput`` / ``CategoricalMolecularInput`` types used to
+        signal by their type alone.
+        """
+        return bool(self.descriptors) or self.structure is not None
+
     def descriptor_table(self, columns: List[str]) -> pd.DataFrame:
         """Per-level table (rows = levels, columns = selected descriptors)."""
         return pd.DataFrame(
