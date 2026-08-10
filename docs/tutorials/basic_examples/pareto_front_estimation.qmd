@@ -241,6 +241,13 @@ gp_mean_front = get_pareto_front(
     experiments=gp_mean_experiments(gp_inputs),
 )
 gp_inputs = gp_mean_front[bnh.domain.inputs.get_keys()]
+
+# Posterior SDs at the GP-selected Pareto inputs
+gp_front_predictions = mobo_strategy.predict(gp_inputs)
+gp_front_sd = {
+    key: gp_front_predictions[f"{key}_sd"].to_numpy()
+    for key in OBJECTIVE_KEYS
+}
 ```
 
 ## Evaluate the GP-selected inputs on the benchmark
@@ -332,7 +339,8 @@ The plotted quantities answer different questions:
 - The combined benchmark reference is the nondominated union of both numerical
   searches and approximates the best available trade-offs.
 - The GP mean front shows what the fitted models predict at their selected
-  inputs.
+  inputs, with ±1σ error bars from the GP posterior. Large error bars
+  indicate the model is uncertain about its believed front.
 - The benchmark values at those same inputs show whether the GP predictions
   and selected Pareto set are reliable.
 
@@ -384,16 +392,20 @@ ax.scatter(
     zorder=1,
     label="GP mean Sobol baseline",
 )
-ax.scatter(
+ax.errorbar(
     gp_mean_front.f1,
     gp_mean_front.f2,
-    s=36,
-    marker="x",
+    xerr=gp_front_sd["f1"],
+    yerr=gp_front_sd["f2"],
+    fmt="x",
+    markersize=6,
     color="tab:blue",
+    ecolor="tab:blue",
+    elinewidth=0.7,
     alpha=0.85,
-    linewidths=1.2,
+    capsize=2,
     zorder=4,
-    label="GP posterior-mean front",
+    label="GP posterior-mean front (±1σ)",
 )
 for prediction, evaluation in zip(
     gp_mean_front[["f1", "f2"]].to_numpy(),
