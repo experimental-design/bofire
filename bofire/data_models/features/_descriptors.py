@@ -26,9 +26,14 @@ def _validate_smiles(values: List[str]) -> None:
 
     No-op (with a warning) when rdkit is not available, so ``data_models`` stays usable
     without rdkit. Imported lazily to keep this module rdkit-light.
+
+    An empty list is left to the per-level length check, which reports it properly;
+    probing it here would raise ``IndexError`` instead of a validation error.
     """
     from bofire.utils.cheminformatics import smiles2mol
 
+    if not values:
+        return
     try:
         smiles2mol(values[0])
     except NameError:

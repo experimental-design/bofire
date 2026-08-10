@@ -454,6 +454,18 @@ specs.add_invalid(
     message="structure must have 3 value",
 )
 
+# an empty structure must report the length problem, not blow up in the rdkit probe
+specs.add_invalid(
+    features.CategoricalInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": ["c1", "c2", "c3"],
+        "structure": [],
+    },
+    error=ValueError,
+    message="structure must have 3 value",
+)
+
 
 specs.add_valid(
     features.CategoricalDescriptorInput,

@@ -36,13 +36,15 @@ class TaskInput(Input):
         descriptor-encode a task index. Should task descriptors ever be wanted, they
         should be introduced deliberately, together with a kernel that uses them.
         """
+        # both fields are inherited, so read them defensively; "empty" is `{}` for
+        # descriptors and `None` for structure, and falsy covers either.
         if getattr(self, "descriptors", None):
             raise ValueError(
                 f"{self.key}: task inputs cannot carry `descriptors`. A task input is "
                 "an index into a set of tasks; inter-task correlation is learned by "
                 "the surrogate, not derived from descriptor columns.",
             )
-        if getattr(self, "structure", None) is not None:
+        if getattr(self, "structure", None):
             raise ValueError(
                 f"{self.key}: task inputs cannot carry a `structure` column; a task "
                 "is not a molecule.",
