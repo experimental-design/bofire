@@ -1,4 +1,5 @@
 import random
+import re
 
 import numpy as np
 import pandas as pd
@@ -438,3 +439,44 @@ def test_default_encoding_keeps_all_descriptor_data(
     # columns=None means "every numeric column the feature carries"
     assert encoding.columns == expected_columns
     assert [type(g).__name__ for g in encoding.generators] == expected_generators
+
+
+def test_descriptors_concat_stacks_component_blocks():
+    """The one-row blocks of mixture components stack into one block."""
+    a = Descriptors(columns={"logP": [-0.3], "MW": [46.0]}, structure=["CCO"])
+    # declared in a different order — the merged block follows the *first* block, because
+    # filter_correlated keeps the first of each correlated group
+    b = Descriptors(columns={"MW": [18.0], "logP": [-1.4]}, structure=["O"])
+    merged = Descriptors.concat([a, b])
+    assert merged.names == ["logP", "MW"]
+    assert merged.columns == {"logP": [-0.3, -1.4], "MW": [46.0, 18.0]}
+    assert merged.structure == ["CCO", "O"]
+    assert len(merged) == 2
+
+
+@pytest.mark.parametrize(
+    "blocks, message",
+    [
+        (
+            [
+                Descriptors(columns={"logP": [1.0], "MW": [2.0]}),
+                Descriptors(columns={"logP": [3.0]}),
+            ],
+            "same descriptor columns",
+        ),
+        (
+            [
+                Descriptors(columns={"logP": [1.0]}, structure=["CCO"]),
+                Descriptors(columns={"logP": [3.0]}),
+            ],
+            "either all components carry a `structure` or none do",
+        ),
+        ([Descriptors(columns={"logP": [1.0]}), None], "carry no descriptors"),
+        ([], "empty list"),
+    ],
+    ids=["mismatched-columns", "mixed-structure", "none-entry", "empty"],
+)
+def test_descriptors_concat_rejects_inconsistent_blocks(blocks, message):
+    """Previously a mismatch surfaced as a bare ``KeyError`` from deep inside pandas."""
+    with pytest.raises(ValueError, match=re.escape(message)):
+        Descriptors.concat(blocks)

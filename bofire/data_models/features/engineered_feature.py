@@ -6,6 +6,7 @@ from pydantic import Field, PositiveFloat, PositiveInt, model_validator
 
 from bofire.data_models.encodings.naming import get_encoded_name
 from bofire.data_models.features._descriptor_spec import DescriptorSpec
+from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.features.feature import Feature
 from bofire.data_models.types import Bounds, FeatureKeys, OneFeatureKeys
@@ -107,20 +108,12 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
     def component_table(self, features: List["ContinuousInput"]) -> pd.DataFrame:
         """Descriptor table with one row per component feature (weighted-sum scope).
 
-        Index = component feature keys. Generators filter once over the combined
-        component structures so every row shares the same (filtered) columns.
-        Delegates assembly (and filtering) to :meth:`DescriptorSpec._assemble`.
+        The components' one-row blocks are stacked into a single block, so generators run
+        once over the combined structures and every row shares the same columns.
         """
-        columns = self._static_columns(features[0].descriptors)
-        index = [feature.key for feature in features]
-        return self._assemble(
-            index=index,
-            static=pd.concat([f.descriptors.table([f.key], columns) for f in features])
-            if columns
-            else None,
-            structures=pd.Series([self._structure(f.descriptors)[0] for f in features])
-            if self.generators
-            else None,
+        return self.build(
+            Descriptors.concat([f.descriptors for f in features]),
+            [f.key for f in features],
         )
 
     def get_names(self, inputs: "Inputs") -> List[str]:
@@ -128,7 +121,7 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
 
         Only correlation filtering needs the assembled *values* — and therefore the
         generators (rdkit). Without it the columns are exactly the static and generator
-        names ``_assemble`` concatenates, so they come from metadata alone.
+        names ``build`` concatenates, so they come from metadata alone.
         """
         components = [inputs.get_by_key(key) for key in self.features]
         names = (

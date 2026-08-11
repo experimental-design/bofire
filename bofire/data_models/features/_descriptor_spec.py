@@ -8,10 +8,10 @@ feature: static numeric columns already stored on the feature (``columns``), plu
 - ``DescriptorEncoding`` (categorical: one descriptor row per category), and
 - ``WeightedSumFeature`` (continuous: one row per component feature).
 
-This class owns the *scope-agnostic* machinery: column-name resolution, correlation
-decorrelation, and the shared ``_assemble`` core. The scope-specific shaping — what a
-row *is* — lives on each consumer as ``table`` / ``component_table``, which just prepare
-``(index, static, structures)`` and delegate here.
+Both scopes reduce to "one descriptor block plus row labels", so the spec exposes a single
+``build(descriptors, index)``. Each consumer only has to say what its rows are: a
+categorical passes its own block and its categories, a weighted sum stacks its components'
+blocks with ``Descriptors.concat`` and passes their keys.
 
 Correlation-based decorrelation (opt-in via ``filter_descriptors``) is applied across the
 *whole* assembled block — static and generated columns together — as a pure function, so
@@ -114,92 +114,45 @@ class DescriptorSpec(BaseModel):
             )
         return names
 
-    # -- table assembly (shared core) ----------------------------------------------
+    # -- table assembly --------------------------------------------------------------
 
-    def _generated_frames(
-        self, structures: pd.Series, index: List
-    ) -> List[pd.DataFrame]:
-        """Run every generator over ``structures`` and return one frame per generator.
+    def build(self, descriptors: Optional[Descriptors], index: List) -> pd.DataFrame:
+        """Build the descriptor table: static columns ‖ generated columns.
 
-        Args:
-            structures: The structure identifiers (SMILES) to generate descriptors
-                from — one per row of the table being assembled, in ``index`` order.
-                For a categorical that is one SMILES per category; for a weighted sum
-                one SMILES per component feature.
-            index: The row labels to stamp onto each generated frame (categories, or
-                component keys), so the generated columns align with the static ones
-                when they are concatenated.
+        Both descriptor scopes reduce to "one block plus row labels":
 
-        Returns:
-            One frame per generator, each indexed by ``index`` with that generator's
-            descriptor names as columns (e.g. ``fingerprint_0 … fingerprint_n``).
-        """
-        frames: List[pd.DataFrame] = []
-        for generator in self.generators:
-            gen_df = generator.get_descriptor_values(structures)
-            gen_df.index = index
-            gen_df.columns = generator.get_descriptor_names()
-            frames.append(gen_df)
-        return frames
-
-    def _assemble(
-        self,
-        index: List,
-        static: Optional[pd.DataFrame],
-        structures: Optional[pd.Series],
-    ) -> pd.DataFrame:
-        """Assemble a descriptor table from prepared parts (static ‖ generated).
-
-        This is the shared core of the two scope-specific builders, which differ *only*
-        in how they prepare the three arguments:
-
-        - ``DescriptorEncoding.table`` (categorical scope) — one row per **category**,
-          because encoding a category means selecting its descriptor row;
-        - ``WeightedSumFeature.component_table`` (continuous scope) — one row per
-          **component feature**, because the model blends component rows by amount
-          (``Σᵢ amountᵢ · rowᵢ``).
+        - categorical — the feature's block, one row per category
+          (:meth:`DescriptorEncoding.table`);
+        - continuous — the components' one-row blocks stacked with
+          :meth:`Descriptors.concat`, one row per component
+          (:meth:`WeightedSumFeature.component_table`).
 
         Args:
-            index: Row labels of the assembled table — the feature's categories
-                (categorical) or the component feature keys (continuous). Also used to
-                align the generated frames with the static ones.
-            static: The static numeric descriptor columns already stored on the
-                feature(s), indexed by ``index``, or None when the spec declares no
-                static columns (``columns=[]``, i.e. generators only).
-            structures: The SMILES to run the generators over, one per row of ``index``,
-                or None when the spec declares no generators.
+            descriptors: The block to read static columns and structures from.
+            index: Row labels for the result (categories, or component keys).
 
         Returns:
-            The descriptor table: ``index`` as rows, static columns followed by
-            generated columns. When ``filter_descriptors`` is set, correlated and
-            zero-variance columns are dropped from the *combined* block first.
+            ``index`` as rows; the selected static columns followed by every generator's
+            columns. With ``filter_descriptors`` set, zero-variance and correlated columns
+            are dropped from the *combined* block.
 
-        Example:
-            A categorical solvent with two static columns and 8-bit fingerprints
-            (``DescriptorEncoding(columns=["logP", "MW"], generators=[Fingerprints(n_bits=8)])``)
-            assembles ``index=["water", "ethanol", "thf"]``, the 3x2 ``static`` frame,
-            and ``structures=["O", "CCO", "C1CCOC1"]`` into::
-
-                         logP    MW  fingerprint_0  ...  fingerprint_7
-                water    -1.4  18.0            0.0  ...            0.0
-                ethanol  -0.3  46.0            1.0  ...            1.0
-                thf       0.5  72.0            1.0  ...            1.0
-
-            The same spec on a mixture of three ``ContinuousInput`` components would
-            instead be given ``index=["ethanol", "water", "thf"]`` (one row per
-            component) and produce a table of the same shape with those row labels.
-
-        Note:
-            Pure — correlation filtering happens here when enabled, but no state is
-            written, so the same inputs always yield the same columns. That is what
-            lets ``encode`` and ``decode`` rebuild the table independently and still
-            agree on the filtered column set.
+        Pure: nothing is cached, so rebuilding always yields the same columns. That is what
+        lets ``encode`` and ``decode`` assemble the table independently and still agree.
         """
         frames: List[pd.DataFrame] = []
-        if static is not None:
-            frames.append(static)
-        if structures is not None:
-            frames += self._generated_frames(structures, index)
+
+        static_columns = self._static_columns(descriptors)
+        if static_columns and descriptors is not None:
+            frames.append(descriptors.table(index, static_columns))
+
+        if self.generators:
+            structures = pd.Series(self._structure(descriptors))
+            for generator in self.generators:
+                generated = generator.get_descriptor_values(structures)
+                generated.index = index
+                generated.columns = generator.get_descriptor_names()
+                frames.append(generated)
+
         raw = pd.concat(frames, axis=1) if frames else pd.DataFrame(index=index)
         self._check_unique(list(raw.columns))
         return (
@@ -213,8 +166,8 @@ class DescriptorSpec(BaseModel):
     def _structure(self, descriptors: Optional[Descriptors]) -> List[str]:
         if descriptors is None or descriptors.structure is None:
             raise ValueError(
-                "has no `structure` column, but the descriptor spec declares "
-                "generators that need one.",
+                "the descriptor spec declares generators, but no `structure` column "
+                "is available to run them on.",
             )
         return [str(value) for value in descriptors.structure]
 

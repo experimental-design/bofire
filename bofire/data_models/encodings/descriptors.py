@@ -34,23 +34,8 @@ class DescriptorEncoding(CategoricalEncoding, DescriptorSpec):
         self.validate_for(feature.descriptors, feature.key)
 
     def table(self, feature: "CategoricalInput") -> pd.DataFrame:
-        """Per-category descriptor table (select-row scope): one row per category.
-
-        Index = the feature's categories; columns = static columns ‖ generated columns.
-        Delegates assembly (and filtering) to :meth:`DescriptorSpec._assemble`.
-        """
-        descriptors = feature.descriptors
-        columns = self._static_columns(descriptors)
-        index = feature.descriptor_levels()
-        return self._assemble(
-            index=index,
-            static=descriptors.table(index, columns)
-            if columns and descriptors is not None
-            else None,
-            structures=pd.Series(self._structure(descriptors))
-            if self.generators
-            else None,
-        )
+        """Per-category descriptor table: one row per category, in ``categories`` order."""
+        return self.build(feature.descriptors, feature.descriptor_levels())
 
     def get_names(self, feature: "CategoricalInput") -> List[str]:
         # avoid running generators when not filtering (declared names suffice).

@@ -18,7 +18,7 @@ feature itself via :func:`validate_descriptors_fit`.
 """
 
 import warnings
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
@@ -136,6 +136,51 @@ class Descriptors(BaseModel):
         """Per-level table (rows = ``index``, columns = ``columns`` or all of them)."""
         selected = self.names if columns is None else columns
         return pd.DataFrame({c: self.columns[c] for c in selected}, index=index)
+
+    @classmethod
+    def concat(cls, blocks: Sequence[Optional["Descriptors"]]) -> "Descriptors":
+        """Stack blocks row-wise into a single block.
+
+        Used to turn the one-row blocks of the components of a mixture into one block the
+        weighted sum can read, so that both descriptor scopes end up as "a block plus an
+        index". The blocks must describe the same thing: same column names and either all
+        or none carrying a structure.
+
+        Column *order* follows the first block, which keeps static columns ahead of
+        generated ones — :func:`filter_correlated` keeps the first of each correlated
+        group, so the order is load-bearing.
+        """
+        if not blocks:
+            raise ValueError("cannot concatenate an empty list of descriptor blocks")
+        missing = [i for i, block in enumerate(blocks) if block is None]
+        if missing:
+            raise ValueError(
+                f"components at positions {missing} carry no descriptors, so they "
+                "cannot be combined with ones that do",
+            )
+
+        first = blocks[0]
+        names = first.names
+        for block in blocks[1:]:
+            if set(block.names) != set(names):
+                raise ValueError(
+                    "all components must carry the same descriptor columns, got "
+                    f"{sorted(names)} and {sorted(block.names)}",
+                )
+            if (block.structure is None) != (first.structure is None):
+                raise ValueError(
+                    "either all components carry a `structure` or none do",
+                )
+
+        columns = {name: [v for b in blocks for v in b.columns[name]] for name in names}
+        # `or []` never fires — the loop above established that every block agrees with
+        # `first` on structure presence — but it keeps the comprehension provably iterable.
+        structure = (
+            [s for b in blocks for s in (b.structure or [])]
+            if first.structure is not None
+            else None
+        )
+        return cls(columns=columns, structure=structure)
 
 
 def validate_descriptors_fit(descriptors: Optional[Descriptors], levels: List) -> None:
