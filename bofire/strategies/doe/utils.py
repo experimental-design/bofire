@@ -765,6 +765,23 @@ def nchoosek_constraints_as_bounds(
     return bounds
 
 
+def _project_to_equality_bounds(
+    x: np.ndarray,
+    bounds: List[Tuple[float, float]],
+) -> np.ndarray:
+    """Snap variables with lb == ub to their exact fixed value.
+
+    IPOPT can return small violations (O(1e-4)) on equality bounds, including
+    NChooseK-pinned [0, 0] dimensions. Without this correction those residuals
+    cause ConstraintNotFulfilledError in downstream validation.
+    """
+    x = np.asarray(x, dtype=float).copy()
+    for i, (lb, ub) in enumerate(bounds):
+        if lb == ub:
+            x[i] = lb
+    return x
+
+
 def _minimize(
     objective_function: Objective,
     x0: np.ndarray,
@@ -809,7 +826,7 @@ def _minimize(
             problem.add_option(key, ipopt_options[key])
 
         x, info = problem.solve(x0)
-        return x
+        return _project_to_equality_bounds(x, bounds)
     else:
         options = {}
         if "max_iter" in ipopt_options.keys():
@@ -825,4 +842,4 @@ def _minimize(
             jac=objective_function.evaluate_jacobian,
             hess=objective_function.evaluate_hessian if use_hessian else None,
         )
-        return result.x
+        return _project_to_equality_bounds(result.x, bounds)

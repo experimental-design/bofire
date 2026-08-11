@@ -18,6 +18,7 @@ Note that this release has two tags `v0.4.2` and `v0.5.0`. It should have been c
 ### Changed
 
 ### Fixed
+- `DoEStrategy` with `NChooseKConstraint` no longer intermittently raises `ConstraintNotFulfilledError`. IPOPT/SLSQP can return O(1e-4) residuals on equality-bound (`lb == ub`) dimensions; the optimizer output is now snapped to the exact bound value before validation.
 - Pin `pydantic-ai<2.0.0` to avoid breaking API changes introduced in pydantic-ai 2.0.0 (`output_retries` removed, `OpenAIModel` moved).
 
 ## [0.4.1] - 2026-06-16
