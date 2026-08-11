@@ -76,8 +76,8 @@ class DescriptorSpec(BaseModel):
 
     # -- column resolution ---------------------------------------------------------
 
-    def _static_columns(self, descriptors: Optional[Descriptors]) -> List[str]:
-        available = descriptors.names if descriptors is not None else []
+    def _static_columns(self, descriptors: Descriptors) -> List[str]:
+        available = descriptors.names
         if self.columns is None:
             return available
         missing = [c for c in self.columns if c not in available]
@@ -95,7 +95,7 @@ class DescriptorSpec(BaseModel):
             for name in generator.get_descriptor_names()
         ]
 
-    def column_names(self, descriptors: Optional[Descriptors]) -> List[str]:
+    def column_names(self, descriptors: Descriptors) -> List[str]:
         """Declared (pre-filter) descriptor column names for a descriptor block.
 
         Static columns resolved against the block, followed by generator columns. The
@@ -116,7 +116,7 @@ class DescriptorSpec(BaseModel):
 
     # -- table assembly --------------------------------------------------------------
 
-    def build(self, descriptors: Optional[Descriptors], index: List) -> pd.DataFrame:
+    def build(self, descriptors: Descriptors, index: List) -> pd.DataFrame:
         """Build the descriptor table: static columns ‖ generated columns.
 
         Both descriptor scopes reduce to "one block plus row labels":
@@ -142,7 +142,7 @@ class DescriptorSpec(BaseModel):
         frames: List[pd.DataFrame] = []
 
         static_columns = self._static_columns(descriptors)
-        if static_columns and descriptors is not None:
+        if static_columns:
             frames.append(descriptors.table(index, static_columns))
 
         if self.generators:
@@ -163,8 +163,8 @@ class DescriptorSpec(BaseModel):
 
     # -- validation ----------------------------------------------------------------
 
-    def _structure(self, descriptors: Optional[Descriptors]) -> List[str]:
-        if descriptors is None or descriptors.structure is None:
+    def _structure(self, descriptors: Descriptors) -> List[str]:
+        if descriptors.structure is None:
             raise ValueError(
                 "the descriptor spec declares generators, but no `structure` column "
                 "is available to run them on.",
@@ -174,9 +174,17 @@ class DescriptorSpec(BaseModel):
     def validate_for(self, descriptors: Optional[Descriptors], key: str) -> None:
         """Validate that ``descriptors`` carries the data this spec needs.
 
+        This is the *only* place that has to cope with a feature carrying no block at
+        all; everything below it takes a `Descriptors` and assumes this gate has run. It
+        is reached from every entry point that can lead to `build` —
+        `Inputs._get_transform_info` / `transform` / `inverse_transform` / `get_bounds`
+        via `_validate_transform_specs`, and `BotorchSurrogate` at construction.
+
         Pure metadata: no generation happens here. ``key`` is only used to name the
         offending feature in error messages.
         """
+        if descriptors is None:
+            raise ValueError(f"{key}: carries no descriptors for this spec to read.")
         try:
             static_cols = self._static_columns(descriptors)
             if self.generators:

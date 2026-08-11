@@ -111,10 +111,12 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
         The components' one-row blocks are stacked into a single block, so generators run
         once over the combined structures and every row shares the same columns.
         """
-        return self.build(
-            Descriptors.concat([f.descriptors for f in features]),
-            [f.key for f in features],
-        )
+        return self.build(self._block(features), [f.key for f in features])
+
+    @staticmethod
+    def _block(features: List["ContinuousInput"]) -> Descriptors:
+        """The components' blocks as one block (Descriptors.concat rejects missing ones)."""
+        return Descriptors.concat([f.descriptors for f in features])
 
     def get_names(self, inputs: "Inputs") -> List[str]:
         """One name per descriptor column of the blended block.
@@ -127,7 +129,7 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
         names = (
             list(self.component_table(components).columns)
             if self.filter_descriptors
-            else self.column_names(components[0].descriptors)
+            else self.column_names(self._block(components))
         )
         return [get_encoded_name(self.key, name) for name in names]
 

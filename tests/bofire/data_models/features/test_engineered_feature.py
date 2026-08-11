@@ -46,9 +46,7 @@ def test_weighted_sum_feature_validation():
             ContinuousInput(key="feat2", bounds=(0, 1)),
         ]
     )
-    with pytest.raises(
-        ValueError, match="feat2: descriptor columns .* are not available"
-    ):
+    with pytest.raises(ValueError, match="feat2: carries no descriptors"):
         weighted_sum_feature.validate_features(inputs)
 
     inputs = Inputs(
@@ -88,9 +86,7 @@ def test_weighted_mean_feature_validation():
             ContinuousInput(key="feat2", bounds=(0, 1)),
         ]
     )
-    with pytest.raises(
-        ValueError, match="feat2: descriptor columns .* are not available"
-    ):
+    with pytest.raises(ValueError, match="feat2: carries no descriptors"):
         weighted_mean_feature.validate_features(inputs)
 
     inputs = Inputs(
@@ -130,7 +126,7 @@ def test_molecular_weighted_sum_feature_validation():
     )
     with pytest.raises(
         ValueError,
-        match="m2: the descriptor spec declares generators, but no .structure. column",
+        match="m2: carries no descriptors",
     ):
         mol_feature.validate_features(inputs)
 
@@ -165,7 +161,7 @@ def test_molecular_weighted_mean_feature_validation():
     )
     with pytest.raises(
         ValueError,
-        match="m2: the descriptor spec declares generators, but no .structure. column",
+        match="m2: carries no descriptors",
     ):
         mol_feature.validate_features(inputs)
 
