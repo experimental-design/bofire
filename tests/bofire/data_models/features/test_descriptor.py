@@ -7,6 +7,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 import tests.bofire.data_models.specs.api as specs
+from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput
@@ -480,3 +481,52 @@ def test_descriptors_concat_rejects_inconsistent_blocks(blocks, message):
     """Previously a mismatch surfaced as a bare ``KeyError`` from deep inside pandas."""
     with pytest.raises(ValueError, match=re.escape(message)):
         Descriptors.concat(blocks)
+
+
+@pytest.mark.parametrize(
+    "spec, descriptors",
+    [
+        # two generators emitting the same names
+        (
+            DescriptorEncoding(
+                columns=[],
+                generators=[Fingerprints(n_bits=8), Fingerprints(n_bits=8)],
+            ),
+            Descriptors(structure=["CCO", "CC"]),
+        ),
+        # a static column colliding with a generated one
+        (
+            DescriptorEncoding(generators=[Fingerprints(n_bits=8)]),
+            Descriptors(columns={"fingerprint_0": [1.0, 2.0]}, structure=["CCO", "CC"]),
+        ),
+    ],
+    ids=["two-identical-generators", "static-collides-with-generated"],
+)
+def test_duplicate_descriptor_names_are_caught_by_the_gate(spec, descriptors):
+    """Duplicates used to escape validation and only surface later, at transform time."""
+    with pytest.raises(ValueError, match="descriptor names must be unique"):
+        spec.validate_for(descriptors, "c")
+
+
+def test_duplicate_descriptor_names_fail_at_surrogate_construction():
+    """Because the gate runs from BotorchSurrogate, the failure is early and located."""
+    from bofire.data_models.domain.api import Inputs, Outputs
+    from bofire.data_models.features.api import ContinuousOutput
+    from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+
+    feature = CategoricalInput(
+        key="c",
+        categories=["CCO", "CC"],
+        descriptors=Descriptors(structure=["CCO", "CC"]),
+    )
+    with pytest.raises(ValueError, match="descriptor names must be unique"):
+        SingleTaskGPSurrogate(
+            inputs=Inputs(features=[feature]),
+            outputs=Outputs(features=[ContinuousOutput(key="y")]),
+            categorical_encodings={
+                "c": DescriptorEncoding(
+                    columns=[],
+                    generators=[Fingerprints(n_bits=8), Fingerprints(n_bits=8)],
+                )
+            },
+        )

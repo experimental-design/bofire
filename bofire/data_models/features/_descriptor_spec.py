@@ -18,6 +18,7 @@ Correlation-based decorrelation (opt-in via ``filter_descriptors``) is applied a
 there is no mutable state on the generators or the spec.
 """
 
+from collections import Counter
 from typing import List, Optional
 
 import pandas as pd
@@ -77,16 +78,8 @@ class DescriptorSpec(BaseModel):
     # -- column resolution ---------------------------------------------------------
 
     def _static_columns(self, descriptors: Descriptors) -> List[str]:
-        available = descriptors.names
-        if self.columns is None:
-            return available
-        missing = [c for c in self.columns if c not in available]
-        if missing:
-            raise ValueError(
-                f"descriptor columns {missing} are not available as numeric "
-                f"descriptors. Available: {sorted(available)}.",
-            )
-        return list(self.columns)
+        """The static columns this spec selects; ``columns=None`` means all of them."""
+        return descriptors.names if self.columns is None else list(self.columns)
 
     def _generated_names(self) -> List[str]:
         return [
@@ -100,19 +93,9 @@ class DescriptorSpec(BaseModel):
 
         Static columns resolved against the block, followed by generator columns. The
         post-filter names, when ``filter_descriptors`` is set, are the columns of an
-        assembled table.
+        assembled table. Uniqueness is the gate's business, see :meth:`validate_for`.
         """
-        return self._check_unique(
-            self._static_columns(descriptors) + self._generated_names()
-        )
-
-    def _check_unique(self, names: List[str]) -> List[str]:
-        duplicates = sorted({n for n in names if names.count(n) > 1})
-        if duplicates:
-            raise ValueError(
-                f"Duplicate descriptor names in descriptor spec: {duplicates}.",
-            )
-        return names
+        return self._static_columns(descriptors) + self._generated_names()
 
     # -- table assembly --------------------------------------------------------------
 
@@ -146,7 +129,8 @@ class DescriptorSpec(BaseModel):
             frames.append(descriptors.table(index, static_columns))
 
         if self.generators:
-            structures = pd.Series(self._structure(descriptors))
+            assert descriptors.structure is not None  # guaranteed by validate_for
+            structures = pd.Series(descriptors.structure)
             for generator in self.generators:
                 generated = generator.get_descriptor_values(structures)
                 generated.index = index
@@ -154,7 +138,6 @@ class DescriptorSpec(BaseModel):
                 frames.append(generated)
 
         raw = pd.concat(frames, axis=1) if frames else pd.DataFrame(index=index)
-        self._check_unique(list(raw.columns))
         return (
             filter_correlated(raw, self.correlation_cutoff)
             if self.filter_descriptors
@@ -163,35 +146,47 @@ class DescriptorSpec(BaseModel):
 
     # -- validation ----------------------------------------------------------------
 
-    def _structure(self, descriptors: Descriptors) -> List[str]:
-        if descriptors.structure is None:
-            raise ValueError(
-                "the descriptor spec declares generators, but no `structure` column "
-                "is available to run them on.",
-            )
-        return [str(value) for value in descriptors.structure]
-
     def validate_for(self, descriptors: Optional[Descriptors], key: str) -> None:
-        """Validate that ``descriptors`` carries the data this spec needs.
+        """Ask every compatibility question about ``descriptors`` and this spec.
 
-        This is the *only* place that has to cope with a feature carrying no block at
-        all; everything below it takes a `Descriptors` and assumes this gate has run. It
-        is reached from every entry point that can lead to `build` —
-        `Inputs._get_transform_info` / `transform` / `inverse_transform` / `get_bounds`
-        via `_validate_transform_specs`, and `BotorchSurrogate` at construction.
+        This is the gate: it is the only place that copes with a feature carrying no
+        block at all, and the only place that raises for an incompatible one. Everything
+        below it takes a `Descriptors` and assumes these checks have passed — which is
+        why `build` asserts rather than re-checking. It is reached from every entry point
+        that can lead to `build`: `Inputs._get_transform_info` / `transform` /
+        `inverse_transform` / `get_bounds` via `_validate_transform_specs`, and
+        `BotorchSurrogate` at construction.
 
-        Pure metadata: no generation happens here. ``key`` is only used to name the
-        offending feature in error messages.
+        Pure metadata — no descriptors are generated here, so this stays usable without
+        rdkit. ``key`` only names the offending feature in the messages.
         """
         if descriptors is None:
             raise ValueError(f"{key}: carries no descriptors for this spec to read.")
-        try:
-            static_cols = self._static_columns(descriptors)
-            if self.generators:
-                self._structure(descriptors)
-        except ValueError as err:
-            raise ValueError(f"{key}: {err}") from err
-        if not static_cols and not self.generators:
+
+        available = descriptors.names
+        missing = [c for c in self.columns or [] if c not in available]
+        if missing:
+            raise ValueError(
+                f"{key}: descriptor columns {missing} are not available as numeric "
+                f"descriptors. Available: {sorted(available)}.",
+            )
+
+        if self.generators and descriptors.structure is None:
+            raise ValueError(
+                f"{key}: the descriptor spec declares generators, but no `structure` "
+                "column is available to run them on.",
+            )
+
+        names = self.column_names(descriptors)
+        duplicates = sorted(n for n, count in Counter(names).items() if count > 1)
+        if duplicates:
+            raise ValueError(
+                f"{key}: descriptor names must be unique, got duplicates {duplicates}. "
+                "Two generators producing the same names, or a static column colliding "
+                "with a generated one, will do this.",
+            )
+
+        if not names:
             raise ValueError(
                 f"{key}: descriptor spec produces no columns (no static descriptor "
                 "columns and no generators).",
