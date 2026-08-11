@@ -6,9 +6,9 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 
 ## [Unreleased]
 
-## [0.4.2] - 2026-08-11 - BREAKING
+## [0.5.0] - 2026-08-11 - BREAKING
 
-Note that this release should have been called 0.5.0. The breaking change has been realized too late.
+Note that this release has two tags `v0.4.2` and `v0.5.0`. It should have been called `v0.5.0`, though, due to a breaking change. The breaking change has been realized too late, hence we have 2 tags on this commit. Further, the two versions in Pypi 0.4.2 and 0.5.0 are identical.
 
 ### Added
 - **BREAKING**: needs at least Pandas 3 due to standardized write-on-copy-behaviour, see https://github.com/experimental-design/bofire/pull/791.
