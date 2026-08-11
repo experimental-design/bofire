@@ -47,6 +47,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - Pin `pydantic-ai<2.0.0` to avoid breaking API changes introduced in pydantic-ai 2.0.0 (`output_retries` removed, `OpenAIModel` moved).
 - `WeightedSumFeature.validate_features` no longer generates descriptor values, so `bofire.data_models` stays usable without the optional `cheminfo` extra.
 - The default surrogate is chosen from the descriptor data a categorical carries rather than from its type, so a `CategoricalInput` with a `descriptors` table no longer selects `MixedSingleTaskGPSurrogate` (which rejects it).
+- `LinearDeterministicSurrogate` rejects engineered features with `filter_descriptors=True` instead of resolving their width during validation. A linear model binds one coefficient per column, so the width must come from the configuration, not the data; resolving it also meant generating descriptors (and therefore requiring rdkit) inside a data-model validator, which failed with a bare `NameError` on installs without the `cheminfo` extra.
 - `WeightedSumFeature` now validates its components against the *blended* descriptor block as well as individually, so components that cannot be merged — disagreeing on their descriptor columns, or only some carrying a `structure` — are rejected when the surrogate is built instead of at transform time. This only surfaced with the default `columns=None`; an explicit `columns` list was already checked per component.
 
 ## [0.4.1] - 2026-06-16

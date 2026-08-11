@@ -16,6 +16,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     MeanFeature,
     SumFeature,
+    WeightedSumFeature,
 )
 from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
@@ -852,6 +853,47 @@ specs.add_invalid(
     },
     error=ValueError,
     message="coefficient keys do not match input feature keys.",
+)
+
+
+# A linear model binds one coefficient per column, so a data-dependent width is not
+# usable. Resolving one would also mean generating descriptors inside a validator, which
+# needs rdkit -- this spec runs in the no-extras job, so it pins that too.
+specs.add_invalid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(
+                    key="a", bounds=(0, 1), descriptors=Descriptors(structure=["CCO"])
+                ),
+                ContinuousInput(
+                    key="b", bounds=(0, 1), descriptors=Descriptors(structure=["CC"])
+                ),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "engineered_features": EngineeredFeatures(
+            features=[
+                WeightedSumFeature(
+                    key="w",
+                    features=["a", "b"],
+                    columns=[],
+                    generators=[Fingerprints(n_bits=8)],
+                    filter_descriptors=True,
+                )
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0, "w": 1.0},
+        "dump": None,
+    },
+    error=ValueError,
+    message="`filter_descriptors=True` makes the width depend on the data.",
 )
 
 
