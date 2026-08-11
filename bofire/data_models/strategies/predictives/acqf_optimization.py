@@ -159,7 +159,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             constraints.NonlinearInequalityConstraint,
             constraints.NonlinearEqualityConstraint,
         ]:
-            return False
+            return True  # was False
         return True
 
     def validate_domain(self, domain: Domain):

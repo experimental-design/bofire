@@ -16,8 +16,11 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
     ProductInequalityConstraint,
 )
+from bofire.data_models.constraints.nonlinear import NonlinearConstraint
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -285,35 +288,168 @@ def get_product_constraints(
     return constraints
 
 
+def _nonlinear_constraint_feature_indices(
+    constraint: NonlinearConstraint,
+    domain: Domain,
+) -> list[int]:
+    cont_keys = domain.inputs.get_keys(ContinuousInput)
+    return [cont_keys.index(key) for key in constraint.features]
+
+
+def evaluate_nonlinear_constraint_on_tensor(
+    constraint: NonlinearConstraint,
+    x: Tensor,
+    feature_indices: list[int],
+) -> Tensor:
+    """Evaluate a nonlinear constraint expression on a BoTorch input tensor."""
+    if x.ndim == 3:
+        batch_size, q, _ = x.shape
+        x_2d = x.reshape(-1, x.shape[-1])
+        return evaluate_nonlinear_constraint_on_tensor(
+            constraint, x_2d, feature_indices
+        ).reshape(batch_size, q)
+
+    sub = x[..., feature_indices]
+    if isinstance(constraint.expression, str):
+        if sub.ndim == 1:
+            feature_dict = {feat: sub[i] for i, feat in enumerate(constraint.features)}
+            return eval(
+                constraint.expression,
+                {"__builtins__": {}, "torch": torch},
+                feature_dict,
+            )
+        results = []
+        for point in sub:
+            feature_dict = {
+                feat: point[i] for i, feat in enumerate(constraint.features)
+            }
+            results.append(
+                eval(
+                    constraint.expression,
+                    {"__builtins__": {}, "torch": torch},
+                    feature_dict,
+                )
+            )
+        return torch.stack(results)
+
+    if isinstance(constraint.expression, Callable):
+        if sub.ndim == 1:
+            feature_dict = {feat: sub[i] for i, feat in enumerate(constraint.features)}
+            return constraint.expression(**feature_dict)
+        results = []
+        for point in sub:
+            feature_dict = {
+                feat: point[i] for i, feat in enumerate(constraint.features)
+            }
+            results.append(constraint.expression(**feature_dict))
+        return torch.stack(results)
+
+    raise ValueError("expression must be a string or callable")
+
+
+def _nonlinear_inequality_botorch_callable(
+    constraint: NonlinearInequalityConstraint,
+    feature_indices: list[int],
+) -> Callable[[Tensor], Tensor]:
+    def constraint_fn(x: Tensor) -> Tensor:
+        return -evaluate_nonlinear_constraint_on_tensor(constraint, x, feature_indices)
+
+    return constraint_fn
+
+
+def _nonlinear_equality_botorch_callables(
+    constraint: NonlinearEqualityConstraint,
+    feature_indices: list[int],
+    equality_tolerance: float,
+) -> tuple[Callable[[Tensor], Tensor], Callable[[Tensor], Tensor]]:
+    def constraint_fn_upper(x: Tensor) -> Tensor:
+        return equality_tolerance - evaluate_nonlinear_constraint_on_tensor(
+            constraint, x, feature_indices
+        )
+
+    def constraint_fn_lower(x: Tensor) -> Tensor:
+        return (
+            evaluate_nonlinear_constraint_on_tensor(constraint, x, feature_indices)
+            + equality_tolerance
+        )
+
+    return constraint_fn_upper, constraint_fn_lower
+
+
 def get_nonlinear_constraints(
     domain: Domain,
     includes: Optional[List[Type[Constraint]]] = None,
+    equality_tolerance: float = 1e-3,
 ) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Returns a list of callable functions that represent the nonlinear constraints
     for the given domain that can be processed by botorch.
 
     Args:
         domain (Domain): The domain for which to generate the nonlinear constraints.
+        includes (Optional[List[Type[Constraint]]]): List of constraint types to include.
+            Defaults to [NChooseKConstraint, ProductInequalityConstraint,
+                        NonlinearInequalityConstraint, NonlinearEqualityConstraint].
+        equality_tolerance (float): Tolerance for converting equality constraints to
+            inequality pairs. An equality constraint f(x) = 0 is converted to:
+            f(x) <= tolerance AND -f(x) <= tolerance. Defaults to 1e-6.
         includes: List of constraint types to include. Defaults to NChooseK and
             ProductInequality. To exclude a constraint type, simply omit it
             from this list (e.g. pass ``[ProductInequalityConstraint]`` to
             exclude NChooseK).
 
     Returns:
-        List[Callable[[Tensor], float]]: A list of callable functions that take a tensor
-        as input and return a float value representing the constraint evaluation.
-
+        List[Tuple[Callable[[Tensor], float], bool]]: A list of tuples where each tuple
+        contains a callable function and a boolean indicating if it's an inequality (True)
+        or equality (False). The callable takes a tensor as input and returns a float
+        representing the constraint evaluation.
     """
-    includes = includes or [NChooseKConstraint, ProductInequalityConstraint]
+
+    # Default includes all supported constraint types
+    includes = includes or [
+        NChooseKConstraint,
+        ProductInequalityConstraint,
+        NonlinearInequalityConstraint,
+        NonlinearEqualityConstraint,
+    ]
+
+    # Validate includes
+    supported_types = (
+        NChooseKConstraint,
+        ProductInequalityConstraint,
+        NonlinearInequalityConstraint,
+        NonlinearEqualityConstraint,
+    )
     assert all(
-        (c in (NChooseKConstraint, ProductInequalityConstraint) for c in includes)
-    ), "Only NChooseK and ProductInequality constraints are supported."
+        c in supported_types for c in includes
+    ), f"Only {supported_types} constraints are supported."
 
     callables = []
+
+    # Handle existing constraint types
     if NChooseKConstraint in includes:
         callables += get_nchoosek_constraints(domain)
     if ProductInequalityConstraint in includes:
         callables += get_product_constraints(domain)
+
+    # Handle NonlinearInequalityConstraint
+    if NonlinearInequalityConstraint in includes:
+        for constraint in domain.constraints.get(NonlinearInequalityConstraint):
+            feature_indices = _nonlinear_constraint_feature_indices(constraint, domain)
+            callables.append(
+                (
+                    _nonlinear_inequality_botorch_callable(constraint, feature_indices),
+                    True,
+                )
+            )
+
+    if NonlinearEqualityConstraint in includes:
+        for constraint in domain.constraints.get(NonlinearEqualityConstraint):
+            feature_indices = _nonlinear_constraint_feature_indices(constraint, domain)
+            upper_fn, lower_fn = _nonlinear_equality_botorch_callables(
+                constraint, feature_indices, equality_tolerance
+            )
+            callables.append((upper_fn, True))
+            callables.append((lower_fn, True))
 
     return callables
 

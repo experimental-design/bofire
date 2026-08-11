@@ -245,7 +245,7 @@ class BotorchStrategy(PredictiveStrategy):
             # input constraints are fulfilled, output constraints are handled directly
             # in botorch
             fulfilled_experiments = clean_experiments[
-                self.domain.is_fulfilled(clean_experiments)
+                self.domain.is_fulfilled(clean_experiments, tol=self._validation_tol)
             ].copy()
             if len(fulfilled_experiments) == 0:
                 warnings.warn(

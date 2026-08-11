@@ -7,6 +7,10 @@ import pandas as pd
 from pydantic import PositiveInt
 from typing_extensions import Self
 
+from bofire.data_models.constraints.api import (
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
+)
 from bofire.data_models.domain.domain import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import Strategy as DataModel
@@ -42,8 +46,17 @@ class Strategy(ABC):
         self.seed_seq = np.random.SeedSequence(seed)
         self._experiments = None
         self._candidates = None
-        # Default validation tolerance - subclasses can override this
-        self._validation_tol = 1e-5
+        needs_relaxed_tol = any(
+            isinstance(
+                c,
+                (
+                    NonlinearEqualityConstraint,
+                    NonlinearInequalityConstraint,
+                ),
+            )
+            for c in data_model.domain.constraints
+        )
+        self._validation_tol = 1e-3 if needs_relaxed_tol else 1e-5
 
     @property
     def domain(self) -> Domain:

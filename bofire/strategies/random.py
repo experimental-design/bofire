@@ -21,6 +21,8 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
@@ -66,6 +68,18 @@ class RandomStrategy(Strategy):
         self.nchoosek_max_iters = data_model.nchoosek_max_iters
         self.sampler_kwargs = data_model.sampler_kwargs
 
+        needs_relaxed_tol = any(
+            isinstance(
+                c,
+                (
+                    NonlinearEqualityConstraint,
+                    NonlinearInequalityConstraint,
+                ),
+            )
+            for c in self.domain.constraints
+        )
+        self._validation_tol = 1e-3 if needs_relaxed_tol else 1e-6
+
     def has_sufficient_experiments(self) -> bool:
         """Check if there are sufficient experiments for the strategy.
 
@@ -110,9 +124,11 @@ class RandomStrategy(Strategy):
             if n_iters > self.max_iters:
                 raise ValueError("Maximum iterations exceeded in rejection sampling.")
             samples = self._sample_with_nchooseks(num_base_samples)
-            valid = self.domain.constraints.is_fulfilled(samples)
+            valid = self.domain.constraints.is_fulfilled(
+                samples, tol=self._validation_tol
+            )
             n_found += np.sum(valid)
-            valid_samples.append(samples[valid])
+            valid_samples.append(samples[valid.values])
             n_iters += 1
         return pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
 
