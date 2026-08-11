@@ -9,9 +9,10 @@ feature: static numeric columns already stored on the feature (``columns``), plu
 - ``WeightedSumFeature`` (continuous: one row per component feature).
 
 Both scopes reduce to "one descriptor block plus row labels", so the spec exposes a single
-``build(descriptors, index)``. Each consumer only has to say what its rows are: a
-categorical passes its own block and its categories, a weighted sum stacks its components'
-blocks with ``Descriptors.concat`` and passes their keys.
+``build(descriptors, index)`` and a single ``resolved_names(descriptors, index)``. Each
+consumer only has to say what its rows are: a categorical passes its own block and its
+categories, a weighted sum stacks its components' blocks with ``Descriptors.concat`` and
+passes their keys.
 
 Correlation-based decorrelation (opt-in via ``filter_descriptors``) is applied across the
 *whole* assembled block — static and generated columns together — as a pure function, so
@@ -82,6 +83,7 @@ class DescriptorSpec(BaseModel):
         return descriptors.names if self.columns is None else list(self.columns)
 
     def _generated_names(self) -> List[str]:
+        """The columns the generators declare, in the order ``build`` appends them."""
         return [
             name
             for generator in self.generators
@@ -91,24 +93,31 @@ class DescriptorSpec(BaseModel):
     def column_names(self, descriptors: Descriptors) -> List[str]:
         """Declared (pre-filter) descriptor column names for a descriptor block.
 
-        Static columns resolved against the block, followed by generator columns. The
-        post-filter names, when ``filter_descriptors`` is set, are the columns of an
-        assembled table. Uniqueness is the gate's business, see :meth:`validate_for`.
+        Static columns resolved against the block, followed by generator columns.
+        Uniqueness is the gate's business, see :meth:`validate_for`.
         """
         return self._static_columns(descriptors) + self._generated_names()
+
+    def resolved_names(self, descriptors: Descriptors, index: List) -> List[str]:
+        """The column names a consumer actually produces for a descriptor block.
+
+        The same as :meth:`column_names` unless ``filter_descriptors`` is set, which can
+        only be resolved by assembling the table — filtering drops columns by *value*.
+        Assembling runs the generators, and therefore needs rdkit, so the declared names
+        are used whenever filtering is off.
+
+        Args:
+            descriptors: The block the consumer reads.
+            index: Row labels, only used when the table has to be assembled.
+        """
+        if self.filter_descriptors:
+            return list(self.build(descriptors, index).columns)
+        return self.column_names(descriptors)
 
     # -- table assembly --------------------------------------------------------------
 
     def build(self, descriptors: Descriptors, index: List) -> pd.DataFrame:
         """Build the descriptor table: static columns ‖ generated columns.
-
-        Both descriptor scopes reduce to "one block plus row labels":
-
-        - categorical — the feature's block, one row per category
-          (:meth:`DescriptorEncoding.table`);
-        - continuous — the components' one-row blocks stacked with
-          :meth:`Descriptors.concat`, one row per component
-          (:meth:`WeightedSumFeature.component_table`).
 
         Args:
             descriptors: The block to read static columns and structures from.
@@ -137,7 +146,8 @@ class DescriptorSpec(BaseModel):
                 generated.columns = generator.get_descriptor_names()
                 frames.append(generated)
 
-        raw = pd.concat(frames, axis=1) if frames else pd.DataFrame(index=index)
+        assert frames  # validate_for rejects a spec that produces no columns
+        raw = pd.concat(frames, axis=1)
         return (
             filter_correlated(raw, self.correlation_cutoff)
             if self.filter_descriptors

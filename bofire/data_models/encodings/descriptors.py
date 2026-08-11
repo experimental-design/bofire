@@ -40,33 +40,17 @@ class DescriptorEncoding(CategoricalEncoding, DescriptorSpec):
         return self.build(feature.descriptors, feature.descriptor_levels())
 
     def get_names(self, feature: "CategoricalInput") -> List[str]:
-        # avoid running generators when not filtering (declared names suffice).
-        if self.filter_descriptors:
-            names = list(self.table(feature).columns)
-        else:
-            assert feature.descriptors is not None  # see table()
-            names = self.column_names(feature.descriptors)
-        return [get_encoded_name(feature.key, d) for d in names]
+        # guaranteed by validate_for_feature, as in table()
+        assert feature.descriptors is not None
+        names = self.resolved_names(feature.descriptors, feature.descriptor_levels())
+        return [get_encoded_name(feature.key, name) for name in names]
 
     def encode(self, feature: "CategoricalInput", values: pd.Series) -> pd.DataFrame:
-        table = self.table(feature)
         return pd.DataFrame(
-            data=table.loc[values.tolist()].to_numpy(),
-            columns=[get_encoded_name(feature.key, d) for d in table.columns],
+            data=self.table(feature).loc[values.tolist()].to_numpy(),
+            columns=self.get_names(feature),
             index=values.index,
         )
-
-    def get_bounds(
-        self,
-        feature: "CategoricalInput",
-        values: Optional[pd.Series] = None,
-    ) -> Tuple[List[float], List[float]]:
-        table = self.table(feature)
-        # values None -> optimization bounds over allowed categories,
-        # else full bounds over all categories (for model fitting).
-        if values is None:
-            table = table.loc[feature.get_allowed_categories()]
-        return table.min().values.tolist(), table.max().values.tolist()
 
     def decode(self, feature: "CategoricalInput", values: pd.DataFrame) -> pd.Series:
         cat_cols = self.get_names(feature)
@@ -95,3 +79,15 @@ class DescriptorEncoding(CategoricalEncoding, DescriptorSpec):
         ).idxmin(1)
         s.name = feature.key
         return s
+
+    def get_bounds(
+        self,
+        feature: "CategoricalInput",
+        values: Optional[pd.Series] = None,
+    ) -> Tuple[List[float], List[float]]:
+        table = self.table(feature)
+        # values None -> optimization bounds over allowed categories,
+        # else full bounds over all categories (for model fitting).
+        if values is None:
+            table = table.loc[feature.get_allowed_categories()]
+        return table.min().values.tolist(), table.max().values.tolist()

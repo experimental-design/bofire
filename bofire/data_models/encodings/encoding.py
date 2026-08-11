@@ -2,9 +2,10 @@
 
 An encoding is the *per-surrogate choice* of how a categorical feature's value is
 turned into model-input columns. It reads the *data* carried on the feature (its
-``categories`` and ``descriptors`` table) and holds the modelling knobs. The
-mechanical pandas transforms themselves live on ``CategoricalInput`` (so they
-stay available downstream); the encoders are thin choice wrappers that delegate.
+``categories`` and its ``descriptors`` block), holds the modelling knobs, and owns
+the transform itself: ``CategoricalInput.to_encoding`` / ``from_encoding`` are entry
+points that delegate here. A feature can therefore be encoded several ways at once,
+by several surrogates, without carrying any encoding state of its own.
 """
 
 from abc import abstractmethod
@@ -56,6 +57,6 @@ class CategoricalEncoding(BaseModel):
 
         The type-level check (``valid_transform_types``) only ensures the encoder
         *class* is allowed; this instance-level hook rejects encoders whose concrete
-        configuration cannot produce columns for the feature (e.g. a static
-        descriptor source on a feature that only carries a structure column).
+        configuration cannot produce columns for the feature (e.g. a ``DescriptorEncoding``
+        listing static columns the feature does not carry).
         """

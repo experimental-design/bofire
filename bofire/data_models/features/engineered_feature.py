@@ -111,33 +111,44 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
         The components' one-row blocks are stacked into a single block, so generators run
         once over the combined structures and every row shares the same columns.
         """
-        return self.build(self._block(features), [f.key for f in features])
+        return self.build(self._merged_descriptors(features), self._index(features))
 
     @staticmethod
-    def _block(features: List["ContinuousInput"]) -> Descriptors:
-        """The components' blocks as one block (Descriptors.concat rejects missing ones)."""
+    def _merged_descriptors(features: List["ContinuousInput"]) -> Descriptors:
+        """The components' one-row blocks as a single block, one row per component.
+
+        ``Descriptors.concat`` rejects components that carry no block, or that disagree
+        on their columns or on carrying a structure.
+        """
         return Descriptors.concat([f.descriptors for f in features])
 
-    def get_names(self, inputs: "Inputs") -> List[str]:
-        """One name per descriptor column of the blended block.
+    @staticmethod
+    def _index(features: List["ContinuousInput"]) -> List[str]:
+        """Row labels of the blended block: the component keys."""
+        return [f.key for f in features]
 
-        Only correlation filtering needs the assembled *values* — and therefore the
-        generators (rdkit). Without it the columns are exactly the static and generator
-        names ``build`` concatenates, so they come from metadata alone.
-        """
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        """One name per descriptor column of the blended block."""
         components = [inputs.get_by_key(key) for key in self.features]
-        names = (
-            list(self.component_table(components).columns)
-            if self.filter_descriptors
-            else self.column_names(self._block(components))
+        names = self.resolved_names(
+            self._merged_descriptors(components),
+            self._index(components),
         )
         return [get_encoded_name(self.key, name) for name in names]
 
     def validate_features(self, inputs: "Inputs"):
+        """Gate the spec against each component *and* against the blend they merge into.
+
+        Per component first, so an incompatible one is named in the message. Then against
+        the blended block, which is what the consumers actually read: merging is where the
+        components' mutual compatibility — same columns, all or none carrying a structure —
+        is decided, and without this it would only surface at build time.
+        """
         super().validate_features(inputs)
-        for key in self.features:
-            feat = inputs.get_by_key(key)
+        components = [inputs.get_by_key(key) for key in self.features]
+        for feat in components:
             self.validate_for(feat.descriptors, feat.key)
+        self.validate_for(self._merged_descriptors(components), self.key)
 
 
 class ProductFeature(EngineeredFeature):

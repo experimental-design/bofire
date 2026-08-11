@@ -178,6 +178,42 @@ def test_molecular_weighted_mean_feature_validation():
     mol_feature.validate_features(inputs)
 
 
+@pytest.mark.parametrize(
+    "second_block, message",
+    [
+        (
+            Descriptors(columns={"desc1": [0.5]}, structure=["CC"]),
+            "all components must carry the same descriptor columns",
+        ),
+        (
+            Descriptors(columns={"desc1": [0.5], "desc2": [0.5]}),
+            "either all components carry a `structure` or none do",
+        ),
+    ],
+)
+def test_weighted_sum_feature_rejects_incompatible_components(second_block, message):
+    """Components must merge into one block, and the gate is where that is decided.
+
+    With ``columns=None`` no per-component check can notice the disagreement, so before
+    this was gated the surrogate built fine and only `component_table` raised.
+    """
+    feature = WeightedSumFeature(key="w", features=["feat1", "feat2"])
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key="feat1",
+                bounds=(0, 1),
+                descriptors=Descriptors(
+                    columns={"desc1": [0.5], "desc2": [0.5]}, structure=["C"]
+                ),
+            ),
+            ContinuousInput(key="feat2", bounds=(0, 1), descriptors=second_block),
+        ]
+    )
+    with pytest.raises(ValueError, match=message):
+        feature.validate_features(inputs)
+
+
 def _molecular_inputs() -> Inputs:
     return Inputs(
         features=[
