@@ -87,7 +87,7 @@ class Descriptors(BaseModel):
 
     @field_validator("columns")
     @classmethod
-    def _coerce_columns(cls, columns):
+    def validate_columns(cls, columns):
         """Coerce every column to numeric; lengths are checked in the model validator."""
         validated: Dict[str, List[float]] = {}
         for name, column in columns.items():
@@ -99,13 +99,13 @@ class Descriptors(BaseModel):
 
     @field_validator("structure")
     @classmethod
-    def _validate_structure(cls, structure):
+    def validate_structure(cls, structure):
         if structure is not None:
             _validate_smiles([str(s) for s in structure])
         return structure
 
     @model_validator(mode="after")
-    def _validate_rectangular(self):
+    def validate_rectangular(self):
         """Every column and the structure must describe the same levels."""
         lengths = {name: len(column) for name, column in self.columns.items()}
         if self.structure is not None:
