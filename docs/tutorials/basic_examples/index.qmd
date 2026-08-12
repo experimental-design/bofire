@@ -34,5 +34,5 @@ Handling and classifying unknown constraints in optimization problems.
 Learn how to use Index Kernel and Positive Index Kernel for categorical variables.
 
 ### [Estimating a Pareto Front from Surrogate Models](pareto_front_estimation.qmd)
-Compare Sobol and GA front estimates, validate fitted GP models, and inspect the
-MOBO acquisition surface.
+Compare Sobol and GA front estimates and validate fitted GP models against a
+known benchmark.

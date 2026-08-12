@@ -49,12 +49,11 @@ from bofire.utils.multiobjective import compute_hypervolume, get_pareto_front
 SMOKE_TEST = os.environ.get("SMOKE_TEST")
 SEED = 42
 NUM_INIT_SAMPLES = 12 if not SMOKE_TEST else 8
-NUM_FRONT_SAMPLES = 8192 if not SMOKE_TEST else 256
+NUM_FRONT_SAMPLES = 8192 if not SMOKE_TEST else 120
 GA_POPULATION_SIZE = 128 if not SMOKE_TEST else 24
 GA_MAX_GENERATIONS = 150 if not SMOKE_TEST else 5
-GA_MAX_EVALUATIONS = 20_000 if not SMOKE_TEST else 120
 OBJECTIVE_KEYS = ["f1", "f2"]
-HYPERVOLUME_REFERENCE_POINT = {"f1": 140, "f2": 50}
+HYPERVOLUME_REFERENCE_POINT = {"f1": 138, "f2": 52}
 
 np.random.seed(SEED)
 ```
@@ -113,6 +112,11 @@ baseline for the GA.
 The approach becomes less fun in higher dimensions: we are basically hoping to
 get lucky and place enough samples near the Pareto set. That is where the GA
 starts to earn its keep.
+
+This tutorial is a showcase rather than a competitive benchmark of Sobol sampling
+versus the GA. However, as the input dimension grows, space-filling samples become sparse,
+whereas the GA can concentrate later evaluations around promising trade-offs;
+it is therefore expected to scale more favorably for front estimation.
 
 ```{python}
 #| tags: []
@@ -191,7 +195,7 @@ front, prefer that as the reference.
 ga = GeneticAlgorithmOptimizer(
     population_size=GA_POPULATION_SIZE,
     n_max_gen=GA_MAX_GENERATIONS,
-    n_max_evals=GA_MAX_EVALUATIONS,
+    n_max_evals=NUM_FRONT_SAMPLES,
     verbose=False,
 )
 
@@ -283,6 +287,11 @@ prediction_errors.abs().agg(["mean", "max"])
 The hypervolume summary compares search quality within each response source.
 Benchmark and GP hypervolumes should not be compared directly because one uses
 actual responses and the other uses model predictions.
+
+Over the BNH input domain, the largest attainable values are 136 for `f1` and
+50 for `f2`. Because both objectives are minimized, larger values are worse. We
+therefore choose a reference point two units beyond those values: `(138, 52)`.
+The same fixed reference point is used for every front.
 
 ```{python}
 #| tags: []
