@@ -299,6 +299,9 @@ The spec is automatically picked up by `tests/bofire/conftest.py` which imports 
 - **Docstrings**: Google-style
 - **Type Checking**: Pydantic for runtime, ty for static analysis
 - **Python**: 3.10+
+- **Pydantic validators**: public methods named `validate_*`, no leading underscore
+  (111 validators in `bofire/`, 104 use the `validate_` prefix). Module-level helper
+  functions they call may still be private. No linter enforces this.
 
 ## Documentation
 
