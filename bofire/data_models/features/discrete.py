@@ -51,8 +51,30 @@ class DiscreteInput(NumericalInput):
         validate_descriptors_fit(self.descriptors, self.descriptor_levels())
         return self
 
+    def _description_prefix(self) -> str:
+        """Leading description string identifying this feature kind."""
+        kind = "Discrete"
+        if self.descriptors is not None and self.descriptors.structure is not None:
+            # a numeric feature is a single descriptor component, so exactly one structure
+            kind = f"Discrete molecular (SMILES: {self.descriptors.structure[0]})"
+        return f"{kind}, allowed values: {self.values}"
+
+    def _extra_description_parts(self) -> List[str]:
+        """Optional extras appended after the prefix, before context.
+
+        A restricted amount of a substance still describes one substance, so the block has
+        a single level here just as it does on ``ContinuousInput``.
+        """
+        if self.descriptors is None or not self.descriptors.names:
+            return []
+        mapping = {name: column[0] for name, column in self.descriptors.columns.items()}
+        return [f"descriptors: {mapping}"]
+
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(description=...))`` with allowed values.
+
+        Subclasses customize the output by overriding ``_description_prefix``
+        and/or ``_extra_description_parts``.
 
         Example::
 
@@ -60,7 +82,7 @@ class DiscreteInput(NumericalInput):
             >>> field_type, _ = feat.to_pydantic_field()
             >>> # field_type = Literal[1.0, 2.0, 5.0]
         """
-        desc_parts = [f"Discrete, allowed values: {self.values}"]
+        desc_parts = [self._description_prefix(), *self._extra_description_parts()]
         if self.context:
             desc_parts.append(self.context)
         return (

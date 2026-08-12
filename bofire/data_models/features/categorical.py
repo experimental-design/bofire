@@ -47,6 +47,11 @@ if TYPE_CHECKING:
 # values and an additional 7500-char combined-length cap above 250 values.
 # 32 is well below any documented limit and leaves headroom for very long
 # category strings.
+#
+# The *description* is deliberately not capped by this threshold: descriptor values
+# are what make a categorical steerable by a model, and the documented provider caps
+# are on enum values, not on descriptions. Do not "fix" the descriptor mapping below
+# to shrink above the threshold without measuring first.
 LLM_ENUM_SCHEMA_THRESHOLD = 32
 
 
@@ -145,14 +150,39 @@ class CategoricalInput(Input):
 
     def _description_prefix(self) -> str:
         """Leading description string identifying this feature kind."""
-        return f"Categorical, allowed: {self.get_allowed_categories()}"
+        kind = "Categorical"
+        if self.descriptors is not None:
+            if self.descriptors.structure is not None:
+                kind = "Categorical molecular (SMILES)"
+            elif self.descriptors.names:
+                kind = "Categorical with descriptors"
+        return f"{kind}, allowed: {self.get_allowed_categories()}"
 
     def _extra_description_parts(self) -> List[str]:
-        """Optional extras appended after the prefix, before context."""
-        # only the numeric columns are worth naming; a structure-only block has none
-        if self.descriptors is not None and self.descriptors.names:
-            return [f"descriptors: {self.descriptors.names}"]
-        return []
+        """Optional extras appended after the prefix, before context.
+
+        The descriptor *values* are what let a model reason about the categories, so
+        they are spelled out per category rather than merely named. Read from the stored
+        block only -- generators live on the surrogate side and are not a property of the
+        feature, so no descriptors are generated here.
+
+        Note the asymmetry with :meth:`_description_prefix`, which lists only the allowed
+        categories while this maps every one of them. That is intentional: a forbidden
+        category's descriptors still inform what the allowed ones mean.
+        """
+        if self.descriptors is None:
+            return []
+        parts = []
+        if self.descriptors.names:
+            columns = self.descriptors.columns
+            mapping = {
+                category: {name: column[i] for name, column in columns.items()}
+                for i, category in enumerate(self.categories)
+            }
+            parts.append(f"descriptors per category: {mapping}")
+        if self.descriptors.structure is not None:
+            parts.append(f"structure: {self.descriptors.structure}")
+        return parts
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(description=...))`` with allowed categories.

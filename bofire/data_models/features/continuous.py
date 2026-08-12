@@ -86,11 +86,23 @@ class ContinuousInput(NumericalInput):
 
     def _description_prefix(self) -> str:
         """Leading description string identifying this feature kind."""
-        return f"Continuous, bounds [{self.bounds[0]}, {self.bounds[1]}]"
+        kind = "Continuous"
+        if self.descriptors is not None and self.descriptors.structure is not None:
+            # a numeric feature is a single descriptor component, so exactly one structure
+            kind = f"Continuous molecular (SMILES: {self.descriptors.structure[0]})"
+        return f"{kind}, bounds [{self.bounds[0]}, {self.bounds[1]}]"
 
     def _extra_description_parts(self) -> List[str]:
-        """Optional extras appended after the prefix, before context."""
-        return []
+        """Optional extras appended after the prefix, before context.
+
+        One value per descriptor, not a table: the feature is one component of a mixture,
+        so its block describes a single level. Read from the stored block only -- see
+        :meth:`CategoricalInput._extra_description_parts`.
+        """
+        if self.descriptors is None or not self.descriptors.names:
+            return []
+        mapping = {name: column[0] for name, column in self.descriptors.columns.items()}
+        return [f"descriptors: {mapping}"]
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(float, Field(ge=..., le=..., description=...))```.

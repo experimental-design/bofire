@@ -12,7 +12,11 @@ from bofire.data_models.descriptor_generators.api import (
 )
 from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
 from bofire.data_models.features._descriptors import Descriptors
-from bofire.data_models.features.api import CategoricalInput, ContinuousInput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    DiscreteInput,
+)
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
@@ -235,9 +239,30 @@ def test_categorical_molecular_input_to_pydantic_field():
     )
     field_type, field_info = feat.to_pydantic_field()
     assert field_type == Literal["CCO", "CC"]
-    # SMILES now live in the explicit `structure` field, not the descriptor table,
-    # so they no longer appear in the categorical descriptor list.
-    assert field_info.description == "Categorical, allowed: ['CCO', 'CC']"
+    assert field_info.description == (
+        "Categorical molecular (SMILES), allowed: ['CCO', 'CC'] — "
+        "structure: ['CCO', 'CC']"
+    )
+
+
+def test_categorical_molecular_input_to_pydantic_field_structure_beside_names():
+    """Categories need not be the SMILES themselves.
+
+    Main could not express this -- `CategoricalMolecularInput` used the categories as the
+    structures -- so without the explicit `structure` part the SMILES would be invisible
+    to the model here.
+    """
+    feat = CategoricalInput(
+        key="solvent",
+        categories=["water", "ethanol"],
+        descriptors=Descriptors(columns={"logP": [-1.4, -0.3]}, structure=["O", "CCO"]),
+    )
+    _, field_info = feat.to_pydantic_field()
+    assert field_info.description == (
+        "Categorical molecular (SMILES), allowed: ['water', 'ethanol'] — "
+        "descriptors per category: {'water': {'logP': -1.4}, 'ethanol': {'logP': -0.3}} — "
+        "structure: ['O', 'CCO']"
+    )
 
 
 def test_categorical_molecular_input_to_pydantic_field_falls_back_above_threshold():
@@ -260,6 +285,39 @@ def test_continuous_molecular_input_to_pydantic_field():
         key="conc", bounds=(0.0, 1.0), descriptors=Descriptors(structure=["CCO"])
     )
     _, field_info = feat.to_pydantic_field()
-    # the deprecated shim is now a plain ContinuousInput carrying a `smiles`
-    # descriptor column; the SMILES no longer surfaces in the field description.
-    assert field_info.description == "Continuous, bounds [0.0, 1.0]"
+    # a numeric feature is a single component, so it carries exactly one structure
+    assert (
+        field_info.description
+        == "Continuous molecular (SMILES: CCO), bounds [0.0, 1.0]"
+    )
+
+
+def test_continuous_molecular_input_to_pydantic_field_with_descriptors():
+    feat = ContinuousInput(
+        key="conc",
+        bounds=(0.0, 1.0),
+        descriptors=Descriptors(columns={"logP": [-0.3]}, structure=["CCO"]),
+    )
+    _, field_info = feat.to_pydantic_field()
+    assert field_info.description == (
+        "Continuous molecular (SMILES: CCO), bounds [0.0, 1.0] — "
+        "descriptors: {'logP': -0.3}"
+    )
+
+
+def test_discrete_input_to_pydantic_field_with_descriptors():
+    """`DiscreteInput` gained descriptors in this refactor; main had none.
+
+    A restricted amount of a substance still describes one substance, so the block has a
+    single level here just as it does on `ContinuousInput`.
+    """
+    feat = DiscreteInput(
+        key="loading",
+        values=[1.0, 2.0, 5.0],
+        descriptors=Descriptors(columns={"logP": [-0.3]}, structure=["CCO"]),
+    )
+    _, field_info = feat.to_pydantic_field()
+    assert field_info.description == (
+        "Discrete molecular (SMILES: CCO), allowed values: [1.0, 2.0, 5.0] — "
+        "descriptors: {'logP': -0.3}"
+    )
