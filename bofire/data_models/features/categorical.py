@@ -107,31 +107,6 @@ class CategoricalInput(Input):
         validate_descriptors_fit(self.descriptors, self.descriptor_levels())
         return self
 
-    @classmethod
-    def from_df(cls, key: str, df: pd.DataFrame) -> "CategoricalInput":
-        """Create a descriptor-carrying feature from a dataframe.
-
-        Args:
-            key: Key of the new feature.
-            df: Categories as rows, descriptors as columns.
-
-        Example::
-
-            >>> df = pd.DataFrame(
-            ...     {"logP": [-1.4, -0.3], "MW": [18.0, 46.0]},
-            ...     index=["water", "ethanol"],
-            ... )
-            >>> CategoricalInput.from_df("solvent", df)
-        """
-        return cls(
-            key=key,
-            categories=list(df.index),
-            allowed=[True for _ in range(len(df))],
-            descriptors=Descriptors(
-                columns={col: df[col].tolist() for col in df.columns}
-            ),
-        )
-
     @field_validator("allowed")
     @classmethod
     def generate_allowed(cls, allowed, info):

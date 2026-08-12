@@ -336,41 +336,6 @@ def test_continuous_descriptor_input_feature_as_dataframe(descriptors, values):
     assert df.values.tolist()[0] == values
 
 
-@pytest.mark.parametrize(
-    "categories, descriptors, values",
-    [
-        (["c1", "c2"], ["d1", "d2", "d3"], [[1, 2, 3], [4, 5, 6]]),
-        (
-            ["c1", "c2", "c3", "c4"],
-            ["d1", "d2", "d3"],
-            [
-                [1, 2, 3],
-                [4, 5, 6],
-                [4, 5, 6],
-                [4, 5, 6],
-            ],
-        ),
-    ],
-)
-def test_categorical_descriptor_input_feature_from_dataframe(
-    categories,
-    descriptors,
-    values,
-):
-    df = pd.DataFrame.from_dict(
-        dict(zip(categories, values)),
-        orient="index",
-        columns=descriptors,
-    )
-    f = CategoricalInput.from_df("k", df)
-    assert f.categories == categories
-    assert f.descriptors.names == descriptors
-    assert (
-        f.descriptors.table(f.descriptor_levels(), descriptors).values.tolist()
-        == values
-    )
-
-
 def test_categorical_descriptor_input_to_pydantic_field():
     feat = CategoricalInput(
         key="cat",

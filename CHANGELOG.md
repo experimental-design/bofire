@@ -28,7 +28,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
   | `input_preprocessing_specs=…` on a surrogate | removed; derived from `inputs`. Use `categorical_encodings` |
 
 - **Breaking**: transformed column order changes for domains that mix descriptor- or structure-carrying features with plain ones. The removed classes occupied `order_id`s 2/4/5/6, interleaved among the survivors; their features now sort as plain `CategoricalInput`/`ContinuousInput` (7/1). Feature *values* are unaffected — only the column positions. Code that indexes transformed tensors positionally should be rechecked; code that goes through `Inputs.get_feature_indices` / `_get_transform_info` needs no change.
-- `CategoricalDescriptorInput.from_df` moved to `CategoricalInput.from_df`.
+- **Breaking**: `CategoricalDescriptorInput.from_df` / `to_df` are removed without replacement. Build the feature directly: `CategoricalInput(key=..., categories=list(df.index), descriptors=Descriptors(columns=df.to_dict("list")))`.
 
 - **Breaking**: descriptor data is now a composed `Descriptors` value object rather than two flat fields mixed into each feature. `feature.descriptors` is `Optional[Descriptors]` holding `columns` and `structure`; `DescriptorsMixin` is gone. This removes the mixin's reach into its host (it needed a phantom `key` field), keeps the descriptor machinery free of any knowledge of features, and fixes an MRO artifact where `descriptors`/`structure` led every serialized feature ahead of `type` and `key`.
 
