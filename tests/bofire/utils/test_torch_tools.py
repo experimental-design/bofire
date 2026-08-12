@@ -24,12 +24,12 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,

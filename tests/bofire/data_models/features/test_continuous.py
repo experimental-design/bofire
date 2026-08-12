@@ -7,8 +7,8 @@ import pytest
 from pandas.testing import assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.features.descriptors import Descriptors
 
 
 def test_continuous_input_invalid_stepsize():

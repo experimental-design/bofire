@@ -12,7 +12,6 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -21,6 +20,7 @@ from bofire.data_models.features.api import (
     Input,
     Output,
 )
+from bofire.data_models.features.descriptors import Descriptors
 
 
 # TODO: split this into the individual methods in the `Inputs` and `Outputs` classes

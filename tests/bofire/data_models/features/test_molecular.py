@@ -11,12 +11,12 @@ from bofire.data_models.descriptor_generators.api import (
     MordredDescriptors,
 )
 from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     DiscreteInput,
 )
+from bofire.data_models.features.descriptors import Descriptors
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None

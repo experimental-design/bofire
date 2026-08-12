@@ -6,7 +6,6 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalOutput,
@@ -18,6 +17,7 @@ from bofire.data_models.features.api import (
     SumFeature,
     WeightedSumFeature,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
     InfiniteWidthBNNKernel,

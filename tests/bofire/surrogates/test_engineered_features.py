@@ -7,7 +7,6 @@ import torch
 
 from bofire.data_models.descriptor_generators.api import MordredDescriptors
 from bofire.data_models.domain.api import Inputs
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CloneFeature,
     ContinuousInput,
@@ -17,6 +16,7 @@ from bofire.data_models.features.api import (
     SumFeature,
     WeightedSumFeature,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.surrogates.engineered_features import (
     map_clone_feature,
     map_interpolate_feature,

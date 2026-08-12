@@ -27,7 +27,7 @@ from pydantic import Field
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.descriptor_generators.api import AnyDescriptorGenerator
-from bofire.data_models.features._descriptors import Descriptors
+from bofire.data_models.features.descriptors import Descriptors
 
 
 def filter_correlated(df: pd.DataFrame, cutoff: float) -> pd.DataFrame:

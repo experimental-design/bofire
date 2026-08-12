@@ -5,12 +5,12 @@ from sklearn.model_selection import GroupShuffleSplit, KFold, StratifiedKFold
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 
 

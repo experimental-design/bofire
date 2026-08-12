@@ -18,7 +18,6 @@ from bofire.benchmarks.data.aniline_cn_crosscoupling import (
 )
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.encodings.api import DescriptorEncoding
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -26,6 +25,7 @@ from bofire.data_models.features.api import (
     ContinuousTaskInput,
     Input,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,

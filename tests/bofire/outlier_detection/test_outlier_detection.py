@@ -5,12 +5,12 @@ import pytest
 import bofire.data_models.outlier_detection.api as data_models
 import bofire.outlier_detection.api as mapper
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import RBFKernel, ScaleKernel
 from bofire.data_models.surrogates.api import Normalize, SingleTaskGPSurrogate
 from bofire.outlier_detection.outlier_detections import OutlierDetections

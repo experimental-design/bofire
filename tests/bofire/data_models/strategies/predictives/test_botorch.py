@@ -1,12 +1,12 @@
 import pytest
 
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.strategies.api import BotorchOptimizer, SoboStrategy
 from bofire.data_models.surrogates.api import (
     MixedSingleTaskGPSurrogate,

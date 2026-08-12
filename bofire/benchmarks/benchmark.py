@@ -15,8 +15,8 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
 

@@ -3,7 +3,7 @@ import pytest
 
 from bofire.data_models.domain import api as domain_api
 from bofire.data_models.features import api as features_api
-from bofire.data_models.features._descriptors import Descriptors
+from bofire.data_models.features.descriptors import Descriptors
 
 
 @pytest.fixture

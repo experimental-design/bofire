@@ -22,7 +22,6 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -30,6 +29,7 @@ from bofire.data_models.features.api import (
     SumFeature,
     WeightedSumFeature,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
 from bofire.surrogates.utils import (

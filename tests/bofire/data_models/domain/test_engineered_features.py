@@ -1,12 +1,12 @@
 import pytest
 
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     ContinuousInput,
     SumFeature,
     WeightedSumFeature,
 )
+from bofire.data_models.features.descriptors import Descriptors
 
 
 def test_engineered_features():

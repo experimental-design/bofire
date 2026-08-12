@@ -19,7 +19,7 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
-from bofire.data_models.features._descriptors import (
+from bofire.data_models.features.descriptors import (
     Descriptors,
     validate_descriptors_fit,
 )

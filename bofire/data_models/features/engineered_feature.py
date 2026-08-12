@@ -6,8 +6,8 @@ from pydantic import Field, PositiveFloat, PositiveInt, model_validator
 
 from bofire.data_models.encodings.naming import get_encoded_name
 from bofire.data_models.features._descriptor_spec import DescriptorSpec
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.features.feature import Feature
 from bofire.data_models.types import Bounds, FeatureKeys, OneFeatureKeys
 

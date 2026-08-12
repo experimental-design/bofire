@@ -19,13 +19,13 @@ import bofire.data_models.surrogates.api as data_models
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.encodings.api import OneHotEncoding, OrdinalEncoding
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler

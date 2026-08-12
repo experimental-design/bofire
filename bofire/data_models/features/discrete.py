@@ -5,7 +5,7 @@ import pandas as pd
 from pydantic import Field, field_validator, model_validator
 from pydantic.fields import FieldInfo
 
-from bofire.data_models.features._descriptors import (
+from bofire.data_models.features.descriptors import (
     Descriptors,
     validate_descriptors_fit,
 )

@@ -18,13 +18,13 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.enum import SamplingMethodEnum
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
 )
+from bofire.data_models.features.descriptors import Descriptors
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)

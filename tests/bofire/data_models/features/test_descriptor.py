@@ -9,8 +9,8 @@ from pandas.testing import assert_frame_equal
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.encodings.api import DescriptorEncoding
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput
+from bofire.data_models.features.descriptors import Descriptors
 
 
 @pytest.mark.parametrize(

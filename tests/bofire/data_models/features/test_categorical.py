@@ -11,8 +11,8 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import CategoricalInput, CategoricalOutput
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
 
 

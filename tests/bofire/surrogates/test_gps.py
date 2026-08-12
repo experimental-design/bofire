@@ -30,13 +30,13 @@ from bofire.data_models.descriptor_generators.api import (
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.encodings.api import DescriptorEncoding, OrdinalEncoding
 from bofire.data_models.enum import RegressionMetricsEnum
-from bofire.data_models.features._descriptors import Descriptors
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     SumFeature,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
     HammingDistanceKernel,
