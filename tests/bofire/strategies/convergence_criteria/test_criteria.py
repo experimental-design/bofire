@@ -90,6 +90,52 @@ class TestApplicability:
             MoboStrategyDataModel(domain=domain, convergence_criterion=criterion_cls())
 
 
+class TestInvalidExperimentsIgnored:
+    """Rows with invalid outputs are excluded from the convergence checks.
+
+    The surrogate is only fit on valid experiments, so the criteria must not
+    compute incumbents, best values, or thresholds from invalidated rows.
+    """
+
+    @staticmethod
+    def _fitted_sobo_with_invalid(benchmark, n_valid, criterion):
+        import pandas as pd
+
+        random = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        )
+        experiments = benchmark.f(random.ask(n_valid + 2), return_complete=True)
+        # Invalidate the two rows with the *best* objective values: if these
+        # leaked into the checks, incumbent-based quantities would change.
+        worst_first = experiments["y"].sort_values().index[:2]
+        experiments.loc[worst_first, "valid_y"] = 0
+        strategy = SoboStrategy(
+            data_model=SoboStrategyDataModel(
+                domain=benchmark.domain, convergence_criterion=criterion
+            )
+        )
+        strategy.tell(experiments)
+        assert isinstance(strategy.experiments, pd.DataFrame)
+        return strategy
+
+    def test_invalid_rows_do_not_count_towards_min_experiments(self, benchmark):
+        criterion = UCBLCBRegretBoundCriterion(min_experiments=9)
+        # 7 valid + 2 invalid rows: below min_experiments -> not converged.
+        strategy = self._fitted_sobo_with_invalid(benchmark, 7, criterion)
+        assert evaluate_ucb_lcb_regret_bound_criterion(criterion, strategy) is False
+
+    @pytest.mark.parametrize("criterion_cls", GP_CRITERIA)
+    def test_criteria_run_with_invalid_rows_present(self, benchmark, criterion_cls):
+        kwargs = {"min_experiments": 5}
+        if criterion_cls is ProbabilisticRegretBoundCriterion:
+            kwargs.update(n_samples_max=32, n_random=64, n_starts=2)
+        if criterion_cls is ExpMinRegretGapCriterion:
+            kwargs.update(n_samples_lcb=100)
+        criterion = criterion_cls(**kwargs)
+        strategy = self._fitted_sobo_with_invalid(benchmark, 10, criterion)
+        assert isinstance(strategy.has_converged(), bool)
+
+
 class TestUCBLCBRegretBoundCriterion:
     """Tests for the criterion data model and its evaluator."""
 

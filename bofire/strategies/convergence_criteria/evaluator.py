@@ -20,9 +20,21 @@ def get_ready_experiments(strategy, min_experiments: int) -> Optional[pd.DataFra
     preconditions every model-based evaluator needs before it can compute
     anything — and ``None`` otherwise. While the preconditions do not hold, a
     strategy is simply not (yet) considered converged.
+
+    Only experiments with valid outputs are counted and returned: rows flagged
+    invalid or with missing outputs are dropped, mirroring the preprocessing
+    the surrogate fit applies, so the criteria never compute incumbents or
+    thresholds from data the model was not fit on. The returned frame has a
+    fresh positional index (labels equal positions), so label-based incumbent
+    lookups line up with tensor positions.
     """
     experiments = strategy.experiments
-    if experiments is None or len(experiments) < min_experiments:
+    if experiments is None:
+        return None
+    experiments = strategy.domain.outputs.preprocess_experiments_all_valid_outputs(
+        experiments
+    ).reset_index(drop=True)
+    if len(experiments) < min_experiments:
         return None
     if (
         not getattr(strategy, "is_fitted", False)

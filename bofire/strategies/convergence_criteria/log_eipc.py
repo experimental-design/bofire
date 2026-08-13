@@ -81,8 +81,7 @@ class LogExpectedImprovementPerCost(AnalyticAcquisitionFunction):
         posterior_transform: Optional[PosteriorTransform] = None,
         maximize: bool = False,
     ) -> None:
-        super(AnalyticAcquisitionFunction, self).__init__(model=model)
-        self.posterior_transform = posterior_transform
+        super().__init__(model=model, posterior_transform=posterior_transform)
         self.maximize = maximize
         self.register_buffer("best_f", torch.as_tensor(best_f))
         self.cost_callable = cost_callable

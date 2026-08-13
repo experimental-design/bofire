@@ -418,7 +418,11 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         start_timing: int,
         rate: float,
     ) -> Optional[float]:
-        """``rate * median(seq_values[:start_timing])``, or ``None`` if not enough values."""
+        """``rate * median(seq_values[:start_timing])``, or ``None`` if not enough values.
+
+        Strict ``>``: the value under test is in ``seq_values`` and must not
+        fall inside its own median window.
+        """
         if len(seq_values) <= start_timing:
             return None
         return float(rate * np.median(seq_values[:start_timing]))
@@ -585,10 +589,6 @@ def evaluate_exp_min_regret_gap_criterion(
     if ExpMinRegretGapEvaluator._objective_sign(strategy) is None:
         return False
     n = len(experiments)
-
-    # Work on positional (0-based) labels so incumbent indices line up with
-    # tensor positions across prefixes.
-    experiments = experiments.reset_index(drop=True)
 
     key = criterion.model_dump_json()
     state = _CHECK_STATE_CACHE.get(strategy)
