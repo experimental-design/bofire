@@ -99,8 +99,8 @@ def invalid_outlier_detection_spec(request) -> specs.InvalidSpec:
     return request.param
 
 
-@fixture(params=specs.molfeatures.invalids)
-def invalid_molfeatures_spec(request) -> specs.InvalidSpec:
+@fixture(params=specs.descriptor_generators.invalids)
+def invalid_descriptor_generator_spec(request) -> specs.InvalidSpec:
     return request.param
 
 
@@ -195,8 +195,8 @@ def outlier_detection_spec(request) -> specs.Spec:
     return request.param
 
 
-@fixture(params=specs.molfeatures.valids)
-def molfeatures_spec(request) -> specs.Spec:
+@fixture(params=specs.descriptor_generators.valids)
+def descriptor_generator_spec(request) -> specs.Spec:
     return request.param
 
 

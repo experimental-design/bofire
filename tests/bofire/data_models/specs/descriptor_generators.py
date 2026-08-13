@@ -1,7 +1,7 @@
 import importlib
 import random
 
-import bofire.data_models.descriptor_generators.api as molfeatures
+import bofire.data_models.descriptor_generators.api as descriptor_generators
 from bofire.data_models.descriptor_generators import names
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -12,7 +12,7 @@ MORDRED_AVAILABLE = importlib.util.find_spec("mordred") is not None
 specs = Specs([])
 
 specs.add_valid(
-    molfeatures.Fingerprints,
+    descriptor_generators.Fingerprints,
     lambda: {
         "bond_radius": random.randrange(1, 6),
         "n_bits": random.randrange(32, 2048),
@@ -21,7 +21,7 @@ specs.add_valid(
 
 if RDKIT_AVAILABLE:
     specs.add_valid(
-        molfeatures.Fragments,
+        descriptor_generators.Fragments,
         lambda: {
             "fragments": random.sample(
                 names.fragments,
@@ -32,7 +32,7 @@ if RDKIT_AVAILABLE:
 
     if MORDRED_AVAILABLE:
         specs.add_valid(
-            molfeatures.MordredDescriptors,
+            descriptor_generators.MordredDescriptors,
             lambda: {
                 "descriptors": random.sample(names.mordred, k=random.randrange(1, 10)),
                 "ignore_3D": False,

@@ -266,7 +266,7 @@ def test_map_molecular_weighted_sum_feature():
             ),
         ]
     )
-    molfeatures = MordredDescriptors(descriptors=["NssCH2", "ATSC2d"], ignore_3D=True)
+    generator = MordredDescriptors(descriptors=["NssCH2", "ATSC2d"], ignore_3D=True)
     # opt into correlation filtering on the feature (default is off)
     aggregation = WeightedSumFeature(
         key="agg1",
@@ -274,7 +274,7 @@ def test_map_molecular_weighted_sum_feature():
         filter_descriptors=True,
         correlation_cutoff=1.0,
         columns=[],
-        generators=[molfeatures],
+        generators=[generator],
     )
 
     aggregation.validate_features(inputs)
@@ -565,13 +565,13 @@ def test_map_molecular_weighted_mean_feature():
             ),
         ]
     )
-    molfeatures = MordredDescriptors(descriptors=["NssCH2", "ATSC2d"], ignore_3D=True)
+    generator = MordredDescriptors(descriptors=["NssCH2", "ATSC2d"], ignore_3D=True)
     # no filtering (default): both descriptor columns are kept
     aggregation = WeightedSumFeature(
         key="agg1",
         features=["m1", "m2"],
         columns=[],
-        generators=[molfeatures],
+        generators=[generator],
         normalize=True,
     )
 
@@ -582,7 +582,7 @@ def test_map_molecular_weighted_mean_feature():
     orig = torch.tensor([[0.1, 0.2], [0.4, 0.1]]).to(**tkwargs)
     result = aggregator(orig)
 
-    descriptors_df = molfeatures.get_descriptor_values(pd.Series(["C", "CC"]))
+    descriptors_df = generator.get_descriptor_values(pd.Series(["C", "CC"]))
     descriptors = torch.tensor(descriptors_df.values).to(**tkwargs)
     expected_weighted = torch.matmul(orig, descriptors) / orig.sum(dim=1, keepdim=True)
 

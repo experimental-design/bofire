@@ -100,9 +100,9 @@ def test_outlier_detection_should_be_serializable(outlier_detection_spec: Spec):
     assert obj.model_dump() == spec
 
 
-def test_molfeatures_should_be_serializable(molfeatures_spec: Spec):
-    spec = molfeatures_spec.typed_spec()
-    obj = molfeatures_spec.cls(**spec)
+def test_descriptor_generators_should_be_serializable(descriptor_generator_spec: Spec):
+    spec = descriptor_generator_spec.typed_spec()
+    obj = descriptor_generator_spec.cls(**spec)
     assert obj.model_dump() == spec
 
 

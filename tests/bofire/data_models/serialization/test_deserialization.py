@@ -108,8 +108,10 @@ def test_outlier_detection_should_be_deserializable(outlier_detection_spec: Spec
     assert obj == deserialized
 
 
-def test_molfeatures_should_be_deserializable(molfeatures_spec: Spec):
-    obj = molfeatures_spec.obj()
+def test_descriptor_generators_should_be_deserializable(
+    descriptor_generator_spec: Spec,
+):
+    obj = descriptor_generator_spec.obj()
     deserialized = TypeAdapter(AnyDescriptorGenerator).validate_python(obj.model_dump())
     assert obj == deserialized
 

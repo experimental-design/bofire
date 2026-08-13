@@ -21,9 +21,6 @@ from bofire.data_models.features.descriptors import Descriptors
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
-if RDKIT_AVAILABLE:
-    pass
-
 smiles = [
     "CC(=O)Oc1ccccc1C(=O)O",
     "c1ccccc1",
@@ -32,7 +29,6 @@ smiles = [
 ]
 VALID_SMILES = pd.Series(smiles)
 VALID_SMILES.name = "molecule"
-INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
@@ -102,9 +98,7 @@ INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
         ),
     ],
 )
-def test_categorical_molecular_input_to_descriptor_encoding(
-    key, transform_type, values
-):
+def test_categorical_with_structure_to_descriptor_encoding(key, transform_type, values):
     input_feature = CategoricalInput(
         key=key,
         categories=VALID_SMILES.tolist(),
@@ -120,7 +114,7 @@ def test_categorical_molecular_input_to_descriptor_encoding(
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_categorical_molecular_input_invalid_smiles():
+def test_categorical_with_structure_rejects_invalid_smiles():
     with pytest.raises(ValueError, match="abcd is not a valid smiles string."):
         CategoricalInput(
             key="a",
@@ -132,7 +126,7 @@ def test_categorical_molecular_input_invalid_smiles():
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_continous_molecular_input_valid_smiles():
+def test_continuous_with_structure_rejects_invalid_smiles():
     with pytest.raises(ValueError, match="abc is not a valid smiles string"):
         ContinuousInput(
             key="a", bounds=[0, 1], descriptors=Descriptors(structure=["abc"])
@@ -140,12 +134,13 @@ def test_continous_molecular_input_valid_smiles():
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_categorical_molecular_input_valid_smiles():
-    CategoricalInput(
+def test_categorical_with_structure_accepts_valid_smiles():
+    feat = CategoricalInput(
         key="a",
         categories=VALID_SMILES.tolist(),
         descriptors=Descriptors(structure=list(VALID_SMILES.tolist())),
     )
+    assert feat.descriptors.structure == VALID_SMILES.tolist()
 
 
 @pytest.mark.parametrize(
@@ -158,7 +153,7 @@ def test_categorical_molecular_input_valid_smiles():
     ],
 )
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_categorical_molecular_input_from_descriptor_encoding(key):
+def test_categorical_with_structure_from_descriptor_encoding(key):
     feat = CategoricalInput(
         key=key,
         categories=VALID_SMILES.to_list(),
@@ -179,7 +174,7 @@ def test_categorical_molecular_input_from_descriptor_encoding(key):
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_categorical_molecular_input_get_bounds():
+def test_categorical_with_structure_get_bounds():
     # first test with onehot
     feat = CategoricalInput(
         key="a",
@@ -229,7 +224,7 @@ def test_categorical_molecular_input_get_bounds():
     assert upper == [6.0, 6.0]
 
 
-def test_categorical_molecular_input_to_pydantic_field():
+def test_categorical_with_structure_to_pydantic_field():
     from typing import Literal
 
     feat = CategoricalInput(
@@ -244,7 +239,7 @@ def test_categorical_molecular_input_to_pydantic_field():
     )
 
 
-def test_categorical_molecular_input_to_pydantic_field_structure_beside_names():
+def test_categorical_with_structure_to_pydantic_field_structure_beside_names():
     """Categories need not be the SMILES themselves.
 
     Main could not express this -- `CategoricalMolecularInput` used the categories as the
@@ -264,7 +259,7 @@ def test_categorical_molecular_input_to_pydantic_field_structure_beside_names():
     )
 
 
-def test_categorical_molecular_input_to_pydantic_field_falls_back_above_threshold():
+def test_categorical_with_structure_to_pydantic_field_falls_back_above_threshold():
     from bofire.data_models.features.categorical import LLM_ENUM_SCHEMA_THRESHOLD
 
     # Generate enough distinct SMILES by varying alkane chain length
@@ -279,7 +274,7 @@ def test_categorical_molecular_input_to_pydantic_field_falls_back_above_threshol
     assert smiles[-1] in field_info.description
 
 
-def test_continuous_molecular_input_to_pydantic_field():
+def test_continuous_with_structure_to_pydantic_field():
     feat = ContinuousInput(
         key="conc", bounds=(0.0, 1.0), descriptors=Descriptors(structure=["CCO"])
     )
@@ -289,7 +284,7 @@ def test_continuous_molecular_input_to_pydantic_field():
     assert field_info.description == "Continuous, bounds [0.0, 1.0] — structure: CCO"
 
 
-def test_continuous_molecular_input_to_pydantic_field_with_descriptors():
+def test_continuous_with_structure_to_pydantic_field_with_descriptors():
     feat = ContinuousInput(
         key="conc",
         bounds=(0.0, 1.0),

@@ -1,4 +1,4 @@
-import bofire.data_models.descriptor_generators.api as molfeatures
+import bofire.data_models.descriptor_generators.api as descriptor_generators
 import bofire.data_models.encodings.api as encodings
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -43,7 +43,9 @@ specs.add_valid(
     encodings.DescriptorEncoding,
     lambda: _descriptor_spec(
         columns=[],
-        generators=[molfeatures.Fingerprints(n_bits=32, bond_radius=3).model_dump()],
+        generators=[
+            descriptor_generators.Fingerprints(n_bits=32, bond_radius=3).model_dump()
+        ],
     ),
 )
 
@@ -52,7 +54,9 @@ specs.add_valid(
     encodings.DescriptorEncoding,
     lambda: _descriptor_spec(
         columns=["logP"],
-        generators=[molfeatures.Fingerprints(n_bits=32, bond_radius=3).model_dump()],
+        generators=[
+            descriptor_generators.Fingerprints(n_bits=32, bond_radius=3).model_dump()
+        ],
         filter_descriptors=True,
     ),
 )
@@ -63,8 +67,8 @@ specs.add_valid(
     lambda: _descriptor_spec(
         columns=[],
         generators=[
-            molfeatures.Fingerprints(n_bits=32, bond_radius=3).model_dump(),
-            molfeatures.Fragments().model_dump(),
+            descriptor_generators.Fingerprints(n_bits=32, bond_radius=3).model_dump(),
+            descriptor_generators.Fragments().model_dump(),
         ],
     ),
 )
