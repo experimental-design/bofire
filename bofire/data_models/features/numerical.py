@@ -20,14 +20,10 @@ class NumericalInput(Input):
     unit: Optional[str] = None
     descriptors: Optional[Descriptors] = None
 
-    def descriptor_levels(self) -> List:
-        """A numeric feature is a single descriptor component, keyed by the feature."""
-        return [self.key]
-
     @model_validator(mode="after")
     def validate_descriptors(self):
         if self.descriptors is not None:
-            self.descriptors.validate_fit(self.descriptor_levels())
+            self.descriptors.validate_fit([self.key])
         return self
 
     def _extra_description_parts(self) -> List[str]:

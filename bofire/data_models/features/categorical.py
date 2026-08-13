@@ -95,14 +95,10 @@ class CategoricalInput(Input):
         validate_default=True,
     )
 
-    def descriptor_levels(self) -> List:
-        """One descriptor row per category."""
-        return list(self.categories)
-
     @model_validator(mode="after")
     def validate_descriptors(self):
         if self.descriptors is not None:
-            self.descriptors.validate_fit(self.descriptor_levels())
+            self.descriptors.validate_fit(self.categories)
         return self
 
     @field_validator("allowed")

@@ -43,7 +43,7 @@ The continuos descriptor features have the following descriptor values for the d
 ```{python}
 pd.concat(
     [
-        feat.descriptors.table(feat.descriptor_levels())
+        feat.descriptors.table([feat.key])
         for feat in bench.domain.inputs.get()
         if feat.descriptors is not None
     ]

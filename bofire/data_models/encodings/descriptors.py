@@ -37,12 +37,12 @@ class DescriptorEncoding(CategoricalEncoding, DescriptorSpec):
         """Per-category descriptor table: one row per category, in ``categories`` order."""
         # guaranteed by validate_for_feature, which every route here passes through
         assert feature.descriptors is not None
-        return self.build(feature.descriptors, feature.descriptor_levels())
+        return self.build(feature.descriptors, list(feature.categories))
 
     def get_names(self, feature: "CategoricalInput") -> List[str]:
         # guaranteed by validate_for_feature, as in table()
         assert feature.descriptors is not None
-        names = self.resolved_names(feature.descriptors, feature.descriptor_levels())
+        names = self.resolved_names(feature.descriptors, list(feature.categories))
         return [get_encoded_name(feature.key, name) for name in names]
 
     def encode(self, feature: "CategoricalInput", values: pd.Series) -> pd.DataFrame:

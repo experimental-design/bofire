@@ -37,7 +37,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
   | `feature.descriptors` (a dict) | `feature.descriptors.columns` |
   | `feature.structure` | `feature.descriptors.structure` |
   | `feature.descriptor_columns()` | `feature.descriptors.names` |
-  | `feature.descriptor_table(cols)` | `feature.descriptors.table(feature.descriptor_levels(), cols)` |
+  | `feature.descriptor_table(cols)` | `feature.descriptors.table(index, cols)`, where `index` is the categories for a `CategoricalInput` and `[feature.key]` for a numeric one |
   | `feature.has_descriptor_data()` | `feature.descriptors is not None` |
 
 - **Breaking**: `CategoricalTaskInput` and `ContinuousTaskInput` narrow `descriptors` to `None` — a task input is an index, not a described entity, so the constraint is now in the type and visible in the schema instead of a runtime validator.
