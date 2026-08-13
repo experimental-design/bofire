@@ -17,8 +17,7 @@ class LogEIPCCriterion(ConvergenceCriterion):
         converged when  max_x [ LogEI(x) - alpha * log(c(x)) - log(lambda_cost) ] <= 0
 
     Ideal for chemical experiments where reagent, time, or equipment costs
-    matter. The ``cost_column`` attribute lets you record the actual cost of
-    each experiment and use the running mean as the cost estimate.
+    matter.
 
     Requires a fitted GP-based strategy (e.g. ``SoboStrategy``).
     Single-objective only.

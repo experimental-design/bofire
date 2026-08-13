@@ -20,13 +20,6 @@ def get_ready_experiments(strategy, min_experiments: int) -> Optional[pd.DataFra
     preconditions every model-based evaluator needs before it can compute
     anything — and ``None`` otherwise. While the preconditions do not hold, a
     strategy is simply not (yet) considered converged.
-
-    Only experiments with valid outputs are counted and returned: rows flagged
-    invalid or with missing outputs are dropped, mirroring the preprocessing
-    the surrogate fit applies, so the criteria never compute incumbents or
-    thresholds from data the model was not fit on. The returned frame has a
-    fresh positional index (labels equal positions), so label-based incumbent
-    lookups line up with tensor positions.
     """
     experiments = strategy.experiments
     if experiments is None:
@@ -106,10 +99,6 @@ class RegretBoundEvaluator(ConvergenceEvaluator):
     machinery shared by the criteria that build confidence bounds:
     :class:`UCBLCBRegretEvaluator` (Makarova et al., 2022) and
     :class:`ExpMinRegretGapEvaluator` (Ishibashi et al., 2023).
-
-    Criteria that do not use confidence bounds — the cost-aware
-    ``LogEIPCEvaluator`` and ``ProbabilisticRegretBoundEvaluator`` — inherit
-    :class:`ConvergenceEvaluator` directly and carry none of these parameters.
 
     Args:
         delta: Confidence parameter for the GP-UCB beta formula (Srinivas et

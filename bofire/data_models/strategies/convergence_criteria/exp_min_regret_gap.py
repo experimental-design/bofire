@@ -27,16 +27,10 @@ class ExpMinRegretGapCriterion(ConvergenceCriterion):
       convergence checking effectively begins (e.g. the size of the initial
       design), so the median window covers the intended early phase.
 
-    The criterion compares consecutive GP posteriors. In a running BO loop
-    (one new experiment per check) the previous posterior is reused from a
-    per-strategy cache, so consecutive checks need no extra GP fits. On a cold
-    start (fresh or deserialized strategy) the previous-iteration model is
-    reconstructed purely from the recorded history by refitting on all but the
-    last experiment; the ``"median"`` mode additionally replays the early
-    stopping values from prefixes of the history, which makes cold starts in
-    that mode considerably more expensive. Results never depend on the cache —
-    it is invalidated whenever it cannot seamlessly continue, falling back to
-    the pure reconstruction.
+    The criterion compares consecutive GP posteriors and derives everything it
+    needs from the recorded experiments, so it works across process restarts;
+    checks in a freshly (re)started process cost one extra GP fit — several in
+    ``"median"`` mode.
 
     Requires a fitted GP-based strategy (e.g. ``SoboStrategy``).
     Single-objective only.

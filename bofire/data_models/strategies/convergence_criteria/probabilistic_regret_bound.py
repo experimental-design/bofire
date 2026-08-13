@@ -19,18 +19,9 @@ class ProbabilisticRegretBoundCriterion(ConvergenceCriterion):
     to the paper's δ_mod (model risk) and δ_est (estimation error from the
     Monte Carlo test).
 
-    **To reproduce the paper's main experiments** use ``delta_mod = delta_est
-    = 0.025`` (total risk 5 %, 95 % guarantee).
-
     Requires a fitted GP-based strategy (e.g. ``SoboStrategy``); the evaluator
     draws posterior sample paths from the strategy's model.
     Single-objective only.
-
-    How ε is determined (in order of priority):
-
-    1. ``epsilon`` — absolute threshold in original Y units, if explicitly set.
-    2. ``epsilon_relative × (y_max − y_min)`` — relative threshold (default
-       ``1 %`` of the observed range when ``epsilon`` is not set).
 
     Attributes:
         epsilon: Absolute simple regret threshold in Y units.  If ``None``

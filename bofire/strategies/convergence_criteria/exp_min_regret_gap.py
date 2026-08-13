@@ -556,17 +556,11 @@ def evaluate_exp_min_regret_gap_criterion(
 ) -> bool:
     """Evaluate whether the expected minimum regret gap dropped below the threshold.
 
-    The stopping value compares the GP posterior of the current iteration with
-    the posterior of the previous one. In a running BO loop (one new experiment
-    per check) the previous posterior is reused from a per-strategy cache — at
-    the previous check the strategy's own model was fit on exactly that prefix
-    — so consecutive checks need no extra GP fits. On a cold start (fresh or
-    deserialized strategy, config change, experiment count not advanced by
-    exactly one) the previous-iteration model is reconstructed purely from the
-    recorded history by refitting on all but the last experiment; ``"median"``
-    threshold mode additionally replays the early stopping values from history
-    prefixes (one refit per prefix), which makes cold starts in that mode
-    considerably more expensive.
+    The stopping value compares the current GP posterior with the previous
+    iteration's, reused from a per-strategy cache in a running loop and
+    reconstructed from the recorded history on a cold start (see the module
+    docstring); cold starts in ``"median"`` mode replay early stopping values
+    and are considerably more expensive.
 
     Args:
         criterion: The convergence criterion data model with its parameters.

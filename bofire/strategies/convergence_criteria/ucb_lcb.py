@@ -1,10 +1,11 @@
 """Functional convergence evaluation for the UCB-LCB regret bound criterion.
 
 The evaluator is a pure function of the criterion and the strategy's *recorded
-history*: it must not keep internal state between ``has_converged`` calls. All
-quantities are computed from the strategy's fitted model and its recorded
-experiments, so a strategy reconstructed by replaying ``tell`` reaches the
-same result (up to Monte Carlo noise in the min-LCB estimate).
+history*: it keeps no state between ``has_converged`` calls. All quantities
+are computed from the recorded experiments and the fitted model (with
+``topq < 1``, from a copy refit on the best fraction), so a strategy
+reconstructed by replaying ``tell`` reaches the same result up to GP-fit and
+Monte Carlo sampling stochasticity.
 """
 
 from typing import TYPE_CHECKING, Any, Dict, Literal, Optional
