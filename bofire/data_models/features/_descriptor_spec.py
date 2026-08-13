@@ -33,8 +33,8 @@ from bofire.data_models.features.descriptors import Descriptors
 def filter_correlated(df: pd.DataFrame, cutoff: float) -> pd.DataFrame:
     """Drop zero-variance columns, then greedily drop columns with ``|corr| > cutoff``.
 
-    Pure: depends only on ``df``. The first column of each correlated group is kept, so
-    ordering the frame with static (interpretable) columns first preserves them on ties.
+    The first column of each correlated group is kept, so column order decides ties: put
+    static (interpretable) columns ahead of generated ones to keep them.
     """
     variances = df.var()
     non_constant = variances[variances > 0].index.tolist()
@@ -128,8 +128,8 @@ class DescriptorSpec(BaseModel):
             columns. With ``filter_descriptors`` set, zero-variance and correlated columns
             are dropped from the *combined* block.
 
-        Pure: nothing is cached, so rebuilding always yields the same columns. That is what
-        lets ``encode`` and ``decode`` assemble the table independently and still agree.
+        Deterministic and uncached: two calls with the same arguments yield the same
+        columns, so independent callers agree without sharing state.
         """
         frames: List[pd.DataFrame] = []
 
@@ -157,18 +157,20 @@ class DescriptorSpec(BaseModel):
     # -- validation ----------------------------------------------------------------
 
     def validate_for(self, descriptors: Optional[Descriptors], key: str) -> None:
-        """Ask every compatibility question about ``descriptors`` and this spec.
+        """Check that ``descriptors`` can satisfy this spec.
 
-        This is the gate: it is the only place that copes with a feature carrying no
-        block at all, and the only place that raises for an incompatible one. Everything
-        below it takes a `Descriptors` and assumes these checks have passed — which is
-        why `build` asserts rather than re-checking. It is reached from every entry point
-        that can lead to `build`: `Inputs._get_transform_info` / `transform` /
-        `inverse_transform` / `get_bounds` via `_validate_transform_specs`, and
-        `BotorchSurrogate` at construction.
+        Reads metadata only: no descriptors are generated, so this is usable without
+        rdkit. Callers may treat a block that passes as buildable.
 
-        Pure metadata — no descriptors are generated here, so this stays usable without
-        rdkit. ``key`` only names the offending feature in the messages.
+        Args:
+            descriptors: The block to check, or None if the feature carries none.
+            key: Names the offending feature in the error messages.
+
+        Raises:
+            ValueError: If there is no block; if a column listed in ``columns`` is not
+                among the block's numeric descriptors; if ``generators`` are declared but
+                the block has no ``structure`` to run them on; if the resulting column
+                names are not unique; or if the spec would produce no columns at all.
         """
         if descriptors is None:
             raise ValueError(f"{key}: carries no descriptors for this spec to read.")

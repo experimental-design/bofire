@@ -47,10 +47,8 @@ class EngineeredFeature(Feature):
     def get_names(self, inputs: "Inputs") -> List[str]:
         """Names of the columns this feature appends, given the input features.
 
-        Resolved on demand from ``inputs`` rather than stored, mirroring
-        :meth:`CategoricalEncoding.get_names`. The width used for offset bookkeeping is
-        ``len(get_names(inputs))``, so it is always derived from the same data the mapper
-        builds its columns from and cannot go stale.
+        Resolved against ``inputs`` on every call. ``len(get_names(inputs))`` is the
+        feature's width, and is what offset bookkeeping uses.
         """
 
 

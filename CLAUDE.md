@@ -302,6 +302,10 @@ The spec is automatically picked up by `tests/bofire/conftest.py` which imports 
 - **Pydantic validators**: public methods named `validate_*`, no leading underscore
   (111 validators in `bofire/`, 104 use the `validate_` prefix). Module-level helper
   functions they call may still be private. No linter enforces this.
+- **Docstrings** state what the code does now: arguments, returns, raises, invariants
+  callers may rely on. Design history, migration rationale ("rather than stored",
+  "this is why X asserts") and enumerated call sites belong in the commit message and
+  CHANGELOG — in a docstring they go stale and crowd out the contract.
 
 ## Documentation
 
