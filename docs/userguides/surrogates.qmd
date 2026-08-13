@@ -90,3 +90,37 @@ For experimental data subject to noise, one can specify the distribution of this
             kernel=PolynomialKernel(power=2),
             noise_prior=NormalPrior(loc=0, scale=1)
     )
+
+### Categorical encoding customization
+
+A categorical input has to be turned into numeric columns before a surrogate can use it.
+The feature carries the *data* — its categories, and optionally a `Descriptors` block with
+numeric columns and/or SMILES structures — while the surrogate chooses the *encoding*. Two
+surrogates over the same domain can therefore encode the same feature differently.
+
+Each surrogate picks a sensible default per feature: a categorical carrying descriptor data
+is encoded by its descriptors, otherwise one-hot (or ordinal, where the surrogate requires
+it). Override per feature with `categorical_encodings`:
+
+**Encoding**|**Description**|**Requires**
+:-----:|:-----:|:-----:
+[OneHotEncoding](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/onehot.py)|One binary column per category|Nothing
+[OrdinalEncoding](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/ordinal.py)|A single integer column|Nothing
+[DescriptorEncoding](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/descriptors.py)|One column per descriptor, taken from the category's row|A `Descriptors` block on the feature
+
+**Example**:
+
+    surrogate_data_0 = SingleTaskGPSurrogate(
+            inputs=domain.inputs,
+            outputs=Outputs(features=[domain.outputs[0]]),
+            categorical_encodings={"solvent": OneHotEncoding()}
+    )
+
+`DescriptorEncoding` additionally selects *which* descriptors to use: `columns` picks from
+the numeric columns the feature carries (all of them by default), and `generators` computes
+further ones from the feature's `structure`, e.g. `Fingerprints()`. Setting
+`filter_descriptors=True` drops correlated columns across the assembled block.
+
+    categorical_encodings={
+        "solvent": DescriptorEncoding(columns=["logP"], generators=[Fingerprints()])
+    }

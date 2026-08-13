@@ -45,11 +45,26 @@ quartodoc:
             - ContinuousInput
             - ContinuousOutput
             - DiscreteInput
-            - ContinuousDescriptorInput
-            - CategoricalDescriptorInput
-            - ContinuousMolecularInput
-            - CategoricalMolecularInput
+            - Descriptors
             - TaskInput
+    - title: Data Models - Encodings
+      desc: How a categorical feature's value becomes model-input columns
+      contents:
+        - name: data_models.encodings.api
+          members:
+            - CategoricalEncoding
+            - OneHotEncoding
+            - OrdinalEncoding
+            - DescriptorEncoding
+    - title: Data Models - Descriptor Generators
+      desc: Descriptor columns generated from molecular structures
+      contents:
+        - name: data_models.descriptor_generators.api
+          members:
+            - DescriptorGenerator
+            - Fingerprints
+            - Fragments
+            - MordredDescriptors
     - title: Data Models - Strategies
       desc: Strategy configuration data models
       contents:
