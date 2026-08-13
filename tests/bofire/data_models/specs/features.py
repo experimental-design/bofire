@@ -201,6 +201,21 @@ specs.add_valid(
     },
 )
 
+# the valid counterpart of the two invalid specs below: one value per column, whatever
+# the allowed values are. This is also the only valid spec carrying a populated block, so
+# it is what exercises the serialization roundtrip for `Descriptors` itself.
+specs.add_valid(
+    features.DiscreteInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "values": [random.random(), random.random() + 3],
+        "unit": random.choice(["°C", "mg", "mmol/l", None]),
+        "rtol": 1e-7,
+        "descriptors": {"columns": {"mw": [46.0]}, "structure": ["CCO"]},
+        "context": None,
+    },
+)
+
 specs.add_invalid(
     features.DiscreteInput,
     lambda: {
