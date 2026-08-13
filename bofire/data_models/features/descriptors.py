@@ -85,23 +85,11 @@ class Descriptors(BaseModel):
     columns: Dict[str, List[float]] = Field(default_factory=dict)
     structure: Optional[List[str]] = None
 
-    @field_validator("columns")
-    @classmethod
-    def validate_columns(cls, columns):
-        """Coerce every column to numeric; lengths are checked in the model validator."""
-        validated: Dict[str, List[float]] = {}
-        for name, column in columns.items():
-            try:
-                validated[name] = [float(v) for v in column]
-            except (TypeError, ValueError):
-                raise ValueError(f"descriptor column '{name}' must be numeric")
-        return validated
-
     @field_validator("structure")
     @classmethod
     def validate_structure(cls, structure):
         if structure is not None:
-            _validate_smiles([str(s) for s in structure])
+            _validate_smiles(structure)
         return structure
 
     @model_validator(mode="after")
