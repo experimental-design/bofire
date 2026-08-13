@@ -130,6 +130,41 @@ def test_inputs_get_categorical_combinations_conditional():
     )
 
 
+def test_inputs_get_categorical_combinations_exclude_semicontinuous():
+    """`include_semicontinuous=False` must drop the on/off enumeration of
+    semi-continuous features, staying consistent with the flag of the same
+    name on `get_number_of_categorical_combinations`.
+    """
+    inputs = Inputs(
+        features=[
+            CategoricalInput(key="f1", categories=["c11", "c12"]),
+            ContinuousInput(key="f2", bounds=(1, 2), allow_zero=True),
+            ContinuousInput(key="f3", bounds=(1, 2), allow_zero=True),
+        ],
+    )
+    expected = [(("f1", "c11"),), (("f1", "c12"),)]
+    assert inputs.get_categorical_combinations(include_semicontinuous=False) == expected
+    assert inputs.get_number_of_categorical_combinations(
+        include_semicontinuous=False
+    ) == len(expected)
+
+    # the two must agree for both values of the flag
+    for include_semicontinuous in [True, False]:
+        assert len(
+            inputs.get_categorical_combinations(
+                include_semicontinuous=include_semicontinuous
+            )
+        ) == inputs.get_number_of_categorical_combinations(
+            include_semicontinuous=include_semicontinuous
+        )
+
+    # purely continuous: no combinations left at all
+    continuous_inputs = inputs.get(includes=ContinuousInput)
+    assert continuous_inputs.get_categorical_combinations(
+        include_semicontinuous=False
+    ) == [()]
+
+
 def test_inputs_is_fulfilled():
     inputs = Inputs(
         features=[

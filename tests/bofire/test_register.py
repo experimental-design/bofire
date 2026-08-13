@@ -919,6 +919,54 @@ class TestEngineeredFeatureRegistration:
 
 
 # ---------------------------------------------------------------------------
+# Regression test for issue #794: a registered engineered feature was stored
+# in the container but silently dropped by the default ``get``/``get_keys``
+# filter, which was bound to ``AnyFeature`` at import time.
+# ---------------------------------------------------------------------------
+
+
+class _VisibleEngineeredFeature(EngineeredFeature):
+    type: Literal["_VisibleEngineered"] = "_VisibleEngineered"
+    order_id = 102
+
+    @property
+    def n_transformed_inputs(self) -> int:
+        return 1
+
+
+class TestRegisteredFeatureIsVisible:
+    """A registered engineered feature must be visible to the default filter."""
+
+    @pytest.fixture
+    def container(self):
+        from bofire.data_models.domain.features import EngineeredFeatures
+        from bofire.data_models.features.api import register_engineered_feature
+
+        register_engineered_feature(_VisibleEngineeredFeature)
+        return EngineeredFeatures(
+            features=[_VisibleEngineeredFeature(key="engineered", features=["a", "b"])]
+        )
+
+    def test_get_keys_sees_registered_feature(self, container):
+        assert container.get_keys() == ["engineered"]
+
+    def test_get_sees_registered_feature(self, container):
+        assert [f.key for f in container.get()] == ["engineered"]
+
+    def test_n_transformed_inputs_counts_registered_feature(self, container):
+        assert container.n_transformed_inputs == 1
+
+    def test_features2idx_maps_registered_feature(self, container):
+        assert container.get_features2idx() == {"engineered": (0,)}
+
+    def test_generic_features_container_accepts_registered_feature(self, container):
+        """``AnyFeature`` is a separate union and has to be kept in sync too."""
+        from bofire.data_models.domain.features import Features
+
+        assert Features(features=list(container.get())).get_keys() == ["engineered"]
+
+
+# ---------------------------------------------------------------------------
 # Introspection test: ensure _rebuild_dependent_models covers all fields
 # ---------------------------------------------------------------------------
 
