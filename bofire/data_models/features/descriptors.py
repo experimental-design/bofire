@@ -14,7 +14,7 @@ widened to other structure languages later without breaking callers).
 The block knows nothing about features. It enforces that it is internally consistent —
 every column, and the structure, describes the same number of levels — while the *fit*
 to a particular feature (one row per category, or per single component) is checked by the
-feature itself via :func:`validate_descriptors_fit`.
+feature itself via :meth:`Descriptors.validate_fit`.
 """
 
 import warnings
@@ -132,6 +132,25 @@ class Descriptors(BaseModel):
         """Names of the numeric descriptor columns."""
         return list(self.columns)
 
+    def validate_fit(self, levels: List) -> None:
+        """Check that this block describes exactly ``levels``.
+
+        The block itself only guarantees internal consistency; how many levels there
+        should be is the feature's business, so the feature calls this from its own
+        model validator.
+
+        Args:
+            levels: The levels the feature carrying this block declares.
+
+        Raises:
+            ValueError: If the block describes a different number of levels.
+        """
+        if len(self) != len(levels):
+            raise ValueError(
+                f"descriptors must have {len(levels)} value(s) per column (one per "
+                f"level), got {len(self)}",
+            )
+
     def table(self, index: List, columns: Optional[List[str]] = None) -> pd.DataFrame:
         """Per-level table (rows = ``index``, columns = ``columns`` or all of them)."""
         selected = self.names if columns is None else columns
@@ -181,18 +200,3 @@ class Descriptors(BaseModel):
             else None
         )
         return cls(columns=columns, structure=structure)
-
-
-def validate_descriptors_fit(descriptors: Optional[Descriptors], levels: List) -> None:
-    """Check that a block describes exactly the levels of the feature carrying it.
-
-    The block itself only guarantees internal consistency; how many levels there should be
-    is the feature's business, so the feature calls this from its own model validator.
-    """
-    if descriptors is None:
-        return
-    if len(descriptors) != len(levels):
-        raise ValueError(
-            f"descriptors must have {len(levels)} value(s) per column (one per level), "
-            f"got {len(descriptors)}",
-        )

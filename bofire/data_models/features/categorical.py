@@ -19,10 +19,7 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
-from bofire.data_models.features.descriptors import (
-    Descriptors,
-    validate_descriptors_fit,
-)
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.features.feature import Input, Output, TTransform
 from bofire.data_models.objectives.api import AnyCategoricalObjective
 from bofire.data_models.types import CategoryVals
@@ -104,7 +101,8 @@ class CategoricalInput(Input):
 
     @model_validator(mode="after")
     def validate_descriptors(self):
-        validate_descriptors_fit(self.descriptors, self.descriptor_levels())
+        if self.descriptors is not None:
+            self.descriptors.validate_fit(self.descriptor_levels())
         return self
 
     @field_validator("allowed")

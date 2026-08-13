@@ -2,13 +2,9 @@ from typing import ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator
 from pydantic.fields import FieldInfo
 
-from bofire.data_models.features.descriptors import (
-    Descriptors,
-    validate_descriptors_fit,
-)
 from bofire.data_models.features.feature import TTransform
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.types import DiscreteVals
@@ -39,17 +35,7 @@ class DiscreteInput(NumericalInput):
     order_id: ClassVar[int] = 3
 
     values: DiscreteVals
-    descriptors: Optional[Descriptors] = None
     rtol: float = 1e-7
-
-    def descriptor_levels(self) -> List:
-        """A numeric feature is a single descriptor component, keyed by the feature."""
-        return [self.key]
-
-    @model_validator(mode="after")
-    def validate_descriptors(self):
-        validate_descriptors_fit(self.descriptors, self.descriptor_levels())
-        return self
 
     def _description_prefix(self) -> str:
         """Leading description string identifying this feature kind."""
@@ -58,17 +44,6 @@ class DiscreteInput(NumericalInput):
             # a numeric feature is a single descriptor component, so exactly one structure
             kind = f"Discrete molecular (SMILES: {self.descriptors.structure[0]})"
         return f"{kind}, allowed values: {self.values}"
-
-    def _extra_description_parts(self) -> List[str]:
-        """Optional extras appended after the prefix, before context.
-
-        A restricted amount of a substance still describes one substance, so the block has
-        a single level here just as it does on ``ContinuousInput``.
-        """
-        if self.descriptors is None or not self.descriptors.names:
-            return []
-        mapping = {name: column[0] for name, column in self.descriptors.columns.items()}
-        return [f"descriptors: {mapping}"]
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(description=...))`` with allowed values.

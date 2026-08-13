@@ -6,10 +6,6 @@ import pandas as pd
 from pydantic import Field, PositiveFloat, model_validator
 from pydantic.fields import FieldInfo
 
-from bofire.data_models.features.descriptors import (
-    Descriptors,
-    validate_descriptors_fit,
-)
 from bofire.data_models.features.feature import Output, TTransform
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.objectives.api import AnyObjective, MaximizeObjective
@@ -59,7 +55,6 @@ class ContinuousInput(NumericalInput):
     order_id: ClassVar[int] = 1
 
     bounds: Bounds
-    descriptors: Optional[Descriptors] = None
     local_relative_bounds: Optional[
         Annotated[List[PositiveFloat], Field(min_length=2, max_length=2)]
     ] = None
@@ -92,18 +87,6 @@ class ContinuousInput(NumericalInput):
             kind = f"Continuous molecular (SMILES: {self.descriptors.structure[0]})"
         return f"{kind}, bounds [{self.bounds[0]}, {self.bounds[1]}]"
 
-    def _extra_description_parts(self) -> List[str]:
-        """Optional extras appended after the prefix, before context.
-
-        One value per descriptor, not a table: the feature is one component of a mixture,
-        so its block describes a single level. Read from the stored block only -- see
-        :meth:`CategoricalInput._extra_description_parts`.
-        """
-        if self.descriptors is None or not self.descriptors.names:
-            return []
-        mapping = {name: column[0] for name, column in self.descriptors.columns.items()}
-        return [f"descriptors: {mapping}"]
-
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(float, Field(ge=..., le=..., description=...))```.
 
@@ -129,15 +112,6 @@ class ContinuousInput(NumericalInput):
             float,
             Field(ge=lower, le=self.bounds[1], description=" — ".join(desc_parts)),
         )
-
-    def descriptor_levels(self) -> List:
-        """A numeric feature is a single descriptor component, keyed by the feature."""
-        return [self.key]
-
-    @model_validator(mode="after")
-    def validate_descriptors(self):
-        validate_descriptors_fit(self.descriptors, self.descriptor_levels())
-        return self
 
     @model_validator(mode="after")
     def validate_step_size(self):
