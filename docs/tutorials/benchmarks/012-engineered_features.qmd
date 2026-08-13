@@ -43,9 +43,9 @@ The continuos descriptor features have the following descriptor values for the d
 ```{python}
 pd.concat(
     [
-        feat.descriptor_table(feat.descriptor_columns())
+        feat.descriptors.table(feat.descriptor_levels())
         for feat in bench.domain.inputs.get()
-        if feat.has_descriptor_data()
+        if feat.descriptors is not None
     ]
 )
 ```
@@ -119,9 +119,9 @@ def create_strategy(domain):
                     features=[
                         f.key
                         for f in bench.domain.inputs.get()
-                        if f.has_descriptor_data()
+                        if f.descriptors is not None
                     ],
-                    descriptors=["x_1", "x_2"]
+                    columns=["x_1", "x_2"],
                     )]),
         #kernel=RBFKernel(features=["x_1", "x_2"], lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR())
     )

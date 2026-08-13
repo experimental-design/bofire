@@ -12,6 +12,9 @@ project:
     - "!docs/*.md"
     - "!docs/_build/"
     - "!docs/javascripts/"
+    # `pip install .` copies the docs tree into build/lib; without this every
+    # tutorial is executed a second time from there (116 files instead of ~58)
+    - "!build/"
   resources:
     - "docs/**/*.png"
     - "docs/**/*.jpg"

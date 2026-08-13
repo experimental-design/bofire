@@ -30,7 +30,11 @@ from bofire.data_models.acquisition_functions.api import qLogEI
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.descriptor_generators.api import Fingerprints, Fragments
 from bofire.data_models.encodings.api import DescriptorEncoding
-from bofire.data_models.features.api import CategoricalInput, ContinuousOutput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousOutput,
+    Descriptors,
+)
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import RandomStrategy, SoboStrategy
 from bofire.data_models.surrogates.api import BotorchSurrogates, TanimotoGPSurrogate
@@ -65,7 +69,7 @@ input_feature = CategoricalInput(
     key=benchmark["input"],
     categories=smiles,
     # the categories *are* SMILES, so they double as the structure column
-    structure=smiles,
+    descriptors=Descriptors(structure=smiles),
 )
 objective = MaximizeObjective(
     w=1.0,
