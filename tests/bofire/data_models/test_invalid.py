@@ -86,6 +86,10 @@ def test_descriptor_generators_should_be_invalid(
     _invalidate(invalid_descriptor_generator_spec)
 
 
+def test_encoding_should_be_invalid(invalid_encoding_spec: InvalidSpec):
+    _invalidate(invalid_encoding_spec)
+
+
 def test_local_search_config_should_be_invalid(
     invalid_local_search_config_spec: InvalidSpec,
 ):

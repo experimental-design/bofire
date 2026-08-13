@@ -205,6 +205,14 @@ def encoding_spec(request) -> specs.Spec:
     return request.param
 
 
+# no invalid encoding specs today: the only constrained field, `correlation_cutoff`, is
+# bounded by pydantic itself, and an invalid spec for it would test pydantic rather than
+# BoFire. The fixture exists so that adding one later needs no wiring.
+@fixture(params=specs.encodings.invalids)
+def invalid_encoding_spec(request) -> specs.InvalidSpec:
+    return request.param
+
+
 @fixture(params=specs.local_search_configs.valids)
 def local_search_config_spec(request) -> specs.Spec:
     return request.param

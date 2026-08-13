@@ -20,7 +20,7 @@ there is no mutable state on the generators or the spec.
 """
 
 from collections import Counter
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 import pandas as pd
 from pydantic import Field
@@ -68,13 +68,15 @@ class DescriptorSpec(BaseModel):
         generators: descriptor generators run on the feature's ``structure`` column;
             their outputs are concatenated. Empty means no generated columns.
         filter_descriptors: if True, drop correlated columns across the whole block.
-        correlation_cutoff: absolute-correlation threshold for filtering.
+        correlation_cutoff: absolute-correlation threshold for filtering, in [0, 1].
+            Correlations are compared after ``abs()``, so a cutoff outside that range
+            would silently either disable filtering or reduce every block to one column.
     """
 
     columns: Optional[List[str]] = None
     generators: List[AnyDescriptorGenerator] = Field(default_factory=list)
     filter_descriptors: bool = False
-    correlation_cutoff: float = 0.95
+    correlation_cutoff: Annotated[float, Field(ge=0.0, le=1.0)] = 0.95
 
     # -- column resolution ---------------------------------------------------------
 
