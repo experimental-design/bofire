@@ -109,12 +109,6 @@ class Descriptors(BaseModel):
             )
         return self
 
-    def __len__(self) -> int:
-        """Number of levels this block describes."""
-        if self.structure is not None:
-            return len(self.structure)
-        return len(next(iter(self.columns.values())))
-
     @property
     def names(self) -> List[str]:
         """Names of the numeric descriptor columns."""
@@ -133,10 +127,17 @@ class Descriptors(BaseModel):
         Raises:
             ValueError: If the block describes a different number of levels.
         """
-        if len(self) != len(levels):
+        # `validate_rectangular` guarantees every column and the structure agree on the
+        # count, and that at least one of them exists -- so any column answers this
+        n_levels = (
+            len(self.structure)
+            if self.structure is not None
+            else len(next(iter(self.columns.values())))
+        )
+        if n_levels != len(levels):
             raise ValueError(
                 f"descriptors must have {len(levels)} value(s) per column (one per "
-                f"level), got {len(self)}",
+                f"level), got {n_levels}",
             )
 
     def table(self, index: List, columns: Optional[List[str]] = None) -> pd.DataFrame:

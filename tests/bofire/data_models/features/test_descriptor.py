@@ -422,7 +422,6 @@ def test_descriptors_concat_stacks_component_blocks():
     assert merged.names == ["logP", "MW"]
     assert merged.columns == {"logP": [-0.3, -1.4], "MW": [46.0, 18.0]}
     assert merged.structure == ["CCO", "O"]
-    assert len(merged) == 2
 
 
 @pytest.mark.parametrize(
