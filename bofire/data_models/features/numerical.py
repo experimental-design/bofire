@@ -31,15 +31,23 @@ class NumericalInput(Input):
         return self
 
     def _extra_description_parts(self) -> List[str]:
-        """One value per descriptor: the block describes a single level.
+        """The descriptor data, one value each: the block describes a single level.
 
         Read from the stored block only -- generators live on the surrogate side and are
         not a property of the feature.
         """
-        if self.descriptors is None or not self.descriptors.names:
+        if self.descriptors is None:
             return []
-        mapping = {name: column[0] for name, column in self.descriptors.columns.items()}
-        return [f"descriptors: {mapping}"]
+        parts = []
+        if self.descriptors.names:
+            mapping = {
+                name: column[0] for name, column in self.descriptors.columns.items()
+            }
+            parts.append(f"descriptors: {mapping}")
+        if self.descriptors.structure is not None:
+            # a single level, so a single structure -- reported as a scalar
+            parts.append(f"structure: {self.descriptors.structure[0]}")
+        return parts
 
     def valid_transform_types(self) -> List:
         return []

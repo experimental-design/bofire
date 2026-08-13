@@ -123,25 +123,18 @@ class CategoricalInput(Input):
 
     def _description_prefix(self) -> str:
         """Leading description string identifying this feature kind."""
-        kind = "Categorical"
-        if self.descriptors is not None:
-            if self.descriptors.structure is not None:
-                kind = "Categorical molecular (SMILES)"
-            elif self.descriptors.names:
-                kind = "Categorical with descriptors"
-        return f"{kind}, allowed: {self.get_allowed_categories()}"
+        return f"Categorical, allowed: {self.get_allowed_categories()}"
 
     def _extra_description_parts(self) -> List[str]:
-        """Optional extras appended after the prefix, before context.
+        """The descriptor data, one entry per category.
 
-        The descriptor *values* are what let a model reason about the categories, so
-        they are spelled out per category rather than merely named. Read from the stored
-        block only -- generators live on the surrogate side and are not a property of the
-        feature, so no descriptors are generated here.
+        The *values* are what let a model reason about the categories, so they are
+        spelled out rather than merely named. Read from the stored block only --
+        generators live on the surrogate side and are not a property of the feature.
 
-        Note the asymmetry with :meth:`_description_prefix`, which lists only the allowed
-        categories while this maps every one of them. That is intentional: a forbidden
-        category's descriptors still inform what the allowed ones mean.
+        Every category is mapped, while :meth:`_description_prefix` lists only the
+        allowed ones: a forbidden category's descriptors still inform what the allowed
+        ones mean.
         """
         if self.descriptors is None:
             return []

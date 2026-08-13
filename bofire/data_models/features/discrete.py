@@ -39,11 +39,7 @@ class DiscreteInput(NumericalInput):
 
     def _description_prefix(self) -> str:
         """Leading description string identifying this feature kind."""
-        kind = "Discrete"
-        if self.descriptors is not None and self.descriptors.structure is not None:
-            # a numeric feature is a single descriptor component, so exactly one structure
-            kind = f"Discrete molecular (SMILES: {self.descriptors.structure[0]})"
-        return f"{kind}, allowed values: {self.values}"
+        return f"Discrete, allowed values: {self.values}"
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(description=...))`` with allowed values.

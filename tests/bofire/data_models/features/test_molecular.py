@@ -240,8 +240,7 @@ def test_categorical_molecular_input_to_pydantic_field():
     field_type, field_info = feat.to_pydantic_field()
     assert field_type == Literal["CCO", "CC"]
     assert field_info.description == (
-        "Categorical molecular (SMILES), allowed: ['CCO', 'CC'] — "
-        "structure: ['CCO', 'CC']"
+        "Categorical, allowed: ['CCO', 'CC'] — structure: ['CCO', 'CC']"
     )
 
 
@@ -259,7 +258,7 @@ def test_categorical_molecular_input_to_pydantic_field_structure_beside_names():
     )
     _, field_info = feat.to_pydantic_field()
     assert field_info.description == (
-        "Categorical molecular (SMILES), allowed: ['water', 'ethanol'] — "
+        "Categorical, allowed: ['water', 'ethanol'] — "
         "descriptors per category: {'water': {'logP': -1.4}, 'ethanol': {'logP': -0.3}} — "
         "structure: ['O', 'CCO']"
     )
@@ -285,11 +284,9 @@ def test_continuous_molecular_input_to_pydantic_field():
         key="conc", bounds=(0.0, 1.0), descriptors=Descriptors(structure=["CCO"])
     )
     _, field_info = feat.to_pydantic_field()
-    # a numeric feature is a single component, so it carries exactly one structure
-    assert (
-        field_info.description
-        == "Continuous molecular (SMILES: CCO), bounds [0.0, 1.0]"
-    )
+    # a numeric feature is a single component, so it carries exactly one structure,
+    # reported as a scalar rather than a one-element list
+    assert field_info.description == "Continuous, bounds [0.0, 1.0] — structure: CCO"
 
 
 def test_continuous_molecular_input_to_pydantic_field_with_descriptors():
@@ -300,8 +297,7 @@ def test_continuous_molecular_input_to_pydantic_field_with_descriptors():
     )
     _, field_info = feat.to_pydantic_field()
     assert field_info.description == (
-        "Continuous molecular (SMILES: CCO), bounds [0.0, 1.0] — "
-        "descriptors: {'logP': -0.3}"
+        "Continuous, bounds [0.0, 1.0] — descriptors: {'logP': -0.3} — structure: CCO"
     )
 
 
@@ -318,6 +314,6 @@ def test_discrete_input_to_pydantic_field_with_descriptors():
     )
     _, field_info = feat.to_pydantic_field()
     assert field_info.description == (
-        "Discrete molecular (SMILES: CCO), allowed values: [1.0, 2.0, 5.0] — "
-        "descriptors: {'logP': -0.3}"
+        "Discrete, allowed values: [1.0, 2.0, 5.0] — "
+        "descriptors: {'logP': -0.3} — structure: CCO"
     )

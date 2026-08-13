@@ -346,7 +346,7 @@ def test_categorical_descriptor_input_to_pydantic_field():
     # the values are the point: a model picking a category needs to know what
     # distinguishes them, not merely that a column named d1 exists.
     assert field_info.description == (
-        "Categorical with descriptors, allowed: ['a', 'b'] — "
+        "Categorical, allowed: ['a', 'b'] — "
         "descriptors per category: {'a': {'d1': 1.0, 'd2': 2.0}, "
         "'b': {'d1': 3.0, 'd2': 4.0}}"
     )

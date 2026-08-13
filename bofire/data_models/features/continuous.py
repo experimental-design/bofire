@@ -81,11 +81,7 @@ class ContinuousInput(NumericalInput):
 
     def _description_prefix(self) -> str:
         """Leading description string identifying this feature kind."""
-        kind = "Continuous"
-        if self.descriptors is not None and self.descriptors.structure is not None:
-            # a numeric feature is a single descriptor component, so exactly one structure
-            kind = f"Continuous molecular (SMILES: {self.descriptors.structure[0]})"
-        return f"{kind}, bounds [{self.bounds[0]}, {self.bounds[1]}]"
+        return f"Continuous, bounds [{self.bounds[0]}, {self.bounds[1]}]"
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(float, Field(ge=..., le=..., description=...))```.
