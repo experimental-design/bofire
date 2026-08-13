@@ -122,7 +122,6 @@ max-complexity = 19
 
 [tool.ruff.lint.per-file-ignores]
 "bofire/surrogates/api.py" = ["F401"]
-"bofire/data_models/molfeatures/names.py" = ["F401"]
 "bofire/data_models/descriptor_generators/api.py" = ["F401"]
 "bofire/data_models/encodings/api.py" = ["F401"]
 "bofire/llm/api.py" = ["F401"]
