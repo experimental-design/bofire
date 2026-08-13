@@ -119,7 +119,7 @@ for _ in range(n_iter):
     specs = {
         Benchmark.domain.inputs.get_keys()[0]: DescriptorEncoding(
             columns=[],
-            generators={"smiles": [Fingerprints(n_bits=2048), Fragments()]},
+            generators=[Fingerprints(n_bits=2048), Fragments()],
         )
     }
     surrogate = TanimotoGPSurrogate(
