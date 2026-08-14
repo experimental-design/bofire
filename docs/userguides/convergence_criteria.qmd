@@ -1,0 +1,115 @@
+# Convergence Criteria
+
+One of the hardest questions in Bayesian optimization is how to determine whether an optimization has converged, or whether further experiments can still be expected to yield meaningful improvement. The basic approach is budget-based stopping, offered by the `StepwiseStrategy` conditions (e.g. `NumberOfExperimentsCondition`). Convergence criteria complement this with more robust, model-informed stopping decisions, listed in the next section.
+
+A convergence criterion is configured on any predictive strategy via its `convergence_criterion` field and queried through `strategy.has_converged()`. If no criterion is configured, `has_converged()` always returns `False`.
+
+## Available criteria
+
+Model-free criteria:
+
+- `ObjectiveImprovementCriterion`: converged when the best observed objective has improved by less than `min_improvement` over the last `n_lookback` experiments (single-objective).
+- `HypervolumeImprovementCriterion`: the multi-objective analogue, based on the dominated hypervolume.
+- `ProposalDeviationCriterion`: converged when consecutive proposals stop moving in normalized input space (objective-free, also usable for active learning).
+
+Model-based criteria for single-objective Bayesian optimization with GP surrogates:
+
+- `UcbLcbRegretBoundCriterion`: converged when the GP-UCB regret bound `min UCB(evaluated) - min LCB(domain)` drops below a noise-derived threshold ([Makarova et al., 2022](https://arxiv.org/abs/2104.08166)).
+- `ExpMinRegretGapCriterion`: converged when an upper bound on the change in expected minimum simple regret between consecutive iterations becomes negligible ([Ishibashi et al., 2023](https://proceedings.mlr.press/v206/ishibashi23a.html)).
+- `LogEipcCriterion`: cost-aware stopping — converged when no candidate's expected improvement is worth its evaluation cost ([Xie et al., 2025](https://arxiv.org/abs/2507.12453)).
+- `ProbabilisticRegretBoundCriterion`: converged when a sequential hypothesis test over GP posterior sample paths certifies that the incumbent's regret exceeds ε only with small probability ([Wilson, 2024](https://arxiv.org/abs/2402.16811)).
+
+Each criterion declares which settings it applies to (`is_applicable_to_singleobjective`, `is_applicable_to_multiobjective`, `is_applicable_to_objective_free`), and strategies validate this at construction time — e.g. a `MoboStrategy` rejects the single-objective criteria above.
+
+## Example: stopping SOBO with the UCB-LCB regret bound
+
+The following example shows single-objective Bayesian optimization on the Himmelblau benchmark until the regret bound certifies that the best evaluated point is within the noise-derived threshold of the best achievable point, or until a maximum budget is exhausted.
+
+``` python
+import bofire.strategies.api as strategies
+from bofire.benchmarks.api import Himmelblau
+from bofire.data_models.strategies.api import SoboStrategy
+from bofire.data_models.strategies.convergence_criteria.api import (
+    UcbLcbRegretBoundCriterion,
+)
+
+benchmark = Himmelblau()
+domain = benchmark.domain
+
+strategy_data = SoboStrategy(
+    domain=domain,
+    convergence_criterion=UcbLcbRegretBoundCriterion(
+        noise_variance=1.0,
+        min_experiments=10,
+    ),
+)
+strategy = strategies.map(strategy_data)
+
+# initial design
+experiments = benchmark.f(domain.inputs.sample(10), return_complete=True)
+strategy.tell(experiments)
+
+for _ in range(50):
+    if strategy.has_converged():
+        print("Converged.")
+        break
+    candidates = strategy.ask(1)
+    strategy.tell(benchmark.f(candidates[domain.inputs.get_keys()], return_complete=True))
+```
+
+The threshold of the `UcbLcbRegretBoundCriterion` is `threshold_factor * noise_variance`, where `noise_variance` can be
+
+- a positive float (as above): a known or assumed observation noise variance in the units of the objective,
+- `None`: the noise variance estimated by the GP is used,
+- `"cv"`: the corrected standard deviation of per-fold cross-validation scores of the incumbent is used (requires `cv_fold_columns`).
+
+Since checking convergence is inexpensive relative to a real experiment, the pattern above also works for campaigns where the loop is re-run from the accumulated experiments after each round of lab work. In this case all criteria derive their state from the recorded experiments.
+
+## Use within a StepwiseStrategy
+
+Convergence criteria and stepwise conditions divide the work: a condition decides which step of a `StepwiseStrategy` is active, while a convergence criterion decides whether the step's predictive strategy itself is done. The `StrategyHasConvergedCondition` bridges the two — it keeps a step active until the strategy reports convergence. The following runs a random initial design, then SOBO until the criterion fires; once no condition is satisfied, `ask` raises an error and the campaign is finished:
+
+``` python
+from bofire.data_models.strategies.api import (
+    NumberOfExperimentsCondition,
+    RandomStrategy,
+    SoboStrategy,
+    Step,
+    StepwiseStrategy,
+    StrategyHasConvergedCondition,
+)
+from bofire.data_models.strategies.convergence_criteria.api import (
+    UcbLcbRegretBoundCriterion,
+)
+
+strategy_data = StepwiseStrategy(
+    domain=domain,
+    steps=[
+        Step(
+            strategy_data=RandomStrategy(domain=domain),
+            condition=NumberOfExperimentsCondition(n_experiments=10),
+        ),
+        Step(
+            strategy_data=SoboStrategy(
+                domain=domain,
+                convergence_criterion=UcbLcbRegretBoundCriterion(noise_variance=1.0),
+            ),
+            condition=StrategyHasConvergedCondition(),
+        ),
+    ],
+)
+```
+
+## Custom criteria
+
+Custom convergence criteria can be registered analogously to other custom types, see [Registering Custom Types](custom_types.qmd):
+
+``` python
+import bofire.strategies.convergence_criteria.api as convergence_criteria
+
+@convergence_criteria.register(MyCriterion)
+def evaluate_my_criterion(criterion, strategy) -> bool:
+    ...
+```
+
+The evaluator must be a pure function of the criterion and the strategy's recorded history, so that a strategy reconstructed by replaying `tell` reaches the same decision.
