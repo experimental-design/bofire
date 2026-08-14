@@ -15,7 +15,7 @@ import pandas as pd
 import torch
 
 from bofire.data_models.strategies.convergence_criteria.api import (
-    UCBLCBRegretBoundCriterion,
+    UcbLcbRegretBoundCriterion,
 )
 from bofire.strategies.convergence_criteria.evaluator import (
     RegretBoundEvaluator,
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 
-class UCBLCBRegretEvaluator(RegretBoundEvaluator):
+class UcbLcbRegretEvaluator(RegretBoundEvaluator):
     """Evaluator for the UCB-LCB regret bound based on the approach from Makarova et al., 2022.
 
     The bound is ``min_{x in evaluated} UCB(x) - min_{x in domain} LCB(x)``
@@ -219,7 +219,7 @@ class UCBLCBRegretEvaluator(RegretBoundEvaluator):
 
 
 def evaluate_ucb_lcb_regret_bound_criterion(
-    criterion: UCBLCBRegretBoundCriterion,
+    criterion: UcbLcbRegretBoundCriterion,
     strategy: "PredictiveStrategy",
 ) -> bool:
     """Evaluate whether the UCB-LCB regret bound dropped below the threshold.
@@ -238,7 +238,7 @@ def evaluate_ucb_lcb_regret_bound_criterion(
     if experiments is None:
         return False
 
-    evaluator = UCBLCBRegretEvaluator(
+    evaluator = UcbLcbRegretEvaluator(
         delta=criterion.delta,
         beta_scale=criterion.beta_scale,
         fallback_noise_variance=criterion.fallback_noise_variance,

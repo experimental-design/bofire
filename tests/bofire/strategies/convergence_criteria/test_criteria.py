@@ -24,9 +24,9 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.data_models.strategies.convergence_criteria.api import (
     ExpMinRegretGapCriterion,
-    LogEIPCCriterion,
+    LogEipcCriterion,
     ProbabilisticRegretBoundCriterion,
-    UCBLCBRegretBoundCriterion,
+    UcbLcbRegretBoundCriterion,
 )
 from bofire.strategies.api import RandomStrategy, SoboStrategy, StepwiseStrategy
 from bofire.strategies.convergence_criteria.exp_min_regret_gap import (
@@ -42,9 +42,9 @@ from bofire.strategies.convergence_criteria.ucb_lcb import (
 
 
 GP_CRITERIA = [
-    UCBLCBRegretBoundCriterion,
+    UcbLcbRegretBoundCriterion,
     ExpMinRegretGapCriterion,
-    LogEIPCCriterion,
+    LogEipcCriterion,
     ProbabilisticRegretBoundCriterion,
 ]
 
@@ -119,7 +119,7 @@ class TestInvalidExperimentsIgnored:
         return strategy
 
     def test_invalid_rows_do_not_count_towards_min_experiments(self, benchmark):
-        criterion = UCBLCBRegretBoundCriterion(min_experiments=9)
+        criterion = UcbLcbRegretBoundCriterion(min_experiments=9)
         # 7 valid + 2 invalid rows: below min_experiments -> not converged.
         strategy = self._fitted_sobo_with_invalid(benchmark, 7, criterion)
         assert evaluate_ucb_lcb_regret_bound_criterion(criterion, strategy) is False
@@ -136,11 +136,11 @@ class TestInvalidExperimentsIgnored:
         assert isinstance(strategy.has_converged(), bool)
 
 
-class TestUCBLCBRegretBoundCriterion:
+class TestUcbLcbRegretBoundCriterion:
     """Tests for the criterion data model and its evaluator."""
 
     def test_defaults(self):
-        criterion = UCBLCBRegretBoundCriterion()
+        criterion = UcbLcbRegretBoundCriterion()
         assert criterion.noise_variance is None
         assert criterion.threshold_factor == 1.0
         assert criterion.min_experiments == 5
@@ -148,7 +148,7 @@ class TestUCBLCBRegretBoundCriterion:
         assert criterion.min_topq == 20
 
     def test_custom_params(self):
-        criterion = UCBLCBRegretBoundCriterion(
+        criterion = UcbLcbRegretBoundCriterion(
             noise_variance=0.1,
             threshold_factor=2.0,
             min_experiments=10,
@@ -162,20 +162,20 @@ class TestUCBLCBRegretBoundCriterion:
         assert criterion.min_topq == 10
 
     def test_serialization(self):
-        criterion = UCBLCBRegretBoundCriterion(noise_variance=0.1, threshold_factor=2.0)
+        criterion = UcbLcbRegretBoundCriterion(noise_variance=0.1, threshold_factor=2.0)
         data = criterion.model_dump()
-        restored = UCBLCBRegretBoundCriterion(**data)
+        restored = UcbLcbRegretBoundCriterion(**data)
         assert restored == criterion
 
     def test_cv_mode_validation(self):
         """noise_variance='cv' requires cv_fold_columns with >= 2 columns."""
         with pytest.raises(ValueError, match="cv_fold_columns"):
-            UCBLCBRegretBoundCriterion(noise_variance="cv")
+            UcbLcbRegretBoundCriterion(noise_variance="cv")
 
         with pytest.raises(ValueError, match="cv_fold_columns"):
-            UCBLCBRegretBoundCriterion(noise_variance="cv", cv_fold_columns=["fold_0"])
+            UcbLcbRegretBoundCriterion(noise_variance="cv", cv_fold_columns=["fold_0"])
 
-        criterion = UCBLCBRegretBoundCriterion(
+        criterion = UcbLcbRegretBoundCriterion(
             noise_variance="cv",
             cv_fold_columns=["fold_0", "fold_1", "fold_2"],
         )
@@ -183,33 +183,33 @@ class TestUCBLCBRegretBoundCriterion:
         assert len(criterion.cv_fold_columns) == 3
 
     def test_cv_mode_serialization(self):
-        criterion = UCBLCBRegretBoundCriterion(
+        criterion = UcbLcbRegretBoundCriterion(
             noise_variance="cv",
             cv_fold_columns=["f0", "f1", "f2", "f3", "f4"],
             threshold_factor=0.5,
         )
-        restored = UCBLCBRegretBoundCriterion(**criterion.model_dump())
+        restored = UcbLcbRegretBoundCriterion(**criterion.model_dump())
         assert restored == criterion
 
     def test_topq_validation(self):
         """topq must be in (0, 1]."""
         with pytest.raises(Exception):
-            UCBLCBRegretBoundCriterion(topq=0.0)
+            UcbLcbRegretBoundCriterion(topq=0.0)
         with pytest.raises(Exception):
-            UCBLCBRegretBoundCriterion(topq=-0.5)
+            UcbLcbRegretBoundCriterion(topq=-0.5)
         with pytest.raises(Exception):
-            UCBLCBRegretBoundCriterion(topq=1.5)
+            UcbLcbRegretBoundCriterion(topq=1.5)
 
     def test_not_converged_with_unfitted_strategy(self, benchmark):
         strategy = SoboStrategy(
             data_model=SoboStrategyDataModel(domain=benchmark.domain)
         )
-        criterion = UCBLCBRegretBoundCriterion()
+        criterion = UcbLcbRegretBoundCriterion()
         assert evaluate_ucb_lcb_regret_bound_criterion(criterion, strategy) is False
 
     def test_not_converged_with_few_experiments(self, benchmark):
         strategy, _ = _fitted_sobo(benchmark, n=3)
-        criterion = UCBLCBRegretBoundCriterion(min_experiments=10)
+        criterion = UcbLcbRegretBoundCriterion(min_experiments=10)
         assert evaluate_ucb_lcb_regret_bound_criterion(criterion, strategy) is False
 
     def test_evaluates_regret_bound(self, benchmark):
@@ -217,7 +217,7 @@ class TestUCBLCBRegretBoundCriterion:
         # Very tight threshold (manual noise_variance mode): not converged.
         strategy, _ = _fitted_sobo(
             benchmark,
-            criterion=UCBLCBRegretBoundCriterion(
+            criterion=UcbLcbRegretBoundCriterion(
                 noise_variance=1e-10, topq=1.0, min_experiments=5
             ),
         )
@@ -226,7 +226,7 @@ class TestUCBLCBRegretBoundCriterion:
         # Very generous threshold (manual noise_variance mode): converged.
         strategy, _ = _fitted_sobo(
             benchmark,
-            criterion=UCBLCBRegretBoundCriterion(
+            criterion=UcbLcbRegretBoundCriterion(
                 noise_variance=1e6, topq=1.0, min_experiments=5
             ),
         )
@@ -237,7 +237,7 @@ class TestUCBLCBRegretBoundCriterion:
         strategy, _ = _fitted_sobo(benchmark)
 
         # Very large threshold_factor with GP noise → converged.
-        criterion_generous = UCBLCBRegretBoundCriterion(
+        criterion_generous = UcbLcbRegretBoundCriterion(
             threshold_factor=1e8, topq=1.0, min_experiments=5
         )
         assert criterion_generous.noise_variance is None  # GP noise mode
@@ -247,7 +247,7 @@ class TestUCBLCBRegretBoundCriterion:
         )
 
         # Tiny threshold_factor → threshold ~ 0 → not converged.
-        criterion_strict = UCBLCBRegretBoundCriterion(
+        criterion_strict = UcbLcbRegretBoundCriterion(
             threshold_factor=1e-12, topq=1.0, min_experiments=5
         )
         assert (
@@ -274,7 +274,7 @@ class TestUCBLCBRegretBoundCriterion:
         strategy.tell(experiments)
 
         # Very large threshold_factor → threshold >> regret bound → converged.
-        criterion_generous = UCBLCBRegretBoundCriterion(
+        criterion_generous = UcbLcbRegretBoundCriterion(
             noise_variance="cv",
             cv_fold_columns=fold_cols,
             threshold_factor=1e6,
@@ -287,7 +287,7 @@ class TestUCBLCBRegretBoundCriterion:
         )
 
         # Very small threshold_factor → not converged.
-        criterion_tight = UCBLCBRegretBoundCriterion(
+        criterion_tight = UcbLcbRegretBoundCriterion(
             noise_variance="cv",
             cv_fold_columns=fold_cols,
             threshold_factor=1e-10,
@@ -302,7 +302,7 @@ class TestUCBLCBRegretBoundCriterion:
         """With topq < 1.0, the evaluator fits a separate GP on filtered data."""
         strategy, _ = _fitted_sobo(benchmark, n=30)
 
-        criterion = UCBLCBRegretBoundCriterion(
+        criterion = UcbLcbRegretBoundCriterion(
             noise_variance=1e6,
             threshold_factor=1.0,
             topq=0.5,
@@ -311,7 +311,7 @@ class TestUCBLCBRegretBoundCriterion:
         )
         assert evaluate_ucb_lcb_regret_bound_criterion(criterion, strategy) is True
 
-        criterion_tight = UCBLCBRegretBoundCriterion(
+        criterion_tight = UcbLcbRegretBoundCriterion(
             noise_variance=1e-10,
             threshold_factor=1.0,
             topq=0.5,
@@ -323,7 +323,7 @@ class TestUCBLCBRegretBoundCriterion:
         )
 
 
-class TestUCBLCBTopQDirection:
+class TestUcbLcbTopQDirection:
     """Top-q filtering in the UCB-LCB criterion is objective-aware.
 
     It refits the regret-bound GP on the best fraction of observations.  For
@@ -369,7 +369,7 @@ class TestUCBLCBTopQDirection:
         X = rng.random((12, 2))
         y = (X[:, 0] - 0.3) ** 2 + 0.5 * (X[:, 1] - 0.6) ** 2
 
-        criterion = UCBLCBRegretBoundCriterion(
+        criterion = UcbLcbRegretBoundCriterion(
             topq=0.5,
             min_topq=3,
             min_experiments=3,
@@ -516,11 +516,11 @@ class TestExpMinRegretGapCriterion:
         assert refits["n"] == 1
 
 
-class TestLogEIPCCriterion:
-    """Tests for the LogEIPCCriterion data model and its evaluator."""
+class TestLogEipcCriterion:
+    """Tests for the LogEipcCriterion data model and its evaluator."""
 
     def test_defaults(self):
-        criterion = LogEIPCCriterion()
+        criterion = LogEipcCriterion()
         assert criterion.lambda_cost == 1.0
         assert criterion.cost_column is None
         assert criterion.cost_value == 1.0
@@ -531,7 +531,7 @@ class TestLogEIPCCriterion:
         assert criterion.cost_model == "mean"
 
     def test_custom_params(self):
-        criterion = LogEIPCCriterion(
+        criterion = LogEipcCriterion(
             lambda_cost=0.1,
             cost_column="time_seconds",
             cost_value=60.0,
@@ -547,30 +547,30 @@ class TestLogEIPCCriterion:
         assert criterion.n_samples == 500
 
     def test_serialization(self):
-        criterion = LogEIPCCriterion(lambda_cost=0.5, cost_value=2.0)
-        restored = LogEIPCCriterion(**criterion.model_dump())
+        criterion = LogEipcCriterion(lambda_cost=0.5, cost_value=2.0)
+        restored = LogEipcCriterion(**criterion.model_dump())
         assert restored == criterion
 
     def test_not_converged_with_unfitted_strategy(self, benchmark):
         strategy = SoboStrategy(
             data_model=SoboStrategyDataModel(domain=benchmark.domain)
         )
-        criterion = LogEIPCCriterion()
+        criterion = LogEipcCriterion()
         assert evaluate_log_eipc_criterion(criterion, strategy) is False
 
     def test_not_converged_with_few_experiments(self, benchmark):
         strategy, _ = _fitted_sobo(benchmark, n=3)
-        criterion = LogEIPCCriterion(min_experiments=10)
+        criterion = LogEipcCriterion(min_experiments=10)
         assert evaluate_log_eipc_criterion(criterion, strategy) is False
 
     def test_evaluate_returns_bool(self, benchmark):
-        criterion = LogEIPCCriterion(min_experiments=5)
+        criterion = LogEipcCriterion(min_experiments=5)
         strategy, _ = _fitted_sobo(benchmark, criterion=criterion)
         assert isinstance(strategy.has_converged(), bool)
 
     def test_generous_lambda_does_not_converge(self, benchmark):
         """Very small lambda_cost → EI almost always exceeds cost → not converged."""
-        criterion = LogEIPCCriterion(lambda_cost=1e-10, min_experiments=5)
+        criterion = LogEipcCriterion(lambda_cost=1e-10, min_experiments=5)
         strategy, _ = _fitted_sobo(benchmark, criterion=criterion)
         assert strategy.has_converged() is False
 
@@ -588,7 +588,7 @@ class TestLogEIPCCriterion:
         )
         strategy.tell(experiments)
 
-        criterion = LogEIPCCriterion(cost_column="cost", min_experiments=5)
+        criterion = LogEipcCriterion(cost_column="cost", min_experiments=5)
         result = evaluate_log_eipc_criterion(criterion, strategy)
         assert isinstance(result, bool)
 
@@ -747,7 +747,7 @@ class TestStepwiseStrategyConvergence:
                 Step(
                     strategy_data=SoboStrategyDataModel(
                         domain=domain,
-                        convergence_criterion=UCBLCBRegretBoundCriterion(
+                        convergence_criterion=UcbLcbRegretBoundCriterion(
                             noise_variance=1e6,
                             topq=1.0,
                             min_experiments=2,
@@ -790,7 +790,7 @@ class TestStepwiseStrategyConvergence:
                 Step(
                     strategy_data=SoboStrategyDataModel(
                         domain=domain,
-                        convergence_criterion=UCBLCBRegretBoundCriterion(
+                        convergence_criterion=UcbLcbRegretBoundCriterion(
                             min_experiments=100,  # Very high: never converges
                         ),
                     ),

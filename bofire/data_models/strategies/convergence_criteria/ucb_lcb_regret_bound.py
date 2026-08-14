@@ -7,7 +7,7 @@ from bofire.data_models.strategies.convergence_criteria.convergence_criterion im
 )
 
 
-class UCBLCBRegretBoundCriterion(ConvergenceCriterion):
+class UcbLcbRegretBoundCriterion(ConvergenceCriterion):
     """Convergence based on the UCB-LCB regret bound from Makarova et al. (2022).
 
     The optimization is considered converged once the regret bound
@@ -59,7 +59,7 @@ class UCBLCBRegretBoundCriterion(ConvergenceCriterion):
             from the GP likelihood. Default ``1e-4``.
     """
 
-    type: Literal["UCBLCBRegretBoundCriterion"] = "UCBLCBRegretBoundCriterion"
+    type: Literal["UcbLcbRegretBoundCriterion"] = "UcbLcbRegretBoundCriterion"
     noise_variance: Optional[Union[PositiveFloat, Literal["cv"]]] = None
     threshold_factor: PositiveFloat = 1.0
     cv_fold_columns: Optional[List[str]] = None

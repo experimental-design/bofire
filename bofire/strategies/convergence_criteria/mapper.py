@@ -44,9 +44,9 @@ CONVERGENCE_MAP: dict[type[ConvergenceCriterion], Callable[..., bool]] = {
         evaluate_hypervolume_improvement_criterion
     ),
     data_models.ProposalDeviationCriterion: (evaluate_proposal_deviation_criterion),
-    data_models.UCBLCBRegretBoundCriterion: (evaluate_ucb_lcb_regret_bound_criterion),
+    data_models.UcbLcbRegretBoundCriterion: (evaluate_ucb_lcb_regret_bound_criterion),
     data_models.ExpMinRegretGapCriterion: (evaluate_exp_min_regret_gap_criterion),
-    data_models.LogEIPCCriterion: (evaluate_log_eipc_criterion),
+    data_models.LogEipcCriterion: (evaluate_log_eipc_criterion),
     data_models.ProbabilisticRegretBoundCriterion: (
         evaluate_probabilistic_regret_bound_criterion
     ),

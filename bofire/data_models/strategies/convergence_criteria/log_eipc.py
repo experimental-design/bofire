@@ -7,7 +7,7 @@ from bofire.data_models.strategies.convergence_criteria.convergence_criterion im
 )
 
 
-class LogEIPCCriterion(ConvergenceCriterion):
+class LogEipcCriterion(ConvergenceCriterion):
     """Cost-aware convergence criterion (Xie et al., 2025).
 
     The optimization is considered converged when the maximum log expected
@@ -48,7 +48,7 @@ class LogEIPCCriterion(ConvergenceCriterion):
         (arXiv:2507.12453).
     """
 
-    type: Literal["LogEIPCCriterion"] = "LogEIPCCriterion"
+    type: Literal["LogEipcCriterion"] = "LogEipcCriterion"
     lambda_cost: PositiveFloat = 1.0
     cost_column: Optional[str] = None
     cost_value: PositiveFloat = 1.0

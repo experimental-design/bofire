@@ -24,7 +24,7 @@ from botorch.models.model import Model
 from botorch.utils.transforms import t_batch_mode_transform
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
-from bofire.data_models.strategies.convergence_criteria.api import LogEIPCCriterion
+from bofire.data_models.strategies.convergence_criteria.api import LogEipcCriterion
 from bofire.strategies.convergence_criteria.evaluator import (
     ConvergenceEvaluator,
     get_ready_experiments,
@@ -113,7 +113,7 @@ class LogExpectedImprovementPerCost(AnalyticAcquisitionFunction):
         return log_ei - self.alpha * log_cost
 
 
-class LogEIPCEvaluator(ConvergenceEvaluator):
+class LogEipcEvaluator(ConvergenceEvaluator):
     """Cost-aware stopping criterion based on Xie et al., 2025.
 
     Stops when the maximum log expected-improvement-per-cost over the domain
@@ -141,7 +141,7 @@ class LogEIPCEvaluator(ConvergenceEvaluator):
             proportional to temperature: ``lambda X: 1.0 + 3.0 * X[:, 0]``).
             Takes priority over ``cost_column`` and ``cost_value``.
             Not serialisable — use the evaluator directly rather than via
-            ``LogEIPCCondition`` when input-dependent costs are needed.
+            ``LogEipcCriterion`` when input-dependent costs are needed.
         cost_column: Name of the column in the experiments DataFrame that
             records the actual cost of each completed experiment.  The running
             mean is used as the cost estimate for future candidates.  Takes
@@ -435,7 +435,7 @@ class LogEIPCEvaluator(ConvergenceEvaluator):
 
 
 def evaluate_log_eipc_criterion(
-    criterion: LogEIPCCriterion,
+    criterion: LogEipcCriterion,
     strategy: "PredictiveStrategy",
 ) -> bool:
     """Evaluate whether no candidate's expected improvement is worth its cost.
@@ -455,7 +455,7 @@ def evaluate_log_eipc_criterion(
     if experiments is None:
         return False
 
-    evaluator = LogEIPCEvaluator(
+    evaluator = LogEipcEvaluator(
         lambda_cost=criterion.lambda_cost,
         cost_column=criterion.cost_column,
         cost_value=criterion.cost_value,

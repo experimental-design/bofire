@@ -97,7 +97,7 @@ class RegretBoundEvaluator(ConvergenceEvaluator):
 
     Holds the GP-UCB ``beta`` schedule and the UCB-LCB confidence-bound
     machinery shared by the criteria that build confidence bounds:
-    :class:`UCBLCBRegretEvaluator` (Makarova et al., 2022) and
+    :class:`UcbLcbRegretEvaluator` (Makarova et al., 2022) and
     :class:`ExpMinRegretGapEvaluator` (Ishibashi et al., 2023).
 
     Args:

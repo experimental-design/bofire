@@ -11,13 +11,13 @@ from bofire.strategies.api import RandomStrategy, SoboStrategy
 from bofire.strategies.convergence_criteria.exp_min_regret_gap import (
     ExpMinRegretGapEvaluator,
 )
-from bofire.strategies.convergence_criteria.log_eipc import LogEIPCEvaluator
+from bofire.strategies.convergence_criteria.log_eipc import LogEipcEvaluator
 from bofire.strategies.convergence_criteria.probabilistic_regret_bound import (
     ProbabilisticRegretBoundEvaluator,
     _minimize_sample_paths,
     _run_prb_level_test,
 )
-from bofire.strategies.convergence_criteria.ucb_lcb import UCBLCBRegretEvaluator
+from bofire.strategies.convergence_criteria.ucb_lcb import UcbLcbRegretEvaluator
 from bofire.strategies.convergence_criteria.utils import clopper_pearson_ci
 
 
@@ -39,13 +39,13 @@ def trained_strategy(benchmark):
     return strategy, experiments
 
 
-class TestUCBLCBRegretEvaluator:
-    """Unit tests for the UCBLCBRegretEvaluator."""
+class TestUcbLcbRegretEvaluator:
+    """Unit tests for the UcbLcbRegretEvaluator."""
 
     def test_evaluate_returns_valid_regret_bound(self, trained_strategy):
         """Regret bound must be a non-negative float."""
         strategy, experiments = trained_strategy
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UcbLcbRegretEvaluator()
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
@@ -55,7 +55,7 @@ class TestUCBLCBRegretEvaluator:
     def test_returns_all_keys(self, trained_strategy):
         """Evaluate must return the complete set of expected keys."""
         strategy, experiments = trained_strategy
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UcbLcbRegretEvaluator()
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
@@ -75,7 +75,7 @@ class TestUCBLCBRegretEvaluator:
         evaluated points, min_x LCB(x) <= min_i UCB(x_i).
         """
         strategy, experiments = trained_strategy
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UcbLcbRegretEvaluator()
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
@@ -84,7 +84,7 @@ class TestUCBLCBRegretEvaluator:
     def test_regret_bound_equals_ucb_minus_lcb(self, trained_strategy):
         """regret_bound = max(0, min_ucb - min_lcb)."""
         strategy, experiments = trained_strategy
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UcbLcbRegretEvaluator()
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
@@ -96,7 +96,7 @@ class TestUCBLCBRegretEvaluator:
         strategy = SoboStrategy(
             data_model=SoboStrategyDataModel(domain=benchmark.domain)
         )
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UcbLcbRegretEvaluator()
 
         result = evaluator.evaluate(strategy, pd.DataFrame(), 0)
 
@@ -105,7 +105,7 @@ class TestUCBLCBRegretEvaluator:
     def test_returns_empty_dict_with_too_few_experiments(self, trained_strategy):
         """Should return empty dict with fewer than 2 experiments."""
         strategy, experiments = trained_strategy
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UcbLcbRegretEvaluator()
 
         result = evaluator.evaluate(strategy, experiments.iloc[:1], 0)
 
@@ -114,7 +114,7 @@ class TestUCBLCBRegretEvaluator:
     def test_beta_computed_from_gp_ucb_formula(self, trained_strategy):
         """Beta should follow the GP-UCB formula: 0.2 * 2 * log(d * t^2 * pi^2 / (6 * delta))."""
         strategy, experiments = trained_strategy
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UcbLcbRegretEvaluator()
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
@@ -128,7 +128,7 @@ class TestUCBLCBRegretEvaluator:
         random_strategy = RandomStrategy(
             data_model=RandomStrategyDataModel(domain=benchmark.domain)
         )
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UcbLcbRegretEvaluator()
 
         # Fit with 5 points
         exp5 = benchmark.f(random_strategy.ask(5), return_complete=True)
@@ -152,7 +152,7 @@ class TestUCBLCBRegretEvaluator:
     def test_noise_variance_estimated(self, trained_strategy):
         """Noise variance should be estimated from the GP likelihood."""
         strategy, experiments = trained_strategy
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UcbLcbRegretEvaluator()
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
@@ -169,8 +169,8 @@ class TestUCBLCBRegretEvaluator:
         )
         strategy.tell(experiments)
 
-        result_full = UCBLCBRegretEvaluator().evaluate(strategy, experiments, 0)
-        result_topq = UCBLCBRegretEvaluator(topq=0.5, min_topq=5).evaluate(
+        result_full = UcbLcbRegretEvaluator().evaluate(strategy, experiments, 0)
+        result_topq = UcbLcbRegretEvaluator(topq=0.5, min_topq=5).evaluate(
             strategy, experiments, 0
         )
 
@@ -179,7 +179,7 @@ class TestUCBLCBRegretEvaluator:
         # 15-point bound GP must have a smaller beta than the 30-point one.
         d = len(benchmark.domain.inputs.get_keys())
         assert result_topq["beta"] == pytest.approx(
-            UCBLCBRegretEvaluator()._compute_beta(d, 15)
+            UcbLcbRegretEvaluator()._compute_beta(d, 15)
         )
         assert result_topq["beta"] < result_full["beta"]
 
@@ -191,12 +191,12 @@ class TestUCBLCBRegretEvaluator:
         same scale.
         """
         strategy, experiments = trained_strategy
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UcbLcbRegretEvaluator()
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
         noise_standardized = strategy.model.likelihood.noise.item()
-        y_std = UCBLCBRegretEvaluator.get_output_scale(strategy.model)
+        y_std = UcbLcbRegretEvaluator.get_output_scale(strategy.model)
         assert y_std > 1.0  # Himmelblau spans hundreds -> Standardize is active
         assert result["estimated_noise_variance"] == pytest.approx(
             noise_standardized * y_std**2, rel=1e-9
@@ -237,7 +237,7 @@ class TestRegretBoundConvergence:
             data_model=SoboStrategyDataModel(domain=benchmark.domain, seed=42)
         )
         strategy.tell(experiments)
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UcbLcbRegretEvaluator()
         evaluator.n_samples_lcb = 500  # enough samples for stable LCB
 
         regret_bounds = []
@@ -607,12 +607,12 @@ class TestExpMinRegretGapEvaluator:
         assert len(result["seq_values"]) == 2  # values from iter 2 + iter 3
 
 
-class TestLogEIPCEvaluator:
-    """Unit tests for the LogEIPCEvaluator (Xie et al., 2025)."""
+class TestLogEipcEvaluator:
+    """Unit tests for the LogEipcEvaluator (Xie et al., 2025)."""
 
     def test_evaluate_returns_expected_keys(self, trained_strategy):
         strategy, experiments = trained_strategy
-        evaluator = LogEIPCEvaluator()
+        evaluator = LogEipcEvaluator()
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
@@ -625,7 +625,7 @@ class TestLogEIPCEvaluator:
 
     def test_max_log_eipc_is_float(self, trained_strategy):
         strategy, experiments = trained_strategy
-        evaluator = LogEIPCEvaluator()
+        evaluator = LogEipcEvaluator()
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
@@ -633,7 +633,7 @@ class TestLogEIPCEvaluator:
 
     def test_best_f_equals_min_observed(self, trained_strategy):
         strategy, experiments = trained_strategy
-        evaluator = LogEIPCEvaluator()
+        evaluator = LogEipcEvaluator()
         output_key = strategy.domain.outputs.get_keys()[0]
 
         result = evaluator.evaluate(strategy, experiments, 0)
@@ -644,7 +644,7 @@ class TestLogEIPCEvaluator:
         strategy = SoboStrategy(
             data_model=SoboStrategyDataModel(domain=benchmark.domain)
         )
-        evaluator = LogEIPCEvaluator()
+        evaluator = LogEipcEvaluator()
 
         result = evaluator.evaluate(strategy, pd.DataFrame(), 0)
 
@@ -652,7 +652,7 @@ class TestLogEIPCEvaluator:
 
     def test_returns_empty_with_few_experiments(self, trained_strategy):
         strategy, experiments = trained_strategy
-        evaluator = LogEIPCEvaluator()
+        evaluator = LogEipcEvaluator()
 
         result = evaluator.evaluate(strategy, experiments.iloc[:1], 0)
 
@@ -663,14 +663,14 @@ class TestLogEIPCEvaluator:
         experiments = experiments.copy()
         experiments["cost"] = 2.5
 
-        evaluator = LogEIPCEvaluator(cost_column="cost")
+        evaluator = LogEipcEvaluator(cost_column="cost")
         result = evaluator.evaluate(strategy, experiments, 0)
 
         assert result["cost_estimate"] == pytest.approx(2.5)
 
     def test_cost_value_fallback_when_no_column(self, trained_strategy):
         strategy, experiments = trained_strategy
-        evaluator = LogEIPCEvaluator(cost_value=3.0)
+        evaluator = LogEipcEvaluator(cost_value=3.0)
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
@@ -680,10 +680,10 @@ class TestLogEIPCEvaluator:
         """Higher lambda_cost shifts the threshold up, lowering max_log_eipc."""
         strategy, experiments = trained_strategy
 
-        result_low = LogEIPCEvaluator(lambda_cost=0.01).evaluate(
+        result_low = LogEipcEvaluator(lambda_cost=0.01).evaluate(
             strategy, experiments, 0
         )
-        result_high = LogEIPCEvaluator(lambda_cost=100.0).evaluate(
+        result_high = LogEipcEvaluator(lambda_cost=100.0).evaluate(
             strategy, experiments, 0
         )
 
@@ -692,7 +692,7 @@ class TestLogEIPCEvaluator:
     def test_returns_empty_with_zero_cost(self, trained_strategy):
         """Zero cost_value should return empty dict (undefined log(0))."""
         strategy, experiments = trained_strategy
-        evaluator = LogEIPCEvaluator(cost_value=0.0)
+        evaluator = LogEipcEvaluator(cost_value=0.0)
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
@@ -702,10 +702,10 @@ class TestLogEIPCEvaluator:
         """cost_callable should override cost_value for per-point evaluation."""
         strategy, experiments = trained_strategy
         # Callable returns constant 2.5 — should give same result as cost_value=2.5
-        ev_callable = LogEIPCEvaluator(
+        ev_callable = LogEipcEvaluator(
             cost_callable=lambda X: X.new_full((X.shape[0],), 2.5)
         )
-        ev_scalar = LogEIPCEvaluator(cost_value=2.5)
+        ev_scalar = LogEipcEvaluator(cost_value=2.5)
 
         r_callable = ev_callable.evaluate(strategy, experiments, 0)
         r_scalar = ev_scalar.evaluate(strategy, experiments, 0)
@@ -717,7 +717,7 @@ class TestLogEIPCEvaluator:
     def test_search_method_optimize_returns_valid_result(self, trained_strategy):
         """search_method='optimize' should return a valid max_log_eipc."""
         strategy, experiments = trained_strategy
-        evaluator = LogEIPCEvaluator(search_method="optimize")
+        evaluator = LogEipcEvaluator(search_method="optimize")
 
         result = evaluator.evaluate(strategy, experiments, 0)
 
@@ -727,10 +727,10 @@ class TestLogEIPCEvaluator:
         """'sample' and 'optimize' should produce results with the same sign."""
         strategy, experiments = trained_strategy
 
-        r_sample = LogEIPCEvaluator(
+        r_sample = LogEipcEvaluator(
             lambda_cost=1.0, cost_value=1.0, search_method="sample"
         ).evaluate(strategy, experiments, 0)
-        r_opt = LogEIPCEvaluator(
+        r_opt = LogEipcEvaluator(
             lambda_cost=1.0, cost_value=1.0, search_method="optimize"
         ).evaluate(strategy, experiments, 0)
 
@@ -743,7 +743,7 @@ class TestLogEIPCEvaluator:
         experiments = experiments.copy()
         experiments["cost"] = np.random.uniform(1.0, 3.0, len(experiments))
 
-        evaluator = LogEIPCEvaluator(cost_column="cost", cost_model="gp")
+        evaluator = LogEipcEvaluator(cost_column="cost", cost_model="gp")
         result = evaluator.evaluate(strategy, experiments, 0)
 
         assert isinstance(result["max_log_eipc"], float)
@@ -754,7 +754,7 @@ class TestLogEIPCEvaluator:
         experiments = experiments.copy()
         experiments["cost"] = 2.0
 
-        evaluator = LogEIPCEvaluator(cost_column="cost", cost_model="gp")
+        evaluator = LogEipcEvaluator(cost_column="cost", cost_model="gp")
         assert evaluator.cost_callable is None
         evaluator.evaluate(strategy, experiments, 0)
         assert evaluator.cost_callable is None  # restored after call
@@ -766,10 +766,10 @@ class TestLogEIPCEvaluator:
         # Costs increase with x_1 — spatial variation the GP can learn
         experiments["cost"] = 1.0 + experiments["x_1"].abs()
 
-        r_mean = LogEIPCEvaluator(cost_column="cost", cost_model="mean").evaluate(
+        r_mean = LogEipcEvaluator(cost_column="cost", cost_model="mean").evaluate(
             strategy, experiments, 0
         )
-        r_gp = LogEIPCEvaluator(cost_column="cost", cost_model="gp").evaluate(
+        r_gp = LogEipcEvaluator(cost_column="cost", cost_model="gp").evaluate(
             strategy, experiments, 0
         )
 
@@ -781,13 +781,13 @@ class TestEvaluatorKwargs:
     """Tests for overriding evaluator parameters via constructor kwargs."""
 
     def test_ucblcb_kwargs_override_defaults(self):
-        evaluator = UCBLCBRegretEvaluator(delta=0.05, beta_scale=1.0, n_samples_lcb=500)
+        evaluator = UcbLcbRegretEvaluator(delta=0.05, beta_scale=1.0, n_samples_lcb=500)
         assert evaluator.delta == 0.05
         assert evaluator.beta_scale == 1.0
         assert evaluator.n_samples_lcb == 500
 
     def test_defaults_preserved_without_kwargs(self):
-        evaluator = UCBLCBRegretEvaluator()
+        evaluator = UcbLcbRegretEvaluator()
         assert evaluator.delta == 0.1
         assert evaluator.beta_scale == 0.2
 
@@ -803,7 +803,7 @@ class TestEvaluatorKwargs:
 
     def test_unknown_kwarg_raises(self):
         with pytest.raises(TypeError, match="unexpected keyword"):
-            UCBLCBRegretEvaluator(not_a_real_param=1.0)
+            UcbLcbRegretEvaluator(not_a_real_param=1.0)
 
     def test_private_kwarg_raises(self):
         with pytest.raises(TypeError, match="unexpected keyword"):
@@ -1470,7 +1470,7 @@ class TestObjectiveDirection:
         import torch
 
         (strat_min, exp_min), (strat_max, exp_max) = self._pair()
-        ev = UCBLCBRegretEvaluator()
+        ev = UcbLcbRegretEvaluator()
         torch.manual_seed(7)
         m_min = ev.evaluate(strat_min, exp_min, 0)
         torch.manual_seed(7)
@@ -1485,7 +1485,7 @@ class TestObjectiveDirection:
         import torch
 
         (strat_min, exp_min), (strat_max, exp_max) = self._pair()
-        ev = LogEIPCEvaluator(n_samples=2000)
+        ev = LogEipcEvaluator(n_samples=2000)
         torch.manual_seed(7)
         m_min = ev.evaluate(strat_min, exp_min, 0)
         torch.manual_seed(7)
@@ -1594,9 +1594,9 @@ class TestObjectiveDirection:
             CloseToTargetObjective(target_value=1.0, exponent=2), X, y
         )
         evaluators = [
-            UCBLCBRegretEvaluator(),
+            UcbLcbRegretEvaluator(),
             ExpMinRegretGapEvaluator(),
-            LogEIPCEvaluator(),
+            LogEipcEvaluator(),
             ProbabilisticRegretBoundEvaluator(
                 n_samples_max=32, n_random=64, n_starts=2
             ),

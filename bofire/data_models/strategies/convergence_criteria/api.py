@@ -10,7 +10,7 @@ from bofire.data_models.strategies.convergence_criteria.exp_min_regret_gap impor
 from bofire.data_models.strategies.convergence_criteria.hypervolume_improvement import (
     HypervolumeImprovementCriterion,
 )
-from bofire.data_models.strategies.convergence_criteria.log_eipc import LogEIPCCriterion
+from bofire.data_models.strategies.convergence_criteria.log_eipc import LogEipcCriterion
 from bofire.data_models.strategies.convergence_criteria.objective_improvement import (
     ObjectiveImprovementCriterion,
 )
@@ -21,7 +21,7 @@ from bofire.data_models.strategies.convergence_criteria.proposal_deviation impor
     ProposalDeviationCriterion,
 )
 from bofire.data_models.strategies.convergence_criteria.ucb_lcb_regret_bound import (
-    UCBLCBRegretBoundCriterion,
+    UcbLcbRegretBoundCriterion,
 )
 from bofire.data_models.unions import tagged_union
 
@@ -30,9 +30,9 @@ _CONVERGENCE_CRITERION_TYPES: list[type[ConvergenceCriterion]] = [
     ObjectiveImprovementCriterion,
     HypervolumeImprovementCriterion,
     ProposalDeviationCriterion,
-    UCBLCBRegretBoundCriterion,
+    UcbLcbRegretBoundCriterion,
     ExpMinRegretGapCriterion,
-    LogEIPCCriterion,
+    LogEipcCriterion,
     ProbabilisticRegretBoundCriterion,
 ]
 

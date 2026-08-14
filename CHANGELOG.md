@@ -7,7 +7,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 ## [Unreleased]
 
 ### Added
-- Four GP-based convergence criteria for single-objective Bayesian optimization: `UCBLCBRegretBoundCriterion` (UCB-LCB regret bound, Makarova et al. 2022), `ExpMinRegretGapCriterion` (expected minimum simple regret gap, Ishibashi et al. 2023), `LogEIPCCriterion` (cost-aware log expected improvement per cost, Xie et al. 2025), and `ProbabilisticRegretBoundCriterion` (probabilistic regret bounds via a Clopper-Pearson sequential test over GP sample paths, Wilson 2024).
+- Four GP-based convergence criteria for single-objective Bayesian optimization: `UcbLcbRegretBoundCriterion` (UCB-LCB regret bound, Makarova et al. 2022), `ExpMinRegretGapCriterion` (expected minimum simple regret gap, Ishibashi et al. 2023), `LogEipcCriterion` (cost-aware log expected improvement per cost, Xie et al. 2025), and `ProbabilisticRegretBoundCriterion` (probabilistic regret bounds via a Clopper-Pearson sequential test over GP sample paths, Wilson 2024).
 - Single-objective benchmark functions used in the stopping-criteria literature.
 
 ## [0.5.0] - 2026-08-11 - BREAKING
