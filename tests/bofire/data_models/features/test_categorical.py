@@ -1,17 +1,17 @@
 import random
 
-import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal, assert_series_equal
+from pandas.testing import assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
-from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
-    CategoricalInput,
-    CategoricalOutput,
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
 )
+from bofire.data_models.features.api import CategoricalInput, CategoricalOutput
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
 
 
@@ -75,6 +75,16 @@ def test_categorical_input_feature_get_possible_categories(input_feature, expect
             pd.Series([random.choice([1, 2, 3]) for _ in range(20)]),
             # CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
             # pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
+            False,
+        ),
+        (
+            # only one category present in the data: unused categories are an error
+            # under strict (see the invalid case below), but fine without it
+            specs.features.valid(CategoricalInput).obj(
+                categories=["a", "b", "c"],
+                allowed=[True, False, False],
+            ),
+            pd.Series(["a", "a"]),
             False,
         ),
     ],
@@ -196,198 +206,6 @@ def test_cateogorical_input_is_fulfilled():
 
 
 @pytest.mark.parametrize(
-    "key, categories, samples",
-    [
-        ("c", ["B", "A", "C"], ["A", "A", "C", "B"]),
-        ("c_alpha", ["B_b", "_A_a", "C_c_"], ["_A_a", "_A_a", "C_c_", "B_b"]),
-        (
-            "__c_alpha_c_",
-            ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
-            [
-                "__c_alpha_c___A_a",
-                "__c_alpha_c___A_a",
-                "__c_alpha_c__C_c_",
-                "__c_alpha_c__B_b",
-            ],
-        ),
-    ],
-)
-def test_categorical_to_one_hot_encoding(key, categories, samples):
-    c = CategoricalInput(key=key, categories=categories)
-    samples = pd.Series(samples)
-    t_samples = c.to_onehot_encoding(samples)
-    assert_frame_equal(
-        t_samples,
-        pd.DataFrame(
-            data=[[0.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]],
-            columns=[f"{key}_{cat_str}" for cat_str in categories],
-        ),
-    )
-    untransformed = c.from_onehot_encoding(t_samples)
-    assert np.all(samples == untransformed)
-
-
-@pytest.mark.parametrize(
-    "key, categories",
-    [
-        ("c", ["B", "A", "C"]),
-        ("c_alpha", ["B_b", "_A_a", "C_c_"]),
-        (
-            "__c_alpha_c_",
-            ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
-        ),
-    ],
-)
-def test_categorical_from_one_hot_encoding(key, categories):
-    c = CategoricalInput(key=key, categories=categories)
-    one_hot_values = pd.DataFrame(
-        columns=[f"{key}_{cat_str}" for cat_str in categories] + ["misc"],
-        data=[[0.9, 0.4, 0.2, 6], [0.8, 0.7, 0.9, 9]],
-    )
-    samples = c.from_onehot_encoding(one_hot_values)
-    assert np.all(samples == pd.Series([categories[0], categories[2]]))
-
-
-def test_categorical_from_one_hot_encoding_invalid():
-    c = CategoricalInput(key="c", categories=["B", "A", "C"])
-    one_hot_values = pd.DataFrame(
-        columns=["c_B", "c_A", "misc"],
-        data=[
-            [
-                0.9,
-                0.4,
-                0.2,
-            ],
-            [0.8, 0.7, 0.9],
-        ],
-    )
-    with pytest.raises(ValueError):
-        c.from_onehot_encoding(one_hot_values)
-
-
-@pytest.mark.parametrize(
-    "key, categories, samples",
-    [
-        ("c", ["B", "A", "C"], ["A", "A", "C", "B"]),
-        ("c_alpha", ["B_b", "_A_a", "C_c_"], ["_A_a", "_A_a", "C_c_", "B_b"]),
-        (
-            "__c_alpha_c_",
-            ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
-            [
-                "__c_alpha_c___A_a",
-                "__c_alpha_c___A_a",
-                "__c_alpha_c__C_c_",
-                "__c_alpha_c__B_b",
-            ],
-        ),
-    ],
-)
-def test_categorical_to_dummy_encoding(key, categories, samples):
-    c = CategoricalInput(key=key, categories=categories)
-    samples = pd.Series(samples)
-    t_samples = c.to_dummy_encoding(samples)
-    assert_frame_equal(
-        t_samples,
-        pd.DataFrame(
-            data=[[1.0, 0.0], [1.0, 0.0], [0.0, 1.0], [0.0, 0.0]],
-            columns=[f"{key}_{cat_str}" for cat_str in categories[1:]],
-        ),
-    )
-    untransformed = c.from_dummy_encoding(t_samples)
-    assert np.all(samples == untransformed)
-
-
-@pytest.mark.parametrize(
-    "key, categories",
-    [
-        ("c", ["B", "A", "C"]),
-        ("c_alpha", ["B_b", "_A_a", "C_c_"]),
-        (
-            "__c_alpha_c_",
-            ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
-        ),
-    ],
-)
-def test_categorical_from_dummy_encoding(key, categories):
-    c = CategoricalInput(key=key, categories=categories)
-    one_hot_values = pd.DataFrame(
-        columns=[f"{key}_{cat_str}" for cat_str in categories[1:]] + ["misc"],
-        data=[[0.9, 0.05, 6], [0.1, 0.1, 9]],
-    )
-    samples = c.from_dummy_encoding(one_hot_values)
-    assert np.all(samples == pd.Series([categories[1], categories[0]]))
-
-
-def test_categorical_to_label_encoding():
-    c = CategoricalInput(key="c", categories=["B", "A", "C"])
-    samples = pd.Series(["A", "A", "C", "B"])
-    t_samples = c.to_ordinal_encoding(samples)
-    assert_series_equal(t_samples, pd.Series([1, 1, 2, 0], name="c"))
-    untransformed = c.from_ordinal_encoding(t_samples)
-    assert np.all(samples == untransformed)
-
-
-@pytest.mark.parametrize(
-    "feature, transform_type, values, expected",
-    [
-        (
-            CategoricalInput(key="c", categories=["B", "A", "C"]),
-            CategoricalEncodingEnum.ORDINAL,
-            None,
-            (0, 2),
-        ),
-        (
-            CategoricalInput(key="c", categories=["B", "A", "C"]),
-            CategoricalEncodingEnum.ONE_HOT,
-            None,
-            ([0, 0, 0], [1, 1, 1]),
-        ),
-        (
-            CategoricalInput(
-                key="c",
-                categories=["B", "A", "C"],
-                allowed=[True, False, True],
-            ),
-            CategoricalEncodingEnum.ONE_HOT,
-            pd.Series(["A", "B", "C"]),
-            ([0, 0, 0], [1, 1, 1]),
-        ),
-        (
-            CategoricalInput(
-                key="c",
-                categories=["B", "A", "C"],
-                allowed=[True, False, True],
-            ),
-            CategoricalEncodingEnum.ONE_HOT,
-            None,
-            ([0, 0, 0], [1, 0, 1]),
-        ),
-        (
-            CategoricalInput(key="c", categories=["B", "A", "C"]),
-            CategoricalEncodingEnum.DUMMY,
-            None,
-            ([0, 0], [1, 1]),
-        ),
-    ],
-)
-def test_categorical_get_bounds(feature, transform_type, values, expected):
-    lower, upper = feature.get_bounds(transform_type=transform_type, values=values)
-    assert np.allclose(lower, expected[0])
-    assert np.allclose(upper, expected[1])
-    # test the same for the categorical with descriptor
-    f = CategoricalDescriptorInput(
-        key="c",
-        categories=feature.categories,
-        allowed=feature.allowed,
-        descriptors=["alpha", "beta"],
-        values=[[1, 2], [3, 4], [5, 6]],
-    )
-    lower, upper = f.get_bounds(transform_type=transform_type, values=values)
-    assert np.allclose(lower, expected[0])
-    assert np.allclose(upper, expected[1])
-
-
-@pytest.mark.parametrize(
     "input_feature, expected, expected_value, transform_type",
     [
         (
@@ -405,39 +223,40 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
                 [True, False, False, False],
                 True,
                 [0],
-                CategoricalEncodingEnum.ORDINAL,
+                OrdinalEncoding(),
             ),
             (
                 ["1", "2", "3", "4"],
                 [True, False, False, False],
                 True,
                 [1, 0, 0, 0],
-                CategoricalEncodingEnum.ONE_HOT,
+                OneHotEncoding(),
             ),
             (
                 ["1", "2", "3", "4"],
                 [True, False, False, False],
                 True,
                 [0, 0, 0],
-                CategoricalEncodingEnum.DUMMY,
+                OneHotEncoding(drop_first=True),
             ),
         ]
     ]
     + [
         (
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="k",
                 categories=["1", "2", "3"],
                 allowed=[True, False, False],
-                descriptors=["alpha", "beta"],
-                values=[[1, 2], [3, 4], [5, 6]],
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 3, 5], "beta": [2, 4, 6]}
+                ),
             ),
             expected,
             expected_value,
             transform_type,
         )
         for expected, expected_value, transform_type in [
-            (True, [1, 2], CategoricalEncodingEnum.DESCRIPTOR),
+            (True, [1, 2], DescriptorEncoding()),
         ]
     ],
 )
@@ -448,7 +267,15 @@ def test_categorical_input_feature_is_fixed(
     transform_type,
 ):
     assert input_feature.is_fixed() == expected
-    assert input_feature.fixed_value(transform_type) == expected_value
+    if isinstance(transform_type, DescriptorEncoding):
+        # the descriptor encoding now carries the descriptor-based fixed value:
+        # a fixed (single allowed category) feature has matching lower/upper bounds
+        # equal to that category's descriptor row.
+        lower, upper = transform_type.get_bounds(input_feature)
+        assert lower == expected_value
+        assert upper == expected_value
+    else:
+        assert input_feature.fixed_value(transform_type) == expected_value
 
 
 @pytest.mark.parametrize(
@@ -546,3 +373,87 @@ def test_categorical_input_to_pydantic_field_at_threshold_stays_literal():
     field_type, _ = feat.to_pydantic_field()
     assert get_origin(field_type) is get_origin(Literal["x"])
     assert list(get_args(field_type)) == categories
+
+
+def test_categorical_descriptor_input_to_pydantic_field():
+    feat = CategoricalInput(
+        key="cat",
+        categories=["a", "b"],
+        descriptors=Descriptors(columns={"d1": [1.0, 3.0], "d2": [2.0, 4.0]}),
+    )
+    _, field_info = feat.to_pydantic_field()
+    # the values are the point: a model picking a category needs to know what
+    # distinguishes them, not merely that a column named d1 exists.
+    assert field_info.description == (
+        "Categorical, allowed: ['a', 'b'] — "
+        "descriptors per category: {'a': {'d1': 1.0, 'd2': 2.0}, "
+        "'b': {'d1': 3.0, 'd2': 4.0}}"
+    )
+
+
+def test_categorical_descriptor_input_to_pydantic_field_falls_back_above_threshold():
+    from bofire.data_models.features.categorical import LLM_ENUM_SCHEMA_THRESHOLD
+
+    n = LLM_ENUM_SCHEMA_THRESHOLD + 1
+    categories = [f"c{i}" for i in range(n)]
+    # distinct values per category so the per-descriptor variance validator passes
+    feat = CategoricalInput(
+        key="big",
+        categories=categories,
+        descriptors=Descriptors(columns={"d1": [float(i) for i in range(n)]}),
+    )
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type is str
+    # description still lists the categories (via the prefix)
+    assert "c0" in field_info.description
+    assert f"c{n - 1}" in field_info.description
+
+
+def test_categorical_with_structure_to_pydantic_field():
+    from typing import Literal
+
+    feat = CategoricalInput(
+        key="mol",
+        categories=["CCO", "CC"],
+        descriptors=Descriptors(structure=["CCO", "CC"]),
+    )
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type == Literal["CCO", "CC"]
+    assert field_info.description == (
+        "Categorical, allowed: ['CCO', 'CC'] — structure: ['CCO', 'CC']"
+    )
+
+
+def test_categorical_with_structure_to_pydantic_field_structure_beside_names():
+    """Categories need not be the SMILES themselves.
+
+    Main could not express this -- `CategoricalMolecularInput` used the categories as the
+    structures -- so without the explicit `structure` part the SMILES would be invisible
+    to the model here.
+    """
+    feat = CategoricalInput(
+        key="solvent",
+        categories=["water", "ethanol"],
+        descriptors=Descriptors(columns={"logP": [-1.4, -0.3]}, structure=["O", "CCO"]),
+    )
+    _, field_info = feat.to_pydantic_field()
+    assert field_info.description == (
+        "Categorical, allowed: ['water', 'ethanol'] — "
+        "descriptors per category: {'water': {'logP': -1.4}, 'ethanol': {'logP': -0.3}} — "
+        "structure: ['O', 'CCO']"
+    )
+
+
+def test_categorical_with_structure_to_pydantic_field_falls_back_above_threshold():
+    from bofire.data_models.features.categorical import LLM_ENUM_SCHEMA_THRESHOLD
+
+    # Generate enough distinct SMILES by varying alkane chain length
+    smiles = ["C" * (i + 1) for i in range(LLM_ENUM_SCHEMA_THRESHOLD + 1)]
+    feat = CategoricalInput(
+        key="mol", categories=smiles, descriptors=Descriptors(structure=list(smiles))
+    )
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type is str
+    # description still lists the SMILES so the LLM has guidance
+    assert smiles[0] in field_info.description
+    assert smiles[-1] in field_info.description

@@ -12,7 +12,7 @@ from pandas.testing import assert_frame_equal
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.api import MultiTaskHimmelblau
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import OrdinalEncoding
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalTaskInput,
@@ -90,7 +90,7 @@ def test_MultiTask_input_preprocessing():
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     data_model = MultiTaskGPSurrogate(inputs=inputs, outputs=outputs)
     assert data_model.input_preprocessing_specs == {
-        "task_id": CategoricalEncodingEnum.ORDINAL,
+        "task_id": OrdinalEncoding(),
     }
 
     # test that if we have a categorical input, one-hot encoding is correctly applied
@@ -105,8 +105,8 @@ def test_MultiTask_input_preprocessing():
         outputs=outputs,
     )
     assert data_model.input_preprocessing_specs == {
-        "categories": CategoricalEncodingEnum.ORDINAL,
-        "task_id": CategoricalEncodingEnum.ORDINAL,
+        "categories": OrdinalEncoding(),
+        "task_id": OrdinalEncoding(),
     }
 
 

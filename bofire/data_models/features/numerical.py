@@ -3,17 +3,49 @@ from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
+from pydantic import model_validator
 
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.features.feature import Input, TTransform
 
 
 class NumericalInput(Input):
-    """Abstract base class for all numerical (ordinal) input features."""
+    """Abstract base class for all numerical (ordinal) input features.
+
+    A numerical input is a *single* descriptor component: its optional ``descriptors``
+    block describes one level, the feature itself, so every column holds exactly one
+    value. Only the amount varies during optimization, not what the substance is.
+    """
 
     unit: Optional[str] = None
+    descriptors: Optional[Descriptors] = None
 
-    @staticmethod
-    def valid_transform_types() -> List:
+    @model_validator(mode="after")
+    def validate_descriptors(self):
+        if self.descriptors is not None:
+            self.descriptors.validate_fit([self.key])
+        return self
+
+    def _extra_description_parts(self) -> List[str]:
+        """The descriptor data, one value each: the block describes a single level.
+
+        Read from the stored block only -- generators live on the surrogate side and are
+        not a property of the feature.
+        """
+        if self.descriptors is None:
+            return []
+        parts = []
+        if self.descriptors.names:
+            mapping = {
+                name: column[0] for name, column in self.descriptors.columns.items()
+            }
+            parts.append(f"descriptors: {mapping}")
+        if self.descriptors.structure is not None:
+            # a single level, so a single structure -- reported as a scalar
+            parts.append(f"structure: {self.descriptors.structure[0]}")
+        return parts
+
+    def valid_transform_types(self) -> List:
         return []
 
     @property

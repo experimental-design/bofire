@@ -5,11 +5,11 @@ from bofire.data_models.api import (
     AnyCondition,
     AnyConstraint,
     AnyDataFrame,
+    AnyDescriptorGenerator,
     AnyFeature,
     AnyKernel,
     AnyLLMProvider,
     AnyLocalSearchConfig,
-    AnyMolFeatures,
     AnyObjective,
     AnyOutlierDetection,
     AnyPrior,
@@ -108,9 +108,19 @@ def test_outlier_detection_should_be_deserializable(outlier_detection_spec: Spec
     assert obj == deserialized
 
 
-def test_molfeatures_should_be_deserializable(molfeatures_spec: Spec):
-    obj = molfeatures_spec.obj()
-    deserialized = TypeAdapter(AnyMolFeatures).validate_python(obj.model_dump())
+def test_descriptor_generators_should_be_deserializable(
+    descriptor_generator_spec: Spec,
+):
+    obj = descriptor_generator_spec.obj()
+    deserialized = TypeAdapter(AnyDescriptorGenerator).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
+def test_encoding_should_be_deserializable(encoding_spec: Spec):
+    from bofire.data_models.encodings.api import AnyCategoricalEncoding
+
+    obj = encoding_spec.obj()
+    deserialized = TypeAdapter(AnyCategoricalEncoding).validate_python(obj.model_dump())
     assert obj == deserialized
 
 

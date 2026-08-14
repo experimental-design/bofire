@@ -8,13 +8,13 @@ from bofire.data_models.domain.api import Features, Inputs, Outputs
 from bofire.data_models.features.api import (
     AnyFeature,
     CategoricalInput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
     Feature,
     Output,
 )
-from bofire.data_models.features.descriptor import CategoricalDescriptorInput
 
 
 # test features container
@@ -32,7 +32,7 @@ if7 = specs.features.valid(CategoricalInput).obj(
     categories=["c", "d", "e"],
     allowed=[True, False, False],
 )
-if8 = specs.features.valid(CategoricalDescriptorInput).obj(
+if8 = specs.features.valid(CategoricalTaskInput).obj(
     key="if8",
     categories=["d1", "d2", "d3"],
     allowed=[True, True, True],
@@ -191,7 +191,7 @@ def test_exclude_include():
 
     test(
         includes=CategoricalInput,
-        excludes=CategoricalDescriptorInput,
+        excludes=CategoricalTaskInput,
         expected=[if4, if7],
     )
     test(includes=CategoricalInput, excludes=None, expected=[if4, if7, if8])

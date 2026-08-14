@@ -4,12 +4,11 @@ import pandas as pd
 from pydantic import Field, model_validator
 
 from bofire.data_models.domain.api import Inputs
-from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
+from bofire.data_models.encodings.api import OrdinalEncoding
+from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
-    CategoricalDescriptorInput,
     CategoricalInput,
-    CategoricalMolecularInput,
     CategoricalTaskInput,
     ContinuousOutput,
 )
@@ -20,7 +19,6 @@ from bofire.data_models.kernels.api import (
     MaternKernel,
     RBFKernel,
 )
-from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
@@ -126,14 +124,10 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     )
 
     @classmethod
-    def _default_categorical_encodings(
-        cls,
-    ) -> dict[Type[CategoricalInput], CategoricalEncodingEnum | Fingerprints]:
+    def _default_plain_categorical_encodings(cls) -> dict:
         return {
-            CategoricalInput: CategoricalEncodingEnum.ORDINAL,
-            CategoricalMolecularInput: Fingerprints(),
-            CategoricalDescriptorInput: CategoricalEncodingEnum.DESCRIPTOR,
-            CategoricalTaskInput: CategoricalEncodingEnum.ORDINAL,
+            CategoricalInput: OrdinalEncoding(),
+            CategoricalTaskInput: OrdinalEncoding(),
         }
 
     @model_validator(mode="after")
@@ -148,8 +142,7 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             )
         # check that a least one of the categorical features is ordinal or not encoded
         if not any(
-            self.categorical_encodings.get(cat, CategoricalEncodingEnum.ORDINAL)
-            == CategoricalEncodingEnum.ORDINAL
+            isinstance(self.categorical_encodings.get(cat), OrdinalEncoding)
             for cat in categoricals
         ):
             raise ValueError(
@@ -159,8 +152,7 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         categorical_feature_keys = [
             cat
             for cat in categoricals
-            if self.categorical_encodings.get(cat, CategoricalEncodingEnum.ORDINAL)
-            == CategoricalEncodingEnum.ORDINAL
+            if isinstance(self.categorical_encodings.get(cat), OrdinalEncoding)
         ]
         ordinal_feature_keys = list(
             set(self.inputs.get_keys()) - set(categorical_feature_keys)

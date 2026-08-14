@@ -44,6 +44,16 @@ in you local project root folder, if you want to use `pre-commit`.
 
 We make heavy use of [Pydantic](https://docs.pydantic.dev/) to enforce type checks during runtime. Further, we use [ty](https://docs.astral.sh/ty/) for static type checking. We enforce ty type checks in our CI/CD pipeline.
 
+## Validation
+
+Data models are built from untrusted input — deserialized JSON, user code — so they validate themselves via Pydantic. Three conventions:
+
+**Validation must work without optional extras.** `bofire.data_models` has to import and validate on the base dependencies alone; a CI job installs `pip install "." pytest` and runs `pytest tests/bofire/data_models`. A validator that reaches into rdkit, torch or entmoot fails there with an import error rather than a `ValidationError`. Call sites rarely make this visible — a method that only looks like it reports a width may generate descriptors — so prefer accessors that answer from stored fields over ones that compute.
+
+**Ask each compatibility question once.** Where a subsystem has a natural validation entry point, let it ask all of the questions and raise `ValueError` naming the offending key. Code downstream takes the validated object and does not re-check.
+
+**Use `assert` only for invariants, never for user errors.** `raise ValueError` for anything a user can cause; reserve `assert` for facts an earlier validation has already established. Asserts are stripped under `python -O`, so one must never be the only thing between a user and a wrong answer.
+
 ## Tests
 
 If you add new functionality, make sure that it is tested properly and that it does not break existing code. Our tests run in our CI/CD pipeline. The test coverage is hidden from our Readme because it is not a very robust metric. However, you can find it in the outputs of our test-CI/CD-pipeline. See [example](https://github.com/experimental-design/bofire/actions/runs/13699899620/job/38310818934#step:5:795.).

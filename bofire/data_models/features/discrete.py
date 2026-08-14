@@ -13,9 +13,21 @@ from bofire.data_models.types import DiscreteVals
 class DiscreteInput(NumericalInput):
     """Feature with discretized ordinal values allowed in the optimization.
 
+    Like `ContinuousInput`, a discrete input is a *single* descriptor component: the
+    allowed ``values`` are not descriptor levels, so each ``descriptors`` column and the
+    ``structure`` column hold exactly one value (a restricted amount of a substance
+    still describes one substance).
+
     Attributes:
         key(str): key of the feature.
         values(List[float]): the discretized allowed values during the optimization.
+        descriptors (Descriptors, optional): Descriptor data for the single component —
+            numeric columns holding one value each, and/or a one-element SMILES structure.
+            Defaults to None.
+        unit (str, optional, inherited from `NumericalInput`): The unit of the feature.
+            Defaults to None.
+        context (str, optional, inherited from `Feature`): Free-text context for the
+            feature. Defaults to None.
 
     """
 
@@ -25,8 +37,15 @@ class DiscreteInput(NumericalInput):
     values: DiscreteVals
     rtol: float = 1e-7
 
+    def _description_prefix(self) -> str:
+        """Leading description string identifying this feature kind."""
+        return f"Discrete, allowed values: {self.values}"
+
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(description=...))`` with allowed values.
+
+        Subclasses customize the output by overriding ``_description_prefix``
+        and/or ``_extra_description_parts``.
 
         Example::
 
@@ -34,7 +53,7 @@ class DiscreteInput(NumericalInput):
             >>> field_type, _ = feat.to_pydantic_field()
             >>> # field_type = Literal[1.0, 2.0, 5.0]
         """
-        desc_parts = [f"Discrete, allowed values: {self.values}"]
+        desc_parts = [self._description_prefix(), *self._extra_description_parts()]
         if self.context:
             desc_parts.append(self.context)
         return (

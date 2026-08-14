@@ -6,13 +6,13 @@ import pandas as pd
 import pytest
 import torch
 
-from bofire.data_models.domain import api as domain_api
-from bofire.data_models.molfeatures.api import (
-    CompositeMolFeatures,
+from bofire.data_models.descriptor_generators.api import (
+    DescriptorGenerator,
     Fingerprints,
     Fragments,
-    MolFeatures,
 )
+from bofire.data_models.domain import api as domain_api
+from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.priors.api import GammaPrior
 from bofire.data_models.strategies import api as strategies_api
 from bofire.data_models.surrogates.api import BotorchSurrogates, TanimotoGPSurrogate
@@ -30,24 +30,26 @@ def n_bits(request) -> int:
 
 
 @pytest.fixture(params=["Figerprints", "Fragments", "Composite"])
-def mol_feature_data_model(request, n_bits) -> MolFeatures:
+def mol_feature_data_model(request, n_bits):
+    # a generator is applied through a DescriptorEncoding; the composite case is two
+    # generators on one structure column.
     if request.param == "Figerprints":
-        return Fingerprints(bond_radius=3, n_bits=n_bits)
+        return DescriptorEncoding(
+            columns=[], generators=[Fingerprints(bond_radius=3, n_bits=n_bits)]
+        )
     elif request.param == "Fragments":
-        return Fragments()
+        return DescriptorEncoding(columns=[], generators=[Fragments()])
     elif request.param == "Composite":
-        return CompositeMolFeatures(
-            features=[
-                Fingerprints(bond_radius=2, n_bits=n_bits),
-                Fragments(),
-            ]
+        return DescriptorEncoding(
+            columns=[],
+            generators=[Fingerprints(bond_radius=2, n_bits=n_bits), Fragments()],
         )
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_tanimoto_calculation(
     chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame],
-    mol_feature_data_model: MolFeatures,
+    mol_feature_data_model: DescriptorGenerator,
 ):
     domain, X, Y = chem_domain_simple
 
@@ -101,7 +103,11 @@ def test_passing_of_tanimoto_sim_matrices(
         inputs=domain.inputs,
         outputs=domain.outputs,
         tanimoto_calculation_mode="pre_computed",
-        categorical_encodings={domain.inputs.get_keys()[0]: Fingerprints()},
+        categorical_encodings={
+            domain.inputs.get_keys()[0]: DescriptorEncoding(
+                columns=[], generators=[Fingerprints()]
+            )
+        },
     )
 
     strategy_data_model = strategies_api.SoboStrategy(
@@ -154,7 +160,9 @@ def test_noise_prior_registered_for_tanimoto_gp(chem_domain_simple):
             inputs=domain.inputs,
             outputs=domain.outputs,
             noise_prior=GammaPrior(concentration=1.1, rate=0.001),
-            categorical_encodings={"molecules": Fingerprints()},
+            categorical_encodings={
+                "molecules": DescriptorEncoding(columns=[], generators=[Fingerprints()])
+            },
         )
     )
     surrogate.fit(experiments)

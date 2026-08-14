@@ -28,8 +28,13 @@ from bofire.benchmarks.data.photoswitches import EXPERIMENTS
 from bofire.benchmarks.LookupTableBenchmark import LookupTableBenchmark
 from bofire.data_models.acquisition_functions.api import qLogEI
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
-from bofire.data_models.features.api import CategoricalMolecularInput, ContinuousOutput
-from bofire.data_models.molfeatures.api import FingerprintsFragments
+from bofire.data_models.descriptor_generators.api import Fingerprints, Fragments
+from bofire.data_models.encodings.api import DescriptorEncoding
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousOutput,
+    Descriptors,
+)
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import RandomStrategy, SoboStrategy
 from bofire.data_models.surrogates.api import BotorchSurrogates, TanimotoGPSurrogate
@@ -59,9 +64,12 @@ main_file[benchmark["input"]] = df[benchmark["input"]].drop(nan_indices).to_list
 main_file[benchmark["output"]] = (
     df[benchmark["output"]].dropna().to_numpy().reshape(-1, 1)
 )
-input_feature = CategoricalMolecularInput(
+smiles = list(set(main_file[benchmark["input"]].to_list()))
+input_feature = CategoricalInput(
     key=benchmark["input"],
-    categories=list(set(main_file[benchmark["input"]].to_list())),
+    categories=smiles,
+    # the categories *are* SMILES, so they double as the structure column
+    descriptors=Descriptors(structure=smiles),
 )
 objective = MaximizeObjective(
     w=1.0,
@@ -108,7 +116,12 @@ for _ in range(n_iter):
         n_procs=1,
     )
 
-    specs = {Benchmark.domain.inputs.get_keys()[0]: FingerprintsFragments(n_bits=2048)}
+    specs = {
+        Benchmark.domain.inputs.get_keys()[0]: DescriptorEncoding(
+            columns=[],
+            generators=[Fingerprints(n_bits=2048), Fragments()],
+        )
+    }
     surrogate = TanimotoGPSurrogate(
         inputs=Benchmark.domain.inputs,
         outputs=Benchmark.domain.outputs,

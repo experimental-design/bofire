@@ -9,6 +9,37 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 ### Added
 - Four GP-based convergence criteria for single-objective Bayesian optimization: `UcbLcbRegretBoundCriterion` (UCB-LCB regret bound, Makarova et al. 2022), `ExpMinRegretGapCriterion` (expected minimum simple regret gap, Ishibashi et al. 2023), `LogEipcCriterion` (cost-aware log expected improvement per cost, Xie et al. 2025), and `ProbabilisticRegretBoundCriterion` (probabilistic regret bounds via a Clopper-Pearson sequential test over GP sample paths, Wilson 2024).
 - Single-objective benchmark functions used in the stopping-criteria literature.
+- Any input feature can carry a `Descriptors` block — numeric `columns` and/or a SMILES `structure` column — via `descriptors=Descriptors(...)`. This includes `DiscreteInput`, which had no descriptor support before, and allows a single categorical to carry handcrafted columns *and* structures at once, which the previous class hierarchy could not express.
+- Categorical encodings are first-class data models (`OneHotEncoding`, `OrdinalEncoding`, `DescriptorEncoding`), chosen per surrogate via `categorical_encodings` and extensible like kernels or priors.
+
+### Changed
+- **Breaking**: descriptor data now lives on the feature and the encoding choice on the surrogate. The classes and the enum that fused those two concerns are **removed**, with no compatibility shim — old serialized domains containing them no longer load. Migrate as follows (note that `values` was row-per-category while `columns` is column-wise, so the table is transposed):
+
+  | removed | replacement |
+  |---|---|
+  | `CategoricalDescriptorInput(categories=C, descriptors=[n…], values=[[row]…])` | `CategoricalInput(categories=C, descriptors=Descriptors(columns={n: [row[j] for row in values]}))` |
+  | `ContinuousDescriptorInput(descriptors=[n…], values=[v…])` | `ContinuousInput(descriptors=Descriptors(columns={n: [v]}))` |
+  | `CategoricalMolecularInput(categories=S)` | `CategoricalInput(categories=S, descriptors=Descriptors(structure=S))` |
+  | `ContinuousMolecularInput(molecule=m)` | `ContinuousInput(descriptors=Descriptors(structure=[m]))` |
+  | `WeightedMeanFeature(…)` | `WeightedSumFeature(…, normalize=True)` |
+  | `MolecularWeightedSumFeature(molfeatures=g)` | `WeightedSumFeature(columns=[], generators=[g])` |
+  | `MolecularWeightedMeanFeature(molfeatures=g)` | `WeightedSumFeature(columns=[], generators=[g], normalize=True)` |
+  | `CategoricalEncodingEnum.ONE_HOT` / `.ORDINAL` / `.DUMMY` | `OneHotEncoding()` / `OrdinalEncoding()` / `OneHotEncoding(drop_first=True)` |
+  | `CategoricalEncodingEnum.DESCRIPTOR` | `DescriptorEncoding()` |
+  | a bare generator as an encoding, e.g. `{"x": Fingerprints()}` | `{"x": DescriptorEncoding(columns=[], generators=[Fingerprints()])}` |
+  | `input_preprocessing_specs=…` on a surrogate | removed; derived from `inputs`. Use `categorical_encodings` |
+  | `CategoricalDescriptorInput.from_df` / `to_df` | build directly: `CategoricalInput(key=…, categories=list(df.index), descriptors=Descriptors(columns=df.to_dict("list")))` |
+  | `bofire.data_models.molfeatures` | `bofire.data_models.descriptor_generators` |
+  | `MolFeatures` / `AnyMolFeatures` | `DescriptorGenerator` / `AnyDescriptorGenerator` |
+
+- **Breaking**: transformed column order changes for domains that mix descriptor- or structure-carrying features with plain ones. The removed classes occupied `order_id`s 2/4/5/6, interleaved among the survivors; their features now sort as plain `CategoricalInput`/`ContinuousInput` (7/1). Feature *values* are unaffected — only the column positions. Code that indexes transformed tensors positionally should be rechecked; code that goes through `Inputs.get_feature_indices` / `_get_transform_info` needs no change.
+- **Breaking**: the default encoding for a categorical, and hence the default surrogate, is chosen from the descriptor data the feature carries rather than from its class. A categorical with numeric columns defaults to `DescriptorEncoding`; one with a structure additionally gets `Fingerprints`; one with neither falls back to one-hot (ordinal where the surrogate requires it). In particular a descriptor-carrying categorical no longer selects `MixedSingleTaskGPSurrogate`.
+- **Breaking**: `CategoricalTaskInput` and `ContinuousTaskInput` declare `descriptors: None`, so they now serialize a `"descriptors": null` key and reject descriptor data at the type level — a task input is an index, not a described entity.
+- **Breaking**: `LinearDeterministicSurrogate` rejects engineered features with `filter_descriptors=True`. A linear model binds one coefficient per column, so the width must follow from the configuration rather than the data.
+- LLM field descriptions report descriptor data uniformly for every feature type: a prefix stating what the feature is and its range or options, then the data — `Categorical, allowed: [...] — descriptors per category: {...} — structure: [...]`, `Continuous, bounds [...] — descriptors: {...} — structure: CCO`. Previously the kind was announced in the prefix (`Categorical with descriptors`, `Continuous molecular (SMILES: CCO)`) and only the two descriptor-carrying classes emitted anything.
+
+### Fixed
+- **Descriptor widths no longer depend on evaluation order.** `MolFeatures.get_descriptor_names()` returned the filtered list only once `remove_correlated_descriptors()` had run and mutated the model, so with `filter_descriptors` defaulting to `True` the width reported for an engineered feature could be the *unfiltered* count depending on call order. Widths are now derived on demand from the same block the matrix is built from.
 
 ## [0.5.0] - 2026-08-11 - BREAKING
 

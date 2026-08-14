@@ -45,9 +45,14 @@ pre-commit run --all-files
 ruff check .
 ruff format .
 
-# Type checking
-ty check bofire
+# Type checking — use the version CI pins, not whatever `uvx ty` resolves to.
+# Look up the pin in .github/workflows/lint.yaml (the `ty==` install), then:
+uvx --from ty==<pinned-version> ty check bofire
 ```
+
+ty is pre-1.0 and its rules tighten fast, so an unpinned run reports a substantially
+different set of diagnostics than CI and will not tell you whether Lint passes. Rule
+configuration lives in `pyproject.toml` under `[tool.ty.rules]` / `[tool.ty.analysis]`.
 
 ## Architecture
 
@@ -294,6 +299,19 @@ The spec is automatically picked up by `tests/bofire/conftest.py` which imports 
 - **Docstrings**: Google-style
 - **Type Checking**: Pydantic for runtime, ty for static analysis
 - **Python**: 3.10+
+- **Pydantic validators**: public methods named `validate_*`, no leading underscore
+  (111 validators in `bofire/`, 104 use the `validate_` prefix). Module-level helper
+  functions they call may still be private. No linter enforces this.
+- **Don't restate the annotation in a validator.** A `field_validator` defaults to
+  `mode="after"`, so pydantic has already validated *and coerced* the value: re-checking
+  or re-coercing it there is unreachable code, and its error message can never surface.
+  Validate only what the type cannot express — cross-field consistency, or domain
+  semantics such as "is this string a parseable SMILES". Use `mode="before"` when you
+  genuinely need the raw input.
+- **Docstrings** state what the code does now: arguments, returns, raises, invariants
+  callers may rely on. Design history, migration rationale ("rather than stored",
+  "this is why X asserts") and enumerated call sites belong in the commit message and
+  CHANGELOG — in a docstring they go stale and crowd out the contract.
 
 ## Documentation
 

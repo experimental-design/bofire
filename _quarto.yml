@@ -12,6 +12,9 @@ project:
     - "!docs/*.md"
     - "!docs/_build/"
     - "!docs/javascripts/"
+    # `pip install .` copies the docs tree into build/lib; without this every
+    # tutorial is executed a second time from there (116 files instead of ~58)
+    - "!build/"
   resources:
     - "docs/**/*.png"
     - "docs/**/*.jpg"
@@ -45,11 +48,26 @@ quartodoc:
             - ContinuousInput
             - ContinuousOutput
             - DiscreteInput
-            - ContinuousDescriptorInput
-            - CategoricalDescriptorInput
-            - ContinuousMolecularInput
-            - CategoricalMolecularInput
+            - Descriptors
             - TaskInput
+    - title: Data Models - Encodings
+      desc: How a categorical feature's value becomes model-input columns
+      contents:
+        - name: data_models.encodings.api
+          members:
+            - CategoricalEncoding
+            - OneHotEncoding
+            - OrdinalEncoding
+            - DescriptorEncoding
+    - title: Data Models - Descriptor Generators
+      desc: Descriptor columns generated from molecular structures
+      contents:
+        - name: data_models.descriptor_generators.api
+          members:
+            - DescriptorGenerator
+            - Fingerprints
+            - Fragments
+            - MordredDescriptors
     - title: Data Models - Strategies
       desc: Strategy configuration data models
       contents:

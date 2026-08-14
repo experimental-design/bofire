@@ -1,19 +1,32 @@
-from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    ClassVar,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
 from pydantic.fields import FieldInfo
 
-from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.feature import (
-    Input,
-    Output,
-    TTransform,
-    get_encoded_name,
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
 )
+from bofire.data_models.features.descriptors import Descriptors
+from bofire.data_models.features.feature import Input, Output, TTransform
 from bofire.data_models.objectives.api import AnyCategoricalObjective
 from bofire.data_models.types import CategoryVals
+
+
+if TYPE_CHECKING:
+    from bofire.data_models.encodings.encoding import CategoricalEncoding
 
 
 # Max number of allowed categories still encoded as ``Literal[...]`` by
@@ -31,15 +44,43 @@ from bofire.data_models.types import CategoryVals
 # values and an additional 7500-char combined-length cap above 250 values.
 # 32 is well below any documented limit and leaves headroom for very long
 # category strings.
+#
+# The *description* is deliberately not capped by this threshold: descriptor values
+# are what make a categorical steerable by a model, and the documented provider caps
+# are on enum values, not on descriptions. Do not "fix" the descriptor mapping below
+# to shrink above the threshold without measuring first.
 LLM_ENUM_SCHEMA_THRESHOLD = 32
 
 
 class CategoricalInput(Input):
     """Base class for all categorical input features.
 
+    A categorical input has one descriptor level *per category*, so each column of the
+    optional ``descriptors`` block holds one value per category, in the same order as
+    ``categories``::
+
+        solvent = CategoricalInput(
+            key="solvent",
+            categories=["water", "ethanol", "thf"],
+            descriptors=Descriptors(
+                columns={"logP": [-1.4, -0.3, 0.5], "MW": [18.0, 46.0, 72.0]},
+                structure=["O", "CCO", "C1CCOC1"],   # one SMILES per category
+            ),
+        )
+
+    How those descriptors are turned into model columns is *not* fixed here: it is
+    chosen per surrogate via ``categorical_encodings`` (e.g. ``OneHotEncoding`` or a
+    ``DescriptorEncoding`` selecting columns and/or running descriptor generators on
+    the structure).
+
     Attributes:
         categories (List[str]): Names of the categories.
         allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
+        descriptors (Descriptors, optional): Per-category descriptor data — numeric
+            columns and/or a SMILES structure column. Defaults to None.
+        key (str, inherited from `Feature`): The unique name of the feature.
+        context (str, optional, inherited from `Feature`): Free-text context for the
+            feature. Defaults to None.
 
     """
 
@@ -48,10 +89,17 @@ class CategoricalInput(Input):
     order_id: ClassVar[int] = 7
 
     categories: CategoryVals
+    descriptors: Optional[Descriptors] = None
     allowed: Optional[Annotated[List[bool], Field(min_length=2)]] = Field(
         default=None,
         validate_default=True,
     )
+
+    @model_validator(mode="after")
+    def validate_descriptors(self):
+        if self.descriptors is not None:
+            self.descriptors.validate_fit(self.categories)
+        return self
 
     @field_validator("allowed")
     @classmethod
@@ -74,8 +122,29 @@ class CategoricalInput(Input):
         return f"Categorical, allowed: {self.get_allowed_categories()}"
 
     def _extra_description_parts(self) -> List[str]:
-        """Optional extras appended after the prefix, before context."""
-        return []
+        """The descriptor data, one entry per category.
+
+        The *values* are what let a model reason about the categories, so they are
+        spelled out rather than merely named. Read from the stored block only --
+        generators live on the surrogate side and are not a property of the feature.
+
+        Every category is mapped, while :meth:`_description_prefix` lists only the
+        allowed ones: a forbidden category's descriptors still inform what the allowed
+        ones mean.
+        """
+        if self.descriptors is None:
+            return []
+        parts = []
+        if self.descriptors.names:
+            columns = self.descriptors.columns
+            mapping = {
+                category: {name: column[i] for name, column in columns.items()}
+                for i, category in enumerate(self.categories)
+            }
+            parts.append(f"descriptors per category: {mapping}")
+        if self.descriptors.structure is not None:
+            parts.append(f"structure: {self.descriptors.structure}")
+        return parts
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(Literal[...], Field(description=...))`` with allowed categories.
@@ -108,13 +177,17 @@ class CategoricalInput(Input):
             Field(description=" — ".join(desc_parts)),
         )
 
-    @staticmethod
-    def valid_transform_types() -> List[CategoricalEncodingEnum]:
-        return [
-            CategoricalEncodingEnum.ONE_HOT,
-            CategoricalEncodingEnum.DUMMY,
-            CategoricalEncodingEnum.ORDINAL,
-        ]
+    def valid_transform_types(self) -> List:
+        """Valid encoding classes for this feature.
+
+        One-hot and ordinal are always valid; ``DescriptorEncoding`` is valid when the
+        feature carries a descriptor block, since the encoding can read either its
+        numeric columns or its structure.
+        """
+        types: List = [OneHotEncoding, OrdinalEncoding]
+        if self.descriptors is not None:
+            types.append(DescriptorEncoding)
+        return types
 
     def is_fixed(self) -> bool:
         """Returns True if there is only one allowed category.
@@ -141,14 +214,12 @@ class CategoricalInput(Input):
             val = self.get_allowed_categories()[0]
             if transform_type is None:
                 return [val]
-            if transform_type == CategoricalEncodingEnum.ONE_HOT:
-                return self.to_onehot_encoding(pd.Series([val])).values[0].tolist()
-            if transform_type == CategoricalEncodingEnum.DUMMY:
-                return self.to_dummy_encoding(pd.Series([val])).values[0].tolist()
-            if transform_type == CategoricalEncodingEnum.ORDINAL:
-                return self.to_ordinal_encoding(pd.Series([val])).tolist()
-            raise ValueError(
-                f"Unknown transform type {transform_type} for categorical input {self.key}",
+            return (
+                transform_type.encode(
+                    self, pd.Series([val])
+                )  # ty: ignore[unresolved-attribute]
+                .values[0]
+                .tolist()
             )
         return None
 
@@ -248,116 +319,24 @@ class CategoricalInput(Input):
         """
         return sorted(set(list(set(values.tolist())) + self.get_allowed_categories()))
 
-    def to_onehot_encoding(self, values: pd.Series) -> pd.DataFrame:
-        """Converts values to a one-hot encoding.
+    def to_encoding(
+        self,
+        encoding: "CategoricalEncoding",
+        values: pd.Series,
+    ) -> pd.DataFrame:
+        """Encode a series of categories with the given encoding.
 
-        Args:
-            values (pd.Series): Series to be transformed.
-
-        Returns:
-            pd.DataFrame: One-hot transformed data frame.
-
+        Generic pandas entry point: the encoding object owns the actual transform.
         """
-        return pd.DataFrame(
-            {get_encoded_name(self.key, c): values == c for c in self.categories},
-            dtype=float,
-            index=values.index,
-        )
+        return encoding.encode(self, values)
 
-    def from_onehot_encoding(self, values: pd.DataFrame) -> pd.Series:
-        """Converts values back from one-hot encoding.
-
-        Args:
-            values (pd.DataFrame): One-hot encoded values.
-
-        Raises:
-            ValueError: If one-hot columns not present in `values`.
-
-        Returns:
-            pd.Series: Series with categorical values.
-
-        """
-        cat_cols = [get_encoded_name(self.key, c) for c in self.categories]
-        # we allow here explicitly that the dataframe can have more columns than needed to have it
-        # easier in the backtransform.
-        if np.any([c not in values.columns for c in cat_cols]):
-            raise ValueError(
-                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}.",
-            )
-        s = values[cat_cols].idxmax(1).str[(len(self.key) + 1) :]
-        s.name = self.key
-        return s
-
-    def to_dummy_encoding(self, values: pd.Series) -> pd.DataFrame:
-        """Converts values to a dummy-hot encoding, dropping the first categorical level.
-
-        Args:
-            values (pd.Series): Series to be transformed.
-
-        Returns:
-            pd.DataFrame: Dummy-hot transformed data frame.
-
-        """
-        return pd.DataFrame(
-            {get_encoded_name(self.key, c): values == c for c in self.categories[1:]},
-            dtype=float,
-            index=values.index,
-        )
-
-    def from_dummy_encoding(self, values: pd.DataFrame) -> pd.Series:
-        """Convert points back from dummy encoding.
-
-        Args:
-            values (pd.DataFrame): Dummy-hot encoded values.
-
-        Raises:
-            ValueError: If one-hot columns not present in `values`.
-
-        Returns:
-            pd.Series: Series with categorical values.
-
-        """
-        cat_cols = [get_encoded_name(self.key, c) for c in self.categories]
-        # we allow here explicitly that the dataframe can have more columns than needed to have it
-        # easier in the backtransform.
-        if np.any([c not in values.columns for c in cat_cols[1:]]):
-            raise ValueError(
-                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols[1:]}.",
-            )
-        values = values.copy()
-        values[cat_cols[0]] = 1 - values[cat_cols[1:]].sum(axis=1)
-        s = values[cat_cols].idxmax(1).str[(len(self.key) + 1) :]
-        s.name = self.key
-        return s
-
-    def to_ordinal_encoding(self, values: pd.Series) -> pd.Series:
-        """Converts values to an ordinal integer based encoding.
-
-        Args:
-            values (pd.Series): Series to be transformed.
-
-        Returns:
-            pd.Series: Ordinal encoded values.
-
-        """
-        enc = pd.Series(range(len(self.categories)), index=list(self.categories))
-        s = enc[values]
-        s.index = values.index
-        s.name = self.key
-        return s
-
-    def from_ordinal_encoding(self, values: pd.Series) -> pd.Series:
-        """Convertes values back from ordinal encoding.
-
-        Args:
-            values (pd.Series): Ordinal encoded series.
-
-        Returns:
-            pd.Series: Series with categorical values.
-
-        """
-        enc = np.array(self.categories)
-        return pd.Series(enc[values], index=values.index, name=self.key)
+    def from_encoding(
+        self,
+        encoding: "CategoricalEncoding",
+        values: pd.DataFrame,
+    ) -> pd.Series:
+        """Back-transform encoded columns to categories with the given encoding."""
+        return encoding.decode(self, values)
 
     def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.
@@ -385,36 +364,14 @@ class CategoricalInput(Input):
         reference_value: Optional[str] = None,
         **kwargs,
     ) -> Tuple[List[float], List[float]]:
-        assert isinstance(transform_type, CategoricalEncodingEnum)
-        if transform_type == CategoricalEncodingEnum.ORDINAL:
-            return [0], [len(self.categories) - 1]
-        if transform_type == CategoricalEncodingEnum.ONE_HOT:
-            # in the case that values are None, we return the bounds
-            # based on the optimization bounds, else we return the true
-            # bounds as this is for model fitting.
-            if values is None:
-                lower = [0.0 for _ in self.categories]
-                upper = [
-                    1.0
-                    if self.allowed[i] is True  # ty: ignore[not-subscriptable]
-                    else 0.0
-                    for i, _ in enumerate(self.categories)
-                ]
-            else:
-                lower = [0.0 for _ in self.categories]
-                upper = [1.0 for _ in self.categories]
-            return lower, upper
-        if transform_type == CategoricalEncodingEnum.DUMMY:
-            lower = [0.0 for _ in range(len(self.categories) - 1)]
-            upper = [1.0 for _ in range(len(self.categories) - 1)]
-            return lower, upper
-        if transform_type == CategoricalEncodingEnum.DESCRIPTOR:
+        # bounds are encoding-specific and delegated to the encoder object.
+        if transform_type is None:
             raise ValueError(
-                f"Invalid descriptor transform for categorical {self.key}.",
+                f"An encoding must be provided to get bounds for categorical {self.key}.",
             )
-        raise ValueError(
-            f"Invalid transform_type {transform_type} provided for categorical {self.key}.",
-        )
+        return transform_type.get_bounds(
+            self, values
+        )  # ty: ignore[unresolved-attribute]
 
     def __str__(self) -> str:
         """Returns the number of categories as str

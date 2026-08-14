@@ -23,15 +23,20 @@ from torch.nn import Module
 
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.api import Hartmann, Himmelblau
+from bofire.data_models.descriptor_generators.api import (
+    Fingerprints,
+    MordredDescriptors,
+)
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
+from bofire.data_models.encodings.api import DescriptorEncoding, OrdinalEncoding
+from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
-    CategoricalMolecularInput,
     ContinuousInput,
     ContinuousOutput,
     SumFeature,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
     HammingDistanceKernel,
@@ -41,7 +46,6 @@ from bofire.data_models.kernels.api import (
     SphericalLinearKernel,
     TanimotoKernel,
 )
-from bofire.data_models.molfeatures.api import Fingerprints, MordredDescriptors
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
@@ -259,7 +263,7 @@ def test_SingleTaskGPModel_with_engineered_features():
 def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     inputs = Inputs(
         features=[
-            CategoricalMolecularInput(
+            CategoricalInput(
                 key="x_mol",
                 categories=[
                     "CC(=O)Oc1ccccc1C(=O)O",
@@ -267,6 +271,14 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             )
         ]
     )
@@ -286,10 +298,13 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         categorical_encodings={
-            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            "x_mol": DescriptorEncoding(
+                columns=[],
+                generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
+            ),
         },
         # input_preprocessing_specs={
-        #     "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+        #     "x_mol": DescriptorEncoding(columns=[], generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]),
         # },
     )
     model = surrogates.map(model)
@@ -324,7 +339,10 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         categorical_encodings={
-            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            "x_mol": DescriptorEncoding(
+                columns=[],
+                generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
+            ),
         },
     )
     model2 = surrogates.map(model2)
@@ -491,7 +509,7 @@ def test_SingleTaskGPModel_mixed_features():
             ContinuousInput(key="x_2", bounds=(-4, 4)),
             CategoricalInput(key="x_cat_1", categories=["mama", "papa"]),
             CategoricalInput(key="x_cat_2", categories=["cat", "dog"]),
-            CategoricalMolecularInput(
+            CategoricalInput(
                 key="x_mol",
                 categories=[
                     "CC(=O)Oc1ccccc1C(=O)O",
@@ -499,6 +517,14 @@ def test_SingleTaskGPModel_mixed_features():
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             ),
         ],
     )
@@ -533,9 +559,14 @@ def test_SingleTaskGPModel_mixed_features():
             ]
         ),
         categorical_encodings={
-            "x_cat_1": CategoricalEncodingEnum.ORDINAL,
-            "x_cat_2": CategoricalEncodingEnum.ORDINAL,
-            "x_mol": Fingerprints(n_bits=2048, correlation_cutoff=1.0),
+            "x_cat_1": OrdinalEncoding(),
+            "x_cat_2": OrdinalEncoding(),
+            "x_mol": DescriptorEncoding(
+                columns=[],
+                generators=[Fingerprints(n_bits=2048)],
+                filter_descriptors=True,
+                correlation_cutoff=1.0,
+            ),
         },
     )
 
@@ -543,16 +574,17 @@ def test_SingleTaskGPModel_mixed_features():
     gp_mapped.fit(experiments)
     pred = gp_mapped.predict(experiments)
     n_descriptors_after_filtering = len(
-        gp_data.categorical_encodings["x_mol"].get_descriptor_names()
+        gp_data.categorical_encodings["x_mol"].get_names(
+            gp_data.inputs.get_by_key("x_mol")
+        )
     )
     assert pred.shape == (4, 2)
-    assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [
-        2 + n_descriptors_after_filtering,
-        3 + n_descriptors_after_filtering,
-    ]
+    # x_mol is a plain CategoricalInput now, so it sorts after x_cat_1/x_cat_2:
+    # layout is x_1, x_2, x_cat_1, x_cat_2, then the molecular descriptors.
+    assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [2, 3]
     assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [0, 1]
     assert gp_mapped.model.covar_module.kernels[2].active_dims.tolist() == list(
-        range(2, 2 + n_descriptors_after_filtering)
+        range(4, 4 + n_descriptors_after_filtering)
     )
     # assert (pred['y_pred'] - experiments['y']).abs().mean() < 0.4
 
@@ -746,7 +778,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
     surrogate_data = MixedSingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
-        # input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        # input_preprocessing_specs={"x_cat": OneHotEncoding()},
         scaler=scaler,
         output_scaler=output_scaler,
         continuous_kernel=kernel,
@@ -819,7 +851,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
 def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     inputs = Inputs(
         features=[
-            CategoricalMolecularInput(
+            CategoricalInput(
                 key="x_mol",
                 categories=[
                     "CC(=O)Oc1ccccc1C(=O)O",
@@ -827,6 +859,14 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             ),
             CategoricalInput(key="x_cat", categories=["a", "b"]),
         ],
@@ -847,7 +887,10 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         output_scaler=output_scaler,
         continuous_kernel=kernel,
         categorical_encodings={
-            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            "x_mol": DescriptorEncoding(
+                columns=[],
+                generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
+            ),
         },
     )
     model = surrogates.map(model)
@@ -871,7 +914,7 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         assert isinstance(model.model.input_transform.scaler, Normalize)
         assert torch.eq(
             model.model.input_transform.scaler.indices,
-            torch.tensor([0, 1], dtype=torch.int64),
+            torch.tensor([1, 2], dtype=torch.int64),
         ).all()
         assert isinstance(model.model.input_transform.cat, NumericToCategoricalEncoding)
     elif isinstance(scaler, StandardizeScaler):
@@ -879,7 +922,7 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         assert isinstance(model.model.input_transform.scaler, InputStandardize)
         assert torch.eq(
             model.model.input_transform.scaler.indices,
-            torch.tensor([0, 1], dtype=torch.int64),
+            torch.tensor([1, 2], dtype=torch.int64),
         ).all()
         assert isinstance(model.model.input_transform.cat, NumericToCategoricalEncoding)
     else:
@@ -888,14 +931,14 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     # check correct indices
     assert torch.allclose(
         model.model.covar_module.kernels[0].base_kernel.kernels[0].active_dims,
-        torch.tensor([0, 1]),
+        torch.tensor([1, 2]),
     )
 
     assert torch.allclose(
         model.model.covar_module.kernels[0]
         .base_kernel.kernels[1]
         .base_kernel.active_dims,
-        torch.tensor([2]),
+        torch.tensor([0]),
     )
 
     assert model.is_compatibilized is False
@@ -907,7 +950,10 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         categorical_encodings={
-            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            "x_mol": DescriptorEncoding(
+                columns=[],
+                generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
+            ),
         },
     )
     model2 = surrogates.map(model2)

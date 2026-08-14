@@ -1,13 +1,15 @@
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
 
+import pandas as pd
 from pydantic import Field, PositiveFloat, PositiveInt, model_validator
 
-from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
+from bofire.data_models.encodings.naming import get_encoded_name
+from bofire.data_models.features._descriptor_spec import DescriptorSpec
+from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.features.feature import Feature
-from bofire.data_models.features.molecular import ContinuousMolecularInput
-from bofire.data_models.molfeatures.api import AnyMolFeatures
-from bofire.data_models.types import Bounds, Descriptors, FeatureKeys, OneFeatureKeys
+from bofire.data_models.types import Bounds, FeatureKeys, OneFeatureKeys
 
 
 if TYPE_CHECKING:
@@ -41,10 +43,13 @@ class EngineeredFeature(Feature):
     def _validate_features(self, inputs: "Inputs"):
         pass
 
-    @property
     @abstractmethod
-    def n_transformed_inputs(self) -> int:
-        pass
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        """Names of the columns this feature appends, given the input features.
+
+        Resolved against ``inputs`` on every call. ``len(get_names(inputs))`` is the
+        feature's width, and is what offset bookkeeping uses.
+        """
 
 
 class SumFeature(EngineeredFeature):
@@ -59,9 +64,8 @@ class SumFeature(EngineeredFeature):
     type: Literal["SumFeature"] = "SumFeature"
     order_id: ClassVar[int] = 0
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return 1
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        return [self.key]
 
 
 class MeanFeature(EngineeredFeature):
@@ -76,101 +80,73 @@ class MeanFeature(EngineeredFeature):
     type: Literal["MeanFeature"] = "MeanFeature"
     order_id: ClassVar[int] = 1
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return 1
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        return [self.key]
 
 
-class WeightedSumFeature(EngineeredFeature):
-    """Weighted sum feature, which computes the sum over the specified
-    descriptors weighted by the involved feature values.
+class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
+    """Amount-weighted blend of descriptors over the specified component features.
+
+    For each descriptor ``d`` the output is ``Σᵢ amountᵢ · rowᵢ,d`` where ``amountᵢ``
+    is the value of component feature ``i`` (optionally normalized by ``Σᵢ amountᵢ``).
+    The descriptor columns are declared by the :class:`DescriptorSpec` mixin
+    (``columns`` for static columns and/or ``generators`` for molecular generators).
 
     Args:
-        features: The features to be used to compute the weighted sum.
-        descriptors: The descriptors to be used to compute the weighted sum.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
+        features: The component features to blend.
+        columns / generators / filter_descriptors: see :class:`DescriptorSpec`.
+        normalize: If True, divide by the sum of amounts (weighted mean).
+        keep_features: Whether to keep the original features in surrogate creation.
     """
 
     type: Literal["WeightedSumFeature"] = "WeightedSumFeature"
-    descriptors: Descriptors
     order_id: ClassVar[int] = 2
+    normalize: bool = False
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return len(self.descriptors)
+    def component_table(self, features: List["ContinuousInput"]) -> pd.DataFrame:
+        """Descriptor table with one row per component feature (weighted-sum scope).
 
-    def validate_features(self, inputs: "Inputs"):
-        super().validate_features(inputs)
-        for feature_key in self.features:
-            feature = inputs.get_by_key(feature_key)
-            if not isinstance(feature, ContinuousDescriptorInput):
-                raise ValueError(
-                    f"Feature '{feature_key}' is not a ContinuousDescriptorInput",
-                )
-            if len(set(self.descriptors) - set(feature.descriptors)) > 0:
-                raise ValueError(
-                    f"Not all descriptors {self.descriptors} are present in feature '{feature_key}'",
-                )
+        The components' one-row blocks are stacked into a single block, so generators run
+        once over the combined structures and every row shares the same columns.
+        """
+        return self.build(self._merged_descriptors(features), self._index(features))
 
+    @staticmethod
+    def _merged_descriptors(features: List["ContinuousInput"]) -> Descriptors:
+        """The components' one-row blocks as a single block, one row per component.
 
-class WeightedMeanFeature(WeightedSumFeature):
-    """Weighted mean feature, which computes the mean over the specified
-    descriptors weighted by the involved feature values.
+        ``Descriptors.concat`` rejects components that carry no block, or that disagree
+        on their columns or on carrying a structure.
+        """
+        return Descriptors.concat([f.descriptors for f in features])
 
-    Args:
-        features: The features to be used to compute the weighted mean.
-        descriptors: The descriptors to be used to compute the weighted mean.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
-    """
+    @staticmethod
+    def _index(features: List["ContinuousInput"]) -> List[str]:
+        """Row labels of the blended block: the component keys."""
+        return [f.key for f in features]
 
-    type: Literal["WeightedMeanFeature"] = "WeightedMeanFeature"
-    order_id: ClassVar[int] = 6
-
-
-class MolecularWeightedSumFeature(EngineeredFeature):
-    """Molecular weighted sum feature, which computes the sum over the specified
-    molecular descriptors weighted by the involved feature values.
-
-    Args:
-        features: The molecular features to be used to compute the weighted sum.
-        molfeatures: The molecular feature descriptor specification.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
-    """
-
-    type: Literal["MolecularWeightedSumFeature"] = "MolecularWeightedSumFeature"
-    molfeatures: AnyMolFeatures
-    order_id: ClassVar[int] = 3
-
-    @property
-    def n_transformed_inputs(self) -> int:
-        return len(self.molfeatures.get_descriptor_names())
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        """One name per descriptor column of the blended block."""
+        components = [inputs.get_by_key(key) for key in self.features]
+        names = self.resolved_names(
+            self._merged_descriptors(components),
+            self._index(components),
+        )
+        return [get_encoded_name(self.key, name) for name in names]
 
     def validate_features(self, inputs: "Inputs"):
+        """Gate the spec against each component *and* against the blend they merge into.
+
+        Per component first, so an incompatible one is named in the message. Then against
+        the blended block, which is what the consumers actually read: merging is where the
+        components' mutual compatibility — same columns, all or none carrying a structure —
+        is decided, and without this it would only surface at build time.
+        """
         super().validate_features(inputs)
-        for feature_key in self.features:
-            feature = inputs.get_by_key(feature_key)
-            if not isinstance(feature, ContinuousMolecularInput):
-                raise ValueError(
-                    f"Feature '{feature_key}' is not a ContinuousMolecularInput",
-                )
-
-
-class MolecularWeightedMeanFeature(MolecularWeightedSumFeature):
-    """Molecular weighted mean feature, which computes the mean over the specified
-    molecular descriptors weighted by the involved feature values.
-
-    Args:
-        features: The molecular features to be used to compute the weighted mean.
-        molfeatures: The molecular feature descriptor specification.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
-    """
-
-    type: Literal["MolecularWeightedMeanFeature"] = "MolecularWeightedMeanFeature"
-    order_id: ClassVar[int] = 7
+        components = [inputs.get_by_key(key) for key in self.features]
+        for feat in components:
+            self.validate_for(feat.descriptors, feat.key)
+        self.validate_for(self._merged_descriptors(components), self.key)
 
 
 class ProductFeature(EngineeredFeature):
@@ -188,9 +164,8 @@ class ProductFeature(EngineeredFeature):
     order_id: ClassVar[int] = 4
     features: Annotated[List[str], Field(min_length=2)]
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return 1
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        return [self.key]
 
 
 class InterpolateFeature(EngineeredFeature):
@@ -242,9 +217,11 @@ class InterpolateFeature(EngineeredFeature):
             )
         return self
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return self.n_interpolation_points
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        return [
+            get_encoded_name(self.key, str(i))
+            for i in range(self.n_interpolation_points)
+        ]
 
 
 class CloneFeature(EngineeredFeature):
@@ -265,6 +242,5 @@ class CloneFeature(EngineeredFeature):
     order_id: ClassVar[int] = 5
     features: OneFeatureKeys
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return len(self.features)
+    def get_names(self, inputs: "Inputs") -> List[str]:
+        return [get_encoded_name(self.key, key) for key in self.features]

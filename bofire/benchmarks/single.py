@@ -13,13 +13,13 @@ from bofire.benchmarks.benchmark import Benchmark
 from bofire.data_models.constraints.api import NChooseKConstraint
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
 
@@ -93,11 +93,12 @@ class Ackley(Benchmark):
 
         if self.descriptor:
             input_feature_list.append(
-                CategoricalDescriptorInput(
+                CategoricalInput(
                     key="descriptor",
                     categories=[str(x) for x in range(self.num_categories)],
-                    descriptors=["d1"],
-                    values=[[x * 2] for x in range(self.num_categories)],
+                    descriptors=Descriptors(
+                        columns={"d1": [x * 2 for x in range(self.num_categories)]}
+                    ),
                 ),
             )
 

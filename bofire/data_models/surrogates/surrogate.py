@@ -1,11 +1,12 @@
 from abc import abstractmethod
 from typing import Any, Optional, Type
 
-from pydantic import Field, field_validator
+from pydantic import field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.features.api import AnyOutput
+from bofire.data_models.encodings.api import OrdinalEncoding
+from bofire.data_models.features.api import AnyOutput, CategoricalInput
 from bofire.data_models.types import InputTransformSpecs
 
 
@@ -13,20 +14,23 @@ class Surrogate(BaseModel):
     type: Any
     inputs: Inputs
     outputs: Outputs
-    input_preprocessing_specs: InputTransformSpecs = Field(
-        default_factory=dict,
-        validate_default=True,
-    )
     dump: Optional[str] = None
 
-    @field_validator("input_preprocessing_specs")
+    @property
+    def input_preprocessing_specs(self) -> InputTransformSpecs:
+        """Pre-model tensorization: every categorical is ordinal-encoded (the in-model
+        encoding choice lives in ``categorical_encodings``)."""
+        return {
+            key: OrdinalEncoding()
+            for key in self.inputs.get_keys(CategoricalInput, exact=False)
+        }
+
+    @field_validator("inputs")
     @classmethod
-    def validate_input_preprocessing_specs(cls, v, info):
-        # we also validate the number of input features here
-        if len(info.data["inputs"]) == 0:
+    def validate_inputs_not_empty(cls, inputs):
+        if len(inputs) == 0:
             raise ValueError("At least one input feature has to be provided.")
-        v = info.data["inputs"]._validate_transform_specs(v)
-        return v
+        return inputs
 
     @field_validator("outputs")
     @classmethod

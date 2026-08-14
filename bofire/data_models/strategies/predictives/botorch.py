@@ -142,7 +142,14 @@ class BotorchStrategy(PredictiveStrategy):
             AnyBotorchSurrogate: Spec for the surrogate for the given output feature.
         """
 
-        if len(domain.inputs.get(CategoricalInput, exact=True)):
+        # A categorical needs the mixed GP only if it is *not* descriptor-encoded: with
+        # descriptor data it turns into continuous columns a plain GP handles. Keyed on
+        # the data the feature carries, not on its type.
+        if any(
+            feat.descriptors is None
+            for feat in domain.inputs.get(CategoricalInput, exact=False)
+            if not isinstance(feat, CategoricalTaskInput)
+        ):
             return MixedSingleTaskGPSurrogate(
                 inputs=domain.inputs,
                 outputs=Outputs(
