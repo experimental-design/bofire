@@ -80,8 +80,14 @@ def test_outlier_detection_should_be_invalid(
     _invalidate(invalid_outlier_detection_spec)
 
 
-def test_molfeatures_should_be_invalid(invalid_molfeatures_spec: InvalidSpec):
-    _invalidate(invalid_molfeatures_spec)
+def test_descriptor_generators_should_be_invalid(
+    invalid_descriptor_generator_spec: InvalidSpec,
+):
+    _invalidate(invalid_descriptor_generator_spec)
+
+
+def test_encoding_should_be_invalid(invalid_encoding_spec: InvalidSpec):
+    _invalidate(invalid_encoding_spec)
 
 
 def test_local_search_config_should_be_invalid(

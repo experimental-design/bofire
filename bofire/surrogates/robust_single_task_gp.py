@@ -3,8 +3,6 @@ from typing import Dict, Optional
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
-
-# from bofire.data_models.molfeatures.api import MolFeatures
 from botorch.models.relevance_pursuit import (
     backward_relevance_pursuit,
     forward_relevance_pursuit,  # noqa: F401

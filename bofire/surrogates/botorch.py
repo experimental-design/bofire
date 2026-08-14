@@ -143,7 +143,7 @@ class BotorchSurrogate(Surrogate):
         for idx in features2idx.values():
             d += len(idx)
         indices += self.engineered_features.get_feature_indices(
-            offset=d, feature_keys=engineered_keys
+            self.inputs, offset=d, feature_keys=engineered_keys
         )
         return indices
 

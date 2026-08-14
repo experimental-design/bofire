@@ -1,9 +1,13 @@
 import bofire.data_models.surrogates.api as models
+from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import (
+    DescriptorEncoding,
+    OneHotEncoding,
+    OrdinalEncoding,
+)
 from bofire.data_models.features.api import (
     CategoricalInput,
-    CategoricalMolecularInput,
     CategoricalOutput,
     CategoricalTaskInput,
     CloneFeature,
@@ -11,7 +15,9 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     MeanFeature,
     SumFeature,
+    WeightedSumFeature,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
     InfiniteWidthBNNKernel,
@@ -20,7 +26,6 @@ from bofire.data_models.kernels.api import (
     ScaleKernel,
     TanimotoKernel,
 )
-from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
     PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
     PAIRWISEGP_LENGTHSCALE_PRIOR,
@@ -69,7 +74,6 @@ specs.add_valid(
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
@@ -105,7 +109,6 @@ specs.add_valid(
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": None,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
@@ -146,7 +149,6 @@ specs.add_valid(
         "cache_model_trace": False,
         "convex_parametrization": True,
         "prior_mean_of_support": None,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
@@ -184,7 +186,6 @@ specs.add_invalid(
         "cache_model_trace": False,
         "convex_parametrization": True,
         "prior_mean_of_support": None,
-        "input_preprocessing_specs": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
@@ -232,7 +233,6 @@ specs.add_valid(
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
         "hyperconfig": None,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "engineered_features": EngineeredFeatures().model_dump(),
         "dump": None,
@@ -257,7 +257,6 @@ specs.add_valid(
         "n_taus": 4,
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "hyperconfig": None,
         "dump": None,
@@ -281,7 +280,6 @@ specs.add_valid(
         "n_taus": 4,
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "hyperconfig": None,
         "dump": None,
@@ -305,7 +303,6 @@ specs.add_invalid(
         "n_taus": 4,
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.LOG,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "hyperconfig": None,
         "dump": None,
@@ -331,7 +328,6 @@ specs.add_invalid(
         "n_taus": 4,
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.CHAINED_LOG_STANDARDIZE,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "hyperconfig": None,
         "dump": None,
@@ -359,7 +355,6 @@ specs.add_valid(
         "engineered_features": EngineeredFeatures().model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "hyperconfig": None,
         "dump": None,
@@ -435,8 +430,7 @@ specs.add_valid(
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ORDINAL},
-        "categorical_encodings": {"cat1": CategoricalEncodingEnum.ORDINAL},
+        "categorical_encodings": {"cat1": OrdinalEncoding().model_dump()},
         "dump": None,
         "hyperconfig": None,
     },
@@ -465,7 +459,6 @@ specs.add_valid(
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
@@ -502,7 +495,7 @@ specs.add_invalid(
                 features.valid(ContinuousOutput).obj(),
             ],
         ).model_dump(),
-        "categorical_encodings": {"x_cat": CategoricalEncodingEnum.ONE_HOT},
+        "categorical_encodings": {"x_cat": OneHotEncoding().model_dump()},
     },
     error=ValueError,
     message="MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is ordinal encoded.",
@@ -565,7 +558,6 @@ specs.add_valid(
             ],
         ).model_dump(),
         "engineered_features": EngineeredFeatures().model_dump(),
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "n_estimators": 100,
         "criterion": "squared_error",
@@ -614,7 +606,6 @@ specs.add_valid(
         "shuffle": True,
         "scaler": None,
         "output_scaler": ScalerEnum.IDENTITY,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": None,
@@ -646,7 +637,6 @@ specs.add_invalid(
         "shuffle": True,
         "scaler": None,
         "output_scaler": ScalerEnum.IDENTITY,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": None,
@@ -681,7 +671,6 @@ specs.add_valid(
         "shuffle": True,
         "scaler": None,
         "output_scaler": ScalerEnum.IDENTITY,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": None,
@@ -713,7 +702,6 @@ specs.add_invalid(
         "shuffle": True,
         "scaler": None,
         "output_scaler": ScalerEnum.IDENTITY,
-        "input_preprocessing_specs": {},
         "dump": None,
         "hyperconfig": None,
     },
@@ -725,7 +713,11 @@ specs.add_valid(
     lambda: {
         "inputs": Inputs(
             features=[
-                CategoricalMolecularInput(key="mol1", categories=["C", "CC", "CCC"]),
+                CategoricalInput(
+                    key="mol1",
+                    categories=["C", "CC", "CCC"],
+                    descriptors=Descriptors(structure=["C", "CC", "CCC"]),
+                ),
             ],
         ).model_dump(),
         "outputs": Outputs(
@@ -744,9 +736,11 @@ specs.add_valid(
         "output_scaler": ScalerEnum.IDENTITY,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "input_preprocessing_specs": {"mol1": CategoricalEncodingEnum.ORDINAL},
         "categorical_encodings": {
-            "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump(),
+            "mol1": DescriptorEncoding(
+                columns=[],
+                generators=[Fingerprints(n_bits=32, bond_radius=3)],
+            ).model_dump(),
         },
         "dump": None,
         "hyperconfig": None,
@@ -768,8 +762,7 @@ specs.add_valid(
                 ContinuousOutput(key="y_cat"),
             ],
         ).model_dump(),
-        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ORDINAL},
-        "categorical_encodings": {"x_cat": CategoricalEncodingEnum.ORDINAL},
+        "categorical_encodings": {"x_cat": OrdinalEncoding().model_dump()},
         "engineered_features": EngineeredFeatures().model_dump(),
         "mapping": {"a": 0.1, "b": 0.2, "c": 1.0},
         "dump": None,
@@ -791,7 +784,6 @@ specs.add_invalid(
                 ContinuousOutput(key="y_cat"),
             ],
         ).model_dump(),
-        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ORDINAL},
         "mapping": {"a": 0.1, "b": 0.2, "c": 1.0},
         "dump": None,
     },
@@ -812,7 +804,6 @@ specs.add_invalid(
                 ContinuousOutput(key="y_cat"),
             ],
         ).model_dump(),
-        "input_preprocessing_specs": {"x_cat": CategoricalEncodingEnum.ORDINAL},
         "mapping": {"a": 0.1, "b": 0.2, "d": 1.0},
         "dump": None,
     },
@@ -837,7 +828,6 @@ specs.add_valid(
         "engineered_features": EngineeredFeatures().model_dump(),
         "intercept": 5.0,
         "coefficients": {"a": 2.0, "b": -3.0},
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
     },
@@ -859,11 +849,51 @@ specs.add_invalid(
         ).model_dump(),
         "intercept": 5.0,
         "coefficients": {"a": 2.0, "b": -3.0, "c": 5.0},
-        "input_preprocessing_specs": {},
         "dump": None,
     },
     error=ValueError,
     message="coefficient keys do not match input feature keys.",
+)
+
+
+# A linear model binds one coefficient per column, so a data-dependent width is not
+# usable. Resolving one would also mean generating descriptors inside a validator, which
+# needs rdkit -- this spec runs in the no-extras job, so it pins that too.
+specs.add_invalid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(
+                    key="a", bounds=(0, 1), descriptors=Descriptors(structure=["CCO"])
+                ),
+                ContinuousInput(
+                    key="b", bounds=(0, 1), descriptors=Descriptors(structure=["CC"])
+                ),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "engineered_features": EngineeredFeatures(
+            features=[
+                WeightedSumFeature(
+                    key="w",
+                    features=["a", "b"],
+                    columns=[],
+                    generators=[Fingerprints(n_bits=8)],
+                    filter_descriptors=True,
+                )
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0, "w": 1.0},
+        "dump": None,
+    },
+    error=ValueError,
+    message="`filter_descriptors=True` makes the width depend on the data.",
 )
 
 
@@ -883,7 +913,6 @@ specs.add_invalid(
         ).model_dump(),
         "intercept": 5.0,
         "coefficients": {"a": 2.0, "b": -3.0},
-        "input_preprocessing_specs": {},
         "dump": None,
     },
     error=ValueError,
@@ -916,49 +945,12 @@ specs.add_valid(
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
         "task_prior": None,
-        "input_preprocessing_specs": {
-            "task": CategoricalEncodingEnum.ORDINAL,
-        },
         "categorical_encodings": {
-            "task": CategoricalEncodingEnum.ORDINAL,
+            "task": OrdinalEncoding().model_dump(),
         },
         "dump": None,
         "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
     },
-)
-
-specs.add_invalid(
-    models.MultiTaskGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                features.valid(ContinuousInput).obj(),
-            ]
-            + [CategoricalTaskInput(key="task", categories=["a", "b", "c"])],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "kernel": ScaleKernel(
-            base_kernel=MaternKernel(
-                ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
-            ),
-            outputscale_prior=THREESIX_SCALE_PRIOR(),
-        ).model_dump(),
-        "scaler": Normalize().model_dump(),
-        "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "task_prior": None,
-        "input_preprocessing_specs": {
-            "task": CategoricalEncodingEnum.ONE_HOT,
-        },
-        "dump": None,
-        "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
-    },
-    error=ValueError,
 )
 
 # if there is no task input, there should be a validation error
@@ -986,9 +978,6 @@ specs.add_invalid(
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
         "task_prior": None,
-        "input_preprocessing_specs": {
-            "task": CategoricalEncodingEnum.ORDINAL,
-        },
         "dump": None,
         "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
     },
@@ -1021,11 +1010,8 @@ specs.add_invalid(
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
         "task_prior": None,
-        "input_preprocessing_specs": {
-            "task": CategoricalEncodingEnum.ORDINAL,
-        },
         "categorical_encodings": {
-            "task": CategoricalEncodingEnum.ONE_HOT,
+            "task": OneHotEncoding().model_dump(),
         },
         "dump": None,
         "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
@@ -1058,7 +1044,6 @@ specs.add_valid(
         "likelihood": "probit",
         "engineered_features": EngineeredFeatures().model_dump(),
         "hyperconfig": None,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
     },
@@ -1089,7 +1074,6 @@ specs.add_valid(
         "likelihood": "logit",
         "engineered_features": EngineeredFeatures().model_dump(),
         "hyperconfig": None,
-        "input_preprocessing_specs": {},
         "categorical_encodings": {},
         "dump": None,
     },
@@ -1125,4 +1109,37 @@ specs.add_invalid(
     },
     error=ValueError,
     message="PairwiseGPSurrogate.kernel must be a ScaleKernel",
+)
+
+
+# The duplicate the spec cannot see by itself: `columns=None` pulls in the feature's own
+# `fingerprint_0`, which the generator also emits. Pairing the two is what the surrogate
+# does, so this is where it surfaces -- self-inconsistent specs are rejected earlier, when
+# the encoding is constructed (see specs/encodings.py).
+specs.add_invalid(
+    models.SingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                CategoricalInput(
+                    key="c",
+                    categories=["CCO", "CC"],
+                    descriptors=Descriptors(
+                        columns={"fingerprint_0": [1.0, 2.0]}, structure=["CCO", "CC"]
+                    ),
+                ),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "categorical_encodings": {
+            "c": DescriptorEncoding(generators=[Fingerprints(n_bits=8)]).model_dump()
+        },
+        "dump": None,
+    },
+    error=ValueError,
+    message="c: descriptor names must be unique",
 )

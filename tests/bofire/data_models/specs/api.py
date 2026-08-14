@@ -7,7 +7,11 @@ from tests.bofire.data_models.specs.constraints_container import (
     specs as constraints_container,
 )
 from tests.bofire.data_models.specs.dataframes import specs as dataframes
+from tests.bofire.data_models.specs.descriptor_generators import (
+    specs as descriptor_generators,
+)
 from tests.bofire.data_models.specs.domain import specs as domain
+from tests.bofire.data_models.specs.encodings import specs as encodings
 from tests.bofire.data_models.specs.engineered_features import (
     specs as engineered_features,
 )
@@ -18,7 +22,6 @@ from tests.bofire.data_models.specs.llm import specs as llm
 from tests.bofire.data_models.specs.local_search_config import (
     specs as local_search_configs,
 )
-from tests.bofire.data_models.specs.molfeatures import specs as molfeatures
 from tests.bofire.data_models.specs.objectives import specs as objectives
 from tests.bofire.data_models.specs.outlier_detection import specs as outlier_detection
 from tests.bofire.data_models.specs.outputs import specs as outputs

@@ -1,5 +1,5 @@
 from bofire.data_models.domain.api import EngineeredFeatures
-from bofire.data_models.features.api import MeanFeature, SumFeature, WeightedMeanFeature
+from bofire.data_models.features.api import MeanFeature, SumFeature, WeightedSumFeature
 from tests.bofire.data_models.specs.specs import Specs
 
 
@@ -11,10 +11,11 @@ specs.add_valid(
         "features": [
             SumFeature(key="sum1", features=["a", "b"]).model_dump(),
             MeanFeature(key="mean1", features=["a", "b"]).model_dump(),
-            WeightedMeanFeature(
-                key="weighted_mean1",
+            WeightedSumFeature(
+                key="weighted_sum1",
                 features=["a", "b"],
-                descriptors=["alpha", "beta"],
+                columns=["alpha", "beta"],
+                normalize=True,
             ).model_dump(),
         ],
     },

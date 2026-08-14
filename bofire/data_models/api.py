@@ -5,6 +5,10 @@ from bofire.data_models.acquisition_functions.api import (
 )
 from bofire.data_models.constraints.api import AnyConstraint, Constraint
 from bofire.data_models.dataframes.api import AnyDataFrame, AnyRow
+from bofire.data_models.descriptor_generators.api import (
+    AnyDescriptorGenerator,
+    DescriptorGenerator,
+)
 from bofire.data_models.domain.api import (
     Constraints,
     Domain,
@@ -23,7 +27,6 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.kernels.api import AnyKernel, Kernel
 from bofire.data_models.llm.api import AnyLLMProvider, LLMProvider
-from bofire.data_models.molfeatures.api import AnyMolFeatures, MolFeatures
 from bofire.data_models.objectives.api import AnyObjective, Objective
 from bofire.data_models.outlier_detection.api import (
     AnyOutlierDetection,
@@ -58,7 +61,7 @@ data_model_list = [
     AnyPrior,
     AnyPriorConstraint,
     AnyStrategy,
-    AnyMolFeatures,
+    AnyDescriptorGenerator,
     Domain,
     AnyLocalSearchConfig,
     Inputs,

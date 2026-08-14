@@ -5,9 +5,11 @@ import pytest
 import torch
 
 from bofire.benchmarks.api import Himmelblau
+from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain import api as domain_api
+from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.features import api as features_api
-from bofire.data_models.molfeatures.api import FingerprintsFragments
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate, TanimotoGPSurrogate
 from bofire.surrogates.api import map
 
@@ -20,8 +22,10 @@ def chem_domain_simple() -> tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame]
     domain = domain_api.Domain(
         inputs=domain_api.Inputs(
             features=[
-                features_api.CategoricalMolecularInput(
-                    key="molecules", categories=["C(O)O", "O", "CC"]
+                features_api.CategoricalInput(
+                    key="molecules",
+                    categories=["C(O)O", "O", "CC"],
+                    descriptors=Descriptors(structure=["C(O)O", "O", "CC"]),
                 )
             ]
         ),
@@ -39,7 +43,11 @@ def test_re_init_kwargs_fingerprints(
     chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame],
 ):
     domain, X, Y = chem_domain_simple
-    specs = {domain.inputs.get_keys()[0]: FingerprintsFragments(n_bits=2048)}
+    specs = {
+        domain.inputs.get_keys()[0]: DescriptorEncoding(
+            columns=[], generators=[Fingerprints(n_bits=2048)]
+        )
+    }
     surrogate_data_model = TanimotoGPSurrogate(
         inputs=domain.inputs,
         outputs=domain.outputs,

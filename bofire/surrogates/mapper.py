@@ -61,7 +61,6 @@ def map_MixedSingleTaskGPSurrogate(
     return data_models.SingleTaskGPSurrogate(
         inputs=data_model.inputs,
         outputs=data_model.outputs,
-        input_preprocessing_specs=data_model.input_preprocessing_specs,
         categorical_encodings=data_model.categorical_encodings,
         dump=data_model.dump,
         scaler=data_model.scaler,

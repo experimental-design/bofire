@@ -10,9 +10,9 @@ from botorch.models.transforms.input import (
     Normalize,
 )
 
+from bofire.data_models.descriptor_generators.api import MordredDescriptors
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
-from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.molfeatures.api import CompositeMolFeatures, MordredDescriptors
+from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.surrogates.scaler import AnyScaler
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.types import InputTransformSpecs
@@ -20,13 +20,26 @@ from bofire.surrogates.engineered_features import map as map_feature
 from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
 
 
+def _produces_continuous_columns(value) -> bool:
+    """Whether an encoding produces only real-valued columns that should be scaled.
+
+    Static descriptor columns and Mordred descriptors are real-valued; fingerprints /
+    fragments are binary/count. A descriptor encoding qualifies only if *every* generator
+    is Mordred (static columns are always real-valued, so they don't disqualify it) —
+    i.e. no binary fingerprint/fragment column is present. One-hot/ordinal never qualify.
+    """
+    return isinstance(value, DescriptorEncoding) and all(
+        isinstance(generator, MordredDescriptors) for generator in value.generators
+    )
+
+
 def get_continuous_feature_keys(
     inputs: Inputs,
     specs: InputTransformSpecs,
 ) -> List[str]:
     """Returns a list of continuous feature keys in the input data.
-    These features include continuous inputs, categorical inputs with transform
-    type CategoricalEncodingEnum.DESCRIPTOR, and Mordred descriptors.
+    These features include continuous inputs, categorical inputs with a
+    descriptor encoding, and Mordred descriptors.
 
     Args:
         inputs (Inputs): Input features.
@@ -38,17 +51,7 @@ def get_continuous_feature_keys(
 
     """
     non_continuous_feature_key_list = [
-        key
-        for key, value in specs.items()
-        if value != CategoricalEncodingEnum.DESCRIPTOR
-        and not isinstance(value, MordredDescriptors)
-        and not (
-            isinstance(value, CompositeMolFeatures)
-            and any(
-                isinstance(molfeature, MordredDescriptors)
-                for molfeature in value.features
-            )
-        )
+        key for key, value in specs.items() if not _produces_continuous_columns(value)
     ]
     continuous_feature_key_list = [
         feat.key
@@ -91,7 +94,7 @@ def get_scaler(
 
     # now we get the engineered feature information
     offset = d
-    efeatures2idx = engineered_features.get_features2idx(offset=offset)
+    efeatures2idx = engineered_features.get_features2idx(inputs, offset=offset)
     for indices in efeatures2idx.values():
         d += len(indices)
 
@@ -109,7 +112,7 @@ def get_scaler(
             feature_keys=continuous_feature_keys,
         )
         engineered_feat_dims = engineered_features.get_feature_indices(
-            offset=offset, feature_keys=engineered_features.get_keys()
+            inputs, offset=offset, feature_keys=engineered_features.get_keys()
         )
 
     else:
@@ -124,6 +127,7 @@ def get_scaler(
             ],
         )
         engineered_feat_dims = engineered_features.get_feature_indices(
+            inputs,
             offset=offset,
             feature_keys=[
                 feat
@@ -233,6 +237,7 @@ def get_input_transform(
             specs=categorical_encodings, feature_keys=inputs.get_keys()
         )
         engineered_idx = engineered_features.get_feature_indices(
+            inputs,
             offset=len(original_idx),
             feature_keys=engineered_features.get_keys(),
         )

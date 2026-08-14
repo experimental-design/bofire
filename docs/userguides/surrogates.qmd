@@ -53,7 +53,7 @@ Specify the [Kernel](https://github.com/experimental-design/bofire/blob/main/bof
 [MaternKernel](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)|Based on Gamma function; allows setting a smoothness parameter|Yes|Continuous
 [PolynomialKernel](https://scikit-learn.org/stable/modules/metrics.html)|Based on dot-product of two vectors of input points|No|Continuous
 [LinearKernel](https://scikit-learn.org/stable/modules/metrics.html)|Equal to dot-product of two vectors of input points|No|Continuous
-TanimotoKernel|Measures similarities between binary vectors using [Tanimoto Similarity](https://en.wikipedia.org/wiki/Jaccard_index)|Not applicable|[CategoricalMolecularInput](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py)
+TanimotoKernel|Measures similarities between binary vectors using [Tanimoto Similarity](https://en.wikipedia.org/wiki/Jaccard_index)|Not applicable|[CategoricalInput](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py) with a `structure` column
 HammingDistanceKernel|Similarity is defined by the [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance) which considers the number of equal entries between two vectors (e.g., in One-Hot-encoding)|Not applicable|[Categorical](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py)
 
 Translational invariance means that the similarity between two input points is not affected by shifting both points by the same amount but only determined by their distance. Example: with a translationally invariant kernel, the values 10 and 20 are equally similar to each other as the values 20 and 30, while with a polynomial kernel the latter pair has potentially higher similarity. Polynomial kernels are often suitable for high-dimensional inputs while for low-dimensional inputs an RBF or Matérn kernel is recommended.
@@ -90,3 +90,37 @@ For experimental data subject to noise, one can specify the distribution of this
             kernel=PolynomialKernel(power=2),
             noise_prior=NormalPrior(loc=0, scale=1)
     )
+
+### Categorical encoding customization
+
+A categorical input has to be turned into numeric columns before a surrogate can use it.
+The feature carries the *data* — its categories, and optionally a `Descriptors` block with
+numeric columns and/or SMILES structures — while the surrogate chooses the *encoding*. Two
+surrogates over the same domain can therefore encode the same feature differently.
+
+Each surrogate picks a sensible default per feature: a categorical carrying descriptor data
+is encoded by its descriptors, otherwise one-hot (or ordinal, where the surrogate requires
+it). Override per feature with `categorical_encodings`:
+
+**Encoding**|**Description**|**Requires**
+:-----:|:-----:|:-----:
+[OneHotEncoding](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/onehot.py)|One binary column per category|Nothing
+[OrdinalEncoding](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/ordinal.py)|A single integer column|Nothing
+[DescriptorEncoding](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/descriptors.py)|One column per descriptor, taken from the category's row|A `Descriptors` block on the feature
+
+**Example**:
+
+    surrogate_data_0 = SingleTaskGPSurrogate(
+            inputs=domain.inputs,
+            outputs=Outputs(features=[domain.outputs[0]]),
+            categorical_encodings={"solvent": OneHotEncoding()}
+    )
+
+`DescriptorEncoding` additionally selects *which* descriptors to use: `columns` picks from
+the numeric columns the feature carries (all of them by default), and `generators` computes
+further ones from the feature's `structure`, e.g. `Fingerprints()`. Setting
+`filter_descriptors=True` drops correlated columns across the assembled block.
+
+    categorical_encodings={
+        "solvent": DescriptorEncoding(columns=["logP"], generators=[Fingerprints()])
+    }

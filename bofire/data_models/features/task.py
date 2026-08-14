@@ -15,14 +15,26 @@ class TaskInput(Input):
     ``AnyFeature``/``AnyInput`` union. Use :class:`CategoricalTaskInput` or
     :class:`ContinuousTaskInput` instead. It exists solely so that strategies
     can use ``isinstance(feat, TaskInput)`` to detect either flavour.
+
+    Task inputs carry no descriptor data: both flavours narrow ``descriptors`` to
+    ``None``, so it cannot be set.
     """
 
     type: Any
 
 
 class CategoricalTaskInput(TaskInput, CategoricalInput):
+    """A categorical index over tasks. Carries no descriptor data.
+
+    A task input says *which* task an observation came from; the relationship between
+    tasks is what the surrogate learns (the inter-task covariance of a ``MultiTaskGP``),
+    not something read off descriptor columns. ``descriptors`` is therefore narrowed to
+    ``None`` — the constraint is in the type, and visible in the schema.
+    """
+
     order_id: ClassVar[int] = 8
     type: Literal["CategoricalTaskInput"] = "CategoricalTaskInput"
+    descriptors: None = None
     fidelities: list[int] = []
 
     @model_validator(mode="after")
@@ -43,5 +55,9 @@ class CategoricalTaskInput(TaskInput, CategoricalInput):
 
 
 class ContinuousTaskInput(TaskInput, ContinuousInput):
+    """A continuous fidelity parameter. Carries no descriptor data (see
+    :class:`CategoricalTaskInput`)."""
+
     order_id: ClassVar[int] = 11
     type: Literal["ContinuousTaskInput"] = "ContinuousTaskInput"  # type: ignore
+    descriptors: None = None

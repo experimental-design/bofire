@@ -836,9 +836,8 @@ class _IntegrationEngineeredFeature(EngineeredFeature):
     type: Literal["_IntegrationEngineered"] = "_IntegrationEngineered"
     order_id = 99
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return 1
+    def get_names(self, inputs) -> list:
+        return [self.key]
 
 
 class TestEngineeredFeatureRegistration:
@@ -886,9 +885,8 @@ class TestEngineeredFeatureRegistration:
             type: Literal["_MapperEngineered"] = "_MapperEngineered"
             order_id = 100
 
-            @property
-            def n_transformed_inputs(self) -> int:
-                return 1
+            def get_names(self, inputs) -> list:
+                return [self.key]
 
         sentinel = MagicMock(name="append_features")
 
@@ -907,9 +905,8 @@ class TestEngineeredFeatureRegistration:
             type: Literal["_DirectEngineered"] = "_DirectEngineered"
             order_id = 101
 
-            @property
-            def n_transformed_inputs(self) -> int:
-                return 1
+            def get_names(self, inputs) -> list:
+                return [self.key]
 
         sentinel = MagicMock(name="append_features")
         register(_DirectEngineered, lambda i, t, f: sentinel)
@@ -929,9 +926,8 @@ class _VisibleEngineeredFeature(EngineeredFeature):
     type: Literal["_VisibleEngineered"] = "_VisibleEngineered"
     order_id = 102
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return 1
+    def get_names(self, inputs) -> list:
+        return [self.key]
 
 
 class TestRegisteredFeatureIsVisible:
@@ -947,17 +943,27 @@ class TestRegisteredFeatureIsVisible:
             features=[_VisibleEngineeredFeature(key="engineered", features=["a", "b"])]
         )
 
+    @pytest.fixture
+    def inputs(self):
+        """Widths are resolved against the original inputs, so they are needed here."""
+        from bofire.data_models.domain.api import Inputs
+        from bofire.data_models.features.api import ContinuousInput
+
+        return Inputs(
+            features=[ContinuousInput(key=k, bounds=(0, 1)) for k in ("a", "b")]
+        )
+
     def test_get_keys_sees_registered_feature(self, container):
         assert container.get_keys() == ["engineered"]
 
     def test_get_sees_registered_feature(self, container):
         assert [f.key for f in container.get()] == ["engineered"]
 
-    def test_n_transformed_inputs_counts_registered_feature(self, container):
-        assert container.n_transformed_inputs == 1
+    def test_transformed_width_counts_registered_feature(self, container, inputs):
+        assert container.transformed_width(inputs) == 1
 
-    def test_features2idx_maps_registered_feature(self, container):
-        assert container.get_features2idx() == {"engineered": (0,)}
+    def test_features2idx_maps_registered_feature(self, container, inputs):
+        assert container.get_features2idx(inputs) == {"engineered": (0,)}
 
     def test_generic_features_container_accepts_registered_feature(self, container):
         """``AnyFeature`` is a separate union and has to be kept in sync too."""

@@ -15,6 +15,21 @@ from bofire.data_models.types import Bounds
 class ContinuousInput(NumericalInput):
     """Base class for all continuous input features.
 
+    A continuous input is a *single* descriptor component: it has exactly one descriptor
+    level (the feature itself), so each column of the optional ``descriptors`` block holds
+    exactly one value. This is what lets a continuous feature act as one component of a
+    mixture, blended by a ``WeightedSumFeature`` — on its own the block has no effect on
+    the feature's own encoding::
+
+        ethanol = ContinuousInput(
+            key="ethanol",
+            bounds=(0, 1),
+            descriptors=Descriptors(
+                columns={"logP": [-0.3], "MW": [46.0]},   # one value per column
+                structure=["CCO"],                        # one SMILES
+            ),
+        )
+
     Attributes:
         bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.
         stepsize (PositiveFloat, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
@@ -24,6 +39,15 @@ class ContinuousInput(NumericalInput):
             Useful for features that take values between `bounds`, but can also take a value of 0.
             One may choose to use a conditional kernel for this, if taking a value of 0
             represents a distinct behaviour from non-zero values.
+        descriptors (Descriptors, optional): Descriptor data for the single component —
+            numeric columns holding one value each, and/or a one-element SMILES structure.
+            Consumed by N-arity engineered features, not by this feature's own encoding.
+            Defaults to None.
+        unit (str, optional, inherited from `NumericalInput`): The unit of the feature.
+            Defaults to None.
+        key (str, inherited from `Feature`): The unique name of the feature.
+        context (str, optional, inherited from `Feature`): Free-text context for the
+            feature. Defaults to None.
 
     """
 
@@ -58,10 +82,6 @@ class ContinuousInput(NumericalInput):
     def _description_prefix(self) -> str:
         """Leading description string identifying this feature kind."""
         return f"Continuous, bounds [{self.bounds[0]}, {self.bounds[1]}]"
-
-    def _extra_description_parts(self) -> List[str]:
-        """Optional extras appended after the prefix, before context."""
-        return []
 
     def to_pydantic_field(self) -> Tuple[type, FieldInfo]:
         """Return ``(float, Field(ge=..., le=..., description=...))```.
