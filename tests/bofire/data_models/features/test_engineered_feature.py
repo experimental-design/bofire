@@ -227,43 +227,47 @@ def _molecular_inputs() -> Inputs:
     )
 
 
-def test_validate_features_does_not_generate_descriptor_values(monkeypatch):
+@pytest.mark.parametrize("filtering", [False, True])
+def test_validate_features_does_not_generate_descriptor_values(monkeypatch, filtering):
     """Validation must stay free of descriptor generation.
 
     Generating needs rdkit, an optional extra, and `bofire.data_models` has to stay
-    usable without it (the bare-install CI job asserts this). The width is resolved
-    later, against the inputs, by `get_names`.
+    usable without it. The bare-install CI job would catch a regression too, but only
+    there; this fails in any environment, including one that has rdkit.
     """
 
-    def boom(self, values):
+    def fail_if_called(self, values):
         raise AssertionError("descriptor values generated during validation")
 
-    monkeypatch.setattr(Fingerprints, "get_descriptor_values", boom)
+    monkeypatch.setattr(Fingerprints, "get_descriptor_values", fail_if_called)
 
-    for filtering in (False, True):
-        feature = WeightedSumFeature(
-            key="w",
-            features=["m1", "m2"],
-            columns=[],
-            generators=[Fingerprints(n_bits=8)],
-            filter_descriptors=filtering,
-        )
-        feature.validate_features(_molecular_inputs())
-
-
-# unlike the test above this one has to actually build the matrix, so it needs rdkit
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-@pytest.mark.parametrize("filtering", [False, True])
-def test_get_names_width_matches_mapped_matrix(filtering):
-    """`get_names` must agree with the matrix the mapper appends, filtered or not."""
-    inputs = _molecular_inputs()
     feature = WeightedSumFeature(
         key="w",
         features=["m1", "m2"],
         columns=[],
         generators=[Fingerprints(n_bits=8)],
         filter_descriptors=filtering,
-        correlation_cutoff=1.0,
+    )
+    feature.validate_features(_molecular_inputs())
+
+
+# unlike the test above this one has to actually build the matrix, so it needs rdkit
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_get_names_width_matches_mapped_matrix():
+    """Unfiltered, `get_names` answers from metadata -- it must still match the build.
+
+    `column_names` comes from `get_descriptor_names()` while `component_table` comes from
+    `get_descriptor_values()`; a generator whose two disagree would corrupt the offset
+    bookkeeping that uses this width. Filtered, both sides resolve through the same
+    `build` call and comparing them proves nothing -- that case is covered end-to-end
+    against the mapped tensor in `tests/bofire/surrogates/test_engineered_features.py`.
+    """
+    inputs = _molecular_inputs()
+    feature = WeightedSumFeature(
+        key="w",
+        features=["m1", "m2"],
+        columns=[],
+        generators=[Fingerprints(n_bits=8)],
     )
     components = [inputs.get_by_key(k) for k in feature.features]
     assert (
