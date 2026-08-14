@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-69b65dc57ba8b1f57efa9e8dc4c071d4.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-dark-690a589ea57c1ca23f47088560ced4db.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-69b65dc57ba8b1f57efa9e8dc4c071d4.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-ef50085ffa0a8bbae5860f282a05e1be.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-6c5449043777d02e3d3fa6b5adb36893.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-ef50085ffa0a8bbae5860f282a05e1be.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -443,6 +443,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#kernel-customization" id="toc-kernel-customization" class="nav-link" data-scroll-target="#kernel-customization">Kernel customization</a></li>
   <li><a href="#noise-model-customization" id="toc-noise-model-customization" class="nav-link" data-scroll-target="#noise-model-customization">Noise model customization</a></li>
+  <li><a href="#categorical-encoding-customization" id="toc-categorical-encoding-customization" class="nav-link" data-scroll-target="#categorical-encoding-customization">Categorical encoding customization</a></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -572,7 +573,7 @@ qparego_data_model = QparegoStrategy(
 <td style="text-align: center;">TanimotoKernel</td>
 <td style="text-align: center;">Measures similarities between binary vectors using <a href="https://en.wikipedia.org/wiki/Jaccard_index">Tanimoto Similarity</a></td>
 <td style="text-align: center;">Not applicable</td>
-<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py">CategoricalMolecularInput</a></td>
+<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py">CategoricalInput</a> with a <code>structure</code> column</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;">HammingDistanceKernel</td>
@@ -625,6 +626,47 @@ qparego_data_model = QparegoStrategy(
         kernel=PolynomialKernel(power=2),
         noise_prior=NormalPrior(loc=0, scale=1)
 )</code></pre>
+</section>
+<section id="categorical-encoding-customization" class="level3">
+<h3 class="anchored" data-anchor-id="categorical-encoding-customization">Categorical encoding customization</h3>
+<p>A categorical input has to be turned into numeric columns before a surrogate can use it. The feature carries the <em>data</em> — its categories, and optionally a <code>Descriptors</code> block with numeric columns and/or SMILES structures — while the surrogate chooses the <em>encoding</em>. Two surrogates over the same domain can therefore encode the same feature differently.</p>
+<p>Each surrogate picks a sensible default per feature: a categorical carrying descriptor data is encoded by its descriptors, otherwise one-hot (or ordinal, where the surrogate requires it). Override per feature with <code>categorical_encodings</code>:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: center;"><strong>Encoding</strong></th>
+<th style="text-align: center;"><strong>Description</strong></th>
+<th style="text-align: center;"><strong>Requires</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/onehot.py">OneHotEncoding</a></td>
+<td style="text-align: center;">One binary column per category</td>
+<td style="text-align: center;">Nothing</td>
+</tr>
+<tr class="even">
+<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/ordinal.py">OrdinalEncoding</a></td>
+<td style="text-align: center;">A single integer column</td>
+<td style="text-align: center;">Nothing</td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/descriptors.py">DescriptorEncoding</a></td>
+<td style="text-align: center;">One column per descriptor, taken from the category’s row</td>
+<td style="text-align: center;">A <code>Descriptors</code> block on the feature</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example</strong>:</p>
+<pre><code>surrogate_data_0 = SingleTaskGPSurrogate(
+        inputs=domain.inputs,
+        outputs=Outputs(features=[domain.outputs[0]]),
+        categorical_encodings={"solvent": OneHotEncoding()}
+)</code></pre>
+<p><code>DescriptorEncoding</code> additionally selects <em>which</em> descriptors to use: <code>columns</code> picks from the numeric columns the feature carries (all of them by default), and <code>generators</code> computes further ones from the feature’s <code>structure</code>, e.g.&nbsp;<code>Fingerprints()</code>. Setting <code>filter_descriptors=True</code> drops correlated columns across the assembled block.</p>
+<pre><code>categorical_encodings={
+    "solvent": DescriptorEncoding(columns=["logP"], generators=[Fingerprints()])
+}</code></pre>
 
 
 <!-- -->
@@ -1114,98 +1156,132 @@ qparego_data_model = QparegoStrategy(
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># Surrogate models</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>In Bayesian Optimization, information from previous experiments is taken into account to generate proposals for future experiments. This information is leveraged by creating a surrogate model for the black-box function that is to be optimized based on the available data. Naturally, experimental candidates for which the surrogate model makes a promising prediction (e.g., high predicted values of a quantity we want to maximize) should be chosen over ones for which this is not the case. However, since the available data might cover only a small part of the input space, the model is likely to only be able to make very uncertain predictions far away from the data. Therefore, the surrogate model should be able to express the degree to which the predictions are uncertain so that we can use this information - combining the prediction and the associated uncertainty - to select the settings for the next experimental iteration.</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>The acquisition function is the object that turns the predicted distribution (you can think of this as the prediction and the prediction uncertainty) into a single quantity representing how promising a candidate experimental point seems. This function determines if one rather wants to focus on exploitation, i.e., quickly approaching a close local optimum of the black-box function, or on exploration, i.e., exploring different regions of the input space first.</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>Therefore, three criteria typically determine whether any candidate is selected as experimental proposal: the value of the surrogate model, the uncertainty of the model, and the acquisition function.</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## Surrogate model options</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>BoFire offers the following classes of surrogate models.</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>**Surrogate**|**Optimization of**|**When to use**|**Type**</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>:-----:|:-----:|:-----:|:-----:</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">SingleTaskGPSurrogate</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/single\_task\_gp.py)</span>|a single objective with real valued inputs|Limited data and black-box function is smooth|Gaussian process</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">RandomForestSurrogate</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/random\_forest.py)</span>|a single objective|Rich data; black-box function does not have to be smooth|sklearn random forest implementation</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">MLP</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mlp.py)</span>|a single objective with real-valued inputs|Rich data and black-box function is smooth|Multi layer perceptron</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">MixedSingleTaskGPSurrogate</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed\_single\_task\_gp.py)</span>|a single objective with categorical and real valued inputs|Limited data and black-box function is smooth|Gaussian process</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">TanimotoGP</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed_tanimoto_gp.py)</span>|a single objective|At least one input feature is a molecule represented as fingerprint|Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>All of these are single-objective surrogate models. For optimization of multiple objectives at the same time, a suitable <span class="co">[</span><span class="ot">Strategy</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/strategies/strategy.py)</span> has to be chosen. Then for each objective a different surrogate model can be specified. By default the SingleTaskGPSurrogate is used.</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>**Example**:</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="in">    surrogate_data_0 = SingleTaskGPSurrogate(</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="in">            inputs=domain.inputs,</span></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="in">            outputs=Outputs(features=[domain.outputs[0]]),</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="in">    surrogate_data_1 = RandomForestSurrogate(</span></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="in">        inputs=domain.inputs,</span></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="in">        outputs=Outputs(features=[domain.outputs[1]]),</span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="in">    qparego_data_model = QparegoStrategy(</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="in">        domain=domain,</span></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="in">        surrogate_specs=BotorchSurrogates(</span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="in">            surrogates=[surrogate_data_0, surrogate_data_1]</span></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="in">        ),</span></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>**Note:**</span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The standard Kernel for all Gaussian Process (GP) surrogates is a 5/2 matern kernel with automated relevance detection and normalization of the input features.</span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The RandomForestSurrogate does not have kernels but quantifies uncertainty using the standard deviation of the predictions of its individual trees.</span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>MLP quantifies uncertainty using the standard deviation of multiple predictions that come from different dropout rates (randomly setting neural network weights to zero).</span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="fu">## Customization</span></span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>BoFire also offers the option to customize surrogate models. In particular, it is possible to customize the SingleTaskGPSurrogate in the following ways.</span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a><span class="fu">### Kernel customization</span></span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>Specify the <span class="co">[</span><span class="ot">Kernel</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/kernels/api.py)</span>:</span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>**Kernel**|**Description**|**Translation invariant**|**Input variable type**</span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>:-----:|:-----:|:-----:|:-----:</span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">RBFKernel</span><span class="co">](https://en.wikipedia.org/wiki/Radial_basis_function_kernel)</span>|Based on Gaussian distribution|Yes|<span class="co">[</span><span class="ot">Continuous</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/continuous.py)</span></span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">MaternKernel</span><span class="co">](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)</span>|Based on Gamma function; allows setting a smoothness parameter|Yes|Continuous</span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">PolynomialKernel</span><span class="co">](https://scikit-learn.org/stable/modules/metrics.html)</span>|Based on dot-product of two vectors of input points|No|Continuous</span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">LinearKernel</span><span class="co">](https://scikit-learn.org/stable/modules/metrics.html)</span>|Equal to dot-product of two vectors of input points|No|Continuous</span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>TanimotoKernel|Measures similarities between binary vectors using <span class="co">[</span><span class="ot">Tanimoto Similarity</span><span class="co">](https://en.wikipedia.org/wiki/Jaccard_index)</span>|Not applicable|<span class="co">[</span><span class="ot">CategoricalMolecularInput</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py)</span></span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>HammingDistanceKernel|Similarity is defined by the <span class="co">[</span><span class="ot">Hamming distance</span><span class="co">](https://en.wikipedia.org/wiki/Hamming_distance)</span> which considers the number of equal entries between two vectors (e.g., in One-Hot-encoding)|Not applicable|<span class="co">[</span><span class="ot">Categorical</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py)</span></span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>Translational invariance means that the similarity between two input points is not affected by shifting both points by the same amount but only determined by their distance. Example: with a translationally invariant kernel, the values 10 and 20 are equally similar to each other as the values 20 and 30, while with a polynomial kernel the latter pair has potentially higher similarity. Polynomial kernels are often suitable for high-dimensional inputs while for low-dimensional inputs an RBF or Matérn kernel is recommended.</span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>**Note:**</span>
-<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>SingleTaskGPSurrogate with PolynomialKernel is equivalent to PolynomialSurrogate.</span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>SingleTaskGPSurrogate with LinearKernel is equivalent to LinearSurrogate.</span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>SingleTaskGPSurrogate with TanimotoKernel is equivalent to TanimotoGP.</span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>One can combine two Kernels by using AdditiveKernel or MultiplicativeKernel.</span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>**Example**:</span>
-<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a><span class="in">    surrogate_data_0 = SingleTaskGPSurrogate(</span></span>
-<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a><span class="in">            inputs=domain.inputs,</span></span>
-<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a><span class="in">            outputs=Outputs(features=[domain.outputs[0]]),</span></span>
-<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a><span class="in">            kernel=PolynomialKernel(power=2)</span></span>
-<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
-<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a><span class="fu">### Noise model customization</span></span>
-<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>For experimental data subject to noise, one can specify the distribution of this noise. The <span class="co">[</span><span class="ot">options</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/api.py)</span> are:</span>
-<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>**Noise Model**|**When to use**</span>
-<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a>:-----:|:-----:</span>
-<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">NormalPrior</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/normal.py)</span>|Noise is Gaussian</span>
-<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">GammaPrior</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/gamma.py)</span>|Noise has a Gamma distribution</span>
-<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>**Example**:</span>
-<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a><span class="in">    surrogate_data_0 = SingleTaskGPSurrogate(</span></span>
-<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a><span class="in">            inputs=domain.inputs,</span></span>
-<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a><span class="in">            outputs=Outputs(features=[domain.outputs[0]]),</span></span>
-<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a><span class="in">            kernel=PolynomialKernel(power=2),</span></span>
-<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a><span class="in">            noise_prior=NormalPrior(loc=0, scale=1)</span></span>
-<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># Surrogate models</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>In Bayesian Optimization, information from previous experiments is taken into account to generate proposals for future experiments. This information is leveraged by creating a surrogate model for the black-box function that is to be optimized based on the available data. Naturally, experimental candidates for which the surrogate model makes a promising prediction (e.g., high predicted values of a quantity we want to maximize) should be chosen over ones for which this is not the case. However, since the available data might cover only a small part of the input space, the model is likely to only be able to make very uncertain predictions far away from the data. Therefore, the surrogate model should be able to express the degree to which the predictions are uncertain so that we can use this information - combining the prediction and the associated uncertainty - to select the settings for the next experimental iteration.</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>The acquisition function is the object that turns the predicted distribution (you can think of this as the prediction and the prediction uncertainty) into a single quantity representing how promising a candidate experimental point seems. This function determines if one rather wants to focus on exploitation, i.e., quickly approaching a close local optimum of the black-box function, or on exploration, i.e., exploring different regions of the input space first.</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>Therefore, three criteria typically determine whether any candidate is selected as experimental proposal: the value of the surrogate model, the uncertainty of the model, and the acquisition function.</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">## Surrogate model options</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>BoFire offers the following classes of surrogate models.</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>**Surrogate**|**Optimization of**|**When to use**|**Type**</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>:-----:|:-----:|:-----:|:-----:</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">SingleTaskGPSurrogate</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/single\_task\_gp.py)</span>|a single objective with real valued inputs|Limited data and black-box function is smooth|Gaussian process</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">RandomForestSurrogate</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/random\_forest.py)</span>|a single objective|Rich data; black-box function does not have to be smooth|sklearn random forest implementation</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">MLP</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mlp.py)</span>|a single objective with real-valued inputs|Rich data and black-box function is smooth|Multi layer perceptron</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">MixedSingleTaskGPSurrogate</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed\_single\_task\_gp.py)</span>|a single objective with categorical and real valued inputs|Limited data and black-box function is smooth|Gaussian process</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">TanimotoGP</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed_tanimoto_gp.py)</span>|a single objective|At least one input feature is a molecule represented as fingerprint|Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>All of these are single-objective surrogate models. For optimization of multiple objectives at the same time, a suitable <span class="co">[</span><span class="ot">Strategy</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/strategies/strategy.py)</span> has to be chosen. Then for each objective a different surrogate model can be specified. By default the SingleTaskGPSurrogate is used.</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>**Example**:</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="in">    surrogate_data_0 = SingleTaskGPSurrogate(</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="in">            inputs=domain.inputs,</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="in">            outputs=Outputs(features=[domain.outputs[0]]),</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="in">    surrogate_data_1 = RandomForestSurrogate(</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="in">        inputs=domain.inputs,</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="in">        outputs=Outputs(features=[domain.outputs[1]]),</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a><span class="in">    qparego_data_model = QparegoStrategy(</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a><span class="in">        domain=domain,</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="in">        surrogate_specs=BotorchSurrogates(</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a><span class="in">            surrogates=[surrogate_data_0, surrogate_data_1]</span></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a><span class="in">        ),</span></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>**Note:**</span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The standard Kernel for all Gaussian Process (GP) surrogates is a 5/2 matern kernel with automated relevance detection and normalization of the input features.</span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The RandomForestSurrogate does not have kernels but quantifies uncertainty using the standard deviation of the predictions of its individual trees.</span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>MLP quantifies uncertainty using the standard deviation of multiple predictions that come from different dropout rates (randomly setting neural network weights to zero).</span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a><span class="fu">## Customization</span></span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>BoFire also offers the option to customize surrogate models. In particular, it is possible to customize the SingleTaskGPSurrogate in the following ways.</span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a><span class="fu">### Kernel customization</span></span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>Specify the <span class="co">[</span><span class="ot">Kernel</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/kernels/api.py)</span>:</span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>**Kernel**|**Description**|**Translation invariant**|**Input variable type**</span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>:-----:|:-----:|:-----:|:-----:</span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">RBFKernel</span><span class="co">](https://en.wikipedia.org/wiki/Radial_basis_function_kernel)</span>|Based on Gaussian distribution|Yes|<span class="co">[</span><span class="ot">Continuous</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/continuous.py)</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">MaternKernel</span><span class="co">](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)</span>|Based on Gamma function; allows setting a smoothness parameter|Yes|Continuous</span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">PolynomialKernel</span><span class="co">](https://scikit-learn.org/stable/modules/metrics.html)</span>|Based on dot-product of two vectors of input points|No|Continuous</span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">LinearKernel</span><span class="co">](https://scikit-learn.org/stable/modules/metrics.html)</span>|Equal to dot-product of two vectors of input points|No|Continuous</span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>TanimotoKernel|Measures similarities between binary vectors using <span class="co">[</span><span class="ot">Tanimoto Similarity</span><span class="co">](https://en.wikipedia.org/wiki/Jaccard_index)</span>|Not applicable|<span class="co">[</span><span class="ot">CategoricalInput</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py)</span> with a <span class="in">`structure`</span> column</span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a>HammingDistanceKernel|Similarity is defined by the <span class="co">[</span><span class="ot">Hamming distance</span><span class="co">](https://en.wikipedia.org/wiki/Hamming_distance)</span> which considers the number of equal entries between two vectors (e.g., in One-Hot-encoding)|Not applicable|<span class="co">[</span><span class="ot">Categorical</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py)</span></span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a>Translational invariance means that the similarity between two input points is not affected by shifting both points by the same amount but only determined by their distance. Example: with a translationally invariant kernel, the values 10 and 20 are equally similar to each other as the values 20 and 30, while with a polynomial kernel the latter pair has potentially higher similarity. Polynomial kernels are often suitable for high-dimensional inputs while for low-dimensional inputs an RBF or Matérn kernel is recommended.</span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a>**Note:**</span>
+<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>SingleTaskGPSurrogate with PolynomialKernel is equivalent to PolynomialSurrogate.</span>
+<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>SingleTaskGPSurrogate with LinearKernel is equivalent to LinearSurrogate.</span>
+<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>SingleTaskGPSurrogate with TanimotoKernel is equivalent to TanimotoGP.</span>
+<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>One can combine two Kernels by using AdditiveKernel or MultiplicativeKernel.</span>
+<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a>**Example**:</span>
+<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a><span class="in">    surrogate_data_0 = SingleTaskGPSurrogate(</span></span>
+<span id="cb6-71"><a href="#cb6-71" aria-hidden="true" tabindex="-1"></a><span class="in">            inputs=domain.inputs,</span></span>
+<span id="cb6-72"><a href="#cb6-72" aria-hidden="true" tabindex="-1"></a><span class="in">            outputs=Outputs(features=[domain.outputs[0]]),</span></span>
+<span id="cb6-73"><a href="#cb6-73" aria-hidden="true" tabindex="-1"></a><span class="in">            kernel=PolynomialKernel(power=2)</span></span>
+<span id="cb6-74"><a href="#cb6-74" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
+<span id="cb6-75"><a href="#cb6-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-76"><a href="#cb6-76" aria-hidden="true" tabindex="-1"></a><span class="fu">### Noise model customization</span></span>
+<span id="cb6-77"><a href="#cb6-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-78"><a href="#cb6-78" aria-hidden="true" tabindex="-1"></a>For experimental data subject to noise, one can specify the distribution of this noise. The <span class="co">[</span><span class="ot">options</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/api.py)</span> are:</span>
+<span id="cb6-79"><a href="#cb6-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-80"><a href="#cb6-80" aria-hidden="true" tabindex="-1"></a>**Noise Model**|**When to use**</span>
+<span id="cb6-81"><a href="#cb6-81" aria-hidden="true" tabindex="-1"></a>:-----:|:-----:</span>
+<span id="cb6-82"><a href="#cb6-82" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">NormalPrior</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/normal.py)</span>|Noise is Gaussian</span>
+<span id="cb6-83"><a href="#cb6-83" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">GammaPrior</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/gamma.py)</span>|Noise has a Gamma distribution</span>
+<span id="cb6-84"><a href="#cb6-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-85"><a href="#cb6-85" aria-hidden="true" tabindex="-1"></a>**Example**:</span>
+<span id="cb6-86"><a href="#cb6-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-87"><a href="#cb6-87" aria-hidden="true" tabindex="-1"></a><span class="in">    surrogate_data_0 = SingleTaskGPSurrogate(</span></span>
+<span id="cb6-88"><a href="#cb6-88" aria-hidden="true" tabindex="-1"></a><span class="in">            inputs=domain.inputs,</span></span>
+<span id="cb6-89"><a href="#cb6-89" aria-hidden="true" tabindex="-1"></a><span class="in">            outputs=Outputs(features=[domain.outputs[0]]),</span></span>
+<span id="cb6-90"><a href="#cb6-90" aria-hidden="true" tabindex="-1"></a><span class="in">            kernel=PolynomialKernel(power=2),</span></span>
+<span id="cb6-91"><a href="#cb6-91" aria-hidden="true" tabindex="-1"></a><span class="in">            noise_prior=NormalPrior(loc=0, scale=1)</span></span>
+<span id="cb6-92"><a href="#cb6-92" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
+<span id="cb6-93"><a href="#cb6-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-94"><a href="#cb6-94" aria-hidden="true" tabindex="-1"></a><span class="fu">### Categorical encoding customization</span></span>
+<span id="cb6-95"><a href="#cb6-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-96"><a href="#cb6-96" aria-hidden="true" tabindex="-1"></a>A categorical input has to be turned into numeric columns before a surrogate can use it.</span>
+<span id="cb6-97"><a href="#cb6-97" aria-hidden="true" tabindex="-1"></a>The feature carries the *data* — its categories, and optionally a <span class="in">`Descriptors`</span> block with</span>
+<span id="cb6-98"><a href="#cb6-98" aria-hidden="true" tabindex="-1"></a>numeric columns and/or SMILES structures — while the surrogate chooses the *encoding*. Two</span>
+<span id="cb6-99"><a href="#cb6-99" aria-hidden="true" tabindex="-1"></a>surrogates over the same domain can therefore encode the same feature differently.</span>
+<span id="cb6-100"><a href="#cb6-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-101"><a href="#cb6-101" aria-hidden="true" tabindex="-1"></a>Each surrogate picks a sensible default per feature: a categorical carrying descriptor data</span>
+<span id="cb6-102"><a href="#cb6-102" aria-hidden="true" tabindex="-1"></a>is encoded by its descriptors, otherwise one-hot (or ordinal, where the surrogate requires</span>
+<span id="cb6-103"><a href="#cb6-103" aria-hidden="true" tabindex="-1"></a>it). Override per feature with <span class="in">`categorical_encodings`</span>:</span>
+<span id="cb6-104"><a href="#cb6-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-105"><a href="#cb6-105" aria-hidden="true" tabindex="-1"></a>**Encoding**|**Description**|**Requires**</span>
+<span id="cb6-106"><a href="#cb6-106" aria-hidden="true" tabindex="-1"></a>:-----:|:-----:|:-----:</span>
+<span id="cb6-107"><a href="#cb6-107" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">OneHotEncoding</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/onehot.py)</span>|One binary column per category|Nothing</span>
+<span id="cb6-108"><a href="#cb6-108" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">OrdinalEncoding</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/ordinal.py)</span>|A single integer column|Nothing</span>
+<span id="cb6-109"><a href="#cb6-109" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">DescriptorEncoding</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/descriptors.py)</span>|One column per descriptor, taken from the category's row|A <span class="in">`Descriptors`</span> block on the feature</span>
+<span id="cb6-110"><a href="#cb6-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-111"><a href="#cb6-111" aria-hidden="true" tabindex="-1"></a>**Example**:</span>
+<span id="cb6-112"><a href="#cb6-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-113"><a href="#cb6-113" aria-hidden="true" tabindex="-1"></a><span class="in">    surrogate_data_0 = SingleTaskGPSurrogate(</span></span>
+<span id="cb6-114"><a href="#cb6-114" aria-hidden="true" tabindex="-1"></a><span class="in">            inputs=domain.inputs,</span></span>
+<span id="cb6-115"><a href="#cb6-115" aria-hidden="true" tabindex="-1"></a><span class="in">            outputs=Outputs(features=[domain.outputs[0]]),</span></span>
+<span id="cb6-116"><a href="#cb6-116" aria-hidden="true" tabindex="-1"></a><span class="in">            categorical_encodings={"solvent": OneHotEncoding()}</span></span>
+<span id="cb6-117"><a href="#cb6-117" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
+<span id="cb6-118"><a href="#cb6-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-119"><a href="#cb6-119" aria-hidden="true" tabindex="-1"></a><span class="in">`DescriptorEncoding`</span> additionally selects *which* descriptors to use: <span class="in">`columns`</span> picks from</span>
+<span id="cb6-120"><a href="#cb6-120" aria-hidden="true" tabindex="-1"></a>the numeric columns the feature carries (all of them by default), and <span class="in">`generators`</span> computes</span>
+<span id="cb6-121"><a href="#cb6-121" aria-hidden="true" tabindex="-1"></a>further ones from the feature's <span class="in">`structure`</span>, e.g. <span class="in">`Fingerprints()`</span>. Setting</span>
+<span id="cb6-122"><a href="#cb6-122" aria-hidden="true" tabindex="-1"></a><span class="in">`filter_descriptors=True`</span> drops correlated columns across the assembled block.</span>
+<span id="cb6-123"><a href="#cb6-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-124"><a href="#cb6-124" aria-hidden="true" tabindex="-1"></a><span class="in">    categorical_encodings={</span></span>
+<span id="cb6-125"><a href="#cb6-125" aria-hidden="true" tabindex="-1"></a><span class="in">        "solvent": DescriptorEncoding(columns=["logP"], generators=[Fingerprints()])</span></span>
+<span id="cb6-126"><a href="#cb6-126" aria-hidden="true" tabindex="-1"></a><span class="in">    }</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

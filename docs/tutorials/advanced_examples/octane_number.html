@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-69b65dc57ba8b1f57efa9e8dc4c071d4.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-690a589ea57c1ca23f47088560ced4db.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-69b65dc57ba8b1f57efa9e8dc4c071d4.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-ef50085ffa0a8bbae5860f282a05e1be.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-6c5449043777d02e3d3fa6b5adb36893.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-ef50085ffa0a8bbae5860f282a05e1be.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -625,7 +625,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/benchmarks/012-engineered_features.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Optimization with <code>ContinuousDescriptorInput</code>s and engineered Features</span></a>
+ <span class="menu-text">Optimization with descriptor-carrying inputs and engineered Features</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -754,28 +754,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This tutorial shows how to predict the Motor Octane Number (MON) of a hydrocarbon mixture. The dataset stems from the paper from <a href="https://www.nature.com/articles/s41524-025-01552-2">Chew et al.</a>. It contains 722 experiments of up to 121 componet mixtures of 423 individual molecules. Each molecule is represented by its SMILES string.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="c6052644" class="cell" data-execution_count="1">
+<div id="027c4690" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.data.octane_number <span class="im">import</span> get_octane_data</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> EngineeredFeatures, Inputs, Outputs</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> (</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    ContinuousMolecularInput,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    ContinuousInput,</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    ContinuousOutput,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    MolecularWeightedSumFeature,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.molfeatures.api <span class="im">import</span> MordredDescriptors</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.molfeatures.names <span class="im">import</span> mordred <span class="im">as</span> mordred_names</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> SingleTaskGPSurrogate</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    Descriptors,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    WeightedSumFeature,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.descriptor_generators.api <span class="im">import</span> MordredDescriptors</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.descriptor_generators.names <span class="im">import</span> mordred <span class="im">as</span> mordred_names</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> SingleTaskGPSurrogate</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="setup-data" class="level2">
 <h2 class="anchored" data-anchor-id="setup-data">Setup Data</h2>
-<div id="3a4bbc38" class="cell" data-execution_count="2">
+<div id="c551376c" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>df_experiments <span class="op">=</span> get_octane_data()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df_experiments[<span class="st">"valid_MON"</span>] <span class="op">=</span> <span class="dv">1</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -783,44 +784,49 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> Inputs(</span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    features <span class="op">=</span> [</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        ContinuousMolecularInput(key<span class="op">=</span>col, molecule<span class="op">=</span>col, bounds<span class="op">=</span>(<span class="dv">0</span>,<span class="dv">1</span>))</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span>col, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>), descriptors<span class="op">=</span>Descriptors(structure<span class="op">=</span>[col]))</span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> col <span class="kw">in</span> df_experiments.columns</span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> col <span class="kw">not</span> <span class="kw">in</span> [<span class="st">"MON"</span>, <span class="st">"Label"</span>, <span class="st">"valid_MON"</span>]</span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    ]</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> Outputs(features<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span>output_key)])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/tmp/ipykernel_6576/4204084361.py:2: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+<pre><code>/tmp/ipykernel_2963/2040360654.py:2: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
   df_experiments["valid_MON"] = 1</code></pre>
 </div>
 </div>
 </section>
 <section id="setup-surrogate-and-perform-cv" class="level2">
 <h2 class="anchored" data-anchor-id="setup-surrogate-and-perform-cv">Setup Surrogate and perform CV</h2>
-<p>We model the high-dimensional problem by using an engineered feature called <code>MolecularWeightedSumFeature</code>. In computes the weighted sum of the molecular descriptors of the original <code>ContinuousMolecularInput</code>s that make up the engineered feature. Here we use Mordred descriptors with a correlation cutoff of 0.9.</p>
-<div id="33a136fc" class="cell" data-execution_count="3">
+<p>We model the high-dimensional problem by using an engineered feature called <code>WeightedSumFeature</code>. It computes the weighted sum of the molecular descriptors of the original <code>ContinuousInput</code>s (each carrying a <code>structure</code>) that make up the engineered feature. Here we use Mordred descriptors with a correlation cutoff of 0.9.</p>
+<div id="804d74d8" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> SingleTaskGPSurrogate(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    engineered_features <span class="op">=</span> EngineeredFeatures(</span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                MolecularWeightedSumFeature(</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                WeightedSumFeature(</span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                    key<span class="op">=</span><span class="st">"mixture"</span>,</span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>                    features<span class="op">=</span>inputs.get_keys(),</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>                    molfeatures<span class="op">=</span>MordredDescriptors(descriptors<span class="op">=</span>mordred_names,ignore_3D<span class="op">=</span><span class="va">False</span>, correlation_cutoff<span class="op">=</span><span class="fl">0.9</span>),</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>                    keep_features<span class="op">=</span><span class="va">False</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                )</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>            ]</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Number of molecular features before correlation filtering: "</span>, <span class="bu">len</span>(surrogate_data.engineered_features[<span class="dv">0</span>].molfeatures.get_descriptor_names()))</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>cv_train, cv_test, _ <span class="op">=</span> surrogate.cross_validate(df_experiments, folds<span class="op">=</span><span class="dv">10</span> <span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST <span class="cf">else</span> <span class="dv">3</span>)</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>display(cv_test.get_metrics())</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Number of molecular features before correlation filtering: "</span>, <span class="bu">len</span>(surrogate_data.engineered_features[<span class="dv">0</span>].molfeatures.get_descriptor_names()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>                    columns<span class="op">=</span>[],</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>                    generators<span class="op">=</span>[</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                        MordredDescriptors(descriptors<span class="op">=</span>mordred_names, ignore_3D<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>                    ],</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>                    filter_descriptors<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>                    correlation_cutoff<span class="op">=</span><span class="fl">0.9</span>,</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>                    keep_features<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>                )</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>            ]</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Number of molecular features before correlation filtering: "</span>, <span class="bu">len</span>(surrogate_data.engineered_features[<span class="dv">0</span>].generators[<span class="dv">0</span>].get_descriptor_names()))</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>cv_train, cv_test, _ <span class="op">=</span> surrogate.cross_validate(df_experiments, folds<span class="op">=</span><span class="dv">10</span> <span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST <span class="cf">else</span> <span class="dv">3</span>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>display(cv_test.get_metrics())</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Number of molecular features before correlation filtering: "</span>, <span class="bu">len</span>(surrogate_data.engineered_features[<span class="dv">0</span>].generators[<span class="dv">0</span>].get_descriptor_names()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Number of molecular features before correlation filtering:  1826</code></pre>
 </div>
@@ -848,13 +854,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>6.058281</td>
-<td>111.027367</td>
-<td>0.650933</td>
-<td>1.126371e+15</td>
-<td>0.807189</td>
-<td>0.827434</td>
-<td>1.057654e-83</td>
+<td>3.34356</td>
+<td>47.306914</td>
+<td>0.851268</td>
+<td>4.494605e+14</td>
+<td>0.92268</td>
+<td>0.923538</td>
+<td>3.202559e-133</td>
 </tr>
 </tbody>
 </table>
@@ -862,7 +868,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Number of molecular features before correlation filtering:  394</code></pre>
+<pre><code>Number of molecular features before correlation filtering:  1826</code></pre>
 </div>
 </div>
 <p>Even better performance can be achieved by using SAAS based surrogates, like <code>AdditiveMapSaasSingleTaskGPSurrogate</code> or <code>EnsembleMapSaasSingleTaskGPSurrogate</code>. Drawback are higher computational costs.</p>
@@ -1371,67 +1377,73 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.data.octane_number <span class="im">import</span> get_octane_data</span>
 <span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> EngineeredFeatures, Inputs, Outputs</span>
 <span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> (</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    ContinuousMolecularInput,</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    ContinuousInput,</span>
 <span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>    ContinuousOutput,</span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    MolecularWeightedSumFeature,</span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.molfeatures.api <span class="im">import</span> MordredDescriptors</span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.molfeatures.names <span class="im">import</span> mordred <span class="im">as</span> mordred_names</span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> SingleTaskGPSurrogate</span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>    Descriptors,</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>    WeightedSumFeature,</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.descriptor_generators.api <span class="im">import</span> MordredDescriptors</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.descriptor_generators.names <span class="im">import</span> mordred <span class="im">as</span> mordred_names</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> SingleTaskGPSurrogate</span>
 <span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a><span class="fu">## Setup Data</span></span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>df_experiments <span class="op">=</span> get_octane_data()</span>
-<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>df_experiments[<span class="st">"valid_MON"</span>] <span class="op">=</span> <span class="dv">1</span></span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>output_key <span class="op">=</span> <span class="st">"MON"</span></span>
-<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> Inputs(</span>
-<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>    features <span class="op">=</span> [</span>
-<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>        ContinuousMolecularInput(key<span class="op">=</span>col, molecule<span class="op">=</span>col, bounds<span class="op">=</span>(<span class="dv">0</span>,<span class="dv">1</span>))</span>
-<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> col <span class="kw">in</span> df_experiments.columns</span>
-<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> col <span class="kw">not</span> <span class="kw">in</span> [<span class="st">"MON"</span>, <span class="st">"Label"</span>, <span class="st">"valid_MON"</span>]</span>
-<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> Outputs(features<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span>output_key)])</span>
-<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a><span class="fu">## Setup Surrogate and perform CV</span></span>
-<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>We model the high-dimensional problem by using an engineered feature called <span class="in">`MolecularWeightedSumFeature`</span>. In computes the weighted sum of the molecular descriptors of the original <span class="in">`ContinuousMolecularInput`</span>s that make up the engineered feature. Here we use Mordred descriptors with a correlation cutoff of 0.9.</span>
-<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> SingleTaskGPSurrogate(</span>
-<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
-<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
-<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a>    engineered_features <span class="op">=</span> EngineeredFeatures(</span>
-<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
-<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a>                MolecularWeightedSumFeature(</span>
-<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a>                    key<span class="op">=</span><span class="st">"mixture"</span>,</span>
-<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a>                    features<span class="op">=</span>inputs.get_keys(),</span>
-<span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a>                    molfeatures<span class="op">=</span>MordredDescriptors(descriptors<span class="op">=</span>mordred_names,ignore_3D<span class="op">=</span><span class="va">False</span>, correlation_cutoff<span class="op">=</span><span class="fl">0.9</span>),</span>
-<span id="cb8-70"><a href="#cb8-70" aria-hidden="true" tabindex="-1"></a>                    keep_features<span class="op">=</span><span class="va">False</span></span>
-<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a>                )</span>
-<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a>            ]</span>
-<span id="cb8-73"><a href="#cb8-73" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Number of molecular features before correlation filtering: "</span>, <span class="bu">len</span>(surrogate_data.engineered_features[<span class="dv">0</span>].molfeatures.get_descriptor_names()))</span>
-<span id="cb8-77"><a href="#cb8-77" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
-<span id="cb8-78"><a href="#cb8-78" aria-hidden="true" tabindex="-1"></a>cv_train, cv_test, _ <span class="op">=</span> surrogate.cross_validate(df_experiments, folds<span class="op">=</span><span class="dv">10</span> <span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST <span class="cf">else</span> <span class="dv">3</span>)</span>
-<span id="cb8-79"><a href="#cb8-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-80"><a href="#cb8-80" aria-hidden="true" tabindex="-1"></a>display(cv_test.get_metrics())</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a><span class="fu">## Setup Data</span></span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>df_experiments <span class="op">=</span> get_octane_data()</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>df_experiments[<span class="st">"valid_MON"</span>] <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>output_key <span class="op">=</span> <span class="st">"MON"</span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> Inputs(</span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>    features <span class="op">=</span> [</span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span>col, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>), descriptors<span class="op">=</span>Descriptors(structure<span class="op">=</span>[col]))</span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> col <span class="kw">in</span> df_experiments.columns</span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> col <span class="kw">not</span> <span class="kw">in</span> [<span class="st">"MON"</span>, <span class="st">"Label"</span>, <span class="st">"valid_MON"</span>]</span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> Outputs(features<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span>output_key)])</span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a><span class="fu">## Setup Surrogate and perform CV</span></span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>We model the high-dimensional problem by using an engineered feature called <span class="in">`WeightedSumFeature`</span>. It computes the weighted sum of the molecular descriptors of the original <span class="in">`ContinuousInput`</span>s (each carrying a <span class="in">`structure`</span>) that make up the engineered feature. Here we use Mordred descriptors with a correlation cutoff of 0.9.</span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a>surrogate_data <span class="op">=</span> SingleTaskGPSurrogate(</span>
+<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>    engineered_features <span class="op">=</span> EngineeredFeatures(</span>
+<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
+<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a>                WeightedSumFeature(</span>
+<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a>                    key<span class="op">=</span><span class="st">"mixture"</span>,</span>
+<span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a>                    features<span class="op">=</span>inputs.get_keys(),</span>
+<span id="cb8-70"><a href="#cb8-70" aria-hidden="true" tabindex="-1"></a>                    columns<span class="op">=</span>[],</span>
+<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a>                    generators<span class="op">=</span>[</span>
+<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a>                        MordredDescriptors(descriptors<span class="op">=</span>mordred_names, ignore_3D<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb8-73"><a href="#cb8-73" aria-hidden="true" tabindex="-1"></a>                    ],</span>
+<span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a>                    filter_descriptors<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a>                    correlation_cutoff<span class="op">=</span><span class="fl">0.9</span>,</span>
+<span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a>                    keep_features<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb8-77"><a href="#cb8-77" aria-hidden="true" tabindex="-1"></a>                )</span>
+<span id="cb8-78"><a href="#cb8-78" aria-hidden="true" tabindex="-1"></a>            ]</span>
+<span id="cb8-79"><a href="#cb8-79" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb8-80"><a href="#cb8-80" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb8-81"><a href="#cb8-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-82"><a href="#cb8-82" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Number of molecular features before correlation filtering: "</span>, <span class="bu">len</span>(surrogate_data.engineered_features[<span class="dv">0</span>].molfeatures.get_descriptor_names()))</span>
-<span id="cb8-83"><a href="#cb8-83" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-84"><a href="#cb8-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-85"><a href="#cb8-85" aria-hidden="true" tabindex="-1"></a>Even better performance can be achieved by using SAAS based surrogates, like <span class="in">`AdditiveMapSaasSingleTaskGPSurrogate`</span> or <span class="in">`EnsembleMapSaasSingleTaskGPSurrogate`</span>. Drawback are higher computational costs.</span>
+<span id="cb8-82"><a href="#cb8-82" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Number of molecular features before correlation filtering: "</span>, <span class="bu">len</span>(surrogate_data.engineered_features[<span class="dv">0</span>].generators[<span class="dv">0</span>].get_descriptor_names()))</span>
+<span id="cb8-83"><a href="#cb8-83" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> surrogates.<span class="bu">map</span>(surrogate_data)</span>
+<span id="cb8-84"><a href="#cb8-84" aria-hidden="true" tabindex="-1"></a>cv_train, cv_test, _ <span class="op">=</span> surrogate.cross_validate(df_experiments, folds<span class="op">=</span><span class="dv">10</span> <span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST <span class="cf">else</span> <span class="dv">3</span>)</span>
+<span id="cb8-85"><a href="#cb8-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-86"><a href="#cb8-86" aria-hidden="true" tabindex="-1"></a>display(cv_test.get_metrics())</span>
+<span id="cb8-87"><a href="#cb8-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-88"><a href="#cb8-88" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Number of molecular features before correlation filtering: "</span>, <span class="bu">len</span>(surrogate_data.engineered_features[<span class="dv">0</span>].generators[<span class="dv">0</span>].get_descriptor_names()))</span>
+<span id="cb8-89"><a href="#cb8-89" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb8-90"><a href="#cb8-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-91"><a href="#cb8-91" aria-hidden="true" tabindex="-1"></a>Even better performance can be achieved by using SAAS based surrogates, like <span class="in">`AdditiveMapSaasSingleTaskGPSurrogate`</span> or <span class="in">`EnsembleMapSaasSingleTaskGPSurrogate`</span>. Drawback are higher computational costs.</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

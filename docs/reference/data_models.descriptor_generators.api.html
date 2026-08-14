@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>data_models.kernels.api – BoFire</title>
+<title>data_models.descriptor_generators.api – BoFire</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -383,25 +383,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#bofire.data_models.kernels.api" id="toc-bofire.data_models.kernels.api" class="nav-link active" data-scroll-target="#bofire.data_models.kernels.api">data_models.kernels.api</a>
+  <li><a href="#bofire.data_models.descriptor_generators.api" id="toc-bofire.data_models.descriptor_generators.api" class="nav-link active" data-scroll-target="#bofire.data_models.descriptor_generators.api">data_models.descriptor_generators.api</a>
   <ul class="collapse">
   <li><a href="#classes" id="toc-classes" class="nav-link" data-scroll-target="#classes">Classes</a>
   <ul class="collapse">
-  <li><a href="#bofire.data_models.kernels.api.Kernel" id="toc-bofire.data_models.kernels.api.Kernel" class="nav-link" data-scroll-target="#bofire.data_models.kernels.api.Kernel">Kernel</a></li>
-  <li><a href="#bofire.data_models.kernels.api.AdditiveKernel" id="toc-bofire.data_models.kernels.api.AdditiveKernel" class="nav-link" data-scroll-target="#bofire.data_models.kernels.api.AdditiveKernel">AdditiveKernel</a></li>
-  <li><a href="#bofire.data_models.kernels.api.MultiplicativeKernel" id="toc-bofire.data_models.kernels.api.MultiplicativeKernel" class="nav-link" data-scroll-target="#bofire.data_models.kernels.api.MultiplicativeKernel">MultiplicativeKernel</a></li>
-  <li><a href="#bofire.data_models.kernels.api.ScaleKernel" id="toc-bofire.data_models.kernels.api.ScaleKernel" class="nav-link" data-scroll-target="#bofire.data_models.kernels.api.ScaleKernel">ScaleKernel</a></li>
-  <li><a href="#bofire.data_models.kernels.api.MaternKernel" id="toc-bofire.data_models.kernels.api.MaternKernel" class="nav-link" data-scroll-target="#bofire.data_models.kernels.api.MaternKernel">MaternKernel</a></li>
-  <li><a href="#bofire.data_models.kernels.api.RBFKernel" id="toc-bofire.data_models.kernels.api.RBFKernel" class="nav-link" data-scroll-target="#bofire.data_models.kernels.api.RBFKernel">RBFKernel</a></li>
-  <li><a href="#bofire.data_models.kernels.api.LinearKernel" id="toc-bofire.data_models.kernels.api.LinearKernel" class="nav-link" data-scroll-target="#bofire.data_models.kernels.api.LinearKernel">LinearKernel</a></li>
-  <li><a href="#bofire.data_models.kernels.api.PolynomialKernel" id="toc-bofire.data_models.kernels.api.PolynomialKernel" class="nav-link" data-scroll-target="#bofire.data_models.kernels.api.PolynomialKernel">PolynomialKernel</a></li>
-  <li><a href="#bofire.data_models.kernels.api.HammingDistanceKernel" id="toc-bofire.data_models.kernels.api.HammingDistanceKernel" class="nav-link" data-scroll-target="#bofire.data_models.kernels.api.HammingDistanceKernel">HammingDistanceKernel</a></li>
-  <li><a href="#bofire.data_models.kernels.api.TanimotoKernel" id="toc-bofire.data_models.kernels.api.TanimotoKernel" class="nav-link" data-scroll-target="#bofire.data_models.kernels.api.TanimotoKernel">TanimotoKernel</a></li>
-  <li><a href="#bofire.data_models.kernels.api.WassersteinKernel" id="toc-bofire.data_models.kernels.api.WassersteinKernel" class="nav-link" data-scroll-target="#bofire.data_models.kernels.api.WassersteinKernel">WassersteinKernel</a></li>
+  <li><a href="#bofire.data_models.descriptor_generators.api.DescriptorGenerator" id="toc-bofire.data_models.descriptor_generators.api.DescriptorGenerator" class="nav-link" data-scroll-target="#bofire.data_models.descriptor_generators.api.DescriptorGenerator">DescriptorGenerator</a></li>
+  <li><a href="#bofire.data_models.descriptor_generators.api.Fingerprints" id="toc-bofire.data_models.descriptor_generators.api.Fingerprints" class="nav-link" data-scroll-target="#bofire.data_models.descriptor_generators.api.Fingerprints">Fingerprints</a></li>
+  <li><a href="#bofire.data_models.descriptor_generators.api.Fragments" id="toc-bofire.data_models.descriptor_generators.api.Fragments" class="nav-link" data-scroll-target="#bofire.data_models.descriptor_generators.api.Fragments">Fragments</a></li>
+  <li><a href="#bofire.data_models.descriptor_generators.api.MordredDescriptors" id="toc-bofire.data_models.descriptor_generators.api.MordredDescriptors" class="nav-link" data-scroll-target="#bofire.data_models.descriptor_generators.api.MordredDescriptors">MordredDescriptors</a></li>
   </ul></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/reference/data_models.kernels.api.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/reference/data_models.descriptor_generators.api.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><h1 class="title display-7"></h1></header><div class="quarto-title-block"><div class="quarto-title-tools-only"><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
@@ -410,9 +403,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="bofire.data_models.kernels.api" class="level1">
-<h1>data_models.kernels.api</h1>
-<p><code>data_models.kernels.api</code></p>
+<section id="bofire.data_models.descriptor_generators.api" class="level1">
+<h1>data_models.descriptor_generators.api</h1>
+<p><code>data_models.descriptor_generators.api</code></p>
 <section id="classes" class="level2">
 <h2 class="anchored" data-anchor-id="classes">Classes</h2>
 <table class="caption-top table">
@@ -424,105 +417,113 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#bofire.data_models.kernels.api.Kernel">Kernel</a></td>
-<td></td>
+<td><a href="#bofire.data_models.descriptor_generators.api.DescriptorGenerator">DescriptorGenerator</a></td>
+<td>Base class for all descriptor generators.</td>
 </tr>
 <tr class="even">
-<td><a href="#bofire.data_models.kernels.api.AdditiveKernel">AdditiveKernel</a></td>
+<td><a href="#bofire.data_models.descriptor_generators.api.Fingerprints">Fingerprints</a></td>
 <td></td>
 </tr>
 <tr class="odd">
-<td><a href="#bofire.data_models.kernels.api.MultiplicativeKernel">MultiplicativeKernel</a></td>
+<td><a href="#bofire.data_models.descriptor_generators.api.Fragments">Fragments</a></td>
 <td></td>
 </tr>
 <tr class="even">
-<td><a href="#bofire.data_models.kernels.api.ScaleKernel">ScaleKernel</a></td>
+<td><a href="#bofire.data_models.descriptor_generators.api.MordredDescriptors">MordredDescriptors</a></td>
 <td></td>
-</tr>
-<tr class="odd">
-<td><a href="#bofire.data_models.kernels.api.MaternKernel">MaternKernel</a></td>
-<td></td>
-</tr>
-<tr class="even">
-<td><a href="#bofire.data_models.kernels.api.RBFKernel">RBFKernel</a></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td><a href="#bofire.data_models.kernels.api.LinearKernel">LinearKernel</a></td>
-<td></td>
-</tr>
-<tr class="even">
-<td><a href="#bofire.data_models.kernels.api.PolynomialKernel">PolynomialKernel</a></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td><a href="#bofire.data_models.kernels.api.HammingDistanceKernel">HammingDistanceKernel</a></td>
-<td></td>
-</tr>
-<tr class="even">
-<td><a href="#bofire.data_models.kernels.api.TanimotoKernel">TanimotoKernel</a></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td><a href="#bofire.data_models.kernels.api.WassersteinKernel">WassersteinKernel</a></td>
-<td>Kernel based on the Wasserstein distance.</td>
 </tr>
 </tbody>
 </table>
-<section id="bofire.data_models.kernels.api.Kernel" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.Kernel">Kernel</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.Kernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="bofire.data_models.kernels.api.AdditiveKernel" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.AdditiveKernel">AdditiveKernel</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.AdditiveKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="bofire.data_models.kernels.api.MultiplicativeKernel" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.MultiplicativeKernel">MultiplicativeKernel</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.MultiplicativeKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="bofire.data_models.kernels.api.ScaleKernel" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.ScaleKernel">ScaleKernel</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.ScaleKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="bofire.data_models.kernels.api.MaternKernel" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.MaternKernel">MaternKernel</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.MaternKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="bofire.data_models.kernels.api.RBFKernel" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.RBFKernel">RBFKernel</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.RBFKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="bofire.data_models.kernels.api.LinearKernel" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.LinearKernel">LinearKernel</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.LinearKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="bofire.data_models.kernels.api.PolynomialKernel" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.PolynomialKernel">PolynomialKernel</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.PolynomialKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="bofire.data_models.kernels.api.HammingDistanceKernel" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.HammingDistanceKernel">HammingDistanceKernel</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.HammingDistanceKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="bofire.data_models.kernels.api.TanimotoKernel" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.TanimotoKernel">TanimotoKernel</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.TanimotoKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="bofire.data_models.kernels.api.WassersteinKernel" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.WassersteinKernel">WassersteinKernel</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.WassersteinKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Kernel based on the Wasserstein distance.</p>
-<p>It only works for 1D data that is monotonically increasing, as it is just calculating the integral of the absolute difference between two shapes. Only when both shapes are monotonically increasing, this integral is also a Wasserstein distance (https://arxiv.org/abs/2002.01878).</p>
-<p>The shape are assumed to be discretized as a set of points. Make sure that the discretization is fine enough to capture the shape of the data.</p>
-<section id="attributes" class="level4 doc-section doc-section-attributes">
-<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes">Attributes</h4>
+<section id="bofire.data_models.descriptor_generators.api.DescriptorGenerator" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.descriptor_generators.api.DescriptorGenerator">DescriptorGenerator</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.DescriptorGenerator()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Base class for all descriptor generators.</p>
+<p>A <code>DescriptorGenerator</code> is a pure, stateless transform: given a series of structure identifiers (e.g.&nbsp;SMILES) it returns a dataframe of numeric descriptor columns. Correlation-based decorrelation is <em>not</em> done here — it lives on the consuming descriptor encoding / engineered feature (<code>DescriptorSpec</code>), applied across the whole assembled descriptor block.</p>
+<section id="methods" class="level4">
+<h4 class="anchored" data-anchor-id="methods">Methods</h4>
 <table class="caption-top table">
-<colgroup>
-<col style="width: 6%">
-<col style="width: 7%">
-<col style="width: 86%">
-</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#bofire.data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_names">get_descriptor_names</a></td>
+<td>The descriptor column names this generator produces.</td>
+</tr>
+<tr class="even">
+<td><a href="#bofire.data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_values">get_descriptor_values</a></td>
+<td>Descriptor values for a series of structures (columns = descriptor names).</td>
+</tr>
+</tbody>
+</table>
+<section id="bofire.data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_names" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_names">get_descriptor_names</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_names()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The descriptor column names this generator produces.</p>
+</section>
+<section id="bofire.data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_values" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_values">get_descriptor_values</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_values(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    values,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Descriptor values for a series of structures (columns = descriptor names).</p>
+</section>
+</section>
+</section>
+<section id="bofire.data_models.descriptor_generators.api.Fingerprints" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.descriptor_generators.api.Fingerprints">Fingerprints</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.Fingerprints()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="bofire.data_models.descriptor_generators.api.Fragments" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.descriptor_generators.api.Fragments">Fragments</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.Fragments()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="methods-1" class="level4">
+<h4 class="anchored" data-anchor-id="methods-1">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#bofire.data_models.descriptor_generators.api.Fragments.validate_fragments">validate_fragments</a></td>
+<td>Validates that fragments have unique names</td>
+</tr>
+</tbody>
+</table>
+<section id="bofire.data_models.descriptor_generators.api.Fragments.validate_fragments" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.descriptor_generators.api.Fragments.validate_fragments">validate_fragments</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.Fragments.validate_fragments(fragments)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Validates that fragments have unique names</p>
+<section id="parameters" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>categories</td>
+<td>List[str]</td>
+<td>List of fragment names</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="raises" class="level6 doc-section doc-section-raises">
+<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h6>
+<table class="caption-top table">
 <thead>
 <tr class="header">
 <th>Name</th>
@@ -532,14 +533,115 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td>squared</td>
-<td>bool</td>
-<td>If True, the squared exponential Wasserstein distance is used. Note that the squared exponential Wasserstein distance kernel is not positive definite for all lengthscales. For this reason, as default the absolute exponential Wasserstein distance is used.</td>
+<td></td>
+<td>ValueError</td>
+<td>when fragments have non-unique names</td>
 </tr>
-<tr class="even">
-<td>lengthscale_prior</td>
-<td>Optional[AnyPrior]</td>
-<td>Prior for the lengthscale of the kernel.</td>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>List[str]: List of the fragments</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+</section>
+</section>
+<section id="bofire.data_models.descriptor_generators.api.MordredDescriptors" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.descriptor_generators.api.MordredDescriptors">MordredDescriptors</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.MordredDescriptors()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="methods-2" class="level4">
+<h4 class="anchored" data-anchor-id="methods-2">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#bofire.data_models.descriptor_generators.api.MordredDescriptors.validate_descriptors">validate_descriptors</a></td>
+<td>Validates that descriptors have unique names</td>
+</tr>
+</tbody>
+</table>
+<section id="bofire.data_models.descriptor_generators.api.MordredDescriptors.validate_descriptors" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.descriptor_generators.api.MordredDescriptors.validate_descriptors">validate_descriptors</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.MordredDescriptors.validate_descriptors(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    descriptors,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Validates that descriptors have unique names</p>
+<section id="parameters-1" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>descriptors</td>
+<td>List[str]</td>
+<td>List of descriptor names</td>
+<td><em>required</em></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="raises-1" class="level6 doc-section doc-section-raises">
+<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises-1">Raises</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>ValueError</td>
+<td>when descriptors have non-unique names</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-1" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td></td>
+<td>List[str]: List of the descriptors</td>
 </tr>
 </tbody>
 </table>
@@ -547,6 +649,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <!-- -->
 
+</section>
+</section>
 </section>
 </section>
 </section>
@@ -1021,134 +1125,153 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># data_models.kernels.api { #bofire.data_models.kernels.api }</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="in">`data_models.kernels.api`</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="fu">## Classes</span></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Kernel</span><span class="co">](#bofire.data_models.kernels.api.Kernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">AdditiveKernel</span><span class="co">](#bofire.data_models.kernels.api.AdditiveKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MultiplicativeKernel</span><span class="co">](#bofire.data_models.kernels.api.MultiplicativeKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">ScaleKernel</span><span class="co">](#bofire.data_models.kernels.api.ScaleKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MaternKernel</span><span class="co">](#bofire.data_models.kernels.api.MaternKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">RBFKernel</span><span class="co">](#bofire.data_models.kernels.api.RBFKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">LinearKernel</span><span class="co">](#bofire.data_models.kernels.api.LinearKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">PolynomialKernel</span><span class="co">](#bofire.data_models.kernels.api.PolynomialKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">HammingDistanceKernel</span><span class="co">](#bofire.data_models.kernels.api.HammingDistanceKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">TanimotoKernel</span><span class="co">](#bofire.data_models.kernels.api.TanimotoKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">WassersteinKernel</span><span class="co">](#bofire.data_models.kernels.api.WassersteinKernel)</span> <span class="pp">|</span> Kernel based on the Wasserstein distance. <span class="pp">|</span></span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a><span class="fu">### Kernel { #bofire.data_models.kernels.api.Kernel }</span></span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.Kernel()</span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a><span class="fu">### AdditiveKernel { #bofire.data_models.kernels.api.AdditiveKernel }</span></span>
-<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.AdditiveKernel()</span>
-<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiplicativeKernel { #bofire.data_models.kernels.api.MultiplicativeKernel }</span></span>
-<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.MultiplicativeKernel()</span>
-<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a><span class="fu">### ScaleKernel { #bofire.data_models.kernels.api.ScaleKernel }</span></span>
-<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.ScaleKernel()</span>
-<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a><span class="fu">### MaternKernel { #bofire.data_models.kernels.api.MaternKernel }</span></span>
-<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.MaternKernel()</span>
-<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a><span class="fu">### RBFKernel { #bofire.data_models.kernels.api.RBFKernel }</span></span>
-<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-65"><a href="#cb12-65" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.RBFKernel()</span>
-<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a><span class="fu">### LinearKernel { #bofire.data_models.kernels.api.LinearKernel }</span></span>
-<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-73"><a href="#cb12-73" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-74"><a href="#cb12-74" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.LinearKernel()</span>
-<span id="cb12-75"><a href="#cb12-75" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-76"><a href="#cb12-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-77"><a href="#cb12-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-78"><a href="#cb12-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-79"><a href="#cb12-79" aria-hidden="true" tabindex="-1"></a><span class="fu">### PolynomialKernel { #bofire.data_models.kernels.api.PolynomialKernel }</span></span>
-<span id="cb12-80"><a href="#cb12-80" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-81"><a href="#cb12-81" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-82"><a href="#cb12-82" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.PolynomialKernel()</span>
-<span id="cb12-83"><a href="#cb12-83" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-84"><a href="#cb12-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-85"><a href="#cb12-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-86"><a href="#cb12-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-87"><a href="#cb12-87" aria-hidden="true" tabindex="-1"></a><span class="fu">### HammingDistanceKernel { #bofire.data_models.kernels.api.HammingDistanceKernel }</span></span>
-<span id="cb12-88"><a href="#cb12-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-89"><a href="#cb12-89" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-90"><a href="#cb12-90" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.HammingDistanceKernel()</span>
-<span id="cb12-91"><a href="#cb12-91" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-92"><a href="#cb12-92" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-93"><a href="#cb12-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-94"><a href="#cb12-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-95"><a href="#cb12-95" aria-hidden="true" tabindex="-1"></a><span class="fu">### TanimotoKernel { #bofire.data_models.kernels.api.TanimotoKernel }</span></span>
-<span id="cb12-96"><a href="#cb12-96" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-97"><a href="#cb12-97" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-98"><a href="#cb12-98" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.TanimotoKernel()</span>
-<span id="cb12-99"><a href="#cb12-99" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-100"><a href="#cb12-100" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-101"><a href="#cb12-101" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-102"><a href="#cb12-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-103"><a href="#cb12-103" aria-hidden="true" tabindex="-1"></a><span class="fu">### WassersteinKernel { #bofire.data_models.kernels.api.WassersteinKernel }</span></span>
-<span id="cb12-104"><a href="#cb12-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-105"><a href="#cb12-105" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-106"><a href="#cb12-106" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.WassersteinKernel()</span>
-<span id="cb12-107"><a href="#cb12-107" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-108"><a href="#cb12-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-109"><a href="#cb12-109" aria-hidden="true" tabindex="-1"></a>Kernel based on the Wasserstein distance.</span>
-<span id="cb12-110"><a href="#cb12-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-111"><a href="#cb12-111" aria-hidden="true" tabindex="-1"></a>It only works for 1D data that is monotonically increasing, as it is just</span>
-<span id="cb12-112"><a href="#cb12-112" aria-hidden="true" tabindex="-1"></a>calculating the integral of the absolute difference between two shapes.</span>
-<span id="cb12-113"><a href="#cb12-113" aria-hidden="true" tabindex="-1"></a>Only when both shapes are monotonically increasing, this integral is also</span>
-<span id="cb12-114"><a href="#cb12-114" aria-hidden="true" tabindex="-1"></a>a Wasserstein distance (https://arxiv.org/abs/2002.01878).</span>
-<span id="cb12-115"><a href="#cb12-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-116"><a href="#cb12-116" aria-hidden="true" tabindex="-1"></a>The shape are assumed to be discretized as a set of points. Make sure that</span>
-<span id="cb12-117"><a href="#cb12-117" aria-hidden="true" tabindex="-1"></a>the discretization is fine enough to capture the shape of the data.</span>
-<span id="cb12-118"><a href="#cb12-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-119"><a href="#cb12-119" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes {.doc-section .doc-section-attributes}</span></span>
-<span id="cb12-120"><a href="#cb12-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-121"><a href="#cb12-121" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name              <span class="pp">|</span> Type                 <span class="pp">|</span> Description                                                                                                                                                                                                                                                    <span class="pp">|</span></span>
-<span id="cb12-122"><a href="#cb12-122" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|</span></span>
-<span id="cb12-123"><a href="#cb12-123" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> squared           <span class="pp">|</span> bool                 <span class="pp">|</span> If True, the squared exponential Wasserstein distance is used. Note that the squared exponential Wasserstein distance kernel is not positive definite for all lengthscales. For this reason, as default the absolute exponential Wasserstein distance is used. <span class="pp">|</span></span>
-<span id="cb12-124"><a href="#cb12-124" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> lengthscale_prior <span class="pp">|</span> Optional<span class="sc">\[</span>AnyPrior<span class="sc">\]</span> <span class="pp">|</span> Prior for the lengthscale of the kernel.                                                                                                                                                                                                                       <span class="pp">|</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># data_models.descriptor_generators.api { #bofire.data_models.descriptor_generators.api }</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="in">`data_models.descriptor_generators.api`</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">## Classes</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">DescriptorGenerator</span><span class="co">](#bofire.data_models.descriptor_generators.api.DescriptorGenerator)</span> <span class="pp">|</span> Base class for all descriptor generators. <span class="pp">|</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Fingerprints</span><span class="co">](#bofire.data_models.descriptor_generators.api.Fingerprints)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Fragments</span><span class="co">](#bofire.data_models.descriptor_generators.api.Fragments)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MordredDescriptors</span><span class="co">](#bofire.data_models.descriptor_generators.api.MordredDescriptors)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="fu">### DescriptorGenerator { #bofire.data_models.descriptor_generators.api.DescriptorGenerator }</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.DescriptorGenerator()</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>Base class for all descriptor generators.</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>A ``DescriptorGenerator`` is a pure, stateless transform: given a series of</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>structure identifiers (e.g. SMILES) it returns a dataframe of numeric descriptor</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>columns. Correlation-based decorrelation is *not* done here — it lives on the</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>consuming descriptor encoding / engineered feature (``DescriptorSpec``), applied</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>across the whole assembled descriptor block.</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">get_descriptor_names</span><span class="co">](#bofire.data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_names)</span> <span class="pp">|</span> The descriptor column names this generator produces. <span class="pp">|</span></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">get_descriptor_values</span><span class="co">](#bofire.data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_values)</span> <span class="pp">|</span> Descriptor values for a series of structures (columns = descriptor names). <span class="pp">|</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a><span class="fu">##### get_descriptor_names { #bofire.data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_names }</span></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_names()</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>The descriptor column names this generator produces.</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a><span class="fu">##### get_descriptor_values { #bofire.data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_values }</span></span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.DescriptorGenerator.get_descriptor_values(</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>    values,</span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>Descriptor values for a series of structures (columns = descriptor names).</span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a><span class="fu">### Fingerprints { #bofire.data_models.descriptor_generators.api.Fingerprints }</span></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.Fingerprints()</span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a><span class="fu">### Fragments { #bofire.data_models.descriptor_generators.api.Fragments }</span></span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.Fragments()</span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_fragments</span><span class="co">](#bofire.data_models.descriptor_generators.api.Fragments.validate_fragments)</span> <span class="pp">|</span> Validates that fragments have unique names <span class="pp">|</span></span>
+<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_fragments { #bofire.data_models.descriptor_generators.api.Fragments.validate_fragments }</span></span>
+<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.Fragments.validate_fragments(fragments)</span>
+<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a>Validates that fragments have unique names</span>
+<span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name       <span class="pp">|</span> Type        <span class="pp">|</span> Description            <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb9-88"><a href="#cb9-88" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------|-------------|------------------------|------------|</span></span>
+<span id="cb9-89"><a href="#cb9-89" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> categories <span class="pp">|</span> List<span class="sc">\[</span>str<span class="sc">\]</span> <span class="pp">|</span> List of fragment names <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb9-90"><a href="#cb9-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-91"><a href="#cb9-91" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Raises {.doc-section .doc-section-raises}</span></span>
+<span id="cb9-92"><a href="#cb9-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-93"><a href="#cb9-93" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                          <span class="pp">|</span></span>
+<span id="cb9-94"><a href="#cb9-94" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|--------------------------------------|</span></span>
+<span id="cb9-95"><a href="#cb9-95" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> when fragments have non-unique names <span class="pp">|</span></span>
+<span id="cb9-96"><a href="#cb9-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-97"><a href="#cb9-97" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb9-98"><a href="#cb9-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-99"><a href="#cb9-99" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description                      <span class="pp">|</span></span>
+<span id="cb9-100"><a href="#cb9-100" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|----------------------------------|</span></span>
+<span id="cb9-101"><a href="#cb9-101" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span>        <span class="pp">|</span> List<span class="co">[</span><span class="ot">str</span><span class="co">]</span>: List of the fragments <span class="pp">|</span></span>
+<span id="cb9-102"><a href="#cb9-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-103"><a href="#cb9-103" aria-hidden="true" tabindex="-1"></a><span class="fu">### MordredDescriptors { #bofire.data_models.descriptor_generators.api.MordredDescriptors }</span></span>
+<span id="cb9-104"><a href="#cb9-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-105"><a href="#cb9-105" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb9-106"><a href="#cb9-106" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.MordredDescriptors()</span>
+<span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-108"><a href="#cb9-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-109"><a href="#cb9-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-110"><a href="#cb9-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-111"><a href="#cb9-111" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb9-112"><a href="#cb9-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-113"><a href="#cb9-113" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb9-114"><a href="#cb9-114" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb9-115"><a href="#cb9-115" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_descriptors</span><span class="co">](#bofire.data_models.descriptor_generators.api.MordredDescriptors.validate_descriptors)</span> <span class="pp">|</span> Validates that descriptors have unique names <span class="pp">|</span></span>
+<span id="cb9-116"><a href="#cb9-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-117"><a href="#cb9-117" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_descriptors { #bofire.data_models.descriptor_generators.api.MordredDescriptors.validate_descriptors }</span></span>
+<span id="cb9-118"><a href="#cb9-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-119"><a href="#cb9-119" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb9-120"><a href="#cb9-120" aria-hidden="true" tabindex="-1"></a>data_models.descriptor_generators.api.MordredDescriptors.validate_descriptors(</span>
+<span id="cb9-121"><a href="#cb9-121" aria-hidden="true" tabindex="-1"></a>    descriptors,</span>
+<span id="cb9-122"><a href="#cb9-122" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-123"><a href="#cb9-123" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-124"><a href="#cb9-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-125"><a href="#cb9-125" aria-hidden="true" tabindex="-1"></a>Validates that descriptors have unique names</span>
+<span id="cb9-126"><a href="#cb9-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-127"><a href="#cb9-127" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb9-128"><a href="#cb9-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-129"><a href="#cb9-129" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name        <span class="pp">|</span> Type        <span class="pp">|</span> Description              <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb9-130"><a href="#cb9-130" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|-------------|--------------------------|------------|</span></span>
+<span id="cb9-131"><a href="#cb9-131" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> descriptors <span class="pp">|</span> List<span class="sc">\[</span>str<span class="sc">\]</span> <span class="pp">|</span> List of descriptor names <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb9-132"><a href="#cb9-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-133"><a href="#cb9-133" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Raises {.doc-section .doc-section-raises}</span></span>
+<span id="cb9-134"><a href="#cb9-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-135"><a href="#cb9-135" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                            <span class="pp">|</span></span>
+<span id="cb9-136"><a href="#cb9-136" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|----------------------------------------|</span></span>
+<span id="cb9-137"><a href="#cb9-137" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> when descriptors have non-unique names <span class="pp">|</span></span>
+<span id="cb9-138"><a href="#cb9-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-139"><a href="#cb9-139" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb9-140"><a href="#cb9-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-141"><a href="#cb9-141" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description                        <span class="pp">|</span></span>
+<span id="cb9-142"><a href="#cb9-142" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|------------------------------------|</span></span>
+<span id="cb9-143"><a href="#cb9-143" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span>        <span class="pp">|</span> List<span class="co">[</span><span class="ot">str</span><span class="co">]</span>: List of the descriptors <span class="pp">|</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/reference/data_models.kernels.api.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/reference/data_models.descriptor_generators.api.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

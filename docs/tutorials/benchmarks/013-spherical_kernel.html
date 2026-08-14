@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-69b65dc57ba8b1f57efa9e8dc4c071d4.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-690a589ea57c1ca23f47088560ced4db.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-69b65dc57ba8b1f57efa9e8dc4c071d4.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-ef50085ffa0a8bbae5860f282a05e1be.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-6c5449043777d02e3d3fa6b5adb36893.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-ef50085ffa0a8bbae5860f282a05e1be.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -622,7 +622,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/benchmarks/012-engineered_features.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Optimization with <code>ContinuousDescriptorInput</code>s and engineered Features</span></a>
+ <span class="menu-text">Optimization with descriptor-carrying inputs and engineered Features</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -741,7 +741,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p><a href="https://arxiv.org/pdf/2512.00170">Spherical Linear Kernel</a> is useful for optimizing high-dimensional problems.</p>
-<div id="32f34e13" class="cell" data-execution_count="1">
+<div id="6283d385" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.svm <span class="im">import</span> SVM</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> SphericalLinearKernel</span>
@@ -749,7 +749,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>We use the <a href="https://github.com/LeoIV/BenchSuite/blob/master/benchsuite/svm.py">SVM</a> benchmark.</p>
-<div id="09e492a3" class="cell" data-execution_count="2">
+<div id="bc334b90" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># problem setup for spherical linear kernels</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SVM()</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> benchmark._domain.inputs.sample(benchmark.dim<span class="op">+</span><span class="dv">1</span>, seed<span class="op">=</span>benchmark.seed)</span>
@@ -777,7 +777,7 @@ Download complete.</code></pre>
 </div>
 </div>
 <p>Running the optimization loop</p>
-<div id="37a7461f" class="cell" data-execution_count="3">
+<div id="e22b92fc" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments, replace<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>num_steps <span class="op">=</span> <span class="dv">3</span> <span class="co"># set the number of steps here (the original paper uses 1000 steps)</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step_number <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>
@@ -1338,8 +1338,8 @@ Step 3/3</code></pre>
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../../../docs/tutorials/benchmarks/012-engineered_features.html" class="pagination-link" aria-label="Optimization with `ContinuousDescriptorInput`s and engineered Features">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Optimization with <code>ContinuousDescriptorInput</code>s and engineered Features</span>
+      <a href="../../../docs/tutorials/benchmarks/012-engineered_features.html" class="pagination-link" aria-label="Optimization with descriptor-carrying inputs and engineered Features">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Optimization with descriptor-carrying inputs and engineered Features</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

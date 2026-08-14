@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>data_models_functionals – BoFire</title>
+<title>data_models.encodings.api – BoFire</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -65,8 +65,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../">
-<link href="../../docs/userguides/custom_types.html" rel="next">
-<link href="../../docs/userguides/surrogates.html" rel="prev">
 <script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
@@ -114,7 +112,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link rel="stylesheet" href="../../styles.css">
 </head>
 
-<body class="nav-sidebar docked nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+<body class="nav-fixed quarto-light"><script id="quarto-html-before-body" type="application/javascript">
     const toggleBodyColorMode = (bsSheetEl) => {
       const mode = bsSheetEl.getAttribute("data-mode");
       const bodyEl = window.document.querySelector("body");
@@ -296,7 +294,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="../../index.html" aria-current="page"> 
+    <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
@@ -375,138 +373,201 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
       </div> <!-- /container-fluid -->
     </nav>
-  <nav class="quarto-secondary-nav">
-    <div class="container-fluid d-flex">
-      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
-        <i class="bi bi-layout-text-sidebar-reverse"></i>
-      </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../docs/userguides/data_models_functionals.html">Data Models vs.&nbsp;Functional Components</a></li></ol></nav>
-        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-        </a>
-    </div>
-  </nav>
 </header>
 <!-- content -->
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
-    <div class="pt-lg-2 mt-2 text-left sidebar-header sidebar-header-stacked">
-      <a href="../../index.html" class="sidebar-logo-link">
-      </a>
-      </div>
-    <div class="sidebar-menu-container"> 
-    <ul class="list-unstyled mt-1">
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../../docs/userguides/domain.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Domains</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../../docs/userguides/strategies.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Strategies</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../../docs/userguides/surrogates.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Surrogate models</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../../docs/userguides/data_models_functionals.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">Data Models vs.&nbsp;Functional Components</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="../../docs/userguides/custom_types.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Registering Custom Types</span></a>
-  </div>
-</li>
-    </ul>
-    </div>
-</nav>
-<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#bofire.data_models.encodings.api" id="toc-bofire.data_models.encodings.api" class="nav-link active" data-scroll-target="#bofire.data_models.encodings.api">data_models.encodings.api</a>
+  <ul class="collapse">
+  <li><a href="#classes" id="toc-classes" class="nav-link" data-scroll-target="#classes">Classes</a>
+  <ul class="collapse">
+  <li><a href="#bofire.data_models.encodings.api.CategoricalEncoding" id="toc-bofire.data_models.encodings.api.CategoricalEncoding" class="nav-link" data-scroll-target="#bofire.data_models.encodings.api.CategoricalEncoding">CategoricalEncoding</a></li>
+  <li><a href="#bofire.data_models.encodings.api.OneHotEncoding" id="toc-bofire.data_models.encodings.api.OneHotEncoding" class="nav-link" data-scroll-target="#bofire.data_models.encodings.api.OneHotEncoding">OneHotEncoding</a></li>
+  <li><a href="#bofire.data_models.encodings.api.OrdinalEncoding" id="toc-bofire.data_models.encodings.api.OrdinalEncoding" class="nav-link" data-scroll-target="#bofire.data_models.encodings.api.OrdinalEncoding">OrdinalEncoding</a></li>
+  <li><a href="#bofire.data_models.encodings.api.DescriptorEncoding" id="toc-bofire.data_models.encodings.api.DescriptorEncoding" class="nav-link" data-scroll-target="#bofire.data_models.encodings.api.DescriptorEncoding">DescriptorEncoding</a></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/reference/data_models.encodings.api.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
-
-
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Data Models vs.&nbsp;Functional Components</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
-</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><h1 class="title display-7"></h1></header><div class="quarto-title-block"><div class="quarto-title-tools-only"><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 
 
 
-<div class="quarto-title-meta">
-
-    
-  
-    
-  </div>
-  
 
 
-</header>
-
-
-<p>Data models in BoFire hold static data of an optimization problem. These are input and output features as well as constraints making up the domain. They further include possible optimization objectives, acquisition functions, and kernels.</p>
-<p>All data models in <code>bofire.data_models</code>, are specified as pydantic models and inherit from <code>bofire.data_models.base.BaseModel</code>. These data models can be (de)serialized via <code>.dict()</code> and <code>.model_dump_json()</code> (provided by pydantic). A json schema of each data model can be obtained using <code>.schema()</code>.</p>
-<p>For surrogates and strategies, all functional parts are located in <code>bofire.surrogates</code> and <code>bofire.strategies</code>. These functionalities include the <code>ask</code> and <code>tell</code> as well as <code>fit</code> and <code>predict</code> methods. All class attributes (used by these method) are also removed from the data models. Each functional entity is initialized using the corresponding data model. As an example, consider the following data model of a <code>RandomStrategy</code>:</p>
-<div id="c9d26d90" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.domain.api <span class="im">as</span> dm_domain</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.features.api <span class="im">as</span> dm_features</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.strategies.api <span class="im">as</span> dm_strategies</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>in1 <span class="op">=</span> dm_features.ContinuousInput(key<span class="op">=</span><span class="st">"in1"</span>, bounds<span class="op">=</span>[<span class="fl">0.0</span>,<span class="fl">1.0</span>])</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>in2 <span class="op">=</span> dm_features.ContinuousInput(key<span class="op">=</span><span class="st">"in2"</span>, bounds<span class="op">=</span>[<span class="fl">0.0</span>,<span class="fl">2.0</span>])</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>in3 <span class="op">=</span> dm_features.ContinuousInput(key<span class="op">=</span><span class="st">"in3"</span>, bounds<span class="op">=</span>[<span class="fl">0.0</span>,<span class="fl">3.0</span>])</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>out1 <span class="op">=</span> dm_features.ContinuousOutput(key<span class="op">=</span><span class="st">"out1"</span>)</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> dm_domain.Inputs(features<span class="op">=</span>[in1, in2, in3])</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> dm_domain.Outputs(features<span class="op">=</span>[out1])</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>constraints <span class="op">=</span> dm_domain.Constraints()</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> dm_domain.Domain(</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>constraints,</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> dm_strategies.RandomStrategy(domain<span class="op">=</span>domain)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Such a data model can be (de)serialized as follows:</p>
-<div id="475f61ca" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> TypeAdapter</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> AnyStrategy</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>serialized <span class="op">=</span> data_model.model_dump_json()</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>data_model_ <span class="op">=</span> TypeAdapter(AnyStrategy).validate_json(serialized)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> data_model_ <span class="op">==</span> data_model</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>The data model of a strategy contains its hyperparameters. Using this data model of a strategy, we can create an instance of a (functional) strategy:</p>
-<div id="a86c398b" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.RandomStrategy(data_model<span class="op">=</span>data_model)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>As each strategy data model should be mapped to a specific (functional) strategy, we provide such a mapping:</p>
-<div id="a7b1e042" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
+<section id="bofire.data_models.encodings.api" class="level1">
+<h1>data_models.encodings.api</h1>
+<p><code>data_models.encodings.api</code></p>
+<section id="classes" class="level2">
+<h2 class="anchored" data-anchor-id="classes">Classes</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#bofire.data_models.encodings.api.CategoricalEncoding">CategoricalEncoding</a></td>
+<td>Base class for all categorical encodings.</td>
+</tr>
+<tr class="even">
+<td><a href="#bofire.data_models.encodings.api.OneHotEncoding">OneHotEncoding</a></td>
+<td>One-hot encode a category into one binary column per category.</td>
+</tr>
+<tr class="odd">
+<td><a href="#bofire.data_models.encodings.api.OrdinalEncoding">OrdinalEncoding</a></td>
+<td>Encode a category as its integer index <code>0 .. len(categories) - 1</code>.</td>
+</tr>
+<tr class="even">
+<td><a href="#bofire.data_models.encodings.api.DescriptorEncoding">DescriptorEncoding</a></td>
+<td>Encode categories via a per-category descriptor row.</td>
+</tr>
+</tbody>
+</table>
+<section id="bofire.data_models.encodings.api.CategoricalEncoding" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.encodings.api.CategoricalEncoding">CategoricalEncoding</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.CategoricalEncoding()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Base class for all categorical encodings.</p>
+<section id="methods" class="level4">
+<h4 class="anchored" data-anchor-id="methods">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#bofire.data_models.encodings.api.CategoricalEncoding.decode">decode</a></td>
+<td>Back-transform encoded columns to categories.</td>
+</tr>
+<tr class="even">
+<td><a href="#bofire.data_models.encodings.api.CategoricalEncoding.encode">encode</a></td>
+<td>Encode a series of categories into model-input columns.</td>
+</tr>
+<tr class="odd">
+<td><a href="#bofire.data_models.encodings.api.CategoricalEncoding.get_bounds">get_bounds</a></td>
+<td>Lower/upper bounds of the encoded columns for <code>feature</code>.</td>
+</tr>
+<tr class="even">
+<td><a href="#bofire.data_models.encodings.api.CategoricalEncoding.get_names">get_names</a></td>
+<td>Final (encoded) column names produced for <code>feature</code>.</td>
+</tr>
+<tr class="odd">
+<td><a href="#bofire.data_models.encodings.api.CategoricalEncoding.validate_for_feature">validate_for_feature</a></td>
+<td>Validate this encoder instance is applicable to <code>feature</code>.</td>
+</tr>
+</tbody>
+</table>
+<section id="bofire.data_models.encodings.api.CategoricalEncoding.decode" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.encodings.api.CategoricalEncoding.decode">decode</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.CategoricalEncoding.decode(feature, values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Back-transform encoded columns to categories.</p>
+</section>
+<section id="bofire.data_models.encodings.api.CategoricalEncoding.encode" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.encodings.api.CategoricalEncoding.encode">encode</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.CategoricalEncoding.encode(feature, values)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Encode a series of categories into model-input columns.</p>
+<p>The returned frame’s columns equal <code>get_names(feature)</code>.</p>
+</section>
+<section id="bofire.data_models.encodings.api.CategoricalEncoding.get_bounds" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.encodings.api.CategoricalEncoding.get_bounds">get_bounds</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.CategoricalEncoding.get_bounds(feature, values<span class="op">=</span><span class="va">None</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Lower/upper bounds of the encoded columns for <code>feature</code>.</p>
+<p>If <code>values</code> is None the optimization bounds (over allowed categories) are returned, else the full bounds over all categories.</p>
+</section>
+<section id="bofire.data_models.encodings.api.CategoricalEncoding.get_names" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.encodings.api.CategoricalEncoding.get_names">get_names</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.CategoricalEncoding.get_names(feature)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Final (encoded) column names produced for <code>feature</code>.</p>
+</section>
+<section id="bofire.data_models.encodings.api.CategoricalEncoding.validate_for_feature" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.encodings.api.CategoricalEncoding.validate_for_feature">validate_for_feature</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.CategoricalEncoding.validate_for_feature(feature)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Validate this encoder instance is applicable to <code>feature</code>.</p>
+<p>The type-level check (<code>valid_transform_types</code>) only ensures the encoder <em>class</em> is allowed; this instance-level hook rejects encoders whose concrete configuration cannot produce columns for the feature (e.g.&nbsp;a <code>DescriptorEncoding</code> listing static columns the feature does not carry).</p>
+</section>
+</section>
+</section>
+<section id="bofire.data_models.encodings.api.OneHotEncoding" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.encodings.api.OneHotEncoding">OneHotEncoding</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.OneHotEncoding()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>One-hot encode a category into one binary column per category.</p>
+<section id="attributes" class="level4 doc-section doc-section-attributes">
+<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes">Attributes</h4>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 6%">
+<col style="width: 83%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>drop_first</td>
+<td>bool</td>
+<td>If True, drop the first category’s column (dummy encoding), yielding <code>len(categories) - 1</code> columns.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="bofire.data_models.encodings.api.OrdinalEncoding" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.encodings.api.OrdinalEncoding">OrdinalEncoding</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.OrdinalEncoding()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Encode a category as its integer index <code>0 .. len(categories) - 1</code>.</p>
+</section>
+<section id="bofire.data_models.encodings.api.DescriptorEncoding" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.encodings.api.DescriptorEncoding">DescriptorEncoding</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.DescriptorEncoding()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Encode categories via a per-category descriptor row.</p>
+<p>Inherits <code>columns</code> / <code>generators</code> / <code>filter_descriptors</code> / <code>correlation_cutoff</code> from :class:<code>DescriptorSpec</code>. With the default (no static columns listed, no generators) it uses all of the feature’s numeric descriptor columns.</p>
+<section id="methods-1" class="level4">
+<h4 class="anchored" data-anchor-id="methods-1">Methods</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#bofire.data_models.encodings.api.DescriptorEncoding.table">table</a></td>
+<td>Per-category descriptor table: one row per category, in <code>categories</code> order.</td>
+</tr>
+</tbody>
+</table>
+<section id="bofire.data_models.encodings.api.DescriptorEncoding.table" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.encodings.api.DescriptorEncoding.table">table</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.DescriptorEncoding.table(feature)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Per-category descriptor table: one row per category, in <code>categories</code> order.</p>
 
 
 <!-- -->
 
+</section>
+</section>
+</section>
+</section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -976,81 +1037,142 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       }
     }
   });
-  </script>
-<nav class="page-navigation">
-  <div class="nav-page nav-page-previous">
-      <a href="../../docs/userguides/surrogates.html" class="pagination-link" aria-label="Surrogate models">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Surrogate models</span>
-      </a>          
-  </div>
-  <div class="nav-page nav-page-next">
-      <a href="../../docs/userguides/custom_types.html" class="pagination-link" aria-label="Registering Custom Types">
-        <span class="nav-page-text">Registering Custom Types</span> <i class="bi bi-arrow-right-short"></i>
-      </a>
-  </div>
-</nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># Data Models vs. Functional Components</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>Data models in BoFire hold static data of an optimization problem. These are input and output features as well as constraints making up the domain. They further include possible optimization objectives, acquisition functions, and kernels.</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>All data models in ```bofire.data_models```, are specified as pydantic models and inherit from ```bofire.data_models.base.BaseModel```. These data models can be (de)serialized via ```.dict()``` and ```.model_dump_json()``` (provided by pydantic). A json schema of each data model can be obtained using ```.schema()```.</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>For surrogates and strategies, all functional parts are located in ```bofire.surrogates``` and ```bofire.strategies```. These functionalities include the ```ask``` and ```tell``` as well as ```fit``` and ```predict``` methods. All class attributes (used by these method) are also removed from the data models. Each functional entity is initialized using the corresponding data model. As an example, consider the following data model of a ```RandomStrategy```:</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.domain.api <span class="im">as</span> dm_domain</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.features.api <span class="im">as</span> dm_features</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.strategies.api <span class="im">as</span> dm_strategies</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>in1 <span class="op">=</span> dm_features.ContinuousInput(key<span class="op">=</span><span class="st">"in1"</span>, bounds<span class="op">=</span>[<span class="fl">0.0</span>,<span class="fl">1.0</span>])</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>in2 <span class="op">=</span> dm_features.ContinuousInput(key<span class="op">=</span><span class="st">"in2"</span>, bounds<span class="op">=</span>[<span class="fl">0.0</span>,<span class="fl">2.0</span>])</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>in3 <span class="op">=</span> dm_features.ContinuousInput(key<span class="op">=</span><span class="st">"in3"</span>, bounds<span class="op">=</span>[<span class="fl">0.0</span>,<span class="fl">3.0</span>])</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>out1 <span class="op">=</span> dm_features.ContinuousOutput(key<span class="op">=</span><span class="st">"out1"</span>)</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> dm_domain.Inputs(features<span class="op">=</span>[in1, in2, in3])</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> dm_domain.Outputs(features<span class="op">=</span>[out1])</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>constraints <span class="op">=</span> dm_domain.Constraints()</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> dm_domain.Domain(</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>constraints,</span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> dm_strategies.RandomStrategy(domain<span class="op">=</span>domain)</span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>Such a data model can be (de)serialized as follows:</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> TypeAdapter</span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> AnyStrategy</span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>serialized <span class="op">=</span> data_model.model_dump_json()</span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>data_model_ <span class="op">=</span> TypeAdapter(AnyStrategy).validate_json(serialized)</span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> data_model_ <span class="op">==</span> data_model</span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>The data model of a strategy contains its hyperparameters.</span>
-<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>Using this data model of a strategy, we can create an instance of a (functional) strategy:</span>
-<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
-<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.RandomStrategy(data_model<span class="op">=</span>data_model)</span>
-<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>As each strategy data model should be mapped to a specific (functional) strategy, we provide such a mapping:</span>
-<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model)</span>
-<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+  </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># data_models.encodings.api { #bofire.data_models.encodings.api }</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="in">`data_models.encodings.api`</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="fu">## Classes</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">CategoricalEncoding</span><span class="co">](#bofire.data_models.encodings.api.CategoricalEncoding)</span> <span class="pp">|</span> Base class for all categorical encodings. <span class="pp">|</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">OneHotEncoding</span><span class="co">](#bofire.data_models.encodings.api.OneHotEncoding)</span> <span class="pp">|</span> One-hot encode a category into one binary column per category. <span class="pp">|</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">OrdinalEncoding</span><span class="co">](#bofire.data_models.encodings.api.OrdinalEncoding)</span> <span class="pp">|</span> Encode a category as its integer index ``0 .. len(categories) - 1``. <span class="pp">|</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">DescriptorEncoding</span><span class="co">](#bofire.data_models.encodings.api.DescriptorEncoding)</span> <span class="pp">|</span> Encode categories via a per-category descriptor row. <span class="pp">|</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="fu">### CategoricalEncoding { #bofire.data_models.encodings.api.CategoricalEncoding }</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.CategoricalEncoding()</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>Base class for all categorical encodings.</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">decode</span><span class="co">](#bofire.data_models.encodings.api.CategoricalEncoding.decode)</span> <span class="pp">|</span> Back-transform encoded columns to categories. <span class="pp">|</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">encode</span><span class="co">](#bofire.data_models.encodings.api.CategoricalEncoding.encode)</span> <span class="pp">|</span> Encode a series of categories into model-input columns. <span class="pp">|</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">get_bounds</span><span class="co">](#bofire.data_models.encodings.api.CategoricalEncoding.get_bounds)</span> <span class="pp">|</span> Lower/upper bounds of the encoded columns for ``feature``. <span class="pp">|</span></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">get_names</span><span class="co">](#bofire.data_models.encodings.api.CategoricalEncoding.get_names)</span> <span class="pp">|</span> Final (encoded) column names produced for ``feature``. <span class="pp">|</span></span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_for_feature</span><span class="co">](#bofire.data_models.encodings.api.CategoricalEncoding.validate_for_feature)</span> <span class="pp">|</span> Validate this encoder instance is applicable to ``feature``. <span class="pp">|</span></span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a><span class="fu">##### decode { #bofire.data_models.encodings.api.CategoricalEncoding.decode }</span></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.CategoricalEncoding.decode(feature, values)</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>Back-transform encoded columns to categories.</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a><span class="fu">##### encode { #bofire.data_models.encodings.api.CategoricalEncoding.encode }</span></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.CategoricalEncoding.encode(feature, values)</span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>Encode a series of categories into model-input columns.</span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>The returned frame's columns equal ``get_names(feature)``.</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a><span class="fu">##### get_bounds { #bofire.data_models.encodings.api.CategoricalEncoding.get_bounds }</span></span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.CategoricalEncoding.get_bounds(feature, values<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a>Lower/upper bounds of the encoded columns for ``feature``.</span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a>If ``values`` is None the optimization bounds (over allowed categories)</span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>are returned, else the full bounds over all categories.</span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a><span class="fu">##### get_names { #bofire.data_models.encodings.api.CategoricalEncoding.get_names }</span></span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb11-66"><a href="#cb11-66" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.CategoricalEncoding.get_names(feature)</span>
+<span id="cb11-67"><a href="#cb11-67" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-68"><a href="#cb11-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-69"><a href="#cb11-69" aria-hidden="true" tabindex="-1"></a>Final (encoded) column names produced for ``feature``.</span>
+<span id="cb11-70"><a href="#cb11-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-71"><a href="#cb11-71" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_for_feature { #bofire.data_models.encodings.api.CategoricalEncoding.validate_for_feature }</span></span>
+<span id="cb11-72"><a href="#cb11-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-73"><a href="#cb11-73" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb11-74"><a href="#cb11-74" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.CategoricalEncoding.validate_for_feature(feature)</span>
+<span id="cb11-75"><a href="#cb11-75" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-76"><a href="#cb11-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-77"><a href="#cb11-77" aria-hidden="true" tabindex="-1"></a>Validate this encoder instance is applicable to ``feature``.</span>
+<span id="cb11-78"><a href="#cb11-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-79"><a href="#cb11-79" aria-hidden="true" tabindex="-1"></a>The type-level check (``valid_transform_types``) only ensures the encoder</span>
+<span id="cb11-80"><a href="#cb11-80" aria-hidden="true" tabindex="-1"></a>*class* is allowed; this instance-level hook rejects encoders whose concrete</span>
+<span id="cb11-81"><a href="#cb11-81" aria-hidden="true" tabindex="-1"></a>configuration cannot produce columns for the feature (e.g. a ``DescriptorEncoding``</span>
+<span id="cb11-82"><a href="#cb11-82" aria-hidden="true" tabindex="-1"></a>listing static columns the feature does not carry).</span>
+<span id="cb11-83"><a href="#cb11-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-84"><a href="#cb11-84" aria-hidden="true" tabindex="-1"></a><span class="fu">### OneHotEncoding { #bofire.data_models.encodings.api.OneHotEncoding }</span></span>
+<span id="cb11-85"><a href="#cb11-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-86"><a href="#cb11-86" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb11-87"><a href="#cb11-87" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.OneHotEncoding()</span>
+<span id="cb11-88"><a href="#cb11-88" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-89"><a href="#cb11-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-90"><a href="#cb11-90" aria-hidden="true" tabindex="-1"></a>One-hot encode a category into one binary column per category.</span>
+<span id="cb11-91"><a href="#cb11-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-92"><a href="#cb11-92" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes {.doc-section .doc-section-attributes}</span></span>
+<span id="cb11-93"><a href="#cb11-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-94"><a href="#cb11-94" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name       <span class="pp">|</span> Type   <span class="pp">|</span> Description                                                                                           <span class="pp">|</span></span>
+<span id="cb11-95"><a href="#cb11-95" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------|--------|-------------------------------------------------------------------------------------------------------|</span></span>
+<span id="cb11-96"><a href="#cb11-96" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> drop_first <span class="pp">|</span> bool   <span class="pp">|</span> If True, drop the first category's column (dummy encoding), yielding ``len(categories) - 1`` columns. <span class="pp">|</span></span>
+<span id="cb11-97"><a href="#cb11-97" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-98"><a href="#cb11-98" aria-hidden="true" tabindex="-1"></a><span class="fu">### OrdinalEncoding { #bofire.data_models.encodings.api.OrdinalEncoding }</span></span>
+<span id="cb11-99"><a href="#cb11-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-100"><a href="#cb11-100" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb11-101"><a href="#cb11-101" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.OrdinalEncoding()</span>
+<span id="cb11-102"><a href="#cb11-102" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-103"><a href="#cb11-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-104"><a href="#cb11-104" aria-hidden="true" tabindex="-1"></a>Encode a category as its integer index ``0 .. len(categories) - 1``.</span>
+<span id="cb11-105"><a href="#cb11-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-106"><a href="#cb11-106" aria-hidden="true" tabindex="-1"></a><span class="fu">### DescriptorEncoding { #bofire.data_models.encodings.api.DescriptorEncoding }</span></span>
+<span id="cb11-107"><a href="#cb11-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-108"><a href="#cb11-108" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb11-109"><a href="#cb11-109" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.DescriptorEncoding()</span>
+<span id="cb11-110"><a href="#cb11-110" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-111"><a href="#cb11-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-112"><a href="#cb11-112" aria-hidden="true" tabindex="-1"></a>Encode categories via a per-category descriptor row.</span>
+<span id="cb11-113"><a href="#cb11-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-114"><a href="#cb11-114" aria-hidden="true" tabindex="-1"></a>Inherits ``columns`` / ``generators`` / ``filter_descriptors`` /</span>
+<span id="cb11-115"><a href="#cb11-115" aria-hidden="true" tabindex="-1"></a>``correlation_cutoff`<span class="in">` from :class:`</span>DescriptorSpec`. With the default (no static</span>
+<span id="cb11-116"><a href="#cb11-116" aria-hidden="true" tabindex="-1"></a>columns listed, no generators) it uses all of the feature's numeric descriptor</span>
+<span id="cb11-117"><a href="#cb11-117" aria-hidden="true" tabindex="-1"></a>columns.</span>
+<span id="cb11-118"><a href="#cb11-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-119"><a href="#cb11-119" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb11-120"><a href="#cb11-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-121"><a href="#cb11-121" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb11-122"><a href="#cb11-122" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb11-123"><a href="#cb11-123" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">table</span><span class="co">](#bofire.data_models.encodings.api.DescriptorEncoding.table)</span> <span class="pp">|</span> Per-category descriptor table: one row per category, in ``categories`` order. <span class="pp">|</span></span>
+<span id="cb11-124"><a href="#cb11-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-125"><a href="#cb11-125" aria-hidden="true" tabindex="-1"></a><span class="fu">##### table { #bofire.data_models.encodings.api.DescriptorEncoding.table }</span></span>
+<span id="cb11-126"><a href="#cb11-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-127"><a href="#cb11-127" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb11-128"><a href="#cb11-128" aria-hidden="true" tabindex="-1"></a>data_models.encodings.api.DescriptorEncoding.table(feature)</span>
+<span id="cb11-129"><a href="#cb11-129" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb11-130"><a href="#cb11-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-131"><a href="#cb11-131" aria-hidden="true" tabindex="-1"></a>Per-category descriptor table: one row per category, in ``categories`` order.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/userguides/data_models_functionals.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/reference/data_models.encodings.api.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

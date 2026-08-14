@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-69b65dc57ba8b1f57efa9e8dc4c071d4.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-690a589ea57c1ca23f47088560ced4db.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-69b65dc57ba8b1f57efa9e8dc4c071d4.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-ef50085ffa0a8bbae5860f282a05e1be.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-6c5449043777d02e3d3fa6b5adb36893.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-ef50085ffa0a8bbae5860f282a05e1be.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -625,7 +625,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/benchmarks/012-engineered_features.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Optimization with <code>ContinuousDescriptorInput</code>s and engineered Features</span></a>
+ <span class="menu-text">Optimization with descriptor-carrying inputs and engineered Features</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -757,7 +757,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Make sure that <code>cyipopt</code>is installed. The recommend way is the installation via conda <code>conda install -c conda-forge cyipopt</code>.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="71f72305" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.575224,&quot;end_time&quot;:&quot;2024-10-10T20:36:07.482098&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:04.906874&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="4160eaeb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.575224,&quot;end_time&quot;:&quot;2024-10-10T20:36:07.482098&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:04.906874&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.api <span class="im">import</span> Domain, Inputs</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousInput</span>
@@ -768,7 +768,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="setup-of-the-problem" class="level2">
 <h2 class="anchored" data-anchor-id="setup-of-the-problem">Setup of the problem</h2>
-<div id="3e102291" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.004962,&quot;end_time&quot;:&quot;2024-10-10T20:36:07.490484&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:07.485522&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="1a7851e9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.004962,&quot;end_time&quot;:&quot;2024-10-10T20:36:07.490484&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:07.485522&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>input_features <span class="op">=</span> Inputs(</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    features<span class="op">=</span>[</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"a"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">5</span>)),</span>
@@ -782,7 +782,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="definition-of-the-formula-for-which-the-optimal-points-should-be-found" class="level2">
 <h2 class="anchored" data-anchor-id="definition-of-the-formula-for-which-the-optimal-points-should-be-found">Definition of the formula for which the optimal points should be found</h2>
-<div id="d80ccac5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.006259,&quot;end_time&quot;:&quot;2024-10-10T20:36:07.500051&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:07.493792&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="dffa229e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.006259,&quot;end_time&quot;:&quot;2024-10-10T20:36:07.500051&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:36:07.493792&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>model_type <span class="op">=</span> <span class="st">"a + {a**2} + b + c + d + a:b + a:c + a:d + b:c + b:d + c:d"</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>model_type</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="3">
@@ -792,7 +792,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="find-d-optimal-design" class="level2">
 <h2 class="anchored" data-anchor-id="find-d-optimal-design">Find D-optimal Design</h2>
-<div id="a530afeb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.573357,&quot;end_time&quot;:&quot;2024-10-10T20:36:08.076835&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:07.503478&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="5579ad44" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.573357,&quot;end_time&quot;:&quot;2024-10-10T20:36:08.076835&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:07.503478&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span>model_type),</span>
@@ -822,122 +822,122 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>5.0</td>
-<td>800.000000</td>
+<td>5.000000</td>
+<td>40.000000</td>
 <td>180.0</td>
 <td>800.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>0.0</td>
-<td>800.000000</td>
-<td>80.0</td>
+<td>0.000000</td>
+<td>539.365497</td>
+<td>180.0</td>
 <td>200.000000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>0.0</td>
-<td>800.000000</td>
-<td>180.0</td>
+<td>5.000000</td>
+<td>40.000000</td>
+<td>80.0</td>
 <td>800.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>0.0</td>
-<td>40.000000</td>
+<td>0.000000</td>
+<td>800.000000</td>
 <td>180.0</td>
-<td>200.000000</td>
+<td>800.000000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>5.0</td>
-<td>800.000000</td>
+<td>0.000000</td>
+<td>40.000000</td>
 <td>80.0</td>
 <td>200.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>5.0</td>
+<td>5.000000</td>
 <td>40.000000</td>
-<td>180.0</td>
+<td>80.0</td>
 <td>200.000000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>5.0</td>
-<td>40.000000</td>
+<td>0.000000</td>
+<td>800.000000</td>
 <td>80.0</td>
 <td>800.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>0.0</td>
+<td>5.000000</td>
 <td>800.000000</td>
-<td>180.0</td>
-<td>200.000000</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">8</th>
-<td>5.0</td>
-<td>800.000000</td>
-<td>180.0</td>
-<td>800.000000</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">9</th>
-<td>2.5</td>
-<td>464.417562</td>
-<td>180.0</td>
-<td>525.726858</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">10</th>
-<td>0.0</td>
-<td>800.000000</td>
-<td>180.0</td>
-<td>800.000000</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">11</th>
-<td>0.0</td>
-<td>40.000000</td>
 <td>80.0</td>
 <td>800.000000</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">12</th>
-<td>0.0</td>
+<th data-quarto-table-cell-role="th">8</th>
+<td>5.000000</td>
 <td>40.000000</td>
 <td>180.0</td>
+<td>200.000000</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">9</th>
+<td>5.000000</td>
+<td>800.000000</td>
+<td>80.0</td>
+<td>200.000000</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">10</th>
+<td>0.000000</td>
+<td>628.176996</td>
+<td>80.0</td>
+<td>211.835652</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">11</th>
+<td>5.000000</td>
+<td>40.000000</td>
+<td>180.0</td>
+<td>615.397311</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">12</th>
+<td>0.000000</td>
+<td>190.467405</td>
+<td>80.0</td>
 <td>800.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">13</th>
-<td>5.0</td>
-<td>800.000000</td>
+<td>2.507955</td>
+<td>587.572444</td>
 <td>180.0</td>
-<td>200.000000</td>
+<td>318.313571</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">14</th>
-<td>5.0</td>
-<td>40.000000</td>
+<td>0.000000</td>
+<td>677.819649</td>
 <td>180.0</td>
-<td>800.000000</td>
+<td>637.864080</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">15</th>
-<td>5.0</td>
+<td>0.000000</td>
 <td>40.000000</td>
-<td>80.0</td>
-<td>200.000000</td>
+<td>180.0</td>
+<td>600.012582</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">16</th>
-<td>0.0</td>
+<td>5.000000</td>
 <td>800.000000</td>
-<td>80.0</td>
-<td>800.000000</td>
+<td>180.0</td>
+<td>200.000000</td>
 </tr>
 </tbody>
 </table>
@@ -948,7 +948,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="analyze-confounding" class="level2">
 <h2 class="anchored" data-anchor-id="analyze-confounding">Analyze Confounding</h2>
-<div id="f2cc4ff3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="5">
+<div id="8d4579e3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
@@ -968,7 +968,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="design_with_explicit_formula_files/figure-html/cell-6-output-1.png" width="691" height="545" class="figure-img"></p>
+<p><img src="design_with_explicit_formula_files/figure-html/cell-6-output-1.png" width="705" height="545" class="figure-img"></p>
 </figure>
 </div>
 </div>

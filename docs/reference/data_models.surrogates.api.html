@@ -77,9 +77,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-69b65dc57ba8b1f57efa9e8dc4c071d4.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-dark-690a589ea57c1ca23f47088560ced4db.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-69b65dc57ba8b1f57efa9e8dc4c071d4.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-ef50085ffa0a8bbae5860f282a05e1be.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-6c5449043777d02e3d3fa6b5adb36893.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-ef50085ffa0a8bbae5860f282a05e1be.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -472,6 +472,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="bofire.data_models.surrogates.api.Surrogate" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.Surrogate">Surrogate</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.Surrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="attributes" class="level4">
+<h4 class="anchored" data-anchor-id="attributes">Attributes</h4>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="#bofire.data_models.surrogates.api.Surrogate.input_preprocessing_specs">input_preprocessing_specs</a></td>
+<td>Pre-model tensorization: every categorical is ordinal-encoded (the in-model</td>
+</tr>
+</tbody>
+</table>
+</section>
 <section id="methods" class="level4">
 <h4 class="anchored" data-anchor-id="methods">Methods</h4>
 <table class="caption-top table">
@@ -580,8 +597,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RobustSingleTaskGPSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Robust Relevance Pursuit Single Task Gaussian Process Surrogate.</p>
 <p>A robust single-task GP that learns a data-point specific noise level and is therefore more robust to outliers. See: https://botorch.org/docs/tutorials/relevance_pursuit_robust_regression/ Paper: https://arxiv.org/pdf/2410.24222</p>
-<section id="attributes" class="level4 doc-section doc-section-attributes">
-<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes">Attributes</h4>
+<section id="attributes-1" class="level4 doc-section doc-section-attributes">
+<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes-1">Attributes</h4>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 14%">
@@ -662,7 +679,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="even">
 <td><a href="#bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars">validate_moleculars</a></td>
-<td>Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present.</td>
+<td>Checks that at least one fingerprint/fragment descriptor encoding is present.</td>
 </tr>
 </tbody>
 </table>
@@ -674,7 +691,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars" class="level5">
 <h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars">validate_moleculars</h5>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present.</p>
+<p>Checks that at least one fingerprint/fragment descriptor encoding is present.</p>
 </section>
 </section>
 </section>
@@ -1272,281 +1289,287 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes</span></span>
 <span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
 <span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.Surrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">input_preprocessing_specs</span><span class="co">](#bofire.data_models.surrogates.api.Surrogate.input_preprocessing_specs)</span> <span class="pp">|</span> Pre-model tensorization: every categorical is ordinal-encoded (the in-model <span class="pp">|</span></span>
 <span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.Surrogate.is_output_implemented }</span></span>
+<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
 <span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.Surrogate.is_output_implemented(my_type)</span>
-<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.Surrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
 <span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb22-45"><a href="#cb22-45" aria-hidden="true" tabindex="-1"></a>    outputs: objective functions for the surrogate</span>
-<span id="cb22-46"><a href="#cb22-46" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb22-47"><a href="#cb22-47" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb22-48"><a href="#cb22-48" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
-<span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-50"><a href="#cb22-50" aria-hidden="true" tabindex="-1"></a><span class="fu">### SingleTaskGPSurrogate { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate }</span></span>
-<span id="cb22-51"><a href="#cb22-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-52"><a href="#cb22-52" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-53"><a href="#cb22-53" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate()</span>
-<span id="cb22-54"><a href="#cb22-54" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.Surrogate.is_output_implemented }</span></span>
+<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-45"><a href="#cb22-45" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-46"><a href="#cb22-46" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.Surrogate.is_output_implemented(my_type)</span>
+<span id="cb22-47"><a href="#cb22-47" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-48"><a href="#cb22-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb22-50"><a href="#cb22-50" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb22-51"><a href="#cb22-51" aria-hidden="true" tabindex="-1"></a>    outputs: objective functions for the surrogate</span>
+<span id="cb22-52"><a href="#cb22-52" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb22-53"><a href="#cb22-53" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb22-54"><a href="#cb22-54" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
 <span id="cb22-55"><a href="#cb22-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-56"><a href="#cb22-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-56"><a href="#cb22-56" aria-hidden="true" tabindex="-1"></a><span class="fu">### SingleTaskGPSurrogate { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate }</span></span>
 <span id="cb22-57"><a href="#cb22-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-58"><a href="#cb22-58" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb22-59"><a href="#cb22-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-60"><a href="#cb22-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb22-61"><a href="#cb22-61" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb22-62"><a href="#cb22-62" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb22-58"><a href="#cb22-58" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-59"><a href="#cb22-59" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate()</span>
+<span id="cb22-60"><a href="#cb22-60" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-61"><a href="#cb22-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-62"><a href="#cb22-62" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-63"><a href="#cb22-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-64"><a href="#cb22-64" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented }</span></span>
+<span id="cb22-64"><a href="#cb22-64" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
 <span id="cb22-65"><a href="#cb22-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-66"><a href="#cb22-66" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-67"><a href="#cb22-67" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented(my_type)</span>
-<span id="cb22-68"><a href="#cb22-68" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-66"><a href="#cb22-66" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb22-67"><a href="#cb22-67" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb22-68"><a href="#cb22-68" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
 <span id="cb22-69"><a href="#cb22-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-70"><a href="#cb22-70" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb22-71"><a href="#cb22-71" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb22-72"><a href="#cb22-72" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb22-73"><a href="#cb22-73" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb22-74"><a href="#cb22-74" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb22-70"><a href="#cb22-70" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented }</span></span>
+<span id="cb22-71"><a href="#cb22-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-72"><a href="#cb22-72" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-73"><a href="#cb22-73" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented(my_type)</span>
+<span id="cb22-74"><a href="#cb22-74" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb22-75"><a href="#cb22-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-76"><a href="#cb22-76" aria-hidden="true" tabindex="-1"></a><span class="fu">### MixedSingleTaskGPSurrogate { #bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate }</span></span>
-<span id="cb22-77"><a href="#cb22-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-78"><a href="#cb22-78" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-79"><a href="#cb22-79" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MixedSingleTaskGPSurrogate()</span>
-<span id="cb22-80"><a href="#cb22-80" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-76"><a href="#cb22-76" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb22-77"><a href="#cb22-77" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb22-78"><a href="#cb22-78" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb22-79"><a href="#cb22-79" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb22-80"><a href="#cb22-80" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
 <span id="cb22-81"><a href="#cb22-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-82"><a href="#cb22-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-82"><a href="#cb22-82" aria-hidden="true" tabindex="-1"></a><span class="fu">### MixedSingleTaskGPSurrogate { #bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate }</span></span>
 <span id="cb22-83"><a href="#cb22-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-84"><a href="#cb22-84" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb22-85"><a href="#cb22-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-86"><a href="#cb22-86" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb22-87"><a href="#cb22-87" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb22-88"><a href="#cb22-88" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb22-84"><a href="#cb22-84" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-85"><a href="#cb22-85" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MixedSingleTaskGPSurrogate()</span>
+<span id="cb22-86"><a href="#cb22-86" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-87"><a href="#cb22-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-88"><a href="#cb22-88" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-89"><a href="#cb22-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-90"><a href="#cb22-90" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented }</span></span>
+<span id="cb22-90"><a href="#cb22-90" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
 <span id="cb22-91"><a href="#cb22-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-92"><a href="#cb22-92" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-93"><a href="#cb22-93" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented(</span>
-<span id="cb22-94"><a href="#cb22-94" aria-hidden="true" tabindex="-1"></a>    my_type,</span>
-<span id="cb22-95"><a href="#cb22-95" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb22-96"><a href="#cb22-96" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-92"><a href="#cb22-92" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb22-93"><a href="#cb22-93" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb22-94"><a href="#cb22-94" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb22-95"><a href="#cb22-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-96"><a href="#cb22-96" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented }</span></span>
 <span id="cb22-97"><a href="#cb22-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-98"><a href="#cb22-98" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb22-99"><a href="#cb22-99" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb22-100"><a href="#cb22-100" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb22-101"><a href="#cb22-101" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb22-102"><a href="#cb22-102" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb22-98"><a href="#cb22-98" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-99"><a href="#cb22-99" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented(</span>
+<span id="cb22-100"><a href="#cb22-100" aria-hidden="true" tabindex="-1"></a>    my_type,</span>
+<span id="cb22-101"><a href="#cb22-101" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-102"><a href="#cb22-102" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb22-103"><a href="#cb22-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-104"><a href="#cb22-104" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiTaskGPSurrogate { #bofire.data_models.surrogates.api.MultiTaskGPSurrogate }</span></span>
-<span id="cb22-105"><a href="#cb22-105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-106"><a href="#cb22-106" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-107"><a href="#cb22-107" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MultiTaskGPSurrogate()</span>
-<span id="cb22-108"><a href="#cb22-108" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-104"><a href="#cb22-104" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb22-105"><a href="#cb22-105" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb22-106"><a href="#cb22-106" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb22-107"><a href="#cb22-107" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb22-108"><a href="#cb22-108" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
 <span id="cb22-109"><a href="#cb22-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-110"><a href="#cb22-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-110"><a href="#cb22-110" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiTaskGPSurrogate { #bofire.data_models.surrogates.api.MultiTaskGPSurrogate }</span></span>
 <span id="cb22-111"><a href="#cb22-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-112"><a href="#cb22-112" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb22-113"><a href="#cb22-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-114"><a href="#cb22-114" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb22-115"><a href="#cb22-115" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb22-116"><a href="#cb22-116" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb22-112"><a href="#cb22-112" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-113"><a href="#cb22-113" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MultiTaskGPSurrogate()</span>
+<span id="cb22-114"><a href="#cb22-114" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-115"><a href="#cb22-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-116"><a href="#cb22-116" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-117"><a href="#cb22-117" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-118"><a href="#cb22-118" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented }</span></span>
+<span id="cb22-118"><a href="#cb22-118" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
 <span id="cb22-119"><a href="#cb22-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-120"><a href="#cb22-120" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-121"><a href="#cb22-121" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented(my_type)</span>
-<span id="cb22-122"><a href="#cb22-122" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-120"><a href="#cb22-120" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb22-121"><a href="#cb22-121" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb22-122"><a href="#cb22-122" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
 <span id="cb22-123"><a href="#cb22-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-124"><a href="#cb22-124" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb22-125"><a href="#cb22-125" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb22-126"><a href="#cb22-126" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb22-127"><a href="#cb22-127" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb22-128"><a href="#cb22-128" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb22-124"><a href="#cb22-124" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented }</span></span>
+<span id="cb22-125"><a href="#cb22-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-126"><a href="#cb22-126" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-127"><a href="#cb22-127" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented(my_type)</span>
+<span id="cb22-128"><a href="#cb22-128" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb22-129"><a href="#cb22-129" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-130"><a href="#cb22-130" aria-hidden="true" tabindex="-1"></a><span class="fu">### RobustSingleTaskGPSurrogate { #bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate }</span></span>
-<span id="cb22-131"><a href="#cb22-131" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-132"><a href="#cb22-132" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-133"><a href="#cb22-133" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RobustSingleTaskGPSurrogate()</span>
-<span id="cb22-134"><a href="#cb22-134" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-130"><a href="#cb22-130" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb22-131"><a href="#cb22-131" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb22-132"><a href="#cb22-132" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb22-133"><a href="#cb22-133" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb22-134"><a href="#cb22-134" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
 <span id="cb22-135"><a href="#cb22-135" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-136"><a href="#cb22-136" aria-hidden="true" tabindex="-1"></a>Robust Relevance Pursuit Single Task Gaussian Process Surrogate.</span>
+<span id="cb22-136"><a href="#cb22-136" aria-hidden="true" tabindex="-1"></a><span class="fu">### RobustSingleTaskGPSurrogate { #bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate }</span></span>
 <span id="cb22-137"><a href="#cb22-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-138"><a href="#cb22-138" aria-hidden="true" tabindex="-1"></a>A robust single-task GP that learns a data-point specific noise level and is therefore more robust to outliers.</span>
-<span id="cb22-139"><a href="#cb22-139" aria-hidden="true" tabindex="-1"></a>See: https://botorch.org/docs/tutorials/relevance_pursuit_robust_regression/</span>
-<span id="cb22-140"><a href="#cb22-140" aria-hidden="true" tabindex="-1"></a>Paper: https://arxiv.org/pdf/2410.24222</span>
+<span id="cb22-138"><a href="#cb22-138" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-139"><a href="#cb22-139" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RobustSingleTaskGPSurrogate()</span>
+<span id="cb22-140"><a href="#cb22-140" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb22-141"><a href="#cb22-141" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-142"><a href="#cb22-142" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes {.doc-section .doc-section-attributes}</span></span>
+<span id="cb22-142"><a href="#cb22-142" aria-hidden="true" tabindex="-1"></a>Robust Relevance Pursuit Single Task Gaussian Process Surrogate.</span>
 <span id="cb22-143"><a href="#cb22-143" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-144"><a href="#cb22-144" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                   <span class="pp">|</span> Type            <span class="pp">|</span> Description                                                                                                            <span class="pp">|</span></span>
-<span id="cb22-145"><a href="#cb22-145" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------------------|-----------------|------------------------------------------------------------------------------------------------------------------------|</span></span>
-<span id="cb22-146"><a href="#cb22-146" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> prior_mean_of_support  <span class="pp">|</span> Optional<span class="sc">\[</span>int<span class="sc">\]</span> <span class="pp">|</span> The prior mean of the support.                                                                                         <span class="pp">|</span></span>
-<span id="cb22-147"><a href="#cb22-147" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> convex_parametrization <span class="pp">|</span> bool            <span class="pp">|</span> Whether to use convex parametrization of the sparse noise model.                                                       <span class="pp">|</span></span>
-<span id="cb22-148"><a href="#cb22-148" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> cache_model_trace      <span class="pp">|</span> bool            <span class="pp">|</span> Whether to cache the model trace. This needs no be set to True if you want to view the model trace after optimization. <span class="pp">|</span></span>
+<span id="cb22-144"><a href="#cb22-144" aria-hidden="true" tabindex="-1"></a>A robust single-task GP that learns a data-point specific noise level and is therefore more robust to outliers.</span>
+<span id="cb22-145"><a href="#cb22-145" aria-hidden="true" tabindex="-1"></a>See: https://botorch.org/docs/tutorials/relevance_pursuit_robust_regression/</span>
+<span id="cb22-146"><a href="#cb22-146" aria-hidden="true" tabindex="-1"></a>Paper: https://arxiv.org/pdf/2410.24222</span>
+<span id="cb22-147"><a href="#cb22-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-148"><a href="#cb22-148" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes {.doc-section .doc-section-attributes}</span></span>
 <span id="cb22-149"><a href="#cb22-149" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-150"><a href="#cb22-150" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Note {.doc-section .doc-section-note}</span></span>
-<span id="cb22-151"><a href="#cb22-151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-152"><a href="#cb22-152" aria-hidden="true" tabindex="-1"></a>The definition of "outliers" depends on the model capacity, so what is an outlier</span>
-<span id="cb22-153"><a href="#cb22-153" aria-hidden="true" tabindex="-1"></a>with respect to a simple model might not be an outlier with respect to a complex model.</span>
-<span id="cb22-154"><a href="#cb22-154" aria-hidden="true" tabindex="-1"></a>For this reason, it is necessary to bound the lengthscale of the GP kernel from below.</span>
+<span id="cb22-150"><a href="#cb22-150" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                   <span class="pp">|</span> Type            <span class="pp">|</span> Description                                                                                                            <span class="pp">|</span></span>
+<span id="cb22-151"><a href="#cb22-151" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------------------|-----------------|------------------------------------------------------------------------------------------------------------------------|</span></span>
+<span id="cb22-152"><a href="#cb22-152" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> prior_mean_of_support  <span class="pp">|</span> Optional<span class="sc">\[</span>int<span class="sc">\]</span> <span class="pp">|</span> The prior mean of the support.                                                                                         <span class="pp">|</span></span>
+<span id="cb22-153"><a href="#cb22-153" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> convex_parametrization <span class="pp">|</span> bool            <span class="pp">|</span> Whether to use convex parametrization of the sparse noise model.                                                       <span class="pp">|</span></span>
+<span id="cb22-154"><a href="#cb22-154" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> cache_model_trace      <span class="pp">|</span> bool            <span class="pp">|</span> Whether to cache the model trace. This needs no be set to True if you want to view the model trace after optimization. <span class="pp">|</span></span>
 <span id="cb22-155"><a href="#cb22-155" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-156"><a href="#cb22-156" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb22-156"><a href="#cb22-156" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Note {.doc-section .doc-section-note}</span></span>
 <span id="cb22-157"><a href="#cb22-157" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-158"><a href="#cb22-158" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb22-159"><a href="#cb22-159" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb22-160"><a href="#cb22-160" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb22-158"><a href="#cb22-158" aria-hidden="true" tabindex="-1"></a>The definition of "outliers" depends on the model capacity, so what is an outlier</span>
+<span id="cb22-159"><a href="#cb22-159" aria-hidden="true" tabindex="-1"></a>with respect to a simple model might not be an outlier with respect to a complex model.</span>
+<span id="cb22-160"><a href="#cb22-160" aria-hidden="true" tabindex="-1"></a>For this reason, it is necessary to bound the lengthscale of the GP kernel from below.</span>
 <span id="cb22-161"><a href="#cb22-161" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-162"><a href="#cb22-162" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented }</span></span>
+<span id="cb22-162"><a href="#cb22-162" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
 <span id="cb22-163"><a href="#cb22-163" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-164"><a href="#cb22-164" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-165"><a href="#cb22-165" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented(</span>
-<span id="cb22-166"><a href="#cb22-166" aria-hidden="true" tabindex="-1"></a>    my_type,</span>
-<span id="cb22-167"><a href="#cb22-167" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb22-168"><a href="#cb22-168" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-164"><a href="#cb22-164" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb22-165"><a href="#cb22-165" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb22-166"><a href="#cb22-166" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb22-167"><a href="#cb22-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-168"><a href="#cb22-168" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented }</span></span>
 <span id="cb22-169"><a href="#cb22-169" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-170"><a href="#cb22-170" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb22-171"><a href="#cb22-171" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb22-172"><a href="#cb22-172" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb22-173"><a href="#cb22-173" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb22-174"><a href="#cb22-174" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb22-170"><a href="#cb22-170" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-171"><a href="#cb22-171" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented(</span>
+<span id="cb22-172"><a href="#cb22-172" aria-hidden="true" tabindex="-1"></a>    my_type,</span>
+<span id="cb22-173"><a href="#cb22-173" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-174"><a href="#cb22-174" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb22-175"><a href="#cb22-175" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-176"><a href="#cb22-176" aria-hidden="true" tabindex="-1"></a><span class="fu">### TanimotoGPSurrogate { #bofire.data_models.surrogates.api.TanimotoGPSurrogate }</span></span>
-<span id="cb22-177"><a href="#cb22-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-178"><a href="#cb22-178" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-179"><a href="#cb22-179" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate()</span>
-<span id="cb22-180"><a href="#cb22-180" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-176"><a href="#cb22-176" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb22-177"><a href="#cb22-177" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb22-178"><a href="#cb22-178" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb22-179"><a href="#cb22-179" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb22-180"><a href="#cb22-180" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
 <span id="cb22-181"><a href="#cb22-181" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-182"><a href="#cb22-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-182"><a href="#cb22-182" aria-hidden="true" tabindex="-1"></a><span class="fu">### TanimotoGPSurrogate { #bofire.data_models.surrogates.api.TanimotoGPSurrogate }</span></span>
 <span id="cb22-183"><a href="#cb22-183" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-184"><a href="#cb22-184" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb22-185"><a href="#cb22-185" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-186"><a href="#cb22-186" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb22-187"><a href="#cb22-187" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb22-188"><a href="#cb22-188" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
-<span id="cb22-189"><a href="#cb22-189" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_moleculars</span><span class="co">](#bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars)</span> <span class="pp">|</span> Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present. <span class="pp">|</span></span>
-<span id="cb22-190"><a href="#cb22-190" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-191"><a href="#cb22-191" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented }</span></span>
-<span id="cb22-192"><a href="#cb22-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-193"><a href="#cb22-193" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-194"><a href="#cb22-194" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented(my_type)</span>
-<span id="cb22-195"><a href="#cb22-195" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-184"><a href="#cb22-184" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-185"><a href="#cb22-185" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate()</span>
+<span id="cb22-186"><a href="#cb22-186" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-187"><a href="#cb22-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-188"><a href="#cb22-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-189"><a href="#cb22-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-190"><a href="#cb22-190" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb22-191"><a href="#cb22-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-192"><a href="#cb22-192" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb22-193"><a href="#cb22-193" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb22-194"><a href="#cb22-194" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb22-195"><a href="#cb22-195" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_moleculars</span><span class="co">](#bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars)</span> <span class="pp">|</span> Checks that at least one fingerprint/fragment descriptor encoding is present. <span class="pp">|</span></span>
 <span id="cb22-196"><a href="#cb22-196" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-197"><a href="#cb22-197" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb22-198"><a href="#cb22-198" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb22-199"><a href="#cb22-199" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb22-200"><a href="#cb22-200" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb22-201"><a href="#cb22-201" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb22-197"><a href="#cb22-197" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented }</span></span>
+<span id="cb22-198"><a href="#cb22-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-199"><a href="#cb22-199" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-200"><a href="#cb22-200" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented(my_type)</span>
+<span id="cb22-201"><a href="#cb22-201" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb22-202"><a href="#cb22-202" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-203"><a href="#cb22-203" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_moleculars { #bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars }</span></span>
-<span id="cb22-204"><a href="#cb22-204" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-205"><a href="#cb22-205" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-206"><a href="#cb22-206" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars()</span>
-<span id="cb22-207"><a href="#cb22-207" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-203"><a href="#cb22-203" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb22-204"><a href="#cb22-204" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb22-205"><a href="#cb22-205" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb22-206"><a href="#cb22-206" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb22-207"><a href="#cb22-207" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
 <span id="cb22-208"><a href="#cb22-208" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-209"><a href="#cb22-209" aria-hidden="true" tabindex="-1"></a>Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present.</span>
+<span id="cb22-209"><a href="#cb22-209" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_moleculars { #bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars }</span></span>
 <span id="cb22-210"><a href="#cb22-210" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-211"><a href="#cb22-211" aria-hidden="true" tabindex="-1"></a><span class="fu">### LinearSurrogate { #bofire.data_models.surrogates.api.LinearSurrogate }</span></span>
-<span id="cb22-212"><a href="#cb22-212" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-213"><a href="#cb22-213" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-214"><a href="#cb22-214" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.LinearSurrogate()</span>
-<span id="cb22-215"><a href="#cb22-215" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-211"><a href="#cb22-211" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-212"><a href="#cb22-212" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars()</span>
+<span id="cb22-213"><a href="#cb22-213" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-214"><a href="#cb22-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-215"><a href="#cb22-215" aria-hidden="true" tabindex="-1"></a>Checks that at least one fingerprint/fragment descriptor encoding is present.</span>
 <span id="cb22-216"><a href="#cb22-216" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-217"><a href="#cb22-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-217"><a href="#cb22-217" aria-hidden="true" tabindex="-1"></a><span class="fu">### LinearSurrogate { #bofire.data_models.surrogates.api.LinearSurrogate }</span></span>
 <span id="cb22-218"><a href="#cb22-218" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-219"><a href="#cb22-219" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb22-220"><a href="#cb22-220" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-221"><a href="#cb22-221" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb22-222"><a href="#cb22-222" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb22-223"><a href="#cb22-223" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.LinearSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb22-219"><a href="#cb22-219" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-220"><a href="#cb22-220" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.LinearSurrogate()</span>
+<span id="cb22-221"><a href="#cb22-221" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-222"><a href="#cb22-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-223"><a href="#cb22-223" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-224"><a href="#cb22-224" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-225"><a href="#cb22-225" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.LinearSurrogate.is_output_implemented }</span></span>
+<span id="cb22-225"><a href="#cb22-225" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
 <span id="cb22-226"><a href="#cb22-226" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-227"><a href="#cb22-227" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-228"><a href="#cb22-228" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.LinearSurrogate.is_output_implemented(my_type)</span>
-<span id="cb22-229"><a href="#cb22-229" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-227"><a href="#cb22-227" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb22-228"><a href="#cb22-228" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb22-229"><a href="#cb22-229" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.LinearSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
 <span id="cb22-230"><a href="#cb22-230" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-231"><a href="#cb22-231" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb22-232"><a href="#cb22-232" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb22-233"><a href="#cb22-233" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb22-234"><a href="#cb22-234" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb22-235"><a href="#cb22-235" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb22-231"><a href="#cb22-231" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.LinearSurrogate.is_output_implemented }</span></span>
+<span id="cb22-232"><a href="#cb22-232" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-233"><a href="#cb22-233" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-234"><a href="#cb22-234" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.LinearSurrogate.is_output_implemented(my_type)</span>
+<span id="cb22-235"><a href="#cb22-235" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb22-236"><a href="#cb22-236" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-237"><a href="#cb22-237" aria-hidden="true" tabindex="-1"></a><span class="fu">### PolynomialSurrogate { #bofire.data_models.surrogates.api.PolynomialSurrogate }</span></span>
-<span id="cb22-238"><a href="#cb22-238" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-239"><a href="#cb22-239" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-240"><a href="#cb22-240" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.PolynomialSurrogate()</span>
-<span id="cb22-241"><a href="#cb22-241" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-237"><a href="#cb22-237" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb22-238"><a href="#cb22-238" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb22-239"><a href="#cb22-239" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb22-240"><a href="#cb22-240" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb22-241"><a href="#cb22-241" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
 <span id="cb22-242"><a href="#cb22-242" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-243"><a href="#cb22-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-243"><a href="#cb22-243" aria-hidden="true" tabindex="-1"></a><span class="fu">### PolynomialSurrogate { #bofire.data_models.surrogates.api.PolynomialSurrogate }</span></span>
 <span id="cb22-244"><a href="#cb22-244" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-245"><a href="#cb22-245" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb22-246"><a href="#cb22-246" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-247"><a href="#cb22-247" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb22-248"><a href="#cb22-248" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb22-249"><a href="#cb22-249" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.PolynomialSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb22-245"><a href="#cb22-245" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-246"><a href="#cb22-246" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.PolynomialSurrogate()</span>
+<span id="cb22-247"><a href="#cb22-247" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-248"><a href="#cb22-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-249"><a href="#cb22-249" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-250"><a href="#cb22-250" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-251"><a href="#cb22-251" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.PolynomialSurrogate.is_output_implemented }</span></span>
+<span id="cb22-251"><a href="#cb22-251" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
 <span id="cb22-252"><a href="#cb22-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-253"><a href="#cb22-253" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-254"><a href="#cb22-254" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.PolynomialSurrogate.is_output_implemented(my_type)</span>
-<span id="cb22-255"><a href="#cb22-255" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-253"><a href="#cb22-253" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb22-254"><a href="#cb22-254" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb22-255"><a href="#cb22-255" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.PolynomialSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
 <span id="cb22-256"><a href="#cb22-256" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-257"><a href="#cb22-257" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb22-258"><a href="#cb22-258" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb22-259"><a href="#cb22-259" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb22-260"><a href="#cb22-260" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb22-261"><a href="#cb22-261" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb22-257"><a href="#cb22-257" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.PolynomialSurrogate.is_output_implemented }</span></span>
+<span id="cb22-258"><a href="#cb22-258" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-259"><a href="#cb22-259" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-260"><a href="#cb22-260" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.PolynomialSurrogate.is_output_implemented(my_type)</span>
+<span id="cb22-261"><a href="#cb22-261" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb22-262"><a href="#cb22-262" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-263"><a href="#cb22-263" aria-hidden="true" tabindex="-1"></a><span class="fu">### RandomForestSurrogate { #bofire.data_models.surrogates.api.RandomForestSurrogate }</span></span>
-<span id="cb22-264"><a href="#cb22-264" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-265"><a href="#cb22-265" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-266"><a href="#cb22-266" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RandomForestSurrogate()</span>
-<span id="cb22-267"><a href="#cb22-267" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-263"><a href="#cb22-263" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb22-264"><a href="#cb22-264" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb22-265"><a href="#cb22-265" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb22-266"><a href="#cb22-266" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb22-267"><a href="#cb22-267" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
 <span id="cb22-268"><a href="#cb22-268" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-269"><a href="#cb22-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-269"><a href="#cb22-269" aria-hidden="true" tabindex="-1"></a><span class="fu">### RandomForestSurrogate { #bofire.data_models.surrogates.api.RandomForestSurrogate }</span></span>
 <span id="cb22-270"><a href="#cb22-270" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-271"><a href="#cb22-271" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb22-272"><a href="#cb22-272" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-273"><a href="#cb22-273" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb22-274"><a href="#cb22-274" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb22-275"><a href="#cb22-275" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.RandomForestSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb22-271"><a href="#cb22-271" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-272"><a href="#cb22-272" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RandomForestSurrogate()</span>
+<span id="cb22-273"><a href="#cb22-273" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-274"><a href="#cb22-274" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-275"><a href="#cb22-275" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-276"><a href="#cb22-276" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-277"><a href="#cb22-277" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.RandomForestSurrogate.is_output_implemented }</span></span>
+<span id="cb22-277"><a href="#cb22-277" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
 <span id="cb22-278"><a href="#cb22-278" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-279"><a href="#cb22-279" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-280"><a href="#cb22-280" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RandomForestSurrogate.is_output_implemented(my_type)</span>
-<span id="cb22-281"><a href="#cb22-281" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-279"><a href="#cb22-279" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb22-280"><a href="#cb22-280" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb22-281"><a href="#cb22-281" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.RandomForestSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
 <span id="cb22-282"><a href="#cb22-282" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-283"><a href="#cb22-283" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb22-284"><a href="#cb22-284" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb22-285"><a href="#cb22-285" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb22-286"><a href="#cb22-286" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb22-287"><a href="#cb22-287" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb22-283"><a href="#cb22-283" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.RandomForestSurrogate.is_output_implemented }</span></span>
+<span id="cb22-284"><a href="#cb22-284" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-285"><a href="#cb22-285" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-286"><a href="#cb22-286" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RandomForestSurrogate.is_output_implemented(my_type)</span>
+<span id="cb22-287"><a href="#cb22-287" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb22-288"><a href="#cb22-288" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-289"><a href="#cb22-289" aria-hidden="true" tabindex="-1"></a><span class="fu">### MLPEnsemble { #bofire.data_models.surrogates.api.MLPEnsemble }</span></span>
-<span id="cb22-290"><a href="#cb22-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-291"><a href="#cb22-291" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-292"><a href="#cb22-292" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MLPEnsemble()</span>
-<span id="cb22-293"><a href="#cb22-293" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-289"><a href="#cb22-289" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb22-290"><a href="#cb22-290" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb22-291"><a href="#cb22-291" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb22-292"><a href="#cb22-292" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb22-293"><a href="#cb22-293" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
 <span id="cb22-294"><a href="#cb22-294" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-295"><a href="#cb22-295" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-295"><a href="#cb22-295" aria-hidden="true" tabindex="-1"></a><span class="fu">### MLPEnsemble { #bofire.data_models.surrogates.api.MLPEnsemble }</span></span>
 <span id="cb22-296"><a href="#cb22-296" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-297"><a href="#cb22-297" aria-hidden="true" tabindex="-1"></a><span class="fu">### BotorchSurrogates { #bofire.data_models.surrogates.api.BotorchSurrogates }</span></span>
-<span id="cb22-298"><a href="#cb22-298" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-299"><a href="#cb22-299" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb22-300"><a href="#cb22-300" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.BotorchSurrogates()</span>
-<span id="cb22-301"><a href="#cb22-301" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-297"><a href="#cb22-297" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-298"><a href="#cb22-298" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MLPEnsemble()</span>
+<span id="cb22-299"><a href="#cb22-299" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-300"><a href="#cb22-300" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-301"><a href="#cb22-301" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-302"><a href="#cb22-302" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-303"><a href="#cb22-303" aria-hidden="true" tabindex="-1"></a>"List of botorch surrogates.</span>
+<span id="cb22-303"><a href="#cb22-303" aria-hidden="true" tabindex="-1"></a><span class="fu">### BotorchSurrogates { #bofire.data_models.surrogates.api.BotorchSurrogates }</span></span>
 <span id="cb22-304"><a href="#cb22-304" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-305"><a href="#cb22-305" aria-hidden="true" tabindex="-1"></a>Behaves similar to a Surrogate.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb22-305"><a href="#cb22-305" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb22-306"><a href="#cb22-306" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.BotorchSurrogates()</span>
+<span id="cb22-307"><a href="#cb22-307" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb22-308"><a href="#cb22-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-309"><a href="#cb22-309" aria-hidden="true" tabindex="-1"></a>"List of botorch surrogates.</span>
+<span id="cb22-310"><a href="#cb22-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-311"><a href="#cb22-311" aria-hidden="true" tabindex="-1"></a>Behaves similar to a Surrogate.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
