@@ -1,7 +1,9 @@
-"""Tests for the `Descriptors` value object and the `DescriptorSpec` gate.
+"""Tests for the `Descriptors` value object.
 
 How a block is *consumed* -- encoded, decoded, turned into bounds -- lives in
-`tests/bofire/data_models/encodings/`.
+`tests/bofire/data_models/encodings/`. Rejections that a data model raises when
+constructed are `add_invalid` specs, not tests here; the SMILES cases below are the
+exception, because they need rdkit and specs have no skip mechanism.
 """
 
 import importlib
@@ -10,8 +12,6 @@ import re
 import pandas as pd
 import pytest
 
-from bofire.data_models.descriptor_generators.api import Fingerprints
-from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 from bofire.data_models.features.descriptors import Descriptors
 
@@ -157,31 +157,3 @@ def test_categorical_with_structure_accepts_valid_smiles():
         descriptors=Descriptors(structure=list(VALID_SMILES.tolist())),
     )
     assert feat.descriptors.structure == VALID_SMILES.tolist()
-
-
-# --- the DescriptorSpec gate ----------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    "spec, descriptors",
-    [
-        # two generators emitting the same names
-        (
-            DescriptorEncoding(
-                columns=[],
-                generators=[Fingerprints(n_bits=8), Fingerprints(n_bits=8)],
-            ),
-            Descriptors(structure=["CCO", "CC"]),
-        ),
-        # a static column colliding with a generated one
-        (
-            DescriptorEncoding(generators=[Fingerprints(n_bits=8)]),
-            Descriptors(columns={"fingerprint_0": [1.0, 2.0]}, structure=["CCO", "CC"]),
-        ),
-    ],
-    ids=["two-identical-generators", "static-collides-with-generated"],
-)
-def test_duplicate_descriptor_names_are_caught_by_the_gate(spec, descriptors):
-    """Duplicates used to escape validation and only surface later, at transform time."""
-    with pytest.raises(ValueError, match="descriptor names must be unique"):
-        spec.validate_for(descriptors, "c")

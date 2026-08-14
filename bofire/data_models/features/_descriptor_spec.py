@@ -23,7 +23,7 @@ from collections import Counter
 from typing import Annotated, List, Optional
 
 import pandas as pd
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.descriptor_generators.api import AnyDescriptorGenerator
@@ -77,6 +77,32 @@ class DescriptorSpec(BaseModel):
     generators: List[AnyDescriptorGenerator] = Field(default_factory=list)
     filter_descriptors: bool = False
     correlation_cutoff: Annotated[float, Field(ge=0.0, le=1.0)] = 0.95
+
+    @model_validator(mode="after")
+    def validate_declared_names_unique(self):
+        """The names this spec declares by itself must be unique.
+
+        Self-consistency only: with ``columns=None`` the feature's own columns are unknown
+        here, so a collision between one of those and a generated name is the gate's
+        business (see :meth:`validate_for`).
+
+        Skipped unless something can actually collide -- each generator already guarantees
+        its own names are unique, so one generator and no listed columns cannot conflict.
+        Worth the guard: generating the 2048 names of a default ``Fingerprints`` costs
+        ~0.75 ms against ~0.003 ms for the construction itself, and the default encoding
+        takes exactly that shape.
+        """
+        if len(self.generators) < 2 and not self.columns:
+            return self
+        names = list(self.columns or []) + self._generated_names()
+        duplicates = sorted(n for n, count in Counter(names).items() if count > 1)
+        if duplicates:
+            raise ValueError(
+                f"descriptor names must be unique, got duplicates {duplicates}. Two "
+                "generators producing the same names, a column listed twice, or a column "
+                "colliding with a generated one will do this.",
+            )
+        return self
 
     # -- column resolution ---------------------------------------------------------
 

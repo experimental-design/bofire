@@ -522,3 +522,17 @@ specs.add_invalid(
     error=ValueError,
     message="Input should be None",
 )
+
+
+# WeightedSumFeature mixes in the same DescriptorSpec, so it inherits the rule that a
+# spec's declared names must be unique
+specs.add_invalid(
+    features.WeightedSumFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b"],
+        "columns": ["logP", "logP"],
+    },
+    error=ValueError,
+    message="descriptor names must be unique",
+)

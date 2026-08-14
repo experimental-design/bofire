@@ -72,3 +72,37 @@ specs.add_valid(
         ],
     ),
 )
+
+
+# A spec must be coherent on its own: the names it declares -- the columns it lists plus
+# the ones its generators emit -- have to be unique. A collision that only shows up once
+# `columns=None` is resolved against a feature is the gate's business, not this one's.
+specs.add_invalid(
+    encodings.DescriptorEncoding,
+    lambda: _descriptor_spec(
+        columns=[],
+        generators=[
+            descriptor_generators.Fingerprints(n_bits=8).model_dump(),
+            descriptor_generators.Fingerprints(n_bits=8).model_dump(),
+        ],
+    ),
+    error=ValueError,
+    message="descriptor names must be unique",
+)
+
+specs.add_invalid(
+    encodings.DescriptorEncoding,
+    lambda: _descriptor_spec(columns=["logP", "logP"]),
+    error=ValueError,
+    message="descriptor names must be unique",
+)
+
+specs.add_invalid(
+    encodings.DescriptorEncoding,
+    lambda: _descriptor_spec(
+        columns=["fingerprint_0"],
+        generators=[descriptor_generators.Fingerprints(n_bits=8).model_dump()],
+    ),
+    error=ValueError,
+    message="descriptor names must be unique",
+)

@@ -1110,3 +1110,36 @@ specs.add_invalid(
     error=ValueError,
     message="PairwiseGPSurrogate.kernel must be a ScaleKernel",
 )
+
+
+# The duplicate the spec cannot see by itself: `columns=None` pulls in the feature's own
+# `fingerprint_0`, which the generator also emits. Pairing the two is what the surrogate
+# does, so this is where it surfaces -- self-inconsistent specs are rejected earlier, when
+# the encoding is constructed (see specs/encodings.py).
+specs.add_invalid(
+    models.SingleTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                CategoricalInput(
+                    key="c",
+                    categories=["CCO", "CC"],
+                    descriptors=Descriptors(
+                        columns={"fingerprint_0": [1.0, 2.0]}, structure=["CCO", "CC"]
+                    ),
+                ),
+            ],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "categorical_encodings": {
+            "c": DescriptorEncoding(generators=[Fingerprints(n_bits=8)]).model_dump()
+        },
+        "dump": None,
+    },
+    error=ValueError,
+    message="c: descriptor names must be unique",
+)
