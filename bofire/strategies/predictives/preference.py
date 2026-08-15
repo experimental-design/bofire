@@ -8,8 +8,12 @@ from botorch.sampling.normal import SobolQMCNormalSampler
 from pydantic import PositiveInt
 from typing_extensions import Self
 
+from bofire.data_models.acquisition_functions.api import qEUBO
 from bofire.data_models.api import Domain
 from bofire.data_models.strategies.api import PreferenceStrategy as DataModel
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate as SurrogateDataModel
 from bofire.data_models.types import InputTransformSpecs
@@ -290,9 +294,11 @@ class PreferenceStrategy(PredictiveStrategy):
     def make(
         cls,
         domain: Domain,
+        acquisition_function: qEUBO | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_spec: SurrogateDataModel | None = None,
         seed: int | None = None,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         """Create a preferential Bayesian optimization strategy."""
 
