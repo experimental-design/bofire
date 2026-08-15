@@ -215,6 +215,62 @@ next_pair = strategy.ask(candidate_count=2)
 next_pair
 ```
 
+To see where qEUBO wants to query, overlay the proposed pair on the true latent
+utility surface. The labels show the pairwise GP's posterior mean at each
+candidate. These predicted values are useful for ranking candidates, but their
+absolute scale is not directly comparable to the true utility scale.
+
+```{python}
+fig, ax = plt.subplots(figsize=(6.5, 5))
+contour = ax.contourf(gx, gy, true_grid, levels=20, cmap="viridis")
+ax.scatter(
+    X[:, 0],
+    X[:, 1],
+    c="white",
+    edgecolors="black",
+    s=25,
+    alpha=0.65,
+    label="compared designs",
+)
+
+candidate_colors = ["tab:red", "tab:orange"]
+for candidate_number, (_, candidate) in enumerate(next_pair.iterrows(), start=1):
+    color = candidate_colors[candidate_number - 1]
+    ax.scatter(
+        candidate["x_1"],
+        candidate["x_2"],
+        c=color,
+        edgecolors="black",
+        marker="*",
+        s=300,
+        linewidth=1.2,
+        label=f"proposed candidate {candidate_number}",
+        zorder=3,
+        clip_on=False,
+    )
+    x_offset = -135 if candidate["x_1"] > 0.85 else 10
+    y_offset = -35 if candidate["x_2"] > 0.8 else 12 - 44 * (candidate_number - 1)
+    ax.annotate(
+        f"candidate {candidate_number}\npredicted utility = {candidate['utility_pred']:.2f}",
+        xy=(candidate["x_1"], candidate["x_2"]),
+        xytext=(x_offset, y_offset),
+        textcoords="offset points",
+        fontsize=9,
+        bbox={"boxstyle": "round,pad=0.3", "facecolor": "white", "alpha": 0.9},
+        arrowprops={"arrowstyle": "->", "color": color},
+    )
+
+ax.set(
+    xlabel="x_1",
+    ylabel="x_2",
+    title="qEUBO proposals on the true latent utility",
+)
+fig.colorbar(contour, ax=ax, label="true latent utility")
+ax.legend(loc="lower left")
+plt.tight_layout()
+plt.show()
+```
+
 The two returned rows are the designs to put in front of the expert next. Before
 recording the response, assign each design a unique `labcode`. Then append the
 new designs and a row such as
