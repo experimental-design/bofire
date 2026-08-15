@@ -233,6 +233,13 @@ $$
 \mathbb{E}\left[\max\{u(x_A), u(x_B)\}\mid\mathcal{D}\right].
 $$
 
+This is the definition implemented by
+[BoTorch's `qExpectedUtilityOfBestOption`](https://botorch.readthedocs.io/en/stable/acquisition.html#botorch.acquisition.preference.qExpectedUtilityOfBestOption)
+and introduced by
+[Astudillo et al. (2023)](https://proceedings.mlr.press/v206/astudillo23a.html).
+BoTorch estimates it by sampling the joint utility posterior for the proposed
+batch, taking the best sampled utility in each draw, and averaging those maxima.
+
 With little data, this often produces a promising option and a plausible
 challenger: the challenger may have a high posterior mean, high uncertainty, or
 both. Thus, qEUBO aims for the pair's *better member* to have high utility; it
@@ -304,66 +311,80 @@ plt.show()
 
 qEUBO scores a *pair*, so it does not have a unique two-dimensional acquisition
 surface by itself. The optimizer selected both candidates jointly; neither was
-fixed during optimization. For visualization only, hold proposed candidate 1
-fixed and evaluate the expected utility of pairing it with every point on the
-grid. Candidate 2 should lie in a high-value part of this conditional surface.
-A different fixed candidate would produce a different two-dimensional slice.
+fixed during optimization. For visualization only, the two panels below show
+both possible conditional slices. The left panel holds candidate 1 fixed and
+varies its partner; the right holds candidate 2 fixed. A shared color scale
+makes the dependence on the fixed candidate directly comparable.
 
 ```{python}
 transformed_grid = domain.inputs.transform(
     grid_df, strategy.input_preprocessing_specs
 )
-anchor = next_pair.iloc[[0]][domain.inputs.get_keys()]
-transformed_anchor = domain.inputs.transform(
-    anchor, strategy.input_preprocessing_specs
-)
-
 grid_tensor = torch.from_numpy(transformed_grid.to_numpy()).to(**tkwargs)
-anchor_tensor = torch.from_numpy(transformed_anchor.to_numpy()).to(**tkwargs)
-pair_batches = torch.stack(
-    [anchor_tensor.expand(len(grid_tensor), -1), grid_tensor], dim=1
-)
-with torch.no_grad():
-    acquisition_grid = (
-        strategy._get_acqf()(pair_batches).cpu().numpy().reshape(gx.shape)
-    )
+acquisition_function = strategy._get_acqf()
+acquisition_surfaces = []
 
-fig, ax = plt.subplots(figsize=(6.5, 5))
-contour = ax.contourf(gx, gy, acquisition_grid, levels=20, cmap="magma")
-ax.scatter(
-    next_pair.iloc[0]["x_1"],
-    next_pair.iloc[0]["x_2"],
-    c="tab:red",
-    edgecolors="black",
-    marker="*",
-    s=300,
-    linewidth=1.2,
-    label="fixed candidate 1",
-    clip_on=False,
-    zorder=3,
+for fixed_index in range(2):
+    anchor = next_pair.iloc[[fixed_index]][domain.inputs.get_keys()]
+    transformed_anchor = domain.inputs.transform(
+        anchor, strategy.input_preprocessing_specs
+    )
+    anchor_tensor = torch.from_numpy(transformed_anchor.to_numpy()).to(**tkwargs)
+    pair_batches = torch.stack(
+        [anchor_tensor.expand(len(grid_tensor), -1), grid_tensor], dim=1
+    )
+    with torch.no_grad():
+        acquisition_surfaces.append(
+            acquisition_function(pair_batches).cpu().numpy().reshape(gx.shape)
+        )
+
+shared_levels = np.linspace(
+    min(surface.min() for surface in acquisition_surfaces),
+    max(surface.max() for surface in acquisition_surfaces),
+    21,
 )
-ax.scatter(
-    next_pair.iloc[1]["x_1"],
-    next_pair.iloc[1]["x_2"],
-    c="tab:orange",
-    edgecolors="black",
-    marker="*",
-    s=300,
-    linewidth=1.2,
-    label="optimized candidate 2",
-    clip_on=False,
-    zorder=3,
-)
-ax.set(
-    xlabel="x_1",
-    ylabel="x_2",
-    title="qEUBO surface conditional on candidate 1",
-)
-fig.colorbar(contour, ax=ax, label="qEUBO acquisition value")
-ax.legend(loc="lower left")
-plt.tight_layout()
+fig, axes = plt.subplots(1, 2, figsize=(13, 5), constrained_layout=True)
+
+for fixed_index, (ax, acquisition_surface) in enumerate(
+    zip(axes, acquisition_surfaces)
+):
+    partner_index = 1 - fixed_index
+    contour = ax.contourf(
+        gx, gy, acquisition_surface, levels=shared_levels, cmap="magma"
+    )
+    for candidate_index, role in [
+        (fixed_index, "fixed"),
+        (partner_index, "optimized partner"),
+    ]:
+        ax.scatter(
+            next_pair.iloc[candidate_index]["x_1"],
+            next_pair.iloc[candidate_index]["x_2"],
+            c=candidate_colors[candidate_index],
+            edgecolors="black",
+            marker="*",
+            s=300,
+            linewidth=1.2,
+            label=f"{role} candidate {candidate_index + 1}",
+            clip_on=False,
+            zorder=3,
+        )
+    ax.set(
+        xlabel="x_1",
+        ylabel="x_2",
+        title=f"qEUBO conditional on candidate {fixed_index + 1}",
+    )
+    ax.legend(loc="lower left")
+
+fig.colorbar(contour, ax=axes, label="qEUBO acquisition value")
 plt.show()
 ```
+
+In this run, fixing candidate 1 produces a surface with a clear maximum around
+candidate 2. In contrast, fixing candidate 2 makes the surface almost flat at a
+high acquisition value: candidate 2 already dominates the expected maximum, so
+changing its partner has little effect. This explains why candidate 1 can land
+on a seemingly arbitrary boundary point even though the pair is jointly
+optimized.
 
 The two returned rows are the designs to put in front of the expert next. Before
 recording the response, assign each design a unique `labcode`. Then append the
