@@ -14,6 +14,7 @@ from bofire.strategies.predictives.multi_fidelity import (
 from bofire.strategies.predictives.multi_fidelity_knowledge_gradient import (
     MultiFidelityHVKGStrategy,
 )
+from bofire.strategies.predictives.preference import PreferenceStrategy
 from bofire.strategies.predictives.qparego import QparegoStrategy
 from bofire.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
@@ -37,6 +38,7 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.CustomSoboStrategy: CustomSoboStrategy,
     data_models.MultiFidelityVarianceBasedStrategy: MultiFidelityVarianceBasedStrategy,
     data_models.MultiFidelityHVKGStrategy: MultiFidelityHVKGStrategy,
+    data_models.PreferenceStrategy: PreferenceStrategy,
     data_models.QparegoStrategy: QparegoStrategy,
     data_models.EntingStrategy: EntingStrategy,
     data_models.DoEStrategy: DoEStrategy,

@@ -82,6 +82,7 @@ quartodoc:
             - MoboStrategy
             - MultiFidelityVarianceBasedStrategy
             - MultiobjectiveStrategy
+            - PreferenceStrategy
             - AdditiveSoboStrategy
             - CustomSoboStrategy
             - LLMStrategy
@@ -136,6 +137,7 @@ quartodoc:
             - EntingStrategy
             - MultiFidelityVarianceBasedStrategy
             - ActiveLearningStrategy
+            - PreferenceStrategy
             - ShortestPathStrategy
             - StepwiseStrategy
             - LLMStrategy
