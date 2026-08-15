@@ -23,6 +23,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import torch
 from matplotlib import pyplot as plt
 from scipy.stats import kendalltau
 
@@ -36,6 +37,7 @@ from bofire.data_models.strategies.api import (
     PreferenceStrategy as PreferenceStrategyDataModel,
 )
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate
+from bofire.utils.torch_tools import tkwargs
 
 warnings.filterwarnings("ignore")
 rng = np.random.default_rng(42)
@@ -140,23 +142,28 @@ print(f"Kendall-Tau rank correlation vs. true utility: {tau:.3f}")
 
 A correlation close to 1 means the surrogate ranks unseen designs almost exactly
 as the latent utility would. We can see this directly by plotting the learned
-posterior mean next to the ground truth.
+posterior mean and standard deviation next to the ground truth. The standard
+deviation shows where the model remains uncertain despite the comparisons seen
+so far.
 
 ```{python}
-fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
+fig, axes = plt.subplots(1, 3, figsize=(16, 4.5))
 
 grid = np.linspace(0, 1, 60)
 gx, gy = np.meshgrid(grid, grid)
 grid_df = pd.DataFrame({"x_1": gx.ravel(), "x_2": gy.ravel()})
 
 true_grid = latent_utility(grid_df.to_numpy()).reshape(gx.shape)
-pred_grid = surrogate.predict(grid_df)["utility_pred"].to_numpy().reshape(gx.shape)
+posterior_grid = surrogate.predict(grid_df)
+pred_grid = posterior_grid["utility_pred"].to_numpy().reshape(gx.shape)
+sd_grid = posterior_grid["utility_sd"].to_numpy().reshape(gx.shape)
 
-for ax, surface, title in [
-    (axes[0], true_grid, "True latent utility"),
-    (axes[1], pred_grid, "Learned posterior mean"),
+for ax, surface, title, cmap in [
+    (axes[0], true_grid, "True latent utility", "viridis"),
+    (axes[1], pred_grid, "Learned posterior mean", "viridis"),
+    (axes[2], sd_grid, "Learned posterior standard deviation", "magma"),
 ]:
-    contour = ax.contourf(gx, gy, surface, levels=20, cmap="viridis")
+    contour = ax.contourf(gx, gy, surface, levels=20, cmap=cmap)
     ax.scatter(
         X[:, 0], X[:, 1], c="white", edgecolors="black", s=25,
         label="compared designs",
@@ -168,10 +175,12 @@ plt.tight_layout()
 plt.show()
 ```
 
-Both surfaces peak in the same region: from comparisons alone, the surrogate has
-located where utility is highest. The absolute contour values differ — pairwise
-learning identifies the latent utility only up to a monotone transform — but the
-*ranking*, which is what matters for optimization, is recovered.
+The true and learned mean surfaces peak in the same region: from comparisons
+alone, the surrogate has located where utility is highest. The absolute mean
+values differ — pairwise learning identifies the latent utility only up to an
+arbitrary scale and offset — but the *ranking*, which is what matters for
+optimization, is recovered. The standard-deviation panel is largest in regions
+that are weakly informed by the observed comparisons.
 
 ## The preference encoding
 
@@ -266,6 +275,68 @@ ax.set(
     title="qEUBO proposals on the true latent utility",
 )
 fig.colorbar(contour, ax=ax, label="true latent utility")
+ax.legend(loc="lower left")
+plt.tight_layout()
+plt.show()
+```
+
+qEUBO scores a *pair*, so it does not have a unique two-dimensional acquisition
+surface by itself. To visualize it, hold proposed candidate 1 fixed and evaluate
+the expected utility of pairing it with every point on the grid. Candidate 2,
+selected by the joint optimizer, should lie in a high-value part of this
+conditional surface.
+
+```{python}
+transformed_grid = domain.inputs.transform(
+    grid_df, strategy.input_preprocessing_specs
+)
+anchor = next_pair.iloc[[0]][domain.inputs.get_keys()]
+transformed_anchor = domain.inputs.transform(
+    anchor, strategy.input_preprocessing_specs
+)
+
+grid_tensor = torch.from_numpy(transformed_grid.to_numpy()).to(**tkwargs)
+anchor_tensor = torch.from_numpy(transformed_anchor.to_numpy()).to(**tkwargs)
+pair_batches = torch.stack(
+    [anchor_tensor.expand(len(grid_tensor), -1), grid_tensor], dim=1
+)
+with torch.no_grad():
+    acquisition_grid = (
+        strategy._get_acqf()(pair_batches).cpu().numpy().reshape(gx.shape)
+    )
+
+fig, ax = plt.subplots(figsize=(6.5, 5))
+contour = ax.contourf(gx, gy, acquisition_grid, levels=20, cmap="magma")
+ax.scatter(
+    next_pair.iloc[0]["x_1"],
+    next_pair.iloc[0]["x_2"],
+    c="tab:red",
+    edgecolors="black",
+    marker="*",
+    s=300,
+    linewidth=1.2,
+    label="fixed candidate 1",
+    clip_on=False,
+    zorder=3,
+)
+ax.scatter(
+    next_pair.iloc[1]["x_1"],
+    next_pair.iloc[1]["x_2"],
+    c="tab:orange",
+    edgecolors="black",
+    marker="*",
+    s=300,
+    linewidth=1.2,
+    label="optimized candidate 2",
+    clip_on=False,
+    zorder=3,
+)
+ax.set(
+    xlabel="x_1",
+    ylabel="x_2",
+    title="qEUBO surface conditional on candidate 1",
+)
+fig.colorbar(contour, ax=ax, label="qEUBO acquisition value")
 ax.legend(loc="lower left")
 plt.tight_layout()
 plt.show()
