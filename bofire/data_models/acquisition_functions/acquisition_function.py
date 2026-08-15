@@ -99,6 +99,17 @@ class MultiObjectiveAcquisitionFunction(AcquisitionFunction):
     )
 
 
+class PreferenceAcquisitionFunction(AcquisitionFunction):
+    type: Any
+
+
+class qEUBO(PreferenceAcquisitionFunction):
+    """MC-based expected utility of the best option."""
+
+    type: Literal["qEUBO"] = "qEUBO"
+    n_mc_samples: IntPowerOfTwo = 512
+
+
 class qNEI(
     MCAcquisitionFunction,
     NoisyAcquisitionFunction,

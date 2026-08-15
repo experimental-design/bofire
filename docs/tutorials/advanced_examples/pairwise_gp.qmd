@@ -27,8 +27,14 @@ from matplotlib import pyplot as plt
 from scipy.stats import kendalltau
 
 import bofire.surrogates.api as surrogates
-from bofire.data_models.domain.api import Inputs, Outputs
+import bofire.strategies.api as strategies
+from bofire.data_models.acquisition_functions.api import qEUBO
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.strategies.api import (
+    BotorchOptimizer,
+    PreferenceStrategy as PreferenceStrategyDataModel,
+)
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate
 
 warnings.filterwarnings("ignore")
@@ -183,9 +189,40 @@ warning. Because the slot (A vs. B) is just bookkeeping, swapping `labcode_A`
 with `labcode_B` and flipping the sign of `preference` describes the very same
 comparison and yields the same fit.
 
-## Where to go next
+## Proposing the next comparison with qEUBO
 
-`PairwiseGPSurrogate` is the modelling building block for preference-based
-Bayesian optimization: combine it with an acquisition function such as BoTorch's
-*Expected Utility of the Best Option* (EUBO) to decide which pair of designs to
-put in front of the expert next.
+`PreferenceStrategy` turns the surrogate into a complete preferential Bayesian
+optimization loop. Its acquisition function is Monte Carlo *q-Expected Utility
+of the Best Option* (qEUBO): it chooses a batch jointly to maximize the expected
+latent utility of the best option in that batch.
+
+```{python}
+domain = Domain(inputs=inputs, outputs=outputs)
+strategy_data = PreferenceStrategyDataModel(
+    domain=domain,
+    surrogate_spec=surrogate_data,
+    acquisition_function=qEUBO(n_mc_samples=64),
+    acquisition_optimizer=BotorchOptimizer(
+        n_restarts=4,
+        n_raw_samples=128,
+        maxiter=200,
+    ),
+    seed=42,
+)
+strategy = strategies.map(strategy_data)
+strategy.tell(experiments, preferences=preferences)
+next_pair = strategy.ask(candidate_count=2)
+next_pair
+```
+
+The two returned rows are the designs to put in front of the expert next. Before
+recording the response, assign each design a unique `labcode`. Then append the
+new designs and a row such as
+`("new_A", "new_B", 1.0)` to the strategy with another call to
+`strategy.tell(new_experiments, preferences=new_preferences)`. Passing a
+positive preference means A won; passing a negative preference means B won. The
+strategy refits the pairwise GP and the next `ask` proposes a new comparison.
+
+Calling `ask()` without a count defaults to a pair. Larger qEUBO batches are
+supported by passing a value greater than two, provided the experiment can turn
+the selected options into pairwise feedback.

@@ -1,10 +1,12 @@
 from bofire.data_models.acquisition_functions.acquisition_function import (
     AcquisitionFunction,
     MultiObjectiveAcquisitionFunction,
+    PreferenceAcquisitionFunction,
     SingleObjectiveAcquisitionFunction,
     pTS,
     qEHVI,
     qEI,
+    qEUBO,
     qLogEHVI,
     qLogEI,
     qLogNEHVI,
@@ -22,6 +24,7 @@ from bofire.data_models.unions import tagged_union
 
 
 AnyAcquisitionFunction = tagged_union(
+    qEUBO,
     qNEI,
     qEI,
     qSR,
@@ -47,6 +50,8 @@ AnyMultiObjectiveAcquisitionFunction = tagged_union(
 )
 
 AnyActiveLearningAcquisitionFunction = qNegIntPosVar
+
+AnyPreferenceAcquisitionFunction = qEUBO
 
 # Acquisition function that cannot handle constraints intrinsically but fall back to constructing
 # a constrainted MC acquisition objective.
