@@ -224,6 +224,28 @@ next_pair = strategy.ask(candidate_count=2)
 next_pair
 ```
 
+::: {.callout-note title="What makes a qEUBO pair optimal?"}
+The optimization goal is still to identify **one design with the highest latent
+utility**. Two designs are proposed because preference feedback requires a
+comparison. For a pair $(x_A, x_B)$, qEUBO maximizes
+
+$$
+\mathbb{E}\left[\max\{u(x_A), u(x_B)\}\mid\mathcal{D}\right].
+$$
+
+With little data, this often produces a promising option and a plausible
+challenger: the challenger may have a high posterior mean, high uncertainty, or
+both. Thus, qEUBO aims for the pair's *better member* to have high utility; it
+does not require both posterior means to be high. The expert selects the
+preferred member, and that comparison is used to refit the model before the next
+query. The current single-design recommendation is conceptually separate: it is
+the design with the highest posterior expected utility.
+
+As the model becomes confident about one design, qEUBO can become almost
+insensitive to the other member of the pair. In that case the second design may
+look arbitrary because it contributes little to the expected maximum.
+:::
+
 To see where qEUBO wants to query, overlay the proposed pair on the true latent
 utility surface. The labels show the pairwise GP's posterior mean at each
 candidate. These predicted values are useful for ranking candidates, but their
@@ -281,10 +303,11 @@ plt.show()
 ```
 
 qEUBO scores a *pair*, so it does not have a unique two-dimensional acquisition
-surface by itself. To visualize it, hold proposed candidate 1 fixed and evaluate
-the expected utility of pairing it with every point on the grid. Candidate 2,
-selected by the joint optimizer, should lie in a high-value part of this
-conditional surface.
+surface by itself. The optimizer selected both candidates jointly; neither was
+fixed during optimization. For visualization only, hold proposed candidate 1
+fixed and evaluate the expected utility of pairing it with every point on the
+grid. Candidate 2 should lie in a high-value part of this conditional surface.
+A different fixed candidate would produce a different two-dimensional slice.
 
 ```{python}
 transformed_grid = domain.inputs.transform(
