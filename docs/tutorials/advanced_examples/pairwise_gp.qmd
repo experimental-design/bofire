@@ -421,7 +421,7 @@ determines which preference labels are used to update that model.
 
 The following small study gives both policies the same initial data and the
 same qLogNEI experiment acquisition. At each of three BO iterations, one new
-design is selected from a finite grid and a budget of $K=8$ previously
+design is selected from a finite grid and a budget of $K=4$ previously
 unqueried comparison pairs is labeled. The only difference is whether those
 pairs are sampled randomly or selected by their qEUBO values.
 
@@ -433,7 +433,7 @@ The pairwise GP is trained exclusively on comparisons.
 
 ```{python}
 STUDY_INPUT_KEYS = ["x_1", "x_2"]
-STUDY_K_PAIRS = 8
+STUDY_K_PAIRS = 4
 STUDY_INITIAL_DESIGNS = 8
 STUDY_BO_ITERATIONS = 3
 STUDY_REPLICATES = 5
@@ -452,9 +452,9 @@ study_pool["labcode"] = study_pool["pool_index"].map(
 
 The feedback helpers below ensure that both policies receive the same noisy
 label whenever they happen to select the same pair. The qEUBO policy evaluates
-each available pair under its joint utility posterior and takes the eight
+each available pair under its joint utility posterior and takes the four
 highest-valued unqueried pairs. This is a simple *greedy pair-selection*
-baseline rather than a claim that those eight comparisons are jointly optimal.
+baseline rather than a claim that those four comparisons are jointly optimal.
 
 ```{python}
 def study_preference_rows(experiments, pair_indices, replicate):
