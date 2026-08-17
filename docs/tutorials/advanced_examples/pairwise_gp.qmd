@@ -27,7 +27,7 @@ import pandas as pd
 import torch
 from botorch.acquisition.logei import qLogNoisyExpectedImprovement
 from botorch.acquisition.preference import qExpectedUtilityOfBestOption
-from botorch.optim import optimize_acqf_discrete
+from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
 from matplotlib import pyplot as plt
 from scipy.stats import kendalltau
@@ -421,9 +421,9 @@ determines which preference labels are used to update that model.
 
 The following small study gives both policies the same initial data and the
 same qLogNEI experiment acquisition. At each of three BO iterations, one new
-design is selected from a finite grid and a budget of $K=4$ previously
-unqueried comparison pairs is labeled. The only difference is whether those
-pairs are sampled randomly or selected by their qEUBO values.
+design is selected continuously over the input domain and a budget of $K=4$
+previously unqueried comparison pairs is labeled. The only difference is
+whether those pairs are sampled randomly or selected by their qEUBO values.
 
 ::: {.callout-warning title="True utility is used only for simulation and scoring"}
 The optimizer never observes `latent_utility` as a scalar response. It is used
@@ -438,16 +438,7 @@ STUDY_INITIAL_DESIGNS = 8
 STUDY_BO_ITERATIONS = 3
 STUDY_REPLICATES = 5
 STUDY_MC_SAMPLES = 64
-
-study_axis = np.linspace(0.0, 1.0, 17)
-study_x_1, study_x_2 = np.meshgrid(study_axis, study_axis)
-study_pool = pd.DataFrame(
-    {"x_1": study_x_1.ravel(), "x_2": study_x_2.ravel()}
-)
-study_pool["pool_index"] = np.arange(len(study_pool))
-study_pool["labcode"] = study_pool["pool_index"].map(
-    lambda index: f"pool_{index:04d}"
-)
+STUDY_BOUNDS = torch.tensor([[0.0, 0.0], [1.0, 1.0]], **tkwargs)
 ```
 
 The feedback helpers below ensure that both policies receive the same noisy
@@ -462,16 +453,24 @@ def study_preference_rows(experiments, pair_indices, replicate):
     for index_a, index_b in pair_indices:
         row_a = experiments.iloc[index_a]
         row_b = experiments.iloc[index_b]
-        pool_a = int(row_a["pool_index"])
-        pool_b = int(row_b["pool_index"])
 
         # Pair-specific noise makes a shared pair reproducible across policies.
-        pair_seed = (
-            100_000 * replicate
-            + min(pool_a, pool_b) * len(study_pool)
-            + max(pool_a, pool_b)
+        point_a = tuple(
+            np.rint(
+                row_a[STUDY_INPUT_KEYS].to_numpy(dtype=float) * 1_000_000
+            ).astype(int)
         )
-        pair_rng = np.random.default_rng(pair_seed)
+        point_b = tuple(
+            np.rint(
+                row_b[STUDY_INPUT_KEYS].to_numpy(dtype=float) * 1_000_000
+            ).astype(int)
+        )
+        point_low, point_high = sorted((point_a, point_b))
+        pair_rng = np.random.default_rng(
+            np.random.SeedSequence(
+                [replicate, *point_low, *point_high]
+            )
+        )
         utility_a = latent_utility(
             row_a[STUDY_INPUT_KEYS].to_numpy(dtype=float)[None, :]
         )[0]
@@ -555,14 +554,11 @@ def study_select_pairs(
 Each arm alternates qLogNEI experiment acquisition and preference-label
 acquisition. We record both the best true utility encountered and the true
 utility of the *measured* design currently recommended by the proxy posterior.
+qLogNEI is optimized continuously over $[0, 1]^2$; only feedback acquisition is
+discrete because its candidates are pairs of already measured designs.
 
 ```{python}
 def study_select_experiment(proxy, experiments, seed):
-    observed = set(experiments["pool_index"].astype(int))
-    choices = study_pool.loc[
-        ~study_pool["pool_index"].isin(observed), STUDY_INPUT_KEYS
-    ]
-    choices_tensor = torch.from_numpy(choices.to_numpy()).to(**tkwargs)
     baseline_tensor = torch.from_numpy(
         experiments[STUDY_INPUT_KEYS].to_numpy(dtype=float)
     ).to(**tkwargs)
@@ -575,16 +571,21 @@ def study_select_experiment(proxy, experiments, seed):
         ),
         prune_baseline=True,
     )
-    candidate, _ = optimize_acqf_discrete(
+    candidate, _ = optimize_acqf(
         acq_function=acquisition,
+        bounds=STUDY_BOUNDS,
         q=1,
-        choices=choices_tensor,
-        unique=True,
+        num_restarts=5,
+        raw_samples=128,
+        options={"batch_limit": 5, "maxiter": 100},
     )
-    distances = np.abs(
-        study_pool[STUDY_INPUT_KEYS].to_numpy() - candidate.cpu().numpy()
-    ).max(axis=1)
-    return study_pool.iloc[int(np.argmin(distances))].copy()
+    return pd.Series(
+        {
+            "x_1": candidate[0, 0].item(),
+            "x_2": candidate[0, 1].item(),
+            "labcode": f"measurement_{len(experiments):03d}",
+        }
+    )
 
 
 def study_recommendation_utility(proxy, experiments):
@@ -603,10 +604,16 @@ def study_recommendation_utility(proxy, experiments):
 
 def study_run(method, replicate):
     rng = np.random.default_rng(10_000 + replicate)
-    initial_indices = np.random.default_rng(replicate).choice(
-        len(study_pool), size=STUDY_INITIAL_DESIGNS, replace=False
+    experiments = pd.DataFrame(
+        np.random.default_rng(replicate).uniform(
+            size=(STUDY_INITIAL_DESIGNS, len(STUDY_INPUT_KEYS))
+        ),
+        columns=STUDY_INPUT_KEYS,
     )
-    experiments = study_pool.iloc[initial_indices].reset_index(drop=True).copy()
+    experiments["labcode"] = [
+        f"measurement_{index:03d}"
+        for index in range(STUDY_INITIAL_DESIGNS)
+    ]
 
     possible_initial_pairs = list(
         combinations(range(STUDY_INITIAL_DESIGNS), 2)
