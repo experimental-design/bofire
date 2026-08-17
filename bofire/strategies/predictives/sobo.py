@@ -2,11 +2,9 @@ import base64
 import warnings
 from typing import Callable, List, Tuple, Union, cast
 
-from pydantic import PositiveInt
 from typing_extensions import Self
 
 from bofire.data_models.api import Domain
-from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.convergence_criteria.api import (
     AnyConvergenceCriterion,
 )
@@ -181,9 +179,6 @@ class SoboStrategy(BotorchStrategy):
         | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
@@ -197,9 +192,6 @@ class SoboStrategy(BotorchStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            outlier_detection_specs: The specifications for the outlier detection.
-            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
-            frequency_check: The frequency of checking for outliers.
             frequency_hyperopt: The frequency of hyperparameter optimization.
             folds: The number of folds for cross-validation.
             seed: The random seed to use.
@@ -290,9 +282,6 @@ class AdditiveSoboStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
@@ -308,9 +297,6 @@ class AdditiveSoboStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            outlier_detection_specs: The specifications for the outlier detection.
-            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
-            frequency_check: The frequency of checking for outliers.
             frequency_hyperopt: The frequency of hyperparameter optimization.
             folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
@@ -356,9 +342,6 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
@@ -373,9 +356,6 @@ class MultiplicativeSoboStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            outlier_detection_specs: The specifications for the outlier detection.
-            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
-            frequency_check: The frequency of checking for outliers.
             frequency_hyperopt: The frequency of hyperparameter optimization.
             folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
@@ -425,9 +405,6 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
@@ -446,9 +423,6 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            outlier_detection_specs: The specifications for the outlier detection.
-            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
-            frequency_check: The frequency of checking for outliers.
             frequency_hyperopt: The frequency of hyperparameter optimization.
             folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
@@ -556,9 +530,6 @@ class CustomSoboStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
@@ -577,9 +548,6 @@ class CustomSoboStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            outlier_detection_specs: The specifications for the outlier detection.
-            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
-            frequency_check: The frequency of checking for outliers.
             frequency_hyperopt: The frequency of hyperparameter optimization.
             folds: The number of folds for cross-validation.
             seed: The random seed to use.

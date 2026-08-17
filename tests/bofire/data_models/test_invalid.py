@@ -74,12 +74,6 @@ def test_transform_should_be_invalid(invalid_condition_spec: InvalidSpec):
     _invalidate(invalid_condition_spec)
 
 
-def test_outlier_detection_should_be_invalid(
-    invalid_outlier_detection_spec: InvalidSpec,
-):
-    _invalidate(invalid_outlier_detection_spec)
-
-
 def test_descriptor_generators_should_be_invalid(
     invalid_descriptor_generator_spec: InvalidSpec,
 ):

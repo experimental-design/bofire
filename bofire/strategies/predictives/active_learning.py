@@ -4,14 +4,12 @@ import torch
 from botorch.acquisition import qNegIntegratedPosteriorVariance
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import ScalarizedPosteriorTransform
-from pydantic import PositiveInt
 
 import bofire.strategies.api as strategies
 from bofire.data_models.acquisition_functions.api import (
     AnyActiveLearningAcquisitionFunction,
 )
 from bofire.data_models.domain.domain import Domain
-from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import RandomStrategy
 from bofire.data_models.strategies.convergence_criteria.api import (
     AnyConvergenceCriterion,
@@ -88,9 +86,6 @@ class ActiveLearningStrategy(BotorchStrategy):
         domain: Domain,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         acquisition_function: AnyActiveLearningAcquisitionFunction | None = None,
@@ -105,9 +100,6 @@ class ActiveLearningStrategy(BotorchStrategy):
                 domain: Domain of the strategy.
                 acquisition_optimizer: Acquisition optimizer to use.
                 surrogate_specs: Surrogate specifications.
-                outlier_detection_specs: Outlier detection specifications.
-                min_experiments_before_outlier_check: Minimum number of experiments before checking for outliers.
-                frequency_check: Frequency of outlier checks.
                 frequency_hyperopt: Frequency of hyperparameter optimization.
                 folds: Number of folds for cross-validation in hyperparameter optimization.
                 acquisition_function: Acquisition function to use.

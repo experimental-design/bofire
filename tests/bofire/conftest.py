@@ -94,11 +94,6 @@ def invalid_transforms_spec(request) -> specs.InvalidSpec:
     return request.param
 
 
-@fixture(params=specs.outlier_detection.invalids)
-def invalid_outlier_detection_spec(request) -> specs.InvalidSpec:
-    return request.param
-
-
 @fixture(params=specs.descriptor_generators.invalids)
 def invalid_descriptor_generator_spec(request) -> specs.InvalidSpec:
     return request.param
@@ -187,11 +182,6 @@ def condition_spec(request) -> specs.Spec:
 
 @fixture(params=specs.transforms.valids)
 def transforms_detection_spec(request) -> specs.Spec:
-    return request.param
-
-
-@fixture(params=specs.outlier_detection.valids)
-def outlier_detection_spec(request) -> specs.Spec:
     return request.param
 
 
