@@ -3,6 +3,7 @@ from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
+from pydantic import Field
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.features import Inputs
@@ -13,8 +14,18 @@ class Constraint(BaseModel):
     """Abstract base class to define constraints on the optimization space."""
 
     type: Any
-    features: FeatureKeys
-    context: Optional[str] = None
+    features: FeatureKeys = Field(
+        description="Keys of the input features the constraint acts on. The order is "
+        "significant for subclasses that pair each feature with a per-feature value, "
+        "such as the coefficients of a LinearConstraint or the exponents of a "
+        "ProductConstraint.",
+    )
+    context: Optional[str] = Field(
+        default=None,
+        description="Free-text context providing additional information about the "
+        "constraint, such as why it exists. Useful for agentic optimization where an "
+        "LLM agent can leverage this description to better understand the constraint.",
+    )
 
     @abstractmethod
     def to_description(self) -> str:
@@ -80,6 +91,13 @@ class IntrapointConstraint(Constraint):
 
 
 class EqualityConstraint(IntrapointConstraint):
+    """Abstract base class for constraints that must evaluate to zero.
+
+    A candidate fulfills the constraint if the constraint evaluation is within `tol`
+    of zero. Subclass this instead of `InequalityConstraint` when the relationship is
+    an exact one, such as a mixture summing to a fixed total.
+    """
+
     type: Any
 
     def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
@@ -90,6 +108,13 @@ class EqualityConstraint(IntrapointConstraint):
 
 
 class InequalityConstraint(IntrapointConstraint):
+    """Abstract base class for constraints that must evaluate to zero or less.
+
+    A candidate fulfills the constraint if the constraint evaluation does not exceed
+    `tol`. Subclass this instead of `EqualityConstraint` when the relationship is a
+    bound rather than an exact one, such as a budget that must not be overspent.
+    """
+
     type: Any
 
     def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:

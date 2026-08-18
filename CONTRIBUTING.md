@@ -31,6 +31,34 @@ pytest tests/
 We use [Ruff](https://docs.astral.sh/ruff/) for linting, sorting and formatting of our code.
 Our doc-strings are in [Google-style](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html).
 
+For the data models in `bofire/data_models/` there is one additional rule: the
+description of a field belongs in `Field(description=...)`, not in an `Attributes:`
+block of the class doc-string. BoFire is configured entirely through these models, so
+they are the API surface for users and for LLM agents alike — and only
+`Field(description=...)` ends up in `model_json_schema()`, which is what an agent reads.
+The class doc-string says what the model is and when to pick it over its siblings in the
+union. An `Examples:` block is encouraged on the concrete types, but it is optional and
+is not executed by the test suite.
+
+```python
+class NChooseKConstraint(IntrapointConstraint):
+    """NChooseK constraint that defines how many ingredients are allowed in a formulation.
+
+    Bounds the *count* of active features rather than a weighted sum of their values,
+    which is what distinguishes it from `LinearInequalityConstraint`.
+    """
+
+    type: Literal["NChooseKConstraint"] = "NChooseKConstraint"
+    min_count: int = Field(
+        description="Minimal number of non-zero/active feature values.",
+    )
+```
+
+`tests/bofire/data_models/test_documentation.py` enforces this. It carries an allowlist
+of the fields and classes that predate the convention, which may only shrink — the
+remaining packages are being migrated one pull request at a time. If you touch a model
+that is still on the allowlist, please document it and remove its entries.
+
 In our CI/CD pipeline we check if contributions are compliant to Ruff.
 To make contributors' lives easier, we have pre-commit hooks for Ruff configured in the versions corresponding to the pipeline. They can be installed via
 
