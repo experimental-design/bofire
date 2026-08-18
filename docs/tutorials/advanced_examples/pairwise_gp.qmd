@@ -463,8 +463,14 @@ simply maximize the posterior mean: it selects the point with the greatest
 expected improvement over the uncertain baseline. The comparison policy then
 determines which preference labels are used to update that model.
 
+As measurements accumulate, the number of possible pairs grows quadratically:
+$n$ measured designs yield $n(n-1)/2$ comparisons. Labeling all of them quickly
+becomes burdensome for a human decision maker and costly when an LLM supplies
+the labels. Feedback acquisition therefore has its own budget. Here we compare
+spending that budget on random pairs with prioritizing pairs by qEUBO.
+
 The following small study gives both policies the same initial data and the
-same qLogNEI experiment acquisition. At each of three BO iterations, one new
+same qLogNEI experiment acquisition. At each of ten BO iterations, one new
 design is selected continuously over the input domain and a budget of $K=4$
 previously unqueried comparison pairs is labeled. The only difference is
 whether those pairs are sampled randomly or selected by their qEUBO values.
@@ -476,58 +482,38 @@ The pairwise GP is trained exclusively on comparisons.
 :::
 
 ```{python}
-STUDY_INPUT_KEYS = ["x_1", "x_2"]
 STUDY_K_PAIRS = 4
-STUDY_INITIAL_DESIGNS = 8
-STUDY_BO_ITERATIONS = 3
-STUDY_REPLICATES = 5
+STUDY_INITIAL_DESIGNS = 4
+STUDY_BO_ITERATIONS = 10
+STUDY_REPLICATES = 10
 STUDY_MC_SAMPLES = 64
-STUDY_BOUNDS = torch.tensor([[0.0, 0.0], [1.0, 1.0]], **tkwargs)
 ```
 
-The feedback helpers below ensure that both policies receive the same noisy
-label whenever they happen to select the same pair. The qEUBO policy evaluates
-each available pair under its joint utility posterior and takes the four
-highest-valued unqueried pairs. This is a simple *greedy pair-selection*
-baseline rather than a claim that those four comparisons are jointly optimal.
+The two policies use matched random-number streams for the simulated preference
+noise. The qEUBO policy evaluates each available pair under its joint utility
+posterior and takes the four highest-valued unqueried pairs. This is a simple
+*greedy pair-selection* baseline rather than a claim that those four
+comparisons are jointly optimal.
 
 ```{python}
-def study_preference_rows(experiments, pair_indices, replicate):
-    rows = []
-    for index_a, index_b in pair_indices:
-        row_a = experiments.iloc[index_a]
-        row_b = experiments.iloc[index_b]
+def to_tensor(frame):
+    return torch.from_numpy(
+        frame[domain.inputs.get_keys()].to_numpy(dtype=float)
+    ).to(**tkwargs)
 
-        # Pair-specific noise makes a shared pair reproducible across policies.
-        point_a = tuple(
-            np.rint(
-                row_a[STUDY_INPUT_KEYS].to_numpy(dtype=float) * 1_000_000
-            ).astype(int)
-        )
-        point_b = tuple(
-            np.rint(
-                row_b[STUDY_INPUT_KEYS].to_numpy(dtype=float) * 1_000_000
-            ).astype(int)
-        )
-        point_low, point_high = sorted((point_a, point_b))
-        pair_rng = np.random.default_rng(
-            np.random.SeedSequence(
-                [replicate, *point_low, *point_high]
-            )
-        )
-        utility_a = latent_utility(
-            row_a[STUDY_INPUT_KEYS].to_numpy(dtype=float)[None, :]
-        )[0]
-        utility_b = latent_utility(
-            row_b[STUDY_INPUT_KEYS].to_numpy(dtype=float)[None, :]
-        )[0]
-        noisy_a = utility_a + pair_rng.normal(scale=0.03)
-        noisy_b = utility_b + pair_rng.normal(scale=0.03)
+
+def label_pairs(experiments, pairs, rng):
+    rows = []
+    for index_a, index_b in pairs:
+        pair = experiments.iloc[[index_a, index_b]]
+        noisy_utility = latent_utility(
+            pair[domain.inputs.get_keys()].to_numpy(dtype=float)
+        ) + rng.normal(scale=0.03, size=2)
         rows.append(
             (
-                row_a["labcode"],
-                row_b["labcode"],
-                1.0 if noisy_a > noisy_b else -1.0,
+                pair.iloc[0]["labcode"],
+                pair.iloc[1]["labcode"],
+                1.0 if noisy_utility[0] > noisy_utility[1] else -1.0,
             )
         )
     return pd.DataFrame(
@@ -535,7 +521,7 @@ def study_preference_rows(experiments, pair_indices, replicate):
     )
 
 
-def study_fit_proxy(experiments, preferences, seed):
+def fit_proxy(experiments, preferences, seed):
     torch.manual_seed(seed)
     proxy = surrogates.map(
         PairwiseGPSurrogate(inputs=inputs, outputs=outputs)
@@ -546,43 +532,31 @@ def study_fit_proxy(experiments, preferences, seed):
     return proxy
 
 
-def study_available_pairs(experiments, preferences):
+def available_pairs(experiments, preferences):
     compared = {
         frozenset((row.labcode_A, row.labcode_B))
         for row in preferences.itertuples()
     }
+    labcodes = experiments["labcode"].tolist()
     return [
         (index_a, index_b)
         for index_a, index_b in combinations(range(len(experiments)), 2)
-        if frozenset(
-            (
-                experiments.iloc[index_a]["labcode"],
-                experiments.iloc[index_b]["labcode"],
-            )
-        )
-        not in compared
+        if frozenset((labcodes[index_a], labcodes[index_b])) not in compared
     ]
 
 
-def study_select_pairs(
+def select_feedback_pairs(
     method, proxy, experiments, preferences, rng, seed
 ):
-    pairs = study_available_pairs(experiments, preferences)
+    pairs = available_pairs(experiments, preferences)
     pair_count = min(STUDY_K_PAIRS, len(pairs))
     if method == "random":
         selected = rng.choice(len(pairs), size=pair_count, replace=False)
         return [pairs[index] for index in selected]
 
-    pair_tensor = torch.from_numpy(
-        np.stack(
-            [
-                experiments.iloc[[index_a, index_b]][
-                    STUDY_INPUT_KEYS
-                ].to_numpy(dtype=float)
-                for index_a, index_b in pairs
-            ]
-        )
-    ).to(**tkwargs)
+    pair_tensor = torch.stack(
+        [to_tensor(experiments.iloc[list(pair)]) for pair in pairs]
+    )
     acquisition = qExpectedUtilityOfBestOption(
         pref_model=proxy.model,
         sampler=SobolQMCNormalSampler(
@@ -602,14 +576,10 @@ qLogNEI is optimized continuously over $[0, 1]^2$; only feedback acquisition is
 discrete because its candidates are pairs of already measured designs.
 
 ```{python}
-def study_select_experiment(proxy, experiments, seed):
-    baseline_tensor = torch.from_numpy(
-        experiments[STUDY_INPUT_KEYS].to_numpy(dtype=float)
-    ).to(**tkwargs)
-
+def select_experiment(proxy, experiments, seed):
     acquisition = qLogNoisyExpectedImprovement(
         model=proxy.model,
-        X_baseline=baseline_tensor,
+        X_baseline=to_tensor(experiments),
         sampler=SobolQMCNormalSampler(
             sample_shape=torch.Size([STUDY_MC_SAMPLES]), seed=seed
         ),
@@ -617,43 +587,37 @@ def study_select_experiment(proxy, experiments, seed):
     )
     candidate, _ = optimize_acqf(
         acq_function=acquisition,
-        bounds=STUDY_BOUNDS,
+        bounds=torch.tensor(domain.inputs.get_bounds({}), **tkwargs),
         q=1,
         num_restarts=5,
         raw_samples=128,
         options={"batch_limit": 5, "maxiter": 100},
     )
-    return pd.Series(
-        {
-            "x_1": candidate[0, 0].item(),
-            "x_2": candidate[0, 1].item(),
-            "labcode": f"measurement_{len(experiments):03d}",
-        }
+    candidate_data = dict(
+        zip(
+            domain.inputs.get_keys(),
+            candidate[0].detach().cpu().tolist(),
+        )
     )
+    candidate_data["labcode"] = f"measurement_{len(experiments):03d}"
+    return pd.Series(candidate_data)
 
 
-def study_recommendation_utility(proxy, experiments):
-    measured_tensor = torch.from_numpy(
-        experiments[STUDY_INPUT_KEYS].to_numpy(dtype=float)
-    ).to(**tkwargs)
+def recommendation_utility(proxy, experiments):
     with torch.no_grad():
-        posterior_mean = proxy.model.posterior(measured_tensor).mean.squeeze(-1)
+        posterior_mean = proxy.model.posterior(to_tensor(experiments)).mean.squeeze(-1)
     recommendation = experiments.iloc[int(posterior_mean.argmax())]
     return float(
         latent_utility(
-            recommendation[STUDY_INPUT_KEYS].to_numpy(dtype=float)[None, :]
+            recommendation[domain.inputs.get_keys()].to_numpy(dtype=float)[None, :]
         )[0]
     )
 
 
-def study_run(method, replicate):
-    rng = np.random.default_rng(10_000 + replicate)
-    experiments = pd.DataFrame(
-        np.random.default_rng(replicate).uniform(
-            size=(STUDY_INITIAL_DESIGNS, len(STUDY_INPUT_KEYS))
-        ),
-        columns=STUDY_INPUT_KEYS,
-    )
+def run_study(method, replicate):
+    pair_rng = np.random.default_rng(10_000 + replicate)
+    noise_rng = np.random.default_rng(20_000 + replicate)
+    experiments = domain.inputs.sample(STUDY_INITIAL_DESIGNS, seed=replicate)
     experiments["labcode"] = [
         f"measurement_{index:03d}"
         for index in range(STUDY_INITIAL_DESIGNS)
@@ -662,24 +626,24 @@ def study_run(method, replicate):
     possible_initial_pairs = list(
         combinations(range(STUDY_INITIAL_DESIGNS), 2)
     )
-    initial_pair_indices = np.random.default_rng(1_000 + replicate).choice(
+    initial_pair_indices = pair_rng.choice(
         len(possible_initial_pairs), size=STUDY_K_PAIRS, replace=False
     )
-    preferences = study_preference_rows(
+    preferences = label_pairs(
         experiments,
         [possible_initial_pairs[index] for index in initial_pair_indices],
-        replicate,
+        noise_rng,
     )
     records = []
 
     for iteration in range(STUDY_BO_ITERATIONS + 1):
-        proxy = study_fit_proxy(
+        proxy = fit_proxy(
             experiments,
             preferences,
             seed=replicate * 100 + iteration,
         )
         measured_utility = latent_utility(
-            experiments[STUDY_INPUT_KEYS].to_numpy(dtype=float)
+            experiments[domain.inputs.get_keys()].to_numpy(dtype=float)
         )
         records.append(
             {
@@ -687,7 +651,7 @@ def study_run(method, replicate):
                 "replicate": replicate,
                 "iteration": iteration,
                 "best_measured_utility": float(measured_utility.max()),
-                "recommended_utility": study_recommendation_utility(
+                "recommended_utility": recommendation_utility(
                     proxy, experiments
                 ),
             }
@@ -695,7 +659,7 @@ def study_run(method, replicate):
         if iteration == STUDY_BO_ITERATIONS:
             break
 
-        next_experiment = study_select_experiment(
+        next_experiment = select_experiment(
             proxy,
             experiments,
             seed=20_000 + replicate * 100 + iteration,
@@ -703,20 +667,18 @@ def study_run(method, replicate):
         experiments = pd.concat(
             [experiments, next_experiment.to_frame().T], ignore_index=True
         )
-        selected_pairs = study_select_pairs(
+        selected_pairs = select_feedback_pairs(
             method,
             proxy,
             experiments,
             preferences,
-            rng,
+            pair_rng,
             seed=30_000 + replicate * 100 + iteration,
         )
         preferences = pd.concat(
             [
                 preferences,
-                study_preference_rows(
-                    experiments, selected_pairs, replicate
-                ),
+                label_pairs(experiments, selected_pairs, noise_rng),
             ],
             ignore_index=True,
         )
@@ -726,7 +688,7 @@ def study_run(method, replicate):
 study_records = []
 for study_replicate in range(STUDY_REPLICATES):
     for study_method in ["random", "qEUBO"]:
-        study_records.extend(study_run(study_method, study_replicate))
+        study_records.extend(run_study(study_method, study_replicate))
 
 study_results = pd.DataFrame(study_records)
 study_results.groupby(["method", "iteration"])[
@@ -773,13 +735,14 @@ plt.tight_layout()
 plt.show()
 ```
 
-The shaded regions show one standard deviation across the five matched
+The shaded regions show one standard deviation across the ten matched
 replications.
 
-In this seeded illustration, qEUBO-selected comparisons improve the utility of
-the model's recommendation faster on average, whereas the random-pair arm has
-found a slightly better measured design by the third iteration. With only five
-replications, this is not a performance claim. It demonstrates the more
-important point: even with identical qLogNEI experiment acquisition, the choice
+In this seeded illustration, qEUBO makes larger gains in recommendation utility
+at several early and middle iterations and leads around iterations four through
+six. The random-pair policy is slightly ahead later, and both policies approach
+the optimum as more measurements and labels accumulate. With ten replications,
+this remains an illustrative baseline rather than a performance claim. The key
+point is that, even with the same qLogNEI experiment-acquisition rule, the choice
 of preference pairs changes the learned utility proxy and therefore changes
 subsequent experiments.
