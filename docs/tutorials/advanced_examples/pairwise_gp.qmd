@@ -472,8 +472,8 @@ spending that budget on random pairs with prioritizing pairs by qEUBO.
 The following small study gives both policies the same initial data and the
 same qLogNEI experiment acquisition. At each of ten BO iterations, one new
 design is selected continuously over the input domain and a budget of $K=4$
-previously unqueried comparison pairs is labeled. The only difference is
-whether those pairs are sampled randomly or selected by their qEUBO values.
+comparison queries is labeled. The only difference is whether those pairs are
+sampled randomly or selected by their qEUBO values.
 
 ::: {.callout-warning title="True utility is used only for simulation and scoring"}
 The optimizer never observes `latent_utility` as a scalar response. It is used
@@ -490,10 +490,12 @@ STUDY_MC_SAMPLES = 64
 ```
 
 The two policies use matched random-number streams for the simulated preference
-noise. The qEUBO policy evaluates each available pair under its joint utility
-posterior and takes the four highest-valued unqueried pairs. This is a simple
-*greedy pair-selection* baseline rather than a claim that those four
-comparisons are jointly optimal.
+noise. They select four distinct pairs within each round, but previously queried
+pairs remain eligible in later rounds and receive a fresh noisy judgment. This
+lets repeated feedback reduce uncertainty about a noisy preference. The qEUBO
+policy evaluates every pair among the measured designs and takes the four
+highest-valued pairs. This is a simple *greedy pair-selection* baseline rather
+than a claim that those four comparisons are jointly optimal.
 
 ```{python}
 def to_tensor(frame):
@@ -532,23 +534,8 @@ def fit_proxy(experiments, preferences, seed):
     return proxy
 
 
-def available_pairs(experiments, preferences):
-    compared = {
-        frozenset((row.labcode_A, row.labcode_B))
-        for row in preferences.itertuples()
-    }
-    labcodes = experiments["labcode"].tolist()
-    return [
-        (index_a, index_b)
-        for index_a, index_b in combinations(range(len(experiments)), 2)
-        if frozenset((labcodes[index_a], labcodes[index_b])) not in compared
-    ]
-
-
-def select_feedback_pairs(
-    method, proxy, experiments, preferences, rng, seed
-):
-    pairs = available_pairs(experiments, preferences)
+def select_feedback_pairs(method, proxy, experiments, rng, seed):
+    pairs = list(combinations(range(len(experiments)), 2))
     pair_count = min(STUDY_K_PAIRS, len(pairs))
     if method == "random":
         selected = rng.choice(len(pairs), size=pair_count, replace=False)
@@ -678,7 +665,6 @@ def run_study(method, replicate):
             method,
             proxy,
             experiments,
-            preferences,
             pair_rng,
             seed=30_000 + replicate * 100 + iteration,
         )
@@ -699,6 +685,8 @@ Before averaging over replications, inspect the first feedback round of one
 replicate. Both policies see the same initial comparisons, learned posterior,
 and newly measured qLogNEI design. The numbered lines are the four pairs each
 policy would send to the decision maker; only the feedback-pair policy differs.
+Solid lines are new comparisons, while dashed lines repeat a pair from the
+initial feedback.
 
 ```{python}
 illustration_replicate = 0
@@ -730,7 +718,6 @@ illustration_pairs = {
         "random",
         illustration_proxy,
         illustration_experiments,
-        illustration_preferences,
         illustration_pair_rng,
         seed=30_000 + illustration_replicate * 100,
     ),
@@ -738,10 +725,13 @@ illustration_pairs = {
         "qEUBO",
         illustration_proxy,
         illustration_experiments,
-        illustration_preferences,
         illustration_pair_rng,
         seed=30_000 + illustration_replicate * 100,
     ),
+}
+illustration_compared = {
+    frozenset((row.labcode_A, row.labcode_B))
+    for row in illustration_preferences.itertuples()
 }
 
 illustration_mean = illustration_proxy.predict(grid_df)[
@@ -778,16 +768,25 @@ for ax, (method, title) in zip(
         label="new qLogNEI design",
         zorder=4,
     )
+    line_labels = set()
     for pair_number, pair in enumerate(illustration_pairs[method], start=1):
         pair_coordinates = illustration_coordinates[list(pair)]
+        pair_labcodes = illustration_experiments.iloc[list(pair)][
+            "labcode"
+        ]
+        repeated = frozenset(pair_labcodes) in illustration_compared
+        line_label = "repeated comparison" if repeated else "new comparison"
         color = f"C{pair_number - 1}"
         ax.plot(
             pair_coordinates[:, 0],
             pair_coordinates[:, 1],
             color=color,
             linewidth=2.5,
+            linestyle="--" if repeated else "-",
+            label=line_label if line_label not in line_labels else None,
             zorder=2,
         )
+        line_labels.add(line_label)
         midpoint = pair_coordinates.mean(axis=0)
         ax.text(
             midpoint[0],
@@ -807,14 +806,13 @@ fig.colorbar(contour, ax=axes, label="learned posterior mean")
 plt.show()
 ```
 
-The background and measured designs are identical in both panels. In this draw,
-both policies include the new qLogNEI design in three comparisons. Random
-selection also spends a comparison on the low-posterior design at the top,
-whereas qEUBO concentrates on the new design and more promising challengers.
-The posterior mean explains part of this behavior, but qEUBO scores each pair
-under the joint posterior and therefore also accounts for uncertainty. This is
-one illustrative draw rather than evidence about average performance; the
-repeated study below provides that comparison.
+The background and measured designs are identical in both panels. A dashed edge
+is not discarded: its new noisy label is appended as another observation of the
+same preference. Here random selection repeats one low-posterior comparison,
+while qEUBO spends all four queries on new comparisons around more promising
+designs. qEUBO is nevertheless allowed to repeat pairs; it simply does not do
+so in this round. This is one illustrative draw rather than evidence about
+average performance; the repeated study below provides that comparison.
 
 We now repeat the complete sequential loop for both policies across ten matched
 replications.
@@ -875,11 +873,10 @@ plt.show()
 The shaded regions show one standard deviation across the ten matched
 replications.
 
-In this seeded illustration, qEUBO makes larger gains in recommendation utility
-at several early and middle iterations and leads around iterations four through
-six. The random-pair policy is slightly ahead later, and both policies approach
-the optimum as more measurements and labels accumulate. With ten replications,
-this remains an illustrative baseline rather than a performance claim. The key
-point is that, even with the same qLogNEI experiment-acquisition rule, the choice
-of preference pairs changes the learned utility proxy and therefore changes
-subsequent experiments.
+In this seeded illustration, qEUBO improves recommendation utility faster and
+remains ahead of random pair selection, while the best-measured-design curves
+are much closer. Both policies approach the optimum as more measurements and
+labels accumulate. With ten replications, this remains an illustrative baseline
+rather than a performance claim. The key point is that, even with the same
+qLogNEI experiment-acquisition rule, the choice of preference pairs changes the
+learned utility proxy and therefore changes subsequent experiments.
