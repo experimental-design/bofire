@@ -33,16 +33,12 @@ from itertools import combinations
 
 import numpy as np
 import pandas as pd
-import torch
-from botorch.acquisition.logei import qLogNoisyExpectedImprovement
-from botorch.optim import optimize_acqf
-from botorch.sampling.normal import SobolQMCNormalSampler
 from matplotlib import pyplot as plt
 from scipy.stats import kendalltau
 
 import bofire.surrogates.api as surrogates
 import bofire.strategies.api as strategies
-from bofire.data_models.acquisition_functions.api import qEUBO
+from bofire.data_models.acquisition_functions.api import qEUBO, qLogNEI
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.strategies.api import (
@@ -50,7 +46,6 @@ from bofire.data_models.strategies.api import (
     PreferenceStrategy as PreferenceStrategyDataModel,
 )
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate
-from bofire.utils.torch_tools import tkwargs
 
 warnings.filterwarnings("ignore")
 rng = np.random.default_rng(42)
@@ -416,12 +411,6 @@ highest-valued pairs. This is a simple *greedy pair-selection* baseline rather
 than a claim that those two comparisons are jointly optimal.
 
 ```{python}
-def to_tensor(frame):
-    return torch.from_numpy(
-        frame[domain.inputs.get_keys()].to_numpy(dtype=float)
-    ).to(**tkwargs)
-
-
 def label_pairs(experiments, pairs, rng):
     rows = []
     for index_a, index_b in pairs:
@@ -441,12 +430,19 @@ def label_pairs(experiments, pairs, rng):
     )
 
 
-def fit_preference_strategy(experiments, preferences, seed):
+def fit_preference_strategy(
+    experiments, preferences, acquisition_function, seed
+):
     preference_strategy = strategies.map(
         PreferenceStrategyDataModel(
             domain=domain,
             surrogate_spec=surrogate_data,
-            acquisition_function=qEUBO(n_mc_samples=STUDY_MC_SAMPLES),
+            acquisition_function=acquisition_function,
+            acquisition_optimizer=BotorchOptimizer(
+                n_restarts=5,
+                n_raw_samples=128,
+                maxiter=100,
+            ),
             seed=seed,
         )
     )
@@ -466,9 +462,7 @@ def select_feedback_pairs(method, preference_strategy, experiments, rng):
     values = np.array(
         [
             preference_strategy.calc_acquisition(
-                experiments.iloc[list(pair)][domain.inputs.get_keys()].astype(
-                    float
-                ),
+                experiments.iloc[list(pair)][domain.inputs.get_keys()],
                 combined=True,
             ).item()
             for pair in pairs
@@ -478,12 +472,13 @@ def select_feedback_pairs(method, preference_strategy, experiments, rng):
     return [pairs[index] for index in selected]
 ```
 
-`calc_acquisition(..., combined=True)` tells BoFire to score the two rows as one
-$q=2$ qEUBO batch. We enumerate pairs here because feedback must be selected
-from designs that have already been measured. In contrast,
-`PreferenceStrategy.ask()` optimizes qEUBO over the domain and proposes new
-designs. The qLogNEI step below remains a direct BoTorch call because it is
-applied to the latent pairwise model, not to an observed scalar-output model.
+Both acquisition steps now use BoFire's `PreferenceStrategy`, configured with
+qLogNEI for experiment acquisition and qEUBO for feedback acquisition.
+`calc_acquisition(..., combined=True)` tells the qEUBO strategy to score the two
+rows as one $q=2$ batch. We enumerate pairs here because feedback must be
+selected from designs that have already been measured. In contrast, calling
+`ask()` on either configuration optimizes its acquisition function over the
+domain and proposes new designs.
 
 Each arm alternates qLogNEI experiment acquisition and preference-label
 acquisition. We record both the best true utility encountered and the true
@@ -493,31 +488,10 @@ acquisition is discrete because its candidates are pairs of already measured
 designs.
 
 ```{python}
-def select_experiment(preference_strategy, experiments, seed):
-    acquisition = qLogNoisyExpectedImprovement(
-        model=preference_strategy.model,
-        X_baseline=to_tensor(experiments),
-        sampler=SobolQMCNormalSampler(
-            sample_shape=torch.Size([STUDY_MC_SAMPLES]), seed=seed
-        ),
-        prune_baseline=True,
-    )
-    candidate, _ = optimize_acqf(
-        acq_function=acquisition,
-        bounds=torch.tensor(domain.inputs.get_bounds({}), **tkwargs),
-        q=1,
-        num_restarts=5,
-        raw_samples=128,
-        options={"batch_limit": 5, "maxiter": 100},
-    )
-    candidate_data = dict(
-        zip(
-            domain.inputs.get_keys(),
-            candidate[0].detach().cpu().tolist(),
-        )
-    )
-    candidate_data["labcode"] = f"measurement_{len(experiments):03d}"
-    return pd.Series(candidate_data)
+def select_experiment(preference_strategy, experiments):
+    candidate = preference_strategy.ask()[domain.inputs.get_keys()].copy()
+    candidate["labcode"] = f"measurement_{len(experiments):03d}"
+    return candidate
 
 
 def recommendation_utility(preference_strategy, experiments):
@@ -560,9 +534,12 @@ def run_study(method, replicate):
     records = []
 
     for iteration in range(STUDY_BO_ITERATIONS + 1):
-        preference_strategy = fit_preference_strategy(
+        experiment_strategy = fit_preference_strategy(
             experiments,
             preferences,
+            acquisition_function=qLogNEI(
+                n_mc_samples=STUDY_MC_SAMPLES
+            ),
             seed=replicate * 100 + iteration,
         )
         measured_utility = latent_utility(
@@ -575,24 +552,32 @@ def run_study(method, replicate):
                 "iteration": iteration,
                 "best_measured_utility": float(measured_utility.max()),
                 "recommended_utility": recommendation_utility(
-                    preference_strategy, experiments
+                    experiment_strategy, experiments
                 ),
             }
         )
         if iteration == STUDY_BO_ITERATIONS:
             break
 
-        next_experiment = select_experiment(
-            preference_strategy,
-            experiments,
-            seed=20_000 + replicate * 100 + iteration,
+        feedback_strategy = (
+            fit_preference_strategy(
+                experiments,
+                preferences,
+                acquisition_function=qEUBO(
+                    n_mc_samples=STUDY_MC_SAMPLES
+                ),
+                seed=10_000 + replicate * 100 + iteration,
+            )
+            if method == "qEUBO"
+            else experiment_strategy
         )
+        next_experiment = select_experiment(experiment_strategy, experiments)
         experiments = pd.concat(
-            [experiments, next_experiment.to_frame().T], ignore_index=True
+            [experiments, next_experiment], ignore_index=True
         )
         selected_pairs = select_feedback_pairs(
             method,
-            preference_strategy,
+            feedback_strategy,
             experiments,
             pair_rng,
         )

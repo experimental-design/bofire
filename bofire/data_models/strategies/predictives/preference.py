@@ -2,7 +2,7 @@ from typing import Literal, Type
 
 from pydantic import Field, model_validator
 
-from bofire.data_models.acquisition_functions.api import qEUBO
+from bofire.data_models.acquisition_functions.api import qEUBO, qLogNEI
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import ContinuousOutput, Feature, Output
 from bofire.data_models.objectives.api import MaximizeObjective, Objective
@@ -16,10 +16,10 @@ from bofire.data_models.surrogates.api import PairwiseGPSurrogate
 
 
 class PreferenceStrategy(PredictiveStrategy):
-    """Preferential Bayesian optimization with a pairwise GP and qEUBO."""
+    """Preferential Bayesian optimization with a pairwise GP."""
 
     type: Literal["PreferenceStrategy"] = "PreferenceStrategy"
-    acquisition_function: qEUBO = Field(default_factory=qEUBO)
+    acquisition_function: qEUBO | qLogNEI = Field(default_factory=qEUBO)
     acquisition_optimizer: AnyAcqfOptimizer = Field(default_factory=BotorchOptimizer)
     surrogate_spec: PairwiseGPSurrogate | None = None
 

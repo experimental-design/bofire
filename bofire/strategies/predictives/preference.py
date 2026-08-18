@@ -3,12 +3,14 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import torch
+from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.logei import qLogNoisyExpectedImprovement
 from botorch.acquisition.preference import qExpectedUtilityOfBestOption
 from botorch.sampling.normal import SobolQMCNormalSampler
 from pydantic import PositiveInt
 from typing_extensions import Self
 
-from bofire.data_models.acquisition_functions.api import qEUBO
+from bofire.data_models.acquisition_functions.api import qEUBO, qLogNEI
 from bofire.data_models.api import Domain
 from bofire.data_models.strategies.api import PreferenceStrategy as DataModel
 from bofire.data_models.strategies.convergence_criteria.api import (
@@ -29,7 +31,7 @@ from bofire.utils.torch_tools import tkwargs
 
 
 class PreferenceStrategy(PredictiveStrategy):
-    """Preferential Bayesian optimization using a pairwise GP and qEUBO."""
+    """Preferential Bayesian optimization using a pairwise GP."""
 
     PREFERENCE_COLUMNS = ("labcode_A", "labcode_B", "preference")
 
@@ -243,7 +245,7 @@ class PreferenceStrategy(PredictiveStrategy):
         )
         return pd.concat([predictions, objectives], axis=1)
 
-    def _get_acqf(self) -> qExpectedUtilityOfBestOption:
+    def _get_acqf(self) -> AcquisitionFunction:
         if not self.is_fitted or self.model is None:
             raise ValueError("Preference model is not fitted.")
 
@@ -252,21 +254,45 @@ class PreferenceStrategy(PredictiveStrategy):
             transformed = self.domain.inputs.transform(
                 self.candidates, self.input_preprocessing_specs
             )
-            X_pending = torch.from_numpy(transformed.values).to(**tkwargs)
+            X_pending = torch.from_numpy(transformed.to_numpy(dtype=float)).to(
+                **tkwargs
+            )
 
         sampler = SobolQMCNormalSampler(
             sample_shape=torch.Size([self.acquisition_function.n_mc_samples]),
             seed=self._get_seed(),
         )
-        return qExpectedUtilityOfBestOption(
-            pref_model=self.model,
+        if isinstance(self.acquisition_function, qEUBO):
+            return qExpectedUtilityOfBestOption(
+                pref_model=self.model,
+                sampler=sampler,
+                X_pending=X_pending,
+            )
+
+        if self.experiments is None:
+            raise ValueError("No preference experiments have been provided.")
+        transformed_baseline = self.domain.inputs.transform(
+            self.experiments, self.input_preprocessing_specs
+        )
+        X_baseline = torch.from_numpy(transformed_baseline.to_numpy(dtype=float)).to(
+            **tkwargs
+        )
+        return qLogNoisyExpectedImprovement(
+            model=self.model,
+            X_baseline=X_baseline,
             sampler=sampler,
             X_pending=X_pending,
+            prune_baseline=self.acquisition_function.prune_baseline,
         )
 
     def _ask(self, candidate_count: Optional[PositiveInt] = None) -> pd.DataFrame:
-        candidate_count = 2 if candidate_count is None else candidate_count
-        if candidate_count < 2:
+        default_candidate_count = (
+            2 if isinstance(self.acquisition_function, qEUBO) else 1
+        )
+        candidate_count = (
+            default_candidate_count if candidate_count is None else candidate_count
+        )
+        if isinstance(self.acquisition_function, qEUBO) and candidate_count < 2:
             raise ValueError(
                 "PreferenceStrategy requires at least two candidates to form a "
                 "comparison batch."
@@ -284,7 +310,7 @@ class PreferenceStrategy(PredictiveStrategy):
         transformed = self.domain.inputs.transform(
             candidates, self.input_preprocessing_specs
         )
-        X = torch.from_numpy(transformed.values).to(**tkwargs)
+        X = torch.from_numpy(transformed.to_numpy(dtype=float)).to(**tkwargs)
         if not combined:
             X = X.unsqueeze(-2)
         with torch.no_grad():
@@ -294,7 +320,7 @@ class PreferenceStrategy(PredictiveStrategy):
     def make(
         cls,
         domain: Domain,
-        acquisition_function: qEUBO | None = None,
+        acquisition_function: qEUBO | qLogNEI | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_spec: SurrogateDataModel | None = None,
         seed: int | None = None,

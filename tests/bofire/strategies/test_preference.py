@@ -1,8 +1,9 @@
 import pandas as pd
 import pytest
+from botorch.acquisition.logei import qLogNoisyExpectedImprovement
 from botorch.acquisition.preference import qExpectedUtilityOfBestOption
 
-from bofire.data_models.acquisition_functions.api import qEUBO
+from bofire.data_models.acquisition_functions.api import qEUBO, qLogNEI
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
@@ -42,11 +43,13 @@ def _data() -> tuple[pd.DataFrame, pd.DataFrame]:
     return experiments, preferences
 
 
-def _strategy() -> PreferenceStrategy:
+def _strategy(acquisition_function=None) -> PreferenceStrategy:
+    if acquisition_function is None:
+        acquisition_function = qEUBO(n_mc_samples=16)
     return map(
         DataModel(
             domain=_domain(),
-            acquisition_function=qEUBO(n_mc_samples=16),
+            acquisition_function=acquisition_function,
             acquisition_optimizer=BotorchOptimizer(
                 n_restarts=2, n_raw_samples=32, maxiter=50
             ),
@@ -62,6 +65,15 @@ def test_preference_strategy_data_model_defaults():
     assert isinstance(data_model.acquisition_function, qEUBO)
     assert data_model.surrogate_spec.inputs == data_model.domain.inputs
     assert data_model.surrogate_spec.outputs == data_model.domain.outputs
+
+
+def test_preference_strategy_data_model_accepts_qlognei():
+    data_model = DataModel(
+        domain=_domain(),
+        acquisition_function=qLogNEI(n_mc_samples=16),
+    )
+
+    assert isinstance(data_model.acquisition_function, qLogNEI)
 
 
 def test_preference_strategy_requires_maximize_objective():
@@ -140,3 +152,19 @@ def test_preference_strategy_rejects_single_candidate():
 
     with pytest.raises(ValueError, match="at least two candidates"):
         strategy.ask(1)
+
+
+def test_preference_strategy_fits_qlognei_and_asks_for_one_candidate():
+    strategy = _strategy(qLogNEI(n_mc_samples=16))
+    experiments, preferences = _data()
+    strategy.tell(experiments, preferences=preferences)
+
+    assert strategy.is_fitted
+    assert isinstance(strategy._get_acqf(), qLogNoisyExpectedImprovement)
+
+    candidates = strategy.ask()
+    assert len(candidates) == 1
+    assert {"x", "utility_pred", "utility_sd", "utility_des"}.issubset(
+        candidates.columns
+    )
+    strategy.domain.validate_candidates(candidates)
