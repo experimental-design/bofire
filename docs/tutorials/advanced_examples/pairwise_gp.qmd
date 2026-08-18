@@ -614,7 +614,7 @@ def recommendation_utility(proxy, experiments):
     )
 
 
-def run_study(method, replicate):
+def initialize_study(replicate):
     pair_rng = np.random.default_rng(10_000 + replicate)
     noise_rng = np.random.default_rng(20_000 + replicate)
     experiments = domain.inputs.sample(STUDY_INITIAL_DESIGNS, seed=replicate)
@@ -633,6 +633,13 @@ def run_study(method, replicate):
         experiments,
         [possible_initial_pairs[index] for index in initial_pair_indices],
         noise_rng,
+    )
+    return experiments, preferences, pair_rng, noise_rng
+
+
+def run_study(method, replicate):
+    experiments, preferences, pair_rng, noise_rng = initialize_study(
+        replicate
     )
     records = []
 
@@ -683,6 +690,136 @@ def run_study(method, replicate):
             ignore_index=True,
         )
     return records
+
+```
+
+### One feedback round up close
+
+Before averaging over replications, inspect the first feedback round of one
+replicate. Both policies see the same initial comparisons, learned posterior,
+and newly measured qLogNEI design. The numbered lines are the four pairs each
+policy would send to the decision maker; only the feedback-pair policy differs.
+
+```{python}
+illustration_replicate = 0
+(
+    illustration_experiments,
+    illustration_preferences,
+    illustration_pair_rng,
+    _,
+) = initialize_study(illustration_replicate)
+illustration_proxy = fit_proxy(
+    illustration_experiments,
+    illustration_preferences,
+    seed=illustration_replicate * 100,
+)
+illustration_candidate = select_experiment(
+    illustration_proxy,
+    illustration_experiments,
+    seed=20_000 + illustration_replicate * 100,
+)
+illustration_experiments = pd.concat(
+    [
+        illustration_experiments,
+        illustration_candidate.to_frame().T,
+    ],
+    ignore_index=True,
+)
+illustration_pairs = {
+    "random": select_feedback_pairs(
+        "random",
+        illustration_proxy,
+        illustration_experiments,
+        illustration_preferences,
+        illustration_pair_rng,
+        seed=30_000 + illustration_replicate * 100,
+    ),
+    "qEUBO": select_feedback_pairs(
+        "qEUBO",
+        illustration_proxy,
+        illustration_experiments,
+        illustration_preferences,
+        illustration_pair_rng,
+        seed=30_000 + illustration_replicate * 100,
+    ),
+}
+
+illustration_mean = illustration_proxy.predict(grid_df)[
+    "utility_pred"
+].to_numpy().reshape(gx.shape)
+illustration_coordinates = illustration_experiments[
+    domain.inputs.get_keys()
+].to_numpy(dtype=float)
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4.8), constrained_layout=True)
+for ax, (method, title) in zip(
+    axes,
+    [("random", "Random feedback pairs"), ("qEUBO", "qEUBO feedback pairs")],
+):
+    contour = ax.contourf(
+        gx, gy, illustration_mean, levels=20, cmap="viridis"
+    )
+    ax.scatter(
+        illustration_coordinates[:-1, 0],
+        illustration_coordinates[:-1, 1],
+        c="white",
+        edgecolors="black",
+        s=70,
+        label="initial measured design",
+        zorder=3,
+    )
+    ax.scatter(
+        illustration_coordinates[-1, 0],
+        illustration_coordinates[-1, 1],
+        c="tab:red",
+        edgecolors="black",
+        marker="*",
+        s=220,
+        label="new qLogNEI design",
+        zorder=4,
+    )
+    for pair_number, pair in enumerate(illustration_pairs[method], start=1):
+        pair_coordinates = illustration_coordinates[list(pair)]
+        color = f"C{pair_number - 1}"
+        ax.plot(
+            pair_coordinates[:, 0],
+            pair_coordinates[:, 1],
+            color=color,
+            linewidth=2.5,
+            zorder=2,
+        )
+        midpoint = pair_coordinates.mean(axis=0)
+        ax.text(
+            midpoint[0],
+            midpoint[1],
+            str(pair_number),
+            ha="center",
+            va="center",
+            fontsize=9,
+            color="white",
+            bbox={"boxstyle": "circle", "facecolor": color, "pad": 0.2},
+            zorder=5,
+        )
+    ax.set(xlabel="x_1", ylabel="x_2", title=title, xlim=(0, 1), ylim=(0, 1))
+    ax.legend(loc="lower left")
+
+fig.colorbar(contour, ax=axes, label="learned posterior mean")
+plt.show()
+```
+
+The background and measured designs are identical in both panels. In this draw,
+both policies include the new qLogNEI design in three comparisons. Random
+selection also spends a comparison on the low-posterior design at the top,
+whereas qEUBO concentrates on the new design and more promising challengers.
+The posterior mean explains part of this behavior, but qEUBO scores each pair
+under the joint posterior and therefore also accounts for uncertainty. This is
+one illustrative draw rather than evidence about average performance; the
+repeated study below provides that comparison.
+
+We now repeat the complete sequential loop for both policies across ten matched
+replications.
+
+```{python}
 
 
 study_records = []
