@@ -14,7 +14,16 @@ comparison data. It wraps BoTorch's `PairwiseGP`, a Gaussian process whose
 likelihood models the probability that one design is preferred over another.
 
 This tutorial fits a `PairwiseGPSurrogate` to synthetic preference data and
-checks that it recovers the hidden utility.
+checks that it recovers the hidden utility. It then explores two directions for
+acquisition-driven optimization. First, qEUBO selects new designs to compare,
+following [Astudillo et al. (2023), *qEUBO: A Decision-Theoretic Acquisition
+Function for Preferential Bayesian
+Optimization*](https://proceedings.mlr.press/v206/astudillo23a.html). Second,
+inspired by the separation of experiment and feedback acquisition in
+[Kobalczyk et al. (2026), *LILO: Bayesian Optimization with Natural Language
+Feedback*](https://arxiv.org/abs/2510.17671), qLogNEI selects the next design to
+measure while our illustrative qEUBO policy chooses which measured pairs to
+label.
 
 ## Imports
 
@@ -223,8 +232,43 @@ strategy_data = PreferenceStrategyDataModel(
     ),
     seed=42,
 )
+```
+
+For a deliberately data-sparse illustration, use only half of the designs and
+the comparisons between them. After filtering the comparisons, we retain
+exactly the designs referenced by those rows. This keeps the two tables
+consistent: every preference labcode exists in the experiment table, and every
+included experiment participates in at least one comparison.
+
+```{python}
+subset_labcodes = set(
+    experiments.sample(n=20, random_state=42)["labcode"]
+)
+strategy_preferences = preferences.loc[
+    preferences["labcode_A"].isin(subset_labcodes)
+    & preferences["labcode_B"].isin(subset_labcodes)
+].reset_index(drop=True)
+referenced_labcodes = pd.unique(
+    strategy_preferences[["labcode_A", "labcode_B"]].to_numpy().ravel()
+)
+strategy_experiments = experiments.loc[
+    experiments["labcode"].isin(referenced_labcodes)
+].reset_index(drop=True)
+
+pd.Series(
+    {
+        "training designs": len(strategy_experiments),
+        "training comparisons": len(strategy_preferences),
+    }
+)
+```
+
+The strategy now fits that subset and optimizes qEUBO continuously over the
+full input domain.
+
+```{python}
 strategy = strategies.map(strategy_data)
-strategy.tell(experiments, preferences=preferences)
+strategy.tell(strategy_experiments, preferences=strategy_preferences)
 next_pair = strategy.ask(candidate_count=2)
 next_pair
 ```
@@ -267,13 +311,13 @@ absolute scale is not directly comparable to the true utility scale.
 fig, ax = plt.subplots(figsize=(6.5, 5))
 contour = ax.contourf(gx, gy, true_grid, levels=20, cmap="viridis")
 ax.scatter(
-    X[:, 0],
-    X[:, 1],
+    strategy_experiments["x_1"],
+    strategy_experiments["x_2"],
     c="white",
     edgecolors="black",
     s=25,
     alpha=0.65,
-    label="compared designs",
+    label="strategy training designs",
 )
 
 candidate_colors = ["tab:red", "tab:orange"]
