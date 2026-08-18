@@ -35,7 +35,6 @@ import numpy as np
 import pandas as pd
 import torch
 from botorch.acquisition.logei import qLogNoisyExpectedImprovement
-from botorch.acquisition.preference import qExpectedUtilityOfBestOption
 from botorch.optim import optimize_acqf
 from botorch.sampling.normal import SobolQMCNormalSampler
 from matplotlib import pyplot as plt
@@ -255,12 +254,8 @@ strategy_experiments = experiments.loc[
     experiments["labcode"].isin(referenced_labcodes)
 ].reset_index(drop=True)
 
-pd.Series(
-    {
-        "training designs": len(strategy_experiments),
-        "training comparisons": len(strategy_preferences),
-    }
-)
+print("training designs:", len(strategy_experiments))
+print("training comparisons:", len(strategy_preferences))
 ```
 
 The strategy now fits that subset and optimizes qEUBO continuously over the
@@ -358,83 +353,6 @@ plt.tight_layout()
 plt.show()
 ```
 
-qEUBO scores a *pair*, so it does not have a unique two-dimensional acquisition
-surface by itself. The optimizer selected both candidates jointly; neither was
-fixed during optimization. For visualization only, the two panels below show
-both possible conditional slices. The left panel holds candidate 1 fixed and
-varies its partner; the right holds candidate 2 fixed. A shared color scale
-makes the dependence on the fixed candidate directly comparable.
-
-```{python}
-transformed_grid = domain.inputs.transform(
-    grid_df, strategy.input_preprocessing_specs
-)
-grid_tensor = torch.from_numpy(transformed_grid.to_numpy()).to(**tkwargs)
-acquisition_function = strategy._get_acqf()
-acquisition_surfaces = []
-
-for fixed_index in range(2):
-    anchor = next_pair.iloc[[fixed_index]][domain.inputs.get_keys()]
-    transformed_anchor = domain.inputs.transform(
-        anchor, strategy.input_preprocessing_specs
-    )
-    anchor_tensor = torch.from_numpy(transformed_anchor.to_numpy()).to(**tkwargs)
-    pair_batches = torch.stack(
-        [anchor_tensor.expand(len(grid_tensor), -1), grid_tensor], dim=1
-    )
-    with torch.no_grad():
-        acquisition_surfaces.append(
-            acquisition_function(pair_batches).cpu().numpy().reshape(gx.shape)
-        )
-
-shared_levels = np.linspace(
-    min(surface.min() for surface in acquisition_surfaces),
-    max(surface.max() for surface in acquisition_surfaces),
-    21,
-)
-fig, axes = plt.subplots(1, 2, figsize=(13, 5), constrained_layout=True)
-
-for fixed_index, (ax, acquisition_surface) in enumerate(
-    zip(axes, acquisition_surfaces)
-):
-    partner_index = 1 - fixed_index
-    contour = ax.contourf(
-        gx, gy, acquisition_surface, levels=shared_levels, cmap="magma"
-    )
-    for candidate_index, role in [
-        (fixed_index, "fixed"),
-        (partner_index, "optimized partner"),
-    ]:
-        ax.scatter(
-            next_pair.iloc[candidate_index]["x_1"],
-            next_pair.iloc[candidate_index]["x_2"],
-            c=candidate_colors[candidate_index],
-            edgecolors="black",
-            marker="*",
-            s=300,
-            linewidth=1.2,
-            label=f"{role} candidate {candidate_index + 1}",
-            clip_on=False,
-            zorder=3,
-        )
-    ax.set(
-        xlabel="x_1",
-        ylabel="x_2",
-        title=f"qEUBO conditional on candidate {fixed_index + 1}",
-    )
-    ax.legend(loc="lower left")
-
-fig.colorbar(contour, ax=axes, label="qEUBO acquisition value")
-plt.show()
-```
-
-In this run, fixing candidate 1 produces a surface with a clear maximum around
-candidate 2. In contrast, fixing candidate 2 makes the surface almost flat at a
-high acquisition value: candidate 2 already dominates the expected maximum, so
-changing its partner has little effect. This explains why candidate 1 can land
-on a seemingly arbitrary boundary point even though the pair is jointly
-optimized.
-
 The two returned rows are the designs to put in front of the expert next. Before
 recording the response, assign each design a unique `labcode`. Then append the
 new designs and a row such as
@@ -471,7 +389,7 @@ spending that budget on random pairs with prioritizing pairs by qEUBO.
 
 The following small study gives both policies the same initial data and the
 same qLogNEI experiment acquisition. At each of ten BO iterations, one new
-design is selected continuously over the input domain and a budget of $K=4$
+design is selected continuously over the input domain and a budget of $K=2$
 comparison queries is labeled. The only difference is whether those pairs are
 sampled randomly or selected by their qEUBO values.
 
@@ -482,7 +400,7 @@ The pairwise GP is trained exclusively on comparisons.
 :::
 
 ```{python}
-STUDY_K_PAIRS = 4
+STUDY_K_PAIRS = 2
 STUDY_INITIAL_DESIGNS = 4
 STUDY_BO_ITERATIONS = 10
 STUDY_REPLICATES = 10
@@ -490,12 +408,12 @@ STUDY_MC_SAMPLES = 64
 ```
 
 The two policies use matched random-number streams for the simulated preference
-noise. They select four distinct pairs within each round, but previously queried
+noise. They select two distinct pairs within each round, but previously queried
 pairs remain eligible in later rounds and receive a fresh noisy judgment. This
 lets repeated feedback reduce uncertainty about a noisy preference. The qEUBO
-policy evaluates every pair among the measured designs and takes the four
+policy evaluates every pair among the measured designs and takes the two
 highest-valued pairs. This is a simple *greedy pair-selection* baseline rather
-than a claim that those four comparisons are jointly optimal.
+than a claim that those two comparisons are jointly optimal.
 
 ```{python}
 def to_tensor(frame):
@@ -523,49 +441,61 @@ def label_pairs(experiments, pairs, rng):
     )
 
 
-def fit_proxy(experiments, preferences, seed):
-    torch.manual_seed(seed)
-    proxy = surrogates.map(
-        PairwiseGPSurrogate(inputs=inputs, outputs=outputs)
+def fit_preference_strategy(experiments, preferences, seed):
+    preference_strategy = strategies.map(
+        PreferenceStrategyDataModel(
+            domain=domain,
+            surrogate_spec=surrogate_data,
+            acquisition_function=qEUBO(n_mc_samples=STUDY_MC_SAMPLES),
+            seed=seed,
+        )
     )
     # A modest fit budget keeps the repeated tutorial study fast.
-    proxy.training_specs = {"maxiter": 50}
-    proxy.fit(experiments, preferences)
-    return proxy
+    preference_strategy.surrogate.training_specs = {"maxiter": 50}
+    preference_strategy.tell(experiments, preferences=preferences)
+    return preference_strategy
 
 
-def select_feedback_pairs(method, proxy, experiments, rng, seed):
+def select_feedback_pairs(method, preference_strategy, experiments, rng):
     pairs = list(combinations(range(len(experiments)), 2))
     pair_count = min(STUDY_K_PAIRS, len(pairs))
     if method == "random":
         selected = rng.choice(len(pairs), size=pair_count, replace=False)
         return [pairs[index] for index in selected]
 
-    pair_tensor = torch.stack(
-        [to_tensor(experiments.iloc[list(pair)]) for pair in pairs]
+    values = np.array(
+        [
+            preference_strategy.calc_acquisition(
+                experiments.iloc[list(pair)][domain.inputs.get_keys()].astype(
+                    float
+                ),
+                combined=True,
+            ).item()
+            for pair in pairs
+        ]
     )
-    acquisition = qExpectedUtilityOfBestOption(
-        pref_model=proxy.model,
-        sampler=SobolQMCNormalSampler(
-            sample_shape=torch.Size([STUDY_MC_SAMPLES]), seed=seed
-        ),
-    )
-    with torch.no_grad():
-        values = acquisition(pair_tensor)
-    selected = torch.topk(values, k=pair_count).indices.cpu().tolist()
+    selected = np.argsort(values)[-pair_count:]
     return [pairs[index] for index in selected]
 ```
 
+`calc_acquisition(..., combined=True)` tells BoFire to score the two rows as one
+$q=2$ qEUBO batch. We enumerate pairs here because feedback must be selected
+from designs that have already been measured. In contrast,
+`PreferenceStrategy.ask()` optimizes qEUBO over the domain and proposes new
+designs. The qLogNEI step below remains a direct BoTorch call because it is
+applied to the latent pairwise model, not to an observed scalar-output model.
+
 Each arm alternates qLogNEI experiment acquisition and preference-label
 acquisition. We record both the best true utility encountered and the true
-utility of the *measured* design currently recommended by the proxy posterior.
-qLogNEI is optimized continuously over $[0, 1]^2$; only feedback acquisition is
-discrete because its candidates are pairs of already measured designs.
+utility of the *measured* design currently recommended by the surrogate
+posterior. qLogNEI is optimized continuously over $[0, 1]^2$; only feedback
+acquisition is discrete because its candidates are pairs of already measured
+designs.
 
 ```{python}
-def select_experiment(proxy, experiments, seed):
+def select_experiment(preference_strategy, experiments, seed):
     acquisition = qLogNoisyExpectedImprovement(
-        model=proxy.model,
+        model=preference_strategy.model,
         X_baseline=to_tensor(experiments),
         sampler=SobolQMCNormalSampler(
             sample_shape=torch.Size([STUDY_MC_SAMPLES]), seed=seed
@@ -590,10 +520,9 @@ def select_experiment(proxy, experiments, seed):
     return pd.Series(candidate_data)
 
 
-def recommendation_utility(proxy, experiments):
-    with torch.no_grad():
-        posterior_mean = proxy.model.posterior(to_tensor(experiments)).mean.squeeze(-1)
-    recommendation = experiments.iloc[int(posterior_mean.argmax())]
+def recommendation_utility(preference_strategy, experiments):
+    posterior_mean = preference_strategy.predict(experiments)["utility_pred"]
+    recommendation = experiments.loc[posterior_mean.idxmax()]
     return float(
         latent_utility(
             recommendation[domain.inputs.get_keys()].to_numpy(dtype=float)[None, :]
@@ -631,7 +560,7 @@ def run_study(method, replicate):
     records = []
 
     for iteration in range(STUDY_BO_ITERATIONS + 1):
-        proxy = fit_proxy(
+        preference_strategy = fit_preference_strategy(
             experiments,
             preferences,
             seed=replicate * 100 + iteration,
@@ -646,7 +575,7 @@ def run_study(method, replicate):
                 "iteration": iteration,
                 "best_measured_utility": float(measured_utility.max()),
                 "recommended_utility": recommendation_utility(
-                    proxy, experiments
+                    preference_strategy, experiments
                 ),
             }
         )
@@ -654,7 +583,7 @@ def run_study(method, replicate):
             break
 
         next_experiment = select_experiment(
-            proxy,
+            preference_strategy,
             experiments,
             seed=20_000 + replicate * 100 + iteration,
         )
@@ -663,10 +592,9 @@ def run_study(method, replicate):
         )
         selected_pairs = select_feedback_pairs(
             method,
-            proxy,
+            preference_strategy,
             experiments,
             pair_rng,
-            seed=30_000 + replicate * 100 + iteration,
         )
         preferences = pd.concat(
             [
@@ -678,141 +606,6 @@ def run_study(method, replicate):
     return records
 
 ```
-
-### One feedback round up close
-
-Before averaging over replications, inspect the first feedback round of one
-replicate. Both policies see the same initial comparisons, learned posterior,
-and newly measured qLogNEI design. The numbered lines are the four pairs each
-policy would send to the decision maker; only the feedback-pair policy differs.
-Solid lines are new comparisons, while dashed lines repeat a pair from the
-initial feedback.
-
-```{python}
-illustration_replicate = 0
-(
-    illustration_experiments,
-    illustration_preferences,
-    illustration_pair_rng,
-    _,
-) = initialize_study(illustration_replicate)
-illustration_proxy = fit_proxy(
-    illustration_experiments,
-    illustration_preferences,
-    seed=illustration_replicate * 100,
-)
-illustration_candidate = select_experiment(
-    illustration_proxy,
-    illustration_experiments,
-    seed=20_000 + illustration_replicate * 100,
-)
-illustration_experiments = pd.concat(
-    [
-        illustration_experiments,
-        illustration_candidate.to_frame().T,
-    ],
-    ignore_index=True,
-)
-illustration_pairs = {
-    "random": select_feedback_pairs(
-        "random",
-        illustration_proxy,
-        illustration_experiments,
-        illustration_pair_rng,
-        seed=30_000 + illustration_replicate * 100,
-    ),
-    "qEUBO": select_feedback_pairs(
-        "qEUBO",
-        illustration_proxy,
-        illustration_experiments,
-        illustration_pair_rng,
-        seed=30_000 + illustration_replicate * 100,
-    ),
-}
-illustration_compared = {
-    frozenset((row.labcode_A, row.labcode_B))
-    for row in illustration_preferences.itertuples()
-}
-
-illustration_mean = illustration_proxy.predict(grid_df)[
-    "utility_pred"
-].to_numpy().reshape(gx.shape)
-illustration_coordinates = illustration_experiments[
-    domain.inputs.get_keys()
-].to_numpy(dtype=float)
-
-fig, axes = plt.subplots(1, 2, figsize=(12, 4.8), constrained_layout=True)
-for ax, (method, title) in zip(
-    axes,
-    [("random", "Random feedback pairs"), ("qEUBO", "qEUBO feedback pairs")],
-):
-    contour = ax.contourf(
-        gx, gy, illustration_mean, levels=20, cmap="viridis"
-    )
-    ax.scatter(
-        illustration_coordinates[:-1, 0],
-        illustration_coordinates[:-1, 1],
-        c="white",
-        edgecolors="black",
-        s=70,
-        label="initial measured design",
-        zorder=3,
-    )
-    ax.scatter(
-        illustration_coordinates[-1, 0],
-        illustration_coordinates[-1, 1],
-        c="tab:red",
-        edgecolors="black",
-        marker="*",
-        s=220,
-        label="new qLogNEI design",
-        zorder=4,
-    )
-    line_labels = set()
-    for pair_number, pair in enumerate(illustration_pairs[method], start=1):
-        pair_coordinates = illustration_coordinates[list(pair)]
-        pair_labcodes = illustration_experiments.iloc[list(pair)][
-            "labcode"
-        ]
-        repeated = frozenset(pair_labcodes) in illustration_compared
-        line_label = "repeated comparison" if repeated else "new comparison"
-        color = f"C{pair_number - 1}"
-        ax.plot(
-            pair_coordinates[:, 0],
-            pair_coordinates[:, 1],
-            color=color,
-            linewidth=2.5,
-            linestyle="--" if repeated else "-",
-            label=line_label if line_label not in line_labels else None,
-            zorder=2,
-        )
-        line_labels.add(line_label)
-        midpoint = pair_coordinates.mean(axis=0)
-        ax.text(
-            midpoint[0],
-            midpoint[1],
-            str(pair_number),
-            ha="center",
-            va="center",
-            fontsize=9,
-            color="white",
-            bbox={"boxstyle": "circle", "facecolor": color, "pad": 0.2},
-            zorder=5,
-        )
-    ax.set(xlabel="x_1", ylabel="x_2", title=title, xlim=(0, 1), ylim=(0, 1))
-    ax.legend(loc="lower left")
-
-fig.colorbar(contour, ax=axes, label="learned posterior mean")
-plt.show()
-```
-
-The background and measured designs are identical in both panels. A dashed edge
-is not discarded: its new noisy label is appended as another observation of the
-same preference. Here random selection repeats one low-posterior comparison,
-while qEUBO spends all four queries on new comparisons around more promising
-designs. qEUBO is nevertheless allowed to repeat pairs; it simply does not do
-so in this round. This is one illustrative draw rather than evidence about
-average performance; the repeated study below provides that comparison.
 
 We now repeat the complete sequential loop for both policies across ten matched
 replications.
@@ -826,9 +619,10 @@ for study_replicate in range(STUDY_REPLICATES):
         study_records.extend(run_study(study_method, study_replicate))
 
 study_results = pd.DataFrame(study_records)
-study_results.groupby(["method", "iteration"])[
+study_summary = study_results.groupby(["method", "iteration"])[
     ["best_measured_utility", "recommended_utility"]
 ].mean().round(3)
+print(study_summary.to_string())
 ```
 
 ```{python}
@@ -873,10 +667,11 @@ plt.show()
 The shaded regions show one standard deviation across the ten matched
 replications.
 
-In this seeded illustration, qEUBO improves recommendation utility faster and
-remains ahead of random pair selection, while the best-measured-design curves
-are much closer. Both policies approach the optimum as more measurements and
-labels accumulate. With ten replications, this remains an illustrative baseline
-rather than a performance claim. The key point is that, even with the same
-qLogNEI experiment-acquisition rule, the choice of preference pairs changes the
-learned utility proxy and therefore changes subsequent experiments.
+In this seeded illustration, the recommendation curves are close for the first
+few iterations, after which qEUBO pulls ahead of random pair selection. The
+best-measured-design curves nearly overlap. Both policies approach the optimum
+as more measurements and labels accumulate. With ten replications, this remains
+an illustrative baseline rather than a performance claim. The key point is
+that, even with the same qLogNEI experiment-acquisition rule, the choice of
+preference pairs changes the learned utility surrogate and therefore changes
+subsequent experiments.
