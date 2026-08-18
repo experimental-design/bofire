@@ -11,6 +11,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - Categorical encodings are first-class data models (`OneHotEncoding`, `OrdinalEncoding`, `DescriptorEncoding`), chosen per surrogate via `categorical_encodings` and extensible like kernels or priors.
 
 ### Changed
+- **Breaking**: the outlier-detection layer is **removed**, with no compatibility shim. Gone are the packages `bofire.outlier_detection` and `bofire.data_models.outlier_detection` (`OutlierDetection`, `IterativeTrimming`, `OutlierDetections`) and the `outlier_detection_specs`, `min_experiments_before_outlier_check` and `frequency_check` fields on `BotorchStrategy` — serialized strategies carrying those fields no longer load. Use `RobustSingleTaskGPSurrogate`, which learns a data-point specific noise level and so handles outliers inside the BO loop instead of trimming them in a pre-fit pass.
 - **Breaking**: descriptor data now lives on the feature and the encoding choice on the surrogate. The classes and the enum that fused those two concerns are **removed**, with no compatibility shim — old serialized domains containing them no longer load. Migrate as follows (note that `values` was row-per-category while `columns` is column-wise, so the table is transposed):
 
   | removed | replacement |

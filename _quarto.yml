@@ -248,7 +248,6 @@ website:
             - docs/tutorials/benchmarks/002-DTLZ2.qmd
             - docs/tutorials/benchmarks/003-Hartmann_with_nchoosek.qmd
             - docs/tutorials/benchmarks/004-30dimBranin.qmd
-            - docs/tutorials/benchmarks/005-Himmelblau_with_outliers.qmd
             - docs/tutorials/benchmarks/006-Bayesian_optimization_over_molecules.qmd
             - docs/tutorials/benchmarks/007-LSRBO.qmd
             - docs/tutorials/benchmarks/008-ZDT1.qmd

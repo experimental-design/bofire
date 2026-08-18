@@ -28,10 +28,6 @@ from bofire.data_models.features.api import (
 from bofire.data_models.kernels.api import AnyKernel, Kernel
 from bofire.data_models.llm.api import AnyLLMProvider, LLMProvider
 from bofire.data_models.objectives.api import AnyObjective, Objective
-from bofire.data_models.outlier_detection.api import (
-    AnyOutlierDetection,
-    OutlierDetection,
-)
 from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint, Prior
 from bofire.data_models.strategies.api import (
     AnyCondition,
@@ -56,7 +52,6 @@ data_model_list = [
     AnyFeature,
     AnyKernel,
     AnySurrogate,
-    AnyOutlierDetection,
     AnyObjective,
     AnyPrior,
     AnyPriorConstraint,
