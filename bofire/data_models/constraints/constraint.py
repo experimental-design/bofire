@@ -91,11 +91,11 @@ class IntrapointConstraint(Constraint):
 
 
 class EqualityConstraint(IntrapointConstraint):
-    """Abstract base class for constraints that must evaluate to zero.
+    """Abstract base class for constraints fulfilled at a constraint value of zero.
 
-    A candidate fulfills the constraint if the constraint evaluation is within `tol`
-    of zero. Subclass this instead of `InequalityConstraint` when the relationship is
-    an exact one, such as a mixture summing to a fixed total.
+    What is evaluated is defined by the `__call__` of the implementing subclass. This
+    class only fixes how that value is interpreted: a candidate fulfills the constraint
+    if the value is within `tol` of zero.
     """
 
     type: Any
@@ -108,11 +108,11 @@ class EqualityConstraint(IntrapointConstraint):
 
 
 class InequalityConstraint(IntrapointConstraint):
-    """Abstract base class for constraints that must evaluate to zero or less.
+    """Abstract base class for constraints fulfilled at a non-positive constraint value.
 
-    A candidate fulfills the constraint if the constraint evaluation does not exceed
-    `tol`. Subclass this instead of `EqualityConstraint` when the relationship is a
-    bound rather than an exact one, such as a budget that must not be overspent.
+    What is evaluated is defined by the `__call__` of the implementing subclass. This
+    class only fixes how that value is interpreted: a candidate fulfills the constraint
+    if the value does not exceed `tol`.
     """
 
     type: Any
