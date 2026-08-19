@@ -32,3 +32,7 @@ Handling and classifying unknown constraints in optimization problems.
 
 ### [Index Kernel and Positive Index Kernel](index_kernel.qmd)
 Learn how to use Index Kernel and Positive Index Kernel for categorical variables.
+
+### [Estimating a Pareto Front from Surrogate Models](pareto_front_estimation.qmd)
+Compare Sobol and GA front estimates and validate fitted GP models against a
+known benchmark.
