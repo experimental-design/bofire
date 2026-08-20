@@ -1,6 +1,6 @@
 from typing import Any, Literal, Optional
 
-from pydantic import PositiveFloat, model_validator
+from pydantic import Field, PositiveFloat, model_validator
 
 from bofire.data_models.base import BaseModel
 
@@ -14,31 +14,36 @@ class PriorConstraint(BaseModel):
 class Positive(PriorConstraint):
     """Class for constraints that enforce a prior to be positive.
 
-    Attributes:
-        initial_value: Optional warm-start value used when registering the
-            constraint on a gpytorch parameter. If ``None``, the consuming code
-            may supply a runtime default (e.g. ``noise_prior.mode`` in the GP
-            surrogates).
+    Use when only the sign matters; use `GreaterThan` or `Interval` to bound the
+    parameter more tightly.
     """
 
     type: Literal["Positive"] = "Positive"
-    initial_value: Optional[PositiveFloat] = None
+    initial_value: Optional[PositiveFloat] = Field(
+        default=None,
+        description="Optional warm-start value used when registering the constraint "
+        "on a gpytorch parameter. If not provided, the consuming code may supply a "
+        "runtime default, e.g. ``noise_prior.mode`` in the GP surrogates.",
+    )
 
 
 class GreaterThan(PriorConstraint):
     """Class for constraints that enforce a prior to be greater than a specified value.
 
-    Attributes:
-        lower_bound: The lower bound enforced on the constrained parameter.
-        initial_value: Optional warm-start value used when registering the
-            constraint on a gpytorch parameter. Must be ``>= lower_bound`` if
-            set. If ``None``, the consuming code may supply a runtime default
-            (e.g. ``noise_prior.mode`` in the GP surrogates).
+    Use `Interval` instead if the parameter needs an upper bound as well.
     """
 
     type: Literal["GreaterThan"] = "GreaterThan"
-    lower_bound: float
-    initial_value: Optional[PositiveFloat] = None
+    lower_bound: float = Field(
+        description="Lower bound enforced on the constrained parameter.",
+    )
+    initial_value: Optional[PositiveFloat] = Field(
+        default=None,
+        description="Optional warm-start value used when registering the constraint "
+        "on a gpytorch parameter. Must be greater than or equal to `lower_bound`. If "
+        "not provided, the consuming code may supply a runtime default, e.g. "
+        "``noise_prior.mode`` in the GP surrogates.",
+    )
 
     @model_validator(mode="after")
     def validate_initial_value(self):
@@ -52,17 +57,20 @@ class GreaterThan(PriorConstraint):
 class LessThan(PriorConstraint):
     """Class for constraints that enforce a prior to be less than a specified value.
 
-    Attributes:
-        upper_bound: The upper bound enforced on the constrained parameter.
-        initial_value: Optional warm-start value used when registering the
-            constraint on a gpytorch parameter. Must be ``<= upper_bound`` if
-            set. If ``None``, the consuming code may supply a runtime default
-            (e.g. ``noise_prior.mode`` in the GP surrogates).
+    Use `Interval` instead if the parameter needs a lower bound as well.
     """
 
     type: Literal["LessThan"] = "LessThan"
-    upper_bound: float
-    initial_value: Optional[PositiveFloat] = None
+    upper_bound: float = Field(
+        description="Upper bound enforced on the constrained parameter.",
+    )
+    initial_value: Optional[PositiveFloat] = Field(
+        default=None,
+        description="Optional warm-start value used when registering the constraint "
+        "on a gpytorch parameter. Must be less than or equal to `upper_bound`. If not "
+        "provided, the consuming code may supply a runtime default, e.g. "
+        "``noise_prior.mode`` in the GP surrogates.",
+    )
 
     @model_validator(mode="after")
     def validate_initial_value(self):

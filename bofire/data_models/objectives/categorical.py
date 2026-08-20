@@ -2,7 +2,7 @@ from typing import Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.objectives.objective import (
     ConstrainedObjective,
@@ -18,15 +18,27 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
         Po where P is an [n, c] matrix where each row is a probability vector
         (P[i, :].sum()=1 for all i) and o is a vector of size [c] of objective values
 
-    Attributes:
-        w (float): float between zero and one for weighting the objective.
-        desirability (list): list of values of size c (c is number of categories) such that the i-th entry is in {True, False}
+    The only objective that applies to a `CategoricalOutput`; all others operate on
+    continuous outputs.
 
+    Examples:
+        >>> ConstrainedCategoricalObjective(
+        ...     categories=["pass", "fail"], desirability=[True, False]
+        ... )
     """
 
-    w: TWeight = 1.0
-    categories: CategoryVals
-    desirability: List[bool]
+    w: TWeight = Field(
+        default=1.0,
+        description="Relative weight of this objective, between zero and one.",
+    )
+    categories: CategoryVals = Field(
+        description="Categories of the output feature this objective applies to, in "
+        "the same order as `desirability`.",
+    )
+    desirability: List[bool] = Field(
+        description="Whether each category is desirable, one entry per category in "
+        "`categories` and in the same order.",
+    )
     type: Literal["ConstrainedCategoricalObjective"] = "ConstrainedCategoricalObjective"
 
     def to_description(self) -> str:

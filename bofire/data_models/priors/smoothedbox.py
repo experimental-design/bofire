@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import PositiveFloat, model_validator
+from pydantic import Field, PositiveFloat, model_validator
 
 from bofire.data_models.priors.prior import Prior
 
@@ -16,17 +16,25 @@ class SmoothedBoxPrior(Prior):
         pdf(x) \\sim exp(- d(x, B)**2 / sqrt(2 * sigma^2))
     \\end{equation*}
 
-    Attributes:
-        lower_bound: lower bound of the uniform prior
-        upper_bound: upper bound of the uniform prior
-        sigma: related to pdf(x)
+    Use when a hyperparameter should be treated as roughly uniform over a range, in
+    contrast to the peaked `GammaPrior` or `NormalPrior`.
 
+    Examples:
+        >>> SmoothedBoxPrior(lower_bound=0.1, upper_bound=10.0)
     """
 
     type: Literal["SmoothedBoxPrior"] = "SmoothedBoxPrior"
-    lower_bound: float
-    upper_bound: float
-    sigma: PositiveFloat = 0.01
+    lower_bound: float = Field(
+        description="Lower bound of the approximated uniform prior.",
+    )
+    upper_bound: float = Field(
+        description="Upper bound of the approximated uniform prior.",
+    )
+    sigma: PositiveFloat = Field(
+        default=0.01,
+        description="Width of the smooth decay outside the bounds. Smaller values "
+        "approximate a hard uniform prior more closely.",
+    )
 
     @model_validator(mode="after")
     def validate_bounds(self):

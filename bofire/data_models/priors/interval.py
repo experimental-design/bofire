@@ -1,6 +1,6 @@
 from typing import Literal, Optional
 
-from pydantic import PositiveFloat, model_validator
+from pydantic import Field, PositiveFloat, model_validator
 
 from bofire.data_models.priors.constraint import PriorConstraint
 
@@ -10,19 +10,19 @@ class Interval(PriorConstraint):
 
     It is used to define interval constraints on GP hyperparameters.
 
-    Attributes:
-        lower_bound: The lower bound of the interval.
-        upper_bound: The upper bound of the interval.
-        initial_value: Optional warm-start value used when registering the
-            constraint on a gpytorch parameter. Must be within
-            ``[lower_bound, upper_bound]`` if set. If ``None``, gpytorch leaves
-            the raw parameter at its default (no warm-start).
+    Bounds the parameter from both sides, unlike `GreaterThan`, `LessThan` and
+    `Positive`.
     """
 
     type: Literal["Interval"] = "Interval"
-    lower_bound: PositiveFloat
-    upper_bound: PositiveFloat
-    initial_value: Optional[PositiveFloat] = None
+    lower_bound: PositiveFloat = Field(description="Lower bound of the interval.")
+    upper_bound: PositiveFloat = Field(description="Upper bound of the interval.")
+    initial_value: Optional[PositiveFloat] = Field(
+        default=None,
+        description="Optional warm-start value used when registering the constraint "
+        "on a gpytorch parameter. Must lie within the interval. If not provided, "
+        "gpytorch leaves the raw parameter at its default.",
+    )
 
     @model_validator(mode="after")
     def validate_bounds(self):
@@ -46,12 +46,6 @@ class NonTransformedInterval(Interval):
     Modification of the GPyTorch interval class that does not apply transformations.
 
     See: https://botorch.readthedocs.io/en/stable/_modules/botorch/utils/constraints.html#NonTransformedInterval
-
-    Attributes:
-        lower_bound: The lower bound of the interval.
-        upper_bound: The upper bound of the interval.
-        initial_value: The initial value within the interval.
-
     """
 
     type: Literal["NonTransformedInterval"] = "NonTransformedInterval"
@@ -63,11 +57,6 @@ class LogTransformedInterval(Interval):
     Modification of the GPyTorch interval class for numerical stability.
 
     See: https://botorch.readthedocs.io/en/stable/_modules/botorch/utils/constraints.html#LogTransformedInterval
-
-    Attributes:
-        lower_bound: The lower bound of the interval.
-        upper_bound: The upper bound of the interval.
-        initial_value: The initial value within the interval.
     """
 
     type: Literal["LogTransformedInterval"] = "LogTransformedInterval"

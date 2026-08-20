@@ -2,6 +2,7 @@ from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
+from pydantic import Field
 
 from bofire.data_models.objectives.objective import (
     ConstrainedObjective,
@@ -12,28 +13,28 @@ from bofire.data_models.objectives.objective import (
 
 
 class SigmoidObjective(Objective, ConstrainedObjective):
-    """Base class for all sigmoid shaped objectives
+    """Base class for all sigmoid shaped objectives"""
 
-    Attributes:
-        w (float): float between zero and one for weighting the objective.
-        steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
-        tp (float): Turning point of the sigmoid function.
-
-    """
-
-    steepness: TGt0
-    tp: float
-    w: TWeight = 1
+    steepness: TGt0 = Field(
+        description="Steepness of the sigmoid. Larger values make the transition "
+        "between rewarded and unrewarded values sharper.",
+    )
+    tp: float = Field(description="Turning point of the sigmoid.")
+    w: TWeight = Field(
+        default=1,
+        description="Relative weight of this objective, between zero and one.",
+    )
 
 
 class MaximizeSigmoidObjective(SigmoidObjective):
     """Class for a maximizing sigmoid objective
 
-    Attributes:
-        w (float): float between zero and one for weighting the objective.
-        steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
-        tp (float): Turning point of the sigmoid function.
+    Rewards values above the turning point. Use `MinimizeSigmoidObjective` to reward
+    values below it, or `MovingMaximizeSigmoidObjective` for a turning point that
+    tracks the observed data.
 
+    Examples:
+        >>> MaximizeSigmoidObjective(tp=5.0, steepness=10.0)
     """
 
     type: Literal["MaximizeSigmoidObjective"] = "MaximizeSigmoidObjective"
@@ -62,12 +63,13 @@ class MaximizeSigmoidObjective(SigmoidObjective):
 class MovingMaximizeSigmoidObjective(SigmoidObjective):
     """Class for a maximizing sigmoid objective with a moving turning point that depends on so far observed x values.
 
-    Attributes:
-        w (float): float between zero and one for weighting the objective when used in a weighting based strategy.
-        steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
-        tp (float): Relative turning point of the sigmoid function. The actual turning point is calculated by adding
-            the maximum of the observed x values to the relative turning point.
+    Note that `tp` is interpreted differently here than in the other sigmoid
+    objectives: it is a *relative* turning point, and the effective one is obtained by
+    adding the maximum of the observed x values to it. Use this when the target is
+    "improve on the best result so far" rather than a fixed threshold.
 
+    Examples:
+        >>> MovingMaximizeSigmoidObjective(tp=0.0, steepness=10.0)
     """
 
     type: Literal["MovingMaximizeSigmoidObjective"] = "MovingMaximizeSigmoidObjective"
@@ -110,11 +112,11 @@ class MovingMaximizeSigmoidObjective(SigmoidObjective):
 class MinimizeSigmoidObjective(SigmoidObjective):
     """Class for a minimizing a sigmoid objective
 
-    Attributes:
-        w (float): float between zero and one for weighting the objective.
-        steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
-        tp (float): Turning point of the sigmoid function.
+    Rewards values below the turning point. Use `MaximizeSigmoidObjective` to reward
+    values above it.
 
+    Examples:
+        >>> MinimizeSigmoidObjective(tp=5.0, steepness=10.0)
     """
 
     type: Literal["MinimizeSigmoidObjective"] = "MinimizeSigmoidObjective"

@@ -4,6 +4,7 @@ from typing import Literal, Optional, Union
 import numpy as np
 import pandas as pd
 import pydantic
+from pydantic import Field
 
 from bofire.data_models.objectives.identity import IdentityObjective
 
@@ -12,7 +13,12 @@ class DesirabilityObjective(IdentityObjective):
     """Abstract class for desirability objectives. Works as Identity Objective"""
 
     type: Literal["DesirabilityObjective"] = "DesirabilityObjective"
-    clip: bool = True
+    clip: bool = Field(
+        default=True,
+        description="Whether to clip the desirability outside `bounds`. If disabled, "
+        "the desirability continues past the bounds and all log shape factors must be "
+        "zero.",
+    )
 
     @pydantic.model_validator(mode="after")
     def validate_clip(self):
@@ -60,21 +66,20 @@ class IncreasingDesirabilityObjective(DesirabilityObjective):
 
     Note, that with clipping the reward is always between zero and one.
 
-    Attributes:
-        clip (bool): Whether to clip the values below/above the lower/upper bound, by
-            default True.
-        log_shape_factor (float): Logarithm of the shape factor:
-            Whether the interpolation between the lower bound and the upper is linear (=0),
-            convex (>0) or concave (<0) , by default 0.0.
-        w (float): relative weight, by default = 1.
-        bounds (tuple[float]): lower and upper bound of the desirability. Below
-            bounds[0] the desirability is =0 (if clip=True) or <0 (if clip=False). Above
-            bounds[1] the desirability is =1  (if clip=True) or >1 (if clip=False).
-            Defaults to (0, 1).
+    Below `bounds[0]` the desirability is 0 (or negative if `clip` is disabled), above
+    `bounds[1]` it is 1 (or greater). Use `DecreasingDesirabilityObjective` for the
+    opposite direction.
+
+    Examples:
+        >>> IncreasingDesirabilityObjective(bounds=[0.0, 10.0])
     """
 
     type: Literal["IncreasingDesirabilityObjective"] = "IncreasingDesirabilityObjective"
-    log_shape_factor: float = 0.0
+    log_shape_factor: float = Field(
+        default=0.0,
+        description="Logarithm of the shape factor: whether the interpolation between "
+        "the lower and the upper bound is linear (=0), convex (>0) or concave (<0).",
+    )
 
     def to_description(self) -> str:
         raise NotImplementedError
@@ -112,21 +117,20 @@ class DecreasingDesirabilityObjective(DesirabilityObjective):
 
     Note, that with clipping the reward is always between zero and one.
 
-    Attributes:
-        clip (bool): Whether to clip the values below/above the lower/upper bound, by
-            default True.
-        log_shape_factor (float): Logarithm of the shape factor:
-            Whether the interpolation between the lower bound and the upper is linear (=0),
-            convex (>0) or concave (<0) , by default 0.0.
-        w (float): relative weight, by default = 1.
-        bounds (tuple[float]): lower and upper bound of the desirability. Below
-            bounds[0] the desirability is =1 (if clip=True) or >1 (if clip=False). Above
-            bounds[1] the desirability is =0  (if clip=True) or <0 (if clip=False).
-            Defaults to (0, 1).
+    Below `bounds[0]` the desirability is 1 (or greater if `clip` is disabled), above
+    `bounds[1]` it is 0 (or negative). Use `IncreasingDesirabilityObjective` for the
+    opposite direction.
+
+    Examples:
+        >>> DecreasingDesirabilityObjective(bounds=[0.0, 10.0])
     """
 
     type: Literal["DecreasingDesirabilityObjective"] = "DecreasingDesirabilityObjective"
-    log_shape_factor: float = 0.0
+    log_shape_factor: float = Field(
+        default=0.0,
+        description="Logarithm of the shape factor: whether the interpolation between "
+        "the lower and the upper bound is linear (=0), convex (>0) or concave (<0).",
+    )
 
     def to_description(self) -> str:
         raise NotImplementedError
@@ -158,27 +162,32 @@ class PeakDesirabilityObjective(DesirabilityObjective):
     A piecewise (linear or convex/concave) objective that increases from the lower bound
     to the peak position and decreases from the peak position to the upper bound.
 
-    Attributes:
-        clip (bool): Whether to clip the values below/above the lower/upper bound, by
-            default True.
-        log_shape_factor (float): Logarithm of the shape factor for the increasing part:
-            Whether the interpolation between the lower bound and the peak is linear (=0),
-            convex (>1) or concave (<1) , by default 0.0.
-        log_shape_factor_decreasing (float): Logarithm of the shape factor for the
-            decreasing part. Whether the interpolation between the peak and the upper
-            bound is linear (=0), convex (>0) or concave (<0), by default 0.0.
-        peak_position (float): Position of the peak, by default 0.5.
-        w (float): relative weight: desirability, when x=peak_position, by default = 1.
-        bounds (tuple[float]): lower and upper bound of the desirability. Below
-            bounds[0] the desirability is =0 (if clip=True) or <0 (if clip=False). Above
-            bounds[1] the desirability is =0  (if clip=True) or <0 (if clip=False).
-            Defaults to (0, 1).
+    The desirability is 0 outside `bounds` (or negative if `clip` is disabled) and
+    reaches `w` at the peak. Use this when a value is best in the middle of a range,
+    rather than as high or as low as possible.
+
+    Examples:
+        >>> PeakDesirabilityObjective(bounds=[0.0, 10.0], peak_position=7.0)
     """
 
     type: Literal["PeakDesirabilityObjective"] = "PeakDesirabilityObjective"
-    log_shape_factor: float = 0.0
-    log_shape_factor_decreasing: float = 0.0  # often named log_t
-    peak_position: float = 0.5  # often named T
+    log_shape_factor: float = Field(
+        default=0.0,
+        description="Logarithm of the shape factor for the increasing part: whether "
+        "the interpolation between the lower bound and the peak is linear (=0), "
+        "convex (>0) or concave (<0).",
+    )
+    log_shape_factor_decreasing: float = Field(
+        default=0.0,
+        description="Logarithm of the shape factor for the decreasing part: whether "
+        "the interpolation between the peak and the upper bound is linear (=0), "
+        "convex (>0) or concave (<0).",
+    )  # often named log_t
+    peak_position: float = Field(
+        default=0.5,
+        description="Position of the peak, where the desirability reaches its "
+        "maximum. Must lie within `bounds`.",
+    )  # often named T
 
     def to_description(self) -> str:
         raise NotImplementedError
@@ -223,6 +232,16 @@ class PeakDesirabilityObjective(DesirabilityObjective):
 
 
 class InRangeDesirability(DesirabilityObjective):
+    """A rectangular objective: desirability is one inside `bounds` and zero outside.
+
+    Use when any value within the range is equally acceptable. The other desirability
+    objectives grade values continuously; this one does not, so `clip` and the log
+    shape factors have no effect on its shape.
+
+    Examples:
+        >>> InRangeDesirability(bounds=[2.0, 8.0])
+    """
+
     type: Literal["InRangeDesirability"] = "InRangeDesirability"
 
     def to_description(self) -> str:

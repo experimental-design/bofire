@@ -2,7 +2,7 @@ from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.objectives.objective import Objective, TWeight
 from bofire.data_models.types import Bounds
@@ -11,16 +11,18 @@ from bofire.data_models.types import Bounds
 class IdentityObjective(Objective):
     """An objective returning the identity as reward.
     The return can be scaled, when a lower and upper bound are provided.
-
-    Attributes:
-        w (float): float between zero and one for weighting the objective
-        bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).
-
     """
 
     type: Literal["IdentityObjective"] = "IdentityObjective"
-    w: TWeight = 1
-    bounds: Bounds = [0, 1]
+    w: TWeight = Field(
+        default=1,
+        description="Relative weight of this objective, between zero and one.",
+    )
+    bounds: Bounds = Field(
+        default=[0, 1],
+        description="Lower and upper bound used to normalize the objective between "
+        "zero and one.",
+    )
 
     @property
     def lower_bound(self) -> float:
@@ -74,10 +76,12 @@ class IdentityObjective(Objective):
 class MaximizeObjective(IdentityObjective):
     """Child class from the identity function without modifications, since the parent class is already defined as maximization
 
-    Attributes:
-        w (float): float between zero and one for weighting the objective
-        bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).
+    The default objective for an output that should be as large as possible. Use
+    `MinimizeObjective` for the opposite, or `CloseToTargetObjective` to aim at a
+    specific value.
 
+    Examples:
+        >>> MaximizeObjective(bounds=[0.0, 100.0])
     """
 
     type: Literal["MaximizeObjective"] = "MaximizeObjective"
@@ -89,10 +93,11 @@ class MaximizeObjective(IdentityObjective):
 class MinimizeObjective(IdentityObjective):
     """Class returning the negative identity as reward.
 
-    Attributes:
-        w (float): float between zero and one for weighting the objective
-        bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).
+    For an output that should be as small as possible. Use `MaximizeObjective` for the
+    opposite, or `CloseToTargetObjective` to aim at a specific value.
 
+    Examples:
+        >>> MinimizeObjective(bounds=[0.0, 100.0])
     """
 
     type: Literal["MinimizeObjective"] = "MinimizeObjective"
