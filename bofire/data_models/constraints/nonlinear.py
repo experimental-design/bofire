@@ -34,21 +34,28 @@ from bofire.data_models.features.api import ContinuousInput
 
 
 class NonlinearConstraint(IntrapointConstraint):
-    """Base class for nonlinear equality and inequality constraints.
+    """Base class for nonlinear equality and inequality constraints."""
 
-    Attributes:
-        expression (str): Mathematical expression that can be evaluated by `pandas.eval`.
-        jacobian_expression (str): Mathematical expression that that can be evaluated by `pandas.eval`.
-        features (list): list of feature keys (str) on which the constraint works on.
-
-    """
-
-    expression: Union[str, Callable]
+    expression: Union[str, Callable] = Field(
+        description="The constraint expression, either as a string that can be "
+        "evaluated by `pandas.eval` or as a callable taking one argument per entry in "
+        "`features`.",
+    )
     jacobian_expression: Optional[Union[str, Callable]] = Field(
-        default=None, validate_default=True
+        default=None,
+        validate_default=True,
+        description="First derivatives of `expression` with respect to each feature, "
+        "in the same form as `expression`. If not provided, it is derived "
+        "symbolically with sympy when `expression` is a string, and by automatic "
+        "differentiation when it is a callable.",
     )
     hessian_expression: Optional[Union[str, Callable]] = Field(
-        default=None, validate_default=True
+        default=None,
+        validate_default=True,
+        description="Second derivatives of `expression` with respect to each pair of "
+        "features, in the same form as `expression`. If not provided, it is derived "
+        "symbolically with sympy when `expression` is a string, and by automatic "
+        "differentiation when it is a callable.",
     )
 
     def validate_inputs(self, inputs: Inputs):
@@ -291,9 +298,14 @@ class NonlinearConstraint(IntrapointConstraint):
 class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
     """Nonlinear equality constraint of the form 'expression == 0'.
 
-    Attributes:
-        expression: Mathematical expression that can be evaluated by `pandas.eval`.
+    Use when the relationship between features cannot be written as a linear
+    combination or a product. For a bound rather than an exact relationship, use
+    `NonlinearInequalityConstraint`.
 
+    Examples:
+        >>> NonlinearEqualityConstraint(
+        ...     features=["x1", "x2"], expression="x1**2 + x2**2 - 1"
+        ... )
     """
 
     type: Literal["NonlinearEqualityConstraint"] = "NonlinearEqualityConstraint"
@@ -305,9 +317,14 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
 class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
     """Nonlinear inequality constraint of the form 'expression <= 0'.
 
-    Attributes:
-        expression: Mathematical expression that can be evaluated by `pandas.eval`.
+    Use when the relationship between features cannot be written as a linear
+    combination or a product. For an exact relationship, use
+    `NonlinearEqualityConstraint`.
 
+    Examples:
+        >>> NonlinearInequalityConstraint(
+        ...     features=["x1", "x2"], expression="x1**2 + x2**2 - 1"
+        ... )
     """
 
     type: Literal["NonlinearInequalityConstraint"] = "NonlinearInequalityConstraint"

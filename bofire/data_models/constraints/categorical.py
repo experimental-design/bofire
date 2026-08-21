@@ -24,20 +24,38 @@ class CategoricalExcludeConstraint(Constraint):
     If the logical combination evaluates to true, the constraint is not fulfilled.
     So far, this kind of constraint is only supported by the RandomStrategy.
 
-    Attributes:
-        features: List of feature keys to apply the conditions on.
-        conditions: List of conditions to evaluate.
-        logical_op: Logical operator to combine the conditions. Can be "AND", "OR", or "XOR".
-            Default is "AND".
+    Use it to rule out combinations that are infeasible in practice, such as a solvent
+    that must not be used above a certain temperature. It is the only constraint that
+    can act on categorical features.
+
+    Examples:
+        >>> CategoricalExcludeConstraint(
+        ...     features=["solvent", "temperature"],
+        ...     conditions=[
+        ...         SelectionCondition(selection=["water"]),
+        ...         ThresholdCondition(threshold=50, operator=">"),
+        ...     ],
+        ...     logical_op="AND",
+        ... )
     """
 
     type: Literal["CategoricalExcludeConstraint"] = "CategoricalExcludeConstraint"
-    features: FeatureKeys
+    features: FeatureKeys = Field(
+        description="Keys of the two input features the conditions are applied to, in "
+        "the same order as `conditions`.",
+    )
     conditions: Annotated[
         List[Union[ThresholdCondition, SelectionCondition]],
         Field(min_length=2, max_length=2),
-    ]
-    logical_op: Literal["AND", "OR", "XOR"] = "AND"
+    ] = Field(
+        description="The two conditions to evaluate, one per entry in `features` and "
+        "in the same order.",
+    )
+    logical_op: Literal["AND", "OR", "XOR"] = Field(
+        default="AND",
+        description="Logical operator combining the conditions. The constraint is "
+        "violated when the combination evaluates to true.",
+    )
 
     def to_description(self) -> str:
         """Render as ``"Exclude where solvent in ['A', 'B'] AND temp > 50"``.

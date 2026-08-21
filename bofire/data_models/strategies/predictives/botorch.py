@@ -1,6 +1,6 @@
-from typing import Annotated, Optional, Type
+from typing import Annotated, Type
 
-from pydantic import Field, PositiveInt, model_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.constraints.api import Constraint, InterpointConstraint
 from bofire.data_models.domain.api import Domain, Outputs
@@ -9,7 +9,6 @@ from bofire.data_models.features.api import (
     CategoricalTaskInput,
     ContinuousInput,
 )
-from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.strategies.predictives.acqf_optimization import (
     AnyAcqfOptimizer,
     BotorchOptimizer,
@@ -34,10 +33,6 @@ class BotorchStrategy(PredictiveStrategy):
         default_factory=lambda: BotorchSurrogates(surrogates=[]),
         validate_default=True,
     )
-    # outlier detection params
-    outlier_detection_specs: Optional[OutlierDetections] = None
-    min_experiments_before_outlier_check: PositiveInt = 1
-    frequency_check: PositiveInt = 1
     # hyperopt params
     frequency_hyperopt: Annotated[int, Field(ge=0)] = 0  # 0 indicates no hyperopt
     folds: int = 5
@@ -85,16 +80,6 @@ class BotorchStrategy(PredictiveStrategy):
 
         self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
 
-        return self
-
-    @model_validator(mode="after")
-    def validate_outlier_detection_specs_for_domain(self):
-        """Ensures that a outlier_detection model is specified for each output feature"""
-        if self.outlier_detection_specs is not None:
-            self.outlier_detection_specs._check_compability(
-                inputs=self.domain.inputs,
-                outputs=self.domain.outputs,
-            )
         return self
 
     @classmethod

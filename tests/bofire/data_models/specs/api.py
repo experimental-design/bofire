@@ -23,7 +23,6 @@ from tests.bofire.data_models.specs.local_search_config import (
     specs as local_search_configs,
 )
 from tests.bofire.data_models.specs.objectives import specs as objectives
-from tests.bofire.data_models.specs.outlier_detection import specs as outlier_detection
 from tests.bofire.data_models.specs.outputs import specs as outputs
 from tests.bofire.data_models.specs.prior_constraints import specs as prior_constraints
 from tests.bofire.data_models.specs.priors import specs as priors

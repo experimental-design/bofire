@@ -26,7 +26,6 @@ from typing_extensions import Self
 from bofire.data_models.acquisition_functions.api import qMFHVKG
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousTaskInput
-from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import ExplicitReferencePoint
 from bofire.data_models.strategies.convergence_criteria.api import (
     AnyConvergenceCriterion,
@@ -199,9 +198,6 @@ class MultiFidelityHVKGStrategy(MoboStrategy):
         fidelity_cost_model_spec: LinearDeterministicSurrogate | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,

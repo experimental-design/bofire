@@ -14,19 +14,15 @@ from bofire.data_models.features.api import ContinuousInput, DiscreteInput
 
 
 class LinearConstraint(IntrapointConstraint):
-    """Abstract base class for linear equality and inequality constraints.
-
-    Attributes:
-        features (list): list of feature keys (str) on which the constraint works on.
-        coefficients (list): list of coefficients (float) of the constraint.
-        rhs (float): Right-hand side of the constraint
-
-    """
+    """Abstract base class for linear equality and inequality constraints."""
 
     type: Literal["LinearConstraint"] = "LinearConstraint"
 
-    coefficients: Annotated[List[float], Field(min_length=2)]
-    rhs: float
+    coefficients: Annotated[List[float], Field(min_length=2)] = Field(
+        description="Coefficients of the linear combination, one per entry in "
+        "`features` and in the same order.",
+    )
+    rhs: float = Field(description="Right-hand side of the constraint.")
 
     @model_validator(mode="after")
     def validate_list_lengths(self):
@@ -69,11 +65,14 @@ class LinearConstraint(IntrapointConstraint):
 class LinearEqualityConstraint(LinearConstraint, EqualityConstraint):
     """Linear equality constraint of the form `coefficients * x = rhs`.
 
-    Attributes:
-        features (list): list of feature keys (str) on which the constraint works on.
-        coefficients (list): list of coefficients (float) of the constraint.
-        rhs (float): Right-hand side of the constraint
+    Use for exact linear relationships, such as a mixture whose components must sum to
+    one. For a bound rather than an exact relationship, use
+    `LinearInequalityConstraint`.
 
+    Examples:
+        >>> LinearEqualityConstraint(
+        ...     features=["x1", "x2"], coefficients=[1.0, 1.0], rhs=1.0
+        ... )
     """
 
     type: Literal["LinearEqualityConstraint"] = "LinearEqualityConstraint"
@@ -100,11 +99,13 @@ class LinearInequalityConstraint(LinearConstraint, InequalityConstraint):
     To instantiate a constraint of the form `coefficients * x >= rhs` multiply coefficients and rhs by -1, or
     use the classmethod `from_greater_equal`.
 
-    Attributes:
-        features (list): list of feature keys (str) on which the constraint works on.
-        coefficients (list): list of coefficients (float) of the constraint.
-        rhs (float): Right-hand side of the constraint
+    Use for linear bounds, such as a budget that must not be overspent. For an exact
+    relationship, use `LinearEqualityConstraint`.
 
+    Examples:
+        >>> LinearInequalityConstraint(
+        ...     features=["x1", "x2"], coefficients=[1.0, 2.0], rhs=5.0
+        ... )
     """
 
     type: Literal["LinearInequalityConstraint"] = "LinearInequalityConstraint"
