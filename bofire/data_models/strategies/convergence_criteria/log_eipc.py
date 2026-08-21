@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import PositiveFloat, PositiveInt
+from pydantic import Field, PositiveFloat, PositiveInt
 
 from bofire.data_models.strategies.convergence_criteria.convergence_criterion import (
     ConvergenceCriterion,
@@ -22,41 +22,49 @@ class LogEipcCriterion(ConvergenceCriterion):
     Requires a fitted GP-based strategy (e.g. ``SoboStrategy``).
     Single-objective only.
 
-    Attributes:
-        lambda_cost: Exchange rate between cost and improvement. Higher values
-            favour earlier stopping (require higher improvement-to-cost ratio
-            to continue). Default ``1.0``.
-        cost_column: Name of the column in the experiments DataFrame that
-            records the cost of each experiment. When set, the mean of past
-            costs is used as the cost estimate. Takes priority over
-            ``cost_value``.
-        cost_value: Fixed cost per experiment used when ``cost_column`` is not
-            provided. Default ``1.0``.
-        alpha: Exponent applied to the cost in the LogEIPC formula. ``1.0``
-            (default) matches the paper's primary formulation.
-        min_experiments: Minimum experiments before convergence is checked.
-            Default ``5``.
-        n_samples: Random domain samples used to approximate the max LogEIPC.
-            Default ``2000``.
-        search_method: How to find the max LogEIPC — ``"sample"`` uses random
-            grid search (default); ``"optimize"`` uses gradient-based search.
-        cost_model: How cost is estimated — ``"mean"`` uses the running mean
-            of past costs (default); ``"gp"`` fits a GP to predict cost.
-
     Reference:
         Xie et al. (2025): "Cost-Aware Stopping for Bayesian Optimization"
         (arXiv:2507.12453).
     """
 
     type: Literal["LogEipcCriterion"] = "LogEipcCriterion"
-    lambda_cost: PositiveFloat = 1.0
-    cost_column: str | None = None
-    cost_value: PositiveFloat = 1.0
-    alpha: PositiveFloat = 1.0
-    min_experiments: PositiveInt = 5
-    n_samples: PositiveInt = 2000
-    search_method: Literal["sample", "optimize"] = "sample"
-    cost_model: Literal["mean", "gp"] = "mean"
+    lambda_cost: PositiveFloat = Field(
+        default=1.0,
+        description="Exchange rate between cost and improvement; higher values "
+        "favour earlier stopping.",
+    )
+    cost_column: str | None = Field(
+        default=None,
+        description="Experiments column recording the cost of each experiment; "
+        "when set, past costs provide the cost estimate (see `cost_model`).",
+    )
+    cost_value: PositiveFloat = Field(
+        default=1.0,
+        description="Fixed cost per experiment used when `cost_column` is not "
+        "provided.",
+    )
+    alpha: PositiveFloat = Field(
+        default=1.0,
+        description="Exponent applied to the cost in the LogEIPC formula.",
+    )
+    min_experiments: PositiveInt = Field(
+        default=5,
+        description="Minimum experiments before convergence is checked.",
+    )
+    n_samples: PositiveInt = Field(
+        default=2000,
+        description="Random domain samples used to approximate the maximum " "LogEIPC.",
+    )
+    search_method: Literal["sample", "optimize"] = Field(
+        default="sample",
+        description="How the maximum LogEIPC is found: random sampling or "
+        "gradient-based search.",
+    )
+    cost_model: Literal["mean", "gp"] = Field(
+        default="mean",
+        description="Cost estimate from the running mean of past costs, or "
+        "from a GP fit to them.",
+    )
 
     @classmethod
     def is_applicable_to_multiobjective(cls) -> bool:

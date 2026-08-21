@@ -30,48 +30,66 @@ class UcbLcbRegretBoundCriterion(ConvergenceCriterion):
         Makarova et al. (2022): "Automatic Termination for Hyperparameter
         Optimization" (AutoML 2022).
 
-    Attributes:
-        noise_variance: Noise variance source (see description).
-        threshold_factor: Multiplier for the threshold (``decay`` in
-            Makarova et al. 2022 for the CV mode).
-        cv_fold_columns: Column names with per-fold CV scores; required
-            when ``noise_variance="cv"``.
-        topq: Fraction of best observations used for the internal
-            regret-bound GP. Default ``0.5`` — Makarova et al. (2022) found
-            fitting the bound on the best ~50 % of observations works best.
-            Set to ``1.0`` to disable filtering and use all observations. The
-            main strategy's GP is unaffected. Only engages once more than
-            ``min_topq`` observations are available.
-        min_topq: Minimum observations kept under top-q filtering.
-        min_experiments: Minimum experiments before convergence is checked.
-        delta: Confidence parameter for the GP-UCB beta formula. Default ``0.1``.
-        beta_scale: Scaling factor for the GP-UCB beta. Default ``0.2``
-            (Makarova et al.).
-        n_samples_lcb: Random domain points for the min-LCB estimate when
-            ``lcb_method="sample"``. Default ``2000``.
-        batch_size: If set, chunk GP posterior evaluation into batches of this
-            size during sampling to bound memory.  ``None`` (default) evaluates
-            all points in a single posterior call.
-        lcb_method: How the domain-wide minimum LCB is found — ``"sample"``
-            (default) draws random points; ``"optimize"`` uses the acquisition
-            optimizer.
-        fallback_noise_variance: Noise variance used when it cannot be read
-            from the GP likelihood. Default ``1e-4``.
     """
 
     type: Literal["UcbLcbRegretBoundCriterion"] = "UcbLcbRegretBoundCriterion"
-    noise_variance: PositiveFloat | Literal["cv"] | None = None
-    threshold_factor: PositiveFloat = 1.0
-    cv_fold_columns: list[str] | None = None
-    topq: Annotated[float, Field(gt=0, le=1)] = 0.5
-    min_topq: PositiveInt = 20
-    min_experiments: PositiveInt = 5
-    delta: PositiveFloat = 0.1
-    beta_scale: PositiveFloat = 0.2
-    n_samples_lcb: PositiveInt = 2000
-    batch_size: PositiveInt | None = None
-    lcb_method: Literal["sample", "optimize"] = "sample"
-    fallback_noise_variance: PositiveFloat = 1e-4
+    noise_variance: PositiveFloat | Literal["cv"] | None = Field(
+        default=None,
+        description="Source of the noise variance the threshold is built from: "
+        "a positive float is used directly, None uses the GP-estimated noise, "
+        'and "cv" uses the corrected CV-fold std of the incumbent.',
+    )
+    threshold_factor: PositiveFloat = Field(
+        default=1.0,
+        description="Multiplier on the noise variance; the threshold is "
+        "`threshold_factor * noise_variance`.",
+    )
+    cv_fold_columns: list[str] | None = Field(
+        default=None,
+        description="Experiments columns holding per-fold CV scores; required "
+        'when `noise_variance="cv"`.',
+    )
+    topq: Annotated[float, Field(gt=0, le=1)] = Field(
+        default=0.5,
+        description="Fraction of the best observations the regret-bound GP is "
+        "refit on (Makarova et al. recommend ~0.5); 1.0 disables the filtering.",
+    )
+    min_topq: PositiveInt = Field(
+        default=20,
+        description="Minimum observations kept under top-q filtering.",
+    )
+    min_experiments: PositiveInt = Field(
+        default=5,
+        description="Minimum experiments before convergence is checked.",
+    )
+    delta: PositiveFloat = Field(
+        default=0.1,
+        description="Confidence parameter of the GP-UCB beta formula.",
+    )
+    beta_scale: PositiveFloat = Field(
+        default=0.2,
+        description="Scaling factor for the GP-UCB beta.",
+    )
+    n_samples_lcb: PositiveInt = Field(
+        default=2000,
+        description="Random domain points for the min-LCB estimate when "
+        '`lcb_method="sample"`.',
+    )
+    batch_size: PositiveInt | None = Field(
+        default=None,
+        description="If set, chunk GP posterior evaluation into batches of "
+        "this size to bound memory.",
+    )
+    lcb_method: Literal["sample", "optimize"] = Field(
+        default="sample",
+        description="How the domain-wide minimum LCB is found: random "
+        "sampling or the acquisition optimizer.",
+    )
+    fallback_noise_variance: PositiveFloat = Field(
+        default=1e-4,
+        description="Noise variance used when it cannot be read from the GP "
+        "likelihood.",
+    )
 
     @model_validator(mode="after")
     def validate_cv_fold_columns(self):

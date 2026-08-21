@@ -23,41 +23,6 @@ class ProbabilisticRegretBoundCriterion(ConvergenceCriterion):
     draws posterior sample paths from the strategy's model.
     Single-objective only.
 
-    Attributes:
-        epsilon: Absolute simple regret threshold in Y units.  If ``None``
-            (default), computed from ``epsilon_relative``.
-        epsilon_relative: Fractional ε relative to the observed Y range.
-            Default ``0.01`` (1 %).  Ignored when ``epsilon`` is set.
-        delta_mod: Model-risk tolerance δ_mod.  Convergence triggers when the
-            estimated probability that regret exceeds ε falls below this
-            value.  Default ``0.05``.
-        delta_est: Estimation-risk tolerance δ_est for the sequential
-            Clopper-Pearson test.  Default ``0.05``.
-        enforce_convergence: Only report convergence when the CP CI
-            conclusively excludes δ_mod (default ``True``).  Set to ``False``
-            to use the raw MC estimate.
-        n_samples_max: Maximum GP path samples per convergence check.
-            Default ``1024``.
-        initial_batch: Initial cumulative sample target for the Clopper-Pearson
-            level test.  Default ``16``.
-        batch_growth: Geometric growth factor for the cumulative sample
-            schedule (must be ``> 1``).  Default ``1.5``.
-        min_experiments: Minimum experiments before convergence is checked.
-            Default ``5``.
-        n_starts: L-BFGS-B starts per path for path minimization.  Default ``8``.
-        n_random: Random domain points for identifying L-BFGS-B start
-            candidates.  Default ``512``.
-        n_test_points: Number of candidate points to evaluate the criterion
-            at.  ``1`` (default) tests the incumbent only; values ``> 1`` also
-            include the ``n_test_points − 1`` in-sample points that are best
-            under the GP posterior mean.
-        optim_method: scipy optimisation method for path minimization.
-            Default ``"L-BFGS-B"``.
-        optim_maxiter: Maximum iterations per optimisation start.
-            Default ``200``.
-        optim_ftol: Function-value convergence tolerance for path
-            minimization.  Default ``1e-9``.
-
     Reference:
         Wilson (2024): "Stopping Bayesian Optimization with Probabilistic
             Regret Bounds" (NeurIPS 2024).
@@ -66,21 +31,74 @@ class ProbabilisticRegretBoundCriterion(ConvergenceCriterion):
     type: Literal["ProbabilisticRegretBoundCriterion"] = (
         "ProbabilisticRegretBoundCriterion"
     )
-    epsilon: PositiveFloat | None = None
-    epsilon_relative: Annotated[float, Field(gt=0, le=1)] = 0.01
-    delta_mod: Annotated[float, Field(gt=0, lt=1)] = 0.05
-    delta_est: Annotated[float, Field(gt=0, lt=1)] = 0.05
-    optim_method: str = "L-BFGS-B"
-    optim_maxiter: PositiveInt = 200
-    optim_ftol: Annotated[float, Field(gt=0)] = 1e-9
-    enforce_convergence: bool = True
-    n_samples_max: PositiveInt = 1024
-    initial_batch: PositiveInt = 16
-    batch_growth: Annotated[float, Field(gt=1.0)] = 1.5
-    min_experiments: PositiveInt = 5
-    n_starts: PositiveInt = 8
-    n_random: PositiveInt = 512
-    n_test_points: PositiveInt = 1
+    epsilon: PositiveFloat | None = Field(
+        default=None,
+        description="Absolute simple-regret threshold in objective units; if "
+        "None, derived from `epsilon_relative`.",
+    )
+    epsilon_relative: Annotated[float, Field(gt=0, le=1)] = Field(
+        default=0.01,
+        description="Fractional regret threshold relative to the observed "
+        "objective range; ignored when `epsilon` is set.",
+    )
+    delta_mod: Annotated[float, Field(gt=0, lt=1)] = Field(
+        default=0.05,
+        description="Model-risk tolerance; converged when the estimated "
+        "probability of the regret exceeding epsilon falls below it.",
+    )
+    delta_est: Annotated[float, Field(gt=0, lt=1)] = Field(
+        default=0.05,
+        description="Estimation-risk tolerance of the sequential "
+        "Clopper-Pearson test.",
+    )
+    optim_method: str = Field(
+        default="L-BFGS-B",
+        description="scipy optimization method for path minimization.",
+    )
+    optim_maxiter: PositiveInt = Field(
+        default=200,
+        description="Maximum iterations per optimization start.",
+    )
+    optim_ftol: Annotated[float, Field(gt=0)] = Field(
+        default=1e-9,
+        description="Function-value convergence tolerance for path " "minimization.",
+    )
+    enforce_convergence: bool = Field(
+        default=True,
+        description="Report convergence only when the Clopper-Pearson interval "
+        "conclusively excludes `delta_mod`; False uses the raw Monte Carlo "
+        "estimate.",
+    )
+    n_samples_max: PositiveInt = Field(
+        default=1024,
+        description="Maximum GP path samples per convergence check.",
+    )
+    initial_batch: PositiveInt = Field(
+        default=16,
+        description="Initial cumulative sample target of the Clopper-Pearson " "test.",
+    )
+    batch_growth: Annotated[float, Field(gt=1.0)] = Field(
+        default=1.5,
+        description="Geometric growth factor of the cumulative sample " "schedule.",
+    )
+    min_experiments: PositiveInt = Field(
+        default=5,
+        description="Minimum experiments before convergence is checked.",
+    )
+    n_starts: PositiveInt = Field(
+        default=8,
+        description="Local-optimization starts per sample path.",
+    )
+    n_random: PositiveInt = Field(
+        default=512,
+        description="Random domain points for selecting optimization starts.",
+    )
+    n_test_points: PositiveInt = Field(
+        default=1,
+        description="Candidate points the criterion is tested at; 1 tests the "
+        "incumbent only, larger values add the best in-sample points under "
+        "the posterior mean.",
+    )
 
     @classmethod
     def is_applicable_to_multiobjective(cls) -> bool:
