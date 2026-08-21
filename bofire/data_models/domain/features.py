@@ -87,7 +87,20 @@ class _BaseFeatures(BaseModel, Generic[F]):
         return len(self.features)
 
     def __getitem__(self, i):
+        """Get a feature by key, or by position/slice.
+
+        ``inputs["temperature"]`` is shorthand for ``get_by_key("temperature")``;
+        integer and slice access are unchanged.
+        """
+        if isinstance(i, str):
+            return self.get_by_key(i)
         return self.features[i]
+
+    def __contains__(self, item) -> bool:
+        """Membership by feature key, or by feature."""
+        if isinstance(item, str):
+            return any(feat.key == item for feat in self.features)
+        return item in self.features
 
     def __add__(self, other: Union[Sequence[AnyFeature], _BaseFeatures]):
         if isinstance(other, Features):

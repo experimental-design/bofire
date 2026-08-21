@@ -94,6 +94,32 @@ class BotorchSurrogates(BaseModel):
 
     surrogates: List[AnyBotorchSurrogate]
 
+    def __iter__(self):
+        return iter(self.surrogates)
+
+    def __len__(self):
+        return len(self.surrogates)
+
+    def __getitem__(self, i):
+        """Get a surrogate by the output key it models, or by position/slice.
+
+        Output keys are unique across the surrogates -- ``_check_compability``
+        requires them to match the domain's outputs exactly -- so a key
+        identifies at most one surrogate.
+        """
+        if isinstance(i, str):
+            for surrogate in self.surrogates:
+                if i in surrogate.outputs.get_keys():
+                    return surrogate
+            raise KeyError(f"No surrogate for output {i}.")
+        return self.surrogates[i]
+
+    def __contains__(self, item) -> bool:
+        """Membership by output key, or by surrogate."""
+        if isinstance(item, str):
+            return item in self.outputs.get_keys()
+        return item in self.surrogates
+
     @property
     def input_preprocessing_specs(self) -> InputTransformSpecs:
         return {
