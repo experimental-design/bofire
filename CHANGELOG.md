@@ -7,6 +7,8 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 ## [Unreleased]
 
 ### Added
+- Four GP-based convergence criteria for single-objective Bayesian optimization: `UcbLcbRegretBoundCriterion` (UCB-LCB regret bound, Makarova et al. 2022), `ExpMinRegretGapCriterion` (expected minimum simple regret gap, Ishibashi et al. 2023), `LogEipcCriterion` (cost-aware log expected improvement per cost, Xie et al. 2025), and `ProbabilisticRegretBoundCriterion` (probabilistic regret bounds via a Clopper-Pearson sequential test over GP sample paths, Wilson 2024).
+- Single-objective benchmark functions used in the stopping-criteria literature.
 - Any input feature can carry a `Descriptors` block — numeric `columns` and/or a SMILES `structure` column — via `descriptors=Descriptors(...)`. This includes `DiscreteInput`, which had no descriptor support before, and allows a single categorical to carry handcrafted columns *and* structures at once, which the previous class hierarchy could not express.
 - Categorical encodings are first-class data models (`OneHotEncoding`, `OrdinalEncoding`, `DescriptorEncoding`), chosen per surrogate via `categorical_encodings` and extensible like kernels or priors.
 - Data model fields are documented in `Field(description=...)`, so the prose now reaches `model_json_schema()` where users and LLM agents configuring BoFire can read it. `tests/bofire/data_models/test_documentation.py` enforces a description on every field and a docstring on every class, with an allowlist of the models that predate the convention that may only shrink. The `constraints` package is migrated; the remaining packages follow.
