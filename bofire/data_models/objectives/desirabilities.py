@@ -10,7 +10,12 @@ from bofire.data_models.objectives.identity import IdentityObjective
 
 
 class DesirabilityObjective(IdentityObjective):
-    """Abstract class for desirability objectives. Works as Identity Objective"""
+    """Abstract class for desirability objectives. Works as Identity Objective
+
+    Desirability objectives map an output onto a 0-to-1 scale over a bounded range, so
+    that outputs in different units can be combined. Note that they are not
+    differentiable at the bounds, and, where a peak is involved, at the peak.
+    """
 
     type: Literal["DesirabilityObjective"] = "DesirabilityObjective"
     clip: bool = Field(
@@ -67,11 +72,10 @@ class IncreasingDesirabilityObjective(DesirabilityObjective):
     Note, that with clipping the reward is always between zero and one.
 
     Below `bounds[0]` the desirability is 0 (or negative if `clip` is disabled), above
-    `bounds[1]` it is 1 (or greater). Use `DecreasingDesirabilityObjective` for the
-    opposite direction.
+    `bounds[1]` it is 1 (or greater).
 
     Examples:
-        >>> IncreasingDesirabilityObjective(bounds=[0.0, 10.0])
+        >>> IncreasingDesirabilityObjective()
     """
 
     type: Literal["IncreasingDesirabilityObjective"] = "IncreasingDesirabilityObjective"
@@ -118,11 +122,10 @@ class DecreasingDesirabilityObjective(DesirabilityObjective):
     Note, that with clipping the reward is always between zero and one.
 
     Below `bounds[0]` the desirability is 1 (or greater if `clip` is disabled), above
-    `bounds[1]` it is 0 (or negative). Use `IncreasingDesirabilityObjective` for the
-    opposite direction.
+    `bounds[1]` it is 0 (or negative).
 
     Examples:
-        >>> DecreasingDesirabilityObjective(bounds=[0.0, 10.0])
+        >>> DecreasingDesirabilityObjective()
     """
 
     type: Literal["DecreasingDesirabilityObjective"] = "DecreasingDesirabilityObjective"
@@ -163,11 +166,11 @@ class PeakDesirabilityObjective(DesirabilityObjective):
     to the peak position and decreases from the peak position to the upper bound.
 
     The desirability is 0 outside `bounds` (or negative if `clip` is disabled) and
-    reaches `w` at the peak. Use this when a value is best in the middle of a range,
-    rather than as high or as low as possible.
+    reaches `w` at the peak, so it expresses that a value is best somewhere in the
+    middle of a range.
 
     Examples:
-        >>> PeakDesirabilityObjective(bounds=[0.0, 10.0], peak_position=7.0)
+        >>> PeakDesirabilityObjective(peak_position=0.7)
     """
 
     type: Literal["PeakDesirabilityObjective"] = "PeakDesirabilityObjective"
@@ -234,12 +237,11 @@ class PeakDesirabilityObjective(DesirabilityObjective):
 class InRangeDesirability(DesirabilityObjective):
     """A rectangular objective: desirability is one inside `bounds` and zero outside.
 
-    Use when any value within the range is equally acceptable. The other desirability
-    objectives grade values continuously; this one does not, so `clip` and the log
-    shape factors have no effect on its shape.
+    Expresses that any value within the range is equally acceptable, so it grades
+    nothing within the range and `clip` has no effect on its shape.
 
     Examples:
-        >>> InRangeDesirability(bounds=[2.0, 8.0])
+        >>> InRangeDesirability()
     """
 
     type: Literal["InRangeDesirability"] = "InRangeDesirability"

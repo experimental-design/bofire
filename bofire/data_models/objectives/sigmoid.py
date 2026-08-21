@@ -8,30 +8,33 @@ from bofire.data_models.objectives.objective import (
     ConstrainedObjective,
     Objective,
     TGt0,
-    TWeight,
 )
 
 
 class SigmoidObjective(Objective, ConstrainedObjective):
-    """Base class for all sigmoid shaped objectives"""
+    """Base class for all sigmoid shaped objectives
+
+    A sigmoid objective expresses a threshold rather than a direction: the reward runs
+    from 0 to 1 across a transition centred on `tp`, and is flat on either side. Values
+    far beyond the threshold therefore earn no additional credit.
+    """
 
     steepness: TGt0 = Field(
         description="Steepness of the sigmoid. Larger values make the transition "
-        "between rewarded and unrewarded values sharper.",
+        "between unrewarded and rewarded values sharper, approaching a hard step.",
     )
-    tp: float = Field(description="Turning point of the sigmoid.")
-    w: TWeight = Field(
-        default=1,
-        description="Relative weight of this objective, between zero and one.",
+    tp: float = Field(
+        description="Turning point of the sigmoid, i.e. the threshold at which the "
+        "reward is one half.",
     )
 
 
 class MaximizeSigmoidObjective(SigmoidObjective):
-    """Class for a maximizing sigmoid objective
+    """Maximize an output up to a threshold, after which it stops counting.
 
-    Rewards values above the turning point. Use `MinimizeSigmoidObjective` to reward
-    values below it, or `MovingMaximizeSigmoidObjective` for a turning point that
-    tracks the observed data.
+    The reward rises from 0 well below `tp` to 1 well above it. Because it saturates,
+    strategies commonly use this as an output constraint -- "this response must exceed
+    `tp`" -- rather than as the quantity being optimized.
 
     Examples:
         >>> MaximizeSigmoidObjective(tp=5.0, steepness=10.0)
@@ -110,10 +113,11 @@ class MovingMaximizeSigmoidObjective(SigmoidObjective):
 
 
 class MinimizeSigmoidObjective(SigmoidObjective):
-    """Class for a minimizing a sigmoid objective
+    """Minimize an output down to a threshold, after which it stops counting.
 
-    Rewards values below the turning point. Use `MaximizeSigmoidObjective` to reward
-    values above it.
+    The reward rises from 0 well above `tp` to 1 well below it. Because it saturates,
+    strategies commonly use this as an output constraint -- "this response must stay
+    below `tp`" -- rather than as the quantity being optimized.
 
     Examples:
         >>> MinimizeSigmoidObjective(tp=5.0, steepness=10.0)

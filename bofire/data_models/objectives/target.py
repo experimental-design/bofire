@@ -9,7 +9,6 @@ from bofire.data_models.objectives.objective import (
     Objective,
     TGe0,
     TGt0,
-    TWeight,
 )
 
 
@@ -25,10 +24,6 @@ class CloseToTargetObjective(Objective):
     """
 
     type: Literal["CloseToTargetObjective"] = "CloseToTargetObjective"
-    w: TWeight = Field(
-        default=1,
-        description="Relative weight of this objective, between zero and one.",
-    )
     target_value: float = Field(description="Target value that should be reached.")
     exponent: float = Field(
         description="Exponent applied to the distance from the target. Larger values "
@@ -58,10 +53,6 @@ class TargetObjective(Objective, ConstrainedObjective):
     """
 
     type: Literal["TargetObjective"] = "TargetObjective"
-    w: TWeight = Field(
-        default=1,
-        description="Relative weight of this objective, between zero and one.",
-    )
     target_value: float = Field(description="Target value that should be reached.")
     tolerance: TGe0 = Field(
         description="Half-width of the accepted window around the target value.",

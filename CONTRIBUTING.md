@@ -36,9 +36,14 @@ description of a field belongs in `Field(description=...)`, not in an `Attribute
 block of the class doc-string. BoFire is configured entirely through these models, so
 they are the API surface for users and for LLM agents alike — and only
 `Field(description=...)` ends up in `model_json_schema()`, which is what an agent reads.
-The class doc-string says what the model is and when to pick it over its siblings in the
-union. An `Examples:` block is encouraged on the concrete types, but it is optional and
-is not executed by the test suite.
+The class doc-string says what the model does, how it behaves and what a sensible value
+looks like. Compare it with a sibling only where the two are genuinely easy to confuse
+and the names do not reveal the difference. An `Examples:` block is encouraged on the
+concrete types, but it is optional, is not executed by the test suite, and should set
+only the fields a caller actually needs.
+
+A field shared by every subclass is declared once, on the base class: redeclaring it in
+a subclass silently drops the inherited description.
 
 ```python
 class NChooseKConstraint(IntrapointConstraint):

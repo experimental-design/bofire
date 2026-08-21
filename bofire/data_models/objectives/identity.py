@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator
 
-from bofire.data_models.objectives.objective import Objective, TWeight
+from bofire.data_models.objectives.objective import Objective
 from bofire.data_models.types import Bounds
 
 
@@ -14,14 +14,10 @@ class IdentityObjective(Objective):
     """
 
     type: Literal["IdentityObjective"] = "IdentityObjective"
-    w: TWeight = Field(
-        default=1,
-        description="Relative weight of this objective, between zero and one.",
-    )
     bounds: Bounds = Field(
         default=[0, 1],
-        description="Lower and upper bound used to normalize the objective between "
-        "zero and one.",
+        description="Lower and upper bound used to normalize the objective onto the "
+        "unit interval. The default of [0, 1] leaves the values unchanged.",
     )
 
     @property
@@ -74,14 +70,13 @@ class IdentityObjective(Objective):
 
 
 class MaximizeObjective(IdentityObjective):
-    """Child class from the identity function without modifications, since the parent class is already defined as maximization
+    """Rewards larger output values, without an upper limit.
 
-    The default objective for an output that should be as large as possible. Use
-    `MinimizeObjective` for the opposite, or `CloseToTargetObjective` to aim at a
-    specific value.
+    The reward is the output value itself, so improving from 9 to 10 counts exactly as
+    much as improving from 1 to 2.
 
     Examples:
-        >>> MaximizeObjective(bounds=[0.0, 100.0])
+        >>> MaximizeObjective()
     """
 
     type: Literal["MaximizeObjective"] = "MaximizeObjective"
@@ -91,13 +86,13 @@ class MaximizeObjective(IdentityObjective):
 
 
 class MinimizeObjective(IdentityObjective):
-    """Class returning the negative identity as reward.
+    """Rewards smaller output values, without a lower limit.
 
-    For an output that should be as small as possible. Use `MaximizeObjective` for the
-    opposite, or `CloseToTargetObjective` to aim at a specific value.
+    The reward is the negated output value, so improving from 2 to 1 counts exactly as
+    much as improving from 10 to 9.
 
     Examples:
-        >>> MinimizeObjective(bounds=[0.0, 100.0])
+        >>> MinimizeObjective()
     """
 
     type: Literal["MinimizeObjective"] = "MinimizeObjective"

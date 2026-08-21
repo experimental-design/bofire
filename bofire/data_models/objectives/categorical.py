@@ -4,11 +4,7 @@ import numpy as np
 import pandas as pd
 from pydantic import Field, model_validator
 
-from bofire.data_models.objectives.objective import (
-    ConstrainedObjective,
-    Objective,
-    TWeight,
-)
+from bofire.data_models.objectives.objective import ConstrainedObjective, Objective
 from bofire.data_models.types import CategoryVals
 
 
@@ -18,8 +14,9 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
         Po where P is an [n, c] matrix where each row is a probability vector
         (P[i, :].sum()=1 for all i) and o is a vector of size [c] of objective values
 
-    The only objective that applies to a `CategoricalOutput`; all others operate on
-    continuous outputs.
+    Applies to a `CategoricalOutput`, marking each category as desirable or not. The
+    reward for a prediction is the probability mass it puts on the desirable
+    categories.
 
     Examples:
         >>> ConstrainedCategoricalObjective(
@@ -27,10 +24,6 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
         ... )
     """
 
-    w: TWeight = Field(
-        default=1.0,
-        description="Relative weight of this objective, between zero and one.",
-    )
     categories: CategoryVals = Field(
         description="Categories of the output feature this objective applies to, in "
         "the same order as `desirability`.",

@@ -16,8 +16,8 @@ class SmoothedBoxPrior(Prior):
         pdf(x) \\sim exp(- d(x, B)**2 / sqrt(2 * sigma^2))
     \\end{equation*}
 
-    Use when a hyperparameter should be treated as roughly uniform over a range, in
-    contrast to the peaked `GammaPrior` or `NormalPrior`.
+    The density is flat between the bounds and decays smoothly outside them, so it
+    expresses a plausible range without favouring any value inside it.
 
     Examples:
         >>> SmoothedBoxPrior(lower_bound=0.1, upper_bound=10.0)

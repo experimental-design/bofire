@@ -21,8 +21,8 @@ class NormalPrior(Prior):
 class LogNormalPrior(Prior):
     """Log-normal prior based on the log-normal distribution.
 
-    Use instead of `NormalPrior` for a parameter that must stay positive, such as a
-    lengthscale.
+    Puts all its mass on positive values, which makes it suitable for scale
+    parameters such as lengthscales.
 
     Examples:
         >>> LogNormalPrior(loc=0.0, scale=1.0)
@@ -47,9 +47,6 @@ class DimensionalityScaledLogNormalPrior(Prior):
 
         loc_eff   = loc + log(d) * loc_scaling
         scale_eff = sqrt(scale**2 + log(d) * scale_scaling)
-
-    Use instead of `LogNormalPrior` when the same prior should be reusable across
-    problems of differing dimensionality.
     """
 
     type: Literal["DimensionalityScaledLogNormalPrior"] = (

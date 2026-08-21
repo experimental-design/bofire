@@ -9,8 +9,8 @@ from bofire.data_models.priors.prior import Prior
 class LKJPrior(Prior):
     """LKJ prior over correlation matrices. Allows to specify the shape of the prior.
 
-    Used for the inter-task correlations of a multi-task GP, where the other priors in
-    this package apply to a single scalar hyperparameter.
+    Applies to the correlation matrix between the tasks of a multi-task GP, rather
+    than to a single scalar hyperparameter.
 
     Examples:
         >>> LKJPrior(shape=2.0, sd_prior=GammaPrior(concentration=2.0, rate=0.15))

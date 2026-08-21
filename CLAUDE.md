@@ -337,11 +337,23 @@ The spec is automatically picked up by `tests/bofire/conftest.py` which imports 
   CHANGELOG — in a docstring they go stale and crowd out the contract.
 - **Data model field prose goes in `Field(description=...)`, never an `Attributes:`
   block.** Only the former reaches `model_json_schema()`, which is the API surface
-  agents read. The class docstring says what the model is and when to pick it over its
-  siblings in the union; an `Examples:` block is encouraged on concrete types but is
-  optional and not executed. The `type` discriminator needs no description.
-  `tests/bofire/data_models/test_documentation.py` enforces this — see
+  agents read. The class docstring says what the model does, how it behaves and what a
+  sensible value looks like — not how it relates to the rest of the codebase. Compare
+  with a sibling only where the two are genuinely easy to confuse and the names do not
+  reveal the difference (`TargetObjective` vs `CloseToTargetObjective`); a pointer like
+  "use instead of X" that only restates the class name is noise, and goes stale as
+  siblings come and go. Skip notes that matter only to someone reading the source, such
+  as which class something inherits from. An `Examples:` block is encouraged on concrete
+  types but is optional and not executed; keep it to the fields a caller actually needs
+  to set, leaving the rest at their defaults. The `type` discriminator needs no
+  description. `tests/bofire/data_models/test_documentation.py` enforces this — see
   [Documentation Ratchet](#documentation-ratchet).
+- **Declare a shared field once, on the class that owns it.** Redeclaring a field in a
+  subclass silently drops the inherited `description`, so a field common to every
+  subclass belongs on the base (`Objective.w`, `PriorConstraint.initial_value`). Only
+  reinterpretations that the base description cannot express — such as
+  `MovingMaximizeSigmoidObjective` treating `tp` as relative — belong in the subclass
+  docstring.
 
 ## Documentation
 

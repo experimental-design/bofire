@@ -37,9 +37,6 @@ class DimensionalityScaledGammaPrior(Prior):
     decaying with sqrt(d)) with a single, serializable prior. See the constants in
     ``bofire.data_models.priors.api`` (``CHEN_*``,
     ``DIMENSIONALITY_SCALED_THREESIX_LENGTHSCALE_PRIOR``).
-
-    Use instead of `GammaPrior` when the same prior should be reusable across problems
-    of differing dimensionality.
     """
 
     type: Literal["DimensionalityScaledGammaPrior"] = "DimensionalityScaledGammaPrior"
