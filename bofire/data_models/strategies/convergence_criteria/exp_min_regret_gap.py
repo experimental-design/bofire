@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import PositiveFloat, PositiveInt
 
@@ -15,7 +15,7 @@ class ExpMinRegretGapCriterion(ConvergenceCriterion):
     in expected minimum simple regret between consecutive BO iterations —
     drops below the threshold.
 
-    Two threshold modes:
+    Three threshold modes:
 
     - ``"adaptive"`` (default): theoretically motivated threshold from the
       GP noise and posterior variances (Ishibashi et al., 2023).
@@ -26,6 +26,8 @@ class ExpMinRegretGapCriterion(ConvergenceCriterion):
       called. Set ``min_experiments`` to the number of experiments at which
       convergence checking effectively begins (e.g. the size of the initial
       design), so the median window covers the intended early phase.
+    - ``"adaptive_median"``: converged as soon as either of the two thresholds
+      fires.
 
     The criterion compares consecutive GP posteriors and derives everything it
     needs from the recorded experiments, so it works across process restarts;
@@ -40,7 +42,8 @@ class ExpMinRegretGapCriterion(ConvergenceCriterion):
         by the gap of expected minimum simple regrets" (AISTATS 2023).
 
     Attributes:
-        threshold_mode: ``"adaptive"`` or ``"median"``.
+        threshold_mode: ``"adaptive"``, ``"median"``, or ``"adaptive_median"``
+            (either threshold fires).
         delta: Confidence parameter for beta and the adaptive threshold.
         rate: Fraction of the median stopping value used as threshold in
             ``"median"`` mode.
@@ -56,14 +59,14 @@ class ExpMinRegretGapCriterion(ConvergenceCriterion):
     """
 
     type: Literal["ExpMinRegretGapCriterion"] = "ExpMinRegretGapCriterion"
-    threshold_mode: Literal["adaptive", "median"] = "adaptive"
+    threshold_mode: Literal["adaptive", "median", "adaptive_median"] = "adaptive"
     delta: PositiveFloat = 0.1
     rate: PositiveFloat = 0.1
     start_timing: PositiveInt = 10
     min_experiments: PositiveInt = 5
     beta_scale: PositiveFloat = 1.0
     n_samples_lcb: PositiveInt = 1000
-    noise_var_override: Optional[PositiveFloat] = None
+    noise_var_override: PositiveFloat | None = None
 
     @classmethod
     def is_applicable_to_multiobjective(cls) -> bool:

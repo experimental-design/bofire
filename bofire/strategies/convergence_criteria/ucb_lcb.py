@@ -8,11 +8,12 @@ reconstructed by replaying ``tell`` reaches the same result up to GP-fit and
 Monte Carlo sampling stochasticity.
 """
 
-from typing import TYPE_CHECKING, Any, Dict, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
 import torch
+from botorch.exceptions.errors import ModelFittingError
 
 from bofire.data_models.strategies.convergence_criteria.api import (
     UcbLcbRegretBoundCriterion,
@@ -84,11 +85,11 @@ class UcbLcbRegretEvaluator(RegretBoundEvaluator):
         beta_log_multiplier: float = 2.0,
         beta_log_denominator: float = 6.0,
         beta_min: float = 0.01,
-        beta_t_offset: Optional[int] = None,
+        beta_t_offset: int | None = None,
         fallback_noise_variance: float = 1e-4,
         lcb_method: Literal["sample", "optimize"] = "sample",
         n_samples_lcb: int = 2000,
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         topq: float = 1.0,
         min_topq: int = 20,
     ):
@@ -112,7 +113,7 @@ class UcbLcbRegretEvaluator(RegretBoundEvaluator):
         strategy,
         experiments: pd.DataFrame,
         sign: float,
-    ) -> Optional[tuple]:
+    ) -> tuple | None:
         """Refit a copy of the strategy on the best ``topq`` fraction.
 
         Returns ``(eval_strategy, eval_experiments)``, or ``None`` when the
@@ -137,7 +138,7 @@ class UcbLcbRegretEvaluator(RegretBoundEvaluator):
         try:
             eval_strategy = map_strategy(strategy._data_model)
             eval_strategy.tell(eval_experiments)
-        except Exception:
+        except (ValueError, RuntimeError, ModelFittingError):
             return None
         return eval_strategy, eval_experiments
 
@@ -146,7 +147,7 @@ class UcbLcbRegretEvaluator(RegretBoundEvaluator):
         strategy,
         experiments: pd.DataFrame,
         iteration: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Return regret-bound metrics, or an empty dict when not applicable."""
         if not strategy.is_fitted or strategy.model is None:
             return {}
@@ -206,7 +207,7 @@ class UcbLcbRegretEvaluator(RegretBoundEvaluator):
                 strategy.model.likelihood.noise.item()
                 * self.get_output_scale(strategy.model) ** 2
             )
-        except Exception:
+        except (AttributeError, RuntimeError):
             estimated_noise_var = self.fallback_noise_variance
 
         return {
@@ -249,7 +250,7 @@ def evaluate_ucb_lcb_regret_bound_criterion(
         min_topq=criterion.min_topq,
     )
 
-    # Objective direction (+1 maximise / -1 minimise, BoFire convention);
+    # Objective direction (+1 maximise / -1 minimise);
     # the regret bound does not apply to other objectives, so the strategy
     # is never considered converged.  Negate to the minimisation frame used
     # for the CV threshold below.

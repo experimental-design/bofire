@@ -1,4 +1,4 @@
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, Literal
 
 from pydantic import Field, PositiveFloat, PositiveInt, model_validator
 
@@ -60,16 +60,16 @@ class UcbLcbRegretBoundCriterion(ConvergenceCriterion):
     """
 
     type: Literal["UcbLcbRegretBoundCriterion"] = "UcbLcbRegretBoundCriterion"
-    noise_variance: Optional[Union[PositiveFloat, Literal["cv"]]] = None
+    noise_variance: PositiveFloat | Literal["cv"] | None = None
     threshold_factor: PositiveFloat = 1.0
-    cv_fold_columns: Optional[List[str]] = None
+    cv_fold_columns: list[str] | None = None
     topq: Annotated[float, Field(gt=0, le=1)] = 0.5
     min_topq: PositiveInt = 20
     min_experiments: PositiveInt = 5
     delta: PositiveFloat = 0.1
     beta_scale: PositiveFloat = 0.2
     n_samples_lcb: PositiveInt = 2000
-    batch_size: Optional[PositiveInt] = None
+    batch_size: PositiveInt | None = None
     lcb_method: Literal["sample", "optimize"] = "sample"
     fallback_noise_variance: PositiveFloat = 1e-4
 

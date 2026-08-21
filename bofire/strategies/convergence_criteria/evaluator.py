@@ -1,7 +1,7 @@
 """Evaluator base classes that compute metrics for convergence criteria."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -9,10 +9,11 @@ import torch
 from botorch.acquisition.analytic import UpperConfidenceBound
 from botorch.models.model import Model
 
+from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
 
 
-def get_ready_experiments(strategy, min_experiments: int) -> Optional[pd.DataFrame]:
+def get_ready_experiments(strategy, min_experiments: int) -> pd.DataFrame | None:
     """Shared guard for the GP-based convergence criterion evaluators.
 
     Returns the strategy's recorded experiments when there are at least
@@ -29,10 +30,7 @@ def get_ready_experiments(strategy, min_experiments: int) -> Optional[pd.DataFra
     ).reset_index(drop=True)
     if len(experiments) < min_experiments:
         return None
-    if (
-        not getattr(strategy, "is_fitted", False)
-        or getattr(strategy, "model", None) is None
-    ):
+    if not strategy.is_fitted or strategy.model is None:
         return None
     return experiments
 
@@ -48,8 +46,8 @@ class ConvergenceEvaluator(ABC):
     """
 
     @staticmethod
-    def _objective_sign(strategy) -> Optional[float]:
-        """Optimization direction of the single output (BoFire convention).
+    def _objective_sign(strategy) -> float | None:
+        """Optimization direction of the single output.
 
         Returns ``+1.0`` for a ``MaximizeObjective`` and ``-1.0`` for a
         ``MinimizeObjective`` — the same ``+1 = maximize`` convention as
@@ -63,14 +61,9 @@ class ConvergenceEvaluator(ABC):
         "lower is better" frame, so they negate this value
         (``sign = -direction``) to obtain their minimisation-frame sign.
         """
-        from bofire.data_models.objectives.api import (
-            MaximizeObjective,
-            MinimizeObjective,
-        )
-
         try:
             outputs = strategy.domain.outputs.get()
-        except Exception:
+        except AttributeError:
             return None
         if len(outputs) != 1:
             return None
@@ -87,7 +80,7 @@ class ConvergenceEvaluator(ABC):
         strategy,  # BotorchStrategy
         experiments: pd.DataFrame,
         iteration: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Return a dict of convergence metrics for the current iteration."""
         pass
 
@@ -128,7 +121,7 @@ class RegretBoundEvaluator(ConvergenceEvaluator):
         beta_log_multiplier: float = 2.0,
         beta_log_denominator: float = 6.0,
         beta_min: float = 0.01,
-        beta_t_offset: Optional[int] = None,
+        beta_t_offset: int | None = None,
         lcb_method: Literal["sample", "optimize"] = "sample",
     ):
         # GP-UCB beta parameters (Srinivas et al., 2010).
@@ -178,7 +171,7 @@ class RegretBoundEvaluator(ConvergenceEvaluator):
         if hasattr(model, "outcome_transform"):
             try:
                 return float(model.outcome_transform.stdvs.item())
-            except Exception:
+            except (AttributeError, RuntimeError):
                 # outcome_transform exposes no scalar stdvs (e.g. it is not a
                 # Standardize transform); fall back to the unit output scale.
                 pass
@@ -213,7 +206,7 @@ class RegretBoundEvaluator(ConvergenceEvaluator):
         bounds_lower: torch.Tensor,
         bounds_upper: torch.Tensor,
         n_samples: int = 2000,
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         sign: float = 1.0,
     ) -> float:
         """Return ``min [sign*mu - sqrt(beta)*sigma]`` via random sampling."""
@@ -297,9 +290,9 @@ class RegretBoundEvaluator(ConvergenceEvaluator):
         bounds_lower: torch.Tensor,
         bounds_upper: torch.Tensor,
         n_samples: int = 2000,
-        batch_size: Optional[int] = None,
+        batch_size: int | None = None,
         strategy=None,
-        experiments: Optional[pd.DataFrame] = None,
+        experiments: pd.DataFrame | None = None,
         sign: float = 1.0,
     ) -> tuple:
         """Upper bound on simple regret via the UCB-LCB gap.

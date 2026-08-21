@@ -16,12 +16,13 @@ via its ``dumps()`` / ``loads()`` methods.
 import base64
 import io
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal
 from weakref import WeakKeyDictionary
 
 import numpy as np
 import pandas as pd
 import torch
+from botorch.exceptions.errors import ModelFittingError
 from botorch.models.model import Model
 from scipy.stats import norm
 
@@ -100,7 +101,7 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         beta_log_multiplier: float = 2.0,
         beta_log_denominator: float = 6.0,
         beta_min: float = 0.01,
-        beta_t_offset: Optional[int] = None,
+        beta_t_offset: int | None = None,
         n_samples_lcb: int = 1000,
         batch_size: int = 512,
         threshold_mode: Literal[
@@ -108,7 +109,7 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         ] = "adaptive_median",
         start_timing: int = 10,
         rate: float = 0.1,
-        noise_var_override: Optional[float] = None,
+        noise_var_override: float | None = None,
         lcb_method: Literal["sample", "optimize"] = "sample",
     ):
         super().__init__(
@@ -130,11 +131,11 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         self.noise_var_override = noise_var_override
 
         # Internal state persisted across evaluate() calls.
-        self._prev_model: Optional[Model] = None
-        self._prev_incumbent_idx: Optional[int] = None
+        self._prev_model: Model | None = None
+        self._prev_incumbent_idx: int | None = None
         self._prev_n_experiments: int = 0
-        self._prev_input_preprocessing_specs: Optional[Dict] = None
-        self._seq_values: List[float] = []
+        self._prev_input_preprocessing_specs: dict | None = None
+        self._seq_values: list[float] = []
 
     @staticmethod
     def _get_noise_variance(model) -> float:
@@ -148,7 +149,7 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         """
         try:
             return float(model.likelihood.noise.item())
-        except Exception:
+        except (AttributeError, RuntimeError):
             return 1e-4
 
     def _calc_kl_qp_fast(
@@ -211,7 +212,7 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         strategy,
         experiments: pd.DataFrame,
         iteration: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Return regret-gap metrics, or an empty dict on the first call / when not applicable."""
         if not strategy.is_fitted or strategy.model is None:
             return {}
@@ -381,7 +382,7 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
         var_old_new: float,
         noise_var: float,
         kappa: float,
-    ) -> Optional[float]:
+    ) -> float | None:
         """Adaptive threshold from Ishibashi et al. (2023).
 
         All inputs are in raw Y scale (the reference implementation uses
@@ -414,10 +415,10 @@ class ExpMinRegretGapEvaluator(RegretBoundEvaluator):
 
     @staticmethod
     def _compute_threshold_median(
-        seq_values: List[float],
+        seq_values: list[float],
         start_timing: int,
         rate: float,
-    ) -> Optional[float]:
+    ) -> float | None:
         """``rate * median(seq_values[:start_timing])``, or ``None`` if not enough values.
 
         Strict ``>``: the value under test is in ``seq_values`` and must not
@@ -470,7 +471,7 @@ def _refit_on_prefix(strategy, experiments: pd.DataFrame, m: int):
     try:
         prefix_strategy = map_strategy(strategy._data_model)
         prefix_strategy.tell(experiments.iloc[:m])
-    except Exception:
+    except (ValueError, RuntimeError, ModelFittingError):
         return None
     return prefix_strategy
 
@@ -502,11 +503,11 @@ def _cold_start_evaluator(
     experiments: pd.DataFrame,
     n: int,
     m0: int,
-) -> Optional[ExpMinRegretGapEvaluator]:
+) -> ExpMinRegretGapEvaluator | None:
     """Reconstruct the previous check's evaluator state purely from history.
 
-    Refits a copy of the strategy on all but the last experiment (and, in
-    ``"median"`` mode, replays the early stopping values from history prefixes
+    Refits a copy of the strategy on all but the last experiment (and, in the
+    median-based modes, replays the early stopping values from history prefixes
     needed for the median threshold). Returns ``None`` when a refit fails.
     """
     evaluator = ExpMinRegretGapEvaluator(
@@ -519,7 +520,7 @@ def _cold_start_evaluator(
         threshold_mode=criterion.threshold_mode,
     )
 
-    if criterion.threshold_mode == "median":
+    if criterion.threshold_mode != "adaptive":
         # The median threshold needs the first ``start_timing`` stopping
         # values, i.e. the values at m0+1 .. m0+start_timing. Replay as many
         # of them as the history already contains (at most up to n-1; the
@@ -607,12 +608,12 @@ def evaluate_exp_min_regret_gap_criterion(
     decision = False
     if metrics:
         stopping_value = metrics["stopping_value"]
-        if criterion.threshold_mode == "adaptive":
-            threshold = metrics.get("threshold_adaptive")
-        else:
-            threshold = metrics.get("threshold_median")
-        if threshold is not None:
-            decision = bool(stopping_value < threshold)
+        thresholds = []
+        if criterion.threshold_mode in ("adaptive", "adaptive_median"):
+            thresholds.append(metrics.get("threshold_adaptive"))
+        if criterion.threshold_mode in ("median", "adaptive_median"):
+            thresholds.append(metrics.get("threshold_median"))
+        decision = any(stopping_value < t for t in thresholds if t is not None)
 
     # ``evaluate`` left the evaluator primed on the current model, ready to be
     # reused as the "previous" state at the next check.

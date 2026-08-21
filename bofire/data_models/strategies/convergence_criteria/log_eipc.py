@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import PositiveFloat, PositiveInt
 
@@ -50,7 +50,7 @@ class LogEipcCriterion(ConvergenceCriterion):
 
     type: Literal["LogEipcCriterion"] = "LogEipcCriterion"
     lambda_cost: PositiveFloat = 1.0
-    cost_column: Optional[str] = None
+    cost_column: str | None = None
     cost_value: PositiveFloat = 1.0
     alpha: PositiveFloat = 1.0
     min_experiments: PositiveInt = 5

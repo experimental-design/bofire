@@ -196,6 +196,7 @@ for _gp_criterion in [
     ExpMinRegretGapCriterion(
         threshold_mode="median", rate=0.05, start_timing=15, noise_var_override=1e-6
     ),
+    ExpMinRegretGapCriterion(threshold_mode="adaptive_median"),
     LogEipcCriterion(lambda_cost=0.5, cost_column="cost", alpha=0.5),
     ProbabilisticRegretBoundCriterion(epsilon=1.0, delta_mod=0.025, delta_est=0.025),
 ]:

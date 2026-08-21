@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, Optional
+from typing import Annotated, Literal
 
 from pydantic import Field, PositiveFloat, PositiveInt
 
@@ -66,7 +66,7 @@ class ProbabilisticRegretBoundCriterion(ConvergenceCriterion):
     type: Literal["ProbabilisticRegretBoundCriterion"] = (
         "ProbabilisticRegretBoundCriterion"
     )
-    epsilon: Optional[PositiveFloat] = None
+    epsilon: PositiveFloat | None = None
     epsilon_relative: Annotated[float, Field(gt=0, le=1)] = 0.01
     delta_mod: Annotated[float, Field(gt=0, lt=1)] = 0.05
     delta_est: Annotated[float, Field(gt=0, lt=1)] = 0.05

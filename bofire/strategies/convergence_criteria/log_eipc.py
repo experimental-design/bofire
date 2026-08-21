@@ -7,7 +7,8 @@ experiments, so a strategy reconstructed by replaying ``tell`` reaches the
 same result (up to Monte Carlo noise in the max-LogEIPC search).
 """
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, Literal, Optional, Union
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -75,10 +76,10 @@ class LogExpectedImprovementPerCost(AnalyticAcquisitionFunction):
     def __init__(
         self,
         model: Model,
-        best_f: Union[float, torch.Tensor],
+        best_f: float | torch.Tensor,
         cost_callable: Callable[[torch.Tensor], torch.Tensor],
         alpha: float = 1.0,
-        posterior_transform: Optional[PosteriorTransform] = None,
+        posterior_transform: PosteriorTransform | None = None,
         maximize: bool = False,
     ) -> None:
         super().__init__(model=model, posterior_transform=posterior_transform)
@@ -182,12 +183,12 @@ class LogEipcEvaluator(ConvergenceEvaluator):
     def __init__(
         self,
         lambda_cost: float = 1.0,
-        cost_column: Optional[str] = None,
+        cost_column: str | None = None,
         cost_value: float = 1.0,
         alpha: float = 1.0,
         n_samples: int = 2000,
         batch_size: int = 512,
-        cost_callable: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
+        cost_callable: Callable[[torch.Tensor], torch.Tensor] | None = None,
         search_method: Literal["sample", "optimize"] = "sample",
         cost_model: Literal["mean", "gp"] = "mean",
     ):
@@ -207,7 +208,7 @@ class LogEipcEvaluator(ConvergenceEvaluator):
         self,
         strategy,
         experiments: pd.DataFrame,
-    ) -> Optional[Callable[[torch.Tensor], torch.Tensor]]:
+    ) -> Callable[[torch.Tensor], torch.Tensor] | None:
         """Fit a GP to observed (X, log_cost) pairs and return a cost callable.
 
         Matches the "unknown cost" approach from Xie et al., 2025: fits a
@@ -377,7 +378,7 @@ class LogEipcEvaluator(ConvergenceEvaluator):
         strategy,
         experiments: pd.DataFrame,
         iteration: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Return LogEIPC metrics, or an empty dict when not applicable."""
         if not strategy.is_fitted or strategy.model is None:
             return {}

@@ -10,7 +10,8 @@ Reference: Wilson (2024), "Stopping Bayesian Optimization with Probabilistic
 Regret Bounds" (NeurIPS 2024).
 """
 
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -116,7 +117,7 @@ def _minimize_sample_paths(
                 )
                 if res.fun < best_val:
                     best_val = float(res.fun)
-            except Exception:
+            except (ValueError, RuntimeError):
                 v0 = float(vals_rand[i, top_idx[i, s]].item())
                 if v0 < best_val:
                     best_val = v0
@@ -291,7 +292,7 @@ class ProbabilisticRegretBoundEvaluator(ConvergenceEvaluator):
 
     def __init__(
         self,
-        epsilon: Optional[float] = None,
+        epsilon: float | None = None,
         epsilon_relative: float = 0.01,
         delta_mod: float = 0.05,
         delta_est: float = 0.05,
@@ -366,7 +367,7 @@ class ProbabilisticRegretBoundEvaluator(ConvergenceEvaluator):
         bounds_upper: torch.Tensor,
         epsilon: float,
         sign: float = 1.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Core evaluation logic called by ``evaluate``.
 
         Args:
@@ -420,7 +421,7 @@ class ProbabilisticRegretBoundEvaluator(ConvergenceEvaluator):
                 initial_batch=self.initial_batch,
                 batch_growth=self.batch_growth,
             )
-        except Exception:
+        except (ValueError, RuntimeError):
             return {}
 
         best_j = int(np.argmin(estimates))
@@ -449,7 +450,7 @@ class ProbabilisticRegretBoundEvaluator(ConvergenceEvaluator):
         strategy,
         experiments: pd.DataFrame,
         iteration: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Return PRB metrics, or an empty dict when not applicable.
 
         Returns a dict with keys:
@@ -493,7 +494,7 @@ class ProbabilisticRegretBoundEvaluator(ConvergenceEvaluator):
 
         try:
             X_test = self._get_test_points(model, X_all, incumbent_pos, sign)
-        except Exception:
+        except (ValueError, RuntimeError, IndexError):
             return {}
 
         bounds = strategy.domain.inputs.get_bounds(

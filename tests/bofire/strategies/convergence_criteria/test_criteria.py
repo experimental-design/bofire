@@ -464,6 +464,17 @@ class TestExpMinRegretGapCriterion:
         strategy, _ = _fitted_sobo(benchmark, criterion=criterion)
         assert strategy.has_converged() is False
 
+    def test_adaptive_median_mode_runs(self, benchmark):
+        """Either-threshold mode accepts the value and decides."""
+        criterion = ExpMinRegretGapCriterion(
+            threshold_mode="adaptive_median",
+            start_timing=2,
+            min_experiments=3,
+            n_samples_lcb=100,
+        )
+        strategy, _ = _fitted_sobo(benchmark, n=8, criterion=criterion)
+        assert isinstance(strategy.has_converged(), bool)
+
     def test_median_mode_replays_history(self, benchmark):
         """Median mode replays early stopping values from history prefixes."""
         criterion = ExpMinRegretGapCriterion(

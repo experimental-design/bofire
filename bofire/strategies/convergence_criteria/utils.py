@@ -1,16 +1,14 @@
 """Pure utility helpers for the convergence criteria module."""
 
-from typing import List, Optional
-
 import numpy as np
 import pandas as pd
 from scipy.stats import beta as scipy_beta
 
 
 def compute_threshold_noise(
-    noise_variance: Optional[float],
+    noise_variance: float | None,
     threshold_factor: float = 1.0,
-) -> Optional[float]:
+) -> float | None:
     """Compute ``threshold_factor * noise_variance``.
 
     Args:
@@ -30,10 +28,10 @@ def compute_threshold_noise(
 def compute_threshold_cv(
     experiments: pd.DataFrame,
     output_key: str,
-    cv_fold_columns: List[str],
+    cv_fold_columns: list[str],
     threshold_factor: float = 1.0,
     sign: float = 1.0,
-) -> Optional[float]:
+) -> float | None:
     """Compute a threshold from cross-validation fold variability.
 
     Uses the corrected std of the incumbent's per-fold scores
