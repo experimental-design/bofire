@@ -37,6 +37,63 @@ class PairwiseTrainableSurrogate(ABC):
 
     PREFERENCE_COLUMNS = ("labcode_A", "labcode_B", "preference")
 
+    def validate_pairwise_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        """Validate designs referenced by pairwise preference observations."""
+        experiments = self.inputs.validate_experiments(experiments.copy(), strict=False)
+        if "labcode" not in experiments.columns:
+            raise ValueError(
+                "Pairwise preference experiments require a 'labcode' column."
+            )
+        if experiments["labcode"].isna().any():
+            raise ValueError("Pairwise preference labcodes must not be missing.")
+        if experiments["labcode"].duplicated().any():
+            duplicates = sorted(
+                experiments.loc[
+                    experiments["labcode"].duplicated(keep=False), "labcode"
+                ]
+                .unique()
+                .tolist()
+            )
+            raise ValueError(f"Duplicate labcodes in experiments: {duplicates}.")
+        return experiments[[*self.inputs.get_keys(), "labcode"]]
+
+    def validate_preferences(
+        self, preferences: pd.DataFrame, experiments: pd.DataFrame
+    ) -> pd.DataFrame:
+        """Validate pairwise labels against their referenced experiments."""
+        preferences = preferences.copy()
+        if len(preferences) == 0:
+            return pd.DataFrame(columns=self.PREFERENCE_COLUMNS)
+
+        missing = set(self.PREFERENCE_COLUMNS) - set(preferences.columns)
+        if missing:
+            raise ValueError(
+                f"`preferences` is missing required columns: {sorted(missing)}. "
+                f"Expected at least {sorted(self.PREFERENCE_COLUMNS)}."
+            )
+        preferences = preferences[list(self.PREFERENCE_COLUMNS)]
+        preferences["preference"] = pd.to_numeric(
+            preferences["preference"], errors="raise"
+        )
+        if not preferences["preference"].isin((-1.0, 0.0, 1.0)).all():
+            raise ValueError("Preference values must be one of -1, 0, or 1.")
+        if preferences[["labcode_A", "labcode_B"]].isna().any().any():
+            raise ValueError("Preference labcodes must not be missing.")
+        if (preferences["labcode_A"] == preferences["labcode_B"]).any():
+            raise ValueError("A design cannot be compared with itself.")
+
+        valid_labcodes = set(experiments["labcode"].tolist())
+        referenced_labcodes = set(preferences["labcode_A"].tolist()) | set(
+            preferences["labcode_B"].tolist()
+        )
+        unknown = referenced_labcodes - valid_labcodes
+        if unknown:
+            raise ValueError(
+                "`preferences` references unknown labcodes not present in "
+                f"experiments: {sorted(unknown)}."
+            )
+        return preferences
+
     def fit(
         self,
         experiments: pd.DataFrame,
@@ -49,53 +106,14 @@ class PairwiseTrainableSurrogate(ABC):
             experiments: DataFrame with input columns plus a ``labcode`` column.
                 Output columns are ignored if present.
             preferences: DataFrame with exactly the columns ``labcode_A``,
-                ``labcode_B``, ``preference``. ``preference`` is a float in
-                ``[-1, 1]``; sign determines the winner (``>0`` = A wins,
-                ``<0`` = B wins), magnitude is currently discarded, ``==0``
-                rows are dropped as ties.
+                ``labcode_B``, ``preference``. ``preference`` must be ``1``
+                when A wins, ``-1`` when B wins, or ``0`` for a tie. Tie rows
+                are dropped.
             options: Additional keyword arguments forwarded to ``_fit_pairwise``.
         """
-        # validate experiment inputs (skip outputs validation: pairwise GP has
-        # no observed Y values in the experiments DataFrame).
-        experiments = self.inputs.validate_experiments(experiments, strict=False)
-
-        if "labcode" not in experiments.columns:
-            raise ValueError(
-                "PairwiseGPSurrogate requires a 'labcode' column on experiments "
-                "to reference preferences."
-            )
-
-        if experiments["labcode"].duplicated().any():
-            dups = (
-                experiments.loc[
-                    experiments["labcode"].duplicated(keep=False), "labcode"
-                ]
-                .unique()
-                .tolist()
-            )
-            raise ValueError(
-                f"Duplicate labcodes in experiments: {sorted(dups)}. "
-                "PairwiseGPSurrogate requires unique labcodes."
-            )
-
-        expected_cols = set(self.PREFERENCE_COLUMNS)
-        missing = expected_cols - set(preferences.columns)
-        if missing:
-            raise ValueError(
-                f"`preferences` is missing required columns: {sorted(missing)}. "
-                f"Expected at least {sorted(expected_cols)}."
-            )
-
-        valid_labcodes = set(experiments["labcode"].tolist())
-        ref_labcodes = set(preferences["labcode_A"].tolist()) | set(
-            preferences["labcode_B"].tolist()
-        )
-        unknown = ref_labcodes - valid_labcodes
-        if unknown:
-            raise ValueError(
-                "`preferences` references labcodes not present in experiments: "
-                f"{sorted(unknown)}."
-            )
+        # Skip outputs validation: the latent utility has no observed Y values.
+        experiments = self.validate_pairwise_experiments(experiments)
+        preferences = self.validate_preferences(preferences, experiments)
 
         # sign conversion: drop ties (preference == 0)
         pref_values = preferences["preference"].astype(float)

@@ -14,12 +14,22 @@ comparison data. It wraps BoTorch's `PairwiseGP`, a Gaussian process whose
 likelihood models the probability that one design is preferred over another.
 
 This tutorial fits a `PairwiseGPSurrogate` to synthetic preference data and
-checks that it recovers the hidden utility.
+checks that it recovers the hidden utility. It then explores two directions for
+acquisition-driven optimization. First, qEUBO selects new designs to compare,
+following [Astudillo et al. (2023), *qEUBO: A Decision-Theoretic Acquisition
+Function for Preferential Bayesian
+Optimization*](https://proceedings.mlr.press/v206/astudillo23a.html). Second,
+inspired by the separation of experiment and feedback acquisition in
+[Kobalczyk et al. (2026), *LILO: Bayesian Optimization with Natural Language
+Feedback*](https://arxiv.org/abs/2510.17671), qLogNEI selects the next design to
+measure while our illustrative qEUBO policy chooses which measured pairs to
+label.
 
 ## Imports
 
 ```{python}
 import warnings
+from itertools import combinations
 
 import numpy as np
 import pandas as pd
@@ -27,8 +37,14 @@ from matplotlib import pyplot as plt
 from scipy.stats import kendalltau
 
 import bofire.surrogates.api as surrogates
-from bofire.data_models.domain.api import Inputs, Outputs
+import bofire.strategies.api as strategies
+from bofire.data_models.acquisition_functions.api import qEUBO, qLogNEI
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.strategies.api import (
+    BotorchOptimizer,
+    PreferenceStrategy as PreferenceStrategyDataModel,
+)
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate
 
 warnings.filterwarnings("ignore")
@@ -134,23 +150,28 @@ print(f"Kendall-Tau rank correlation vs. true utility: {tau:.3f}")
 
 A correlation close to 1 means the surrogate ranks unseen designs almost exactly
 as the latent utility would. We can see this directly by plotting the learned
-posterior mean next to the ground truth.
+posterior mean and standard deviation next to the ground truth. The standard
+deviation shows where the model remains uncertain despite the comparisons seen
+so far.
 
 ```{python}
-fig, axes = plt.subplots(1, 2, figsize=(11, 4.5))
+fig, axes = plt.subplots(1, 3, figsize=(16, 4.5))
 
 grid = np.linspace(0, 1, 60)
 gx, gy = np.meshgrid(grid, grid)
 grid_df = pd.DataFrame({"x_1": gx.ravel(), "x_2": gy.ravel()})
 
 true_grid = latent_utility(grid_df.to_numpy()).reshape(gx.shape)
-pred_grid = surrogate.predict(grid_df)["utility_pred"].to_numpy().reshape(gx.shape)
+posterior_grid = surrogate.predict(grid_df)
+pred_grid = posterior_grid["utility_pred"].to_numpy().reshape(gx.shape)
+sd_grid = posterior_grid["utility_sd"].to_numpy().reshape(gx.shape)
 
-for ax, surface, title in [
-    (axes[0], true_grid, "True latent utility"),
-    (axes[1], pred_grid, "Learned posterior mean"),
+for ax, surface, title, cmap in [
+    (axes[0], true_grid, "True latent utility", "viridis"),
+    (axes[1], pred_grid, "Learned posterior mean", "viridis"),
+    (axes[2], sd_grid, "Learned posterior standard deviation", "magma"),
 ]:
-    contour = ax.contourf(gx, gy, surface, levels=20, cmap="viridis")
+    contour = ax.contourf(gx, gy, surface, levels=20, cmap=cmap)
     ax.scatter(
         X[:, 0], X[:, 1], c="white", edgecolors="black", s=25,
         label="compared designs",
@@ -162,10 +183,12 @@ plt.tight_layout()
 plt.show()
 ```
 
-Both surfaces peak in the same region: from comparisons alone, the surrogate has
-located where utility is highest. The absolute contour values differ — pairwise
-learning identifies the latent utility only up to a monotone transform — but the
-*ranking*, which is what matters for optimization, is recovered.
+The true and learned mean surfaces peak in the same region: from comparisons
+alone, the surrogate has located where utility is highest. The absolute mean
+values differ — pairwise learning identifies the latent utility only up to an
+arbitrary scale and offset — but the *ranking*, which is what matters for
+optimization, is recovered. The standard-deviation panel is largest in regions
+that are weakly informed by the observed comparisons.
 
 ## The preference encoding
 
@@ -175,17 +198,464 @@ The `preferences` DataFrame must have exactly these three columns:
 |---|---|
 | `labcode_A` | first design in the comparison (must appear in `experiments`) |
 | `labcode_B` | second design in the comparison (must appear in `experiments`) |
-| `preference` | sign marks the winner: `> 0` → A preferred, `< 0` → B preferred |
+| `preference` | `1` → A preferred, `-1` → B preferred, `0` → tie |
 
-Only the **sign** of `preference` is used — its magnitude is currently ignored.
-A `preference` of exactly `0` denotes a tie; tied rows are dropped with a
+The value must be exactly `-1`, `0`, or `1`. Tied rows are dropped with a
 warning. Because the slot (A vs. B) is just bookkeeping, swapping `labcode_A`
-with `labcode_B` and flipping the sign of `preference` describes the very same
-comparison and yields the same fit.
+with `labcode_B` and flipping `preference` describes the very same comparison
+and yields the same fit.
 
-## Where to go next
+## Proposing the next comparison with qEUBO
 
-`PairwiseGPSurrogate` is the modelling building block for preference-based
-Bayesian optimization: combine it with an acquisition function such as BoTorch's
-*Expected Utility of the Best Option* (EUBO) to decide which pair of designs to
-put in front of the expert next.
+`PreferenceStrategy` turns the surrogate into a complete preferential Bayesian
+optimization loop. Its acquisition function is Monte Carlo *q-Expected Utility
+of the Best Option* (qEUBO): it chooses a batch jointly to maximize the expected
+latent utility of the best option in that batch.
+
+```{python}
+domain = Domain(inputs=inputs, outputs=outputs)
+strategy_data = PreferenceStrategyDataModel(
+    domain=domain,
+    surrogate_spec=surrogate_data,
+    acquisition_function=qEUBO(n_mc_samples=64),
+    acquisition_optimizer=BotorchOptimizer(
+        n_restarts=4,
+        n_raw_samples=128,
+        maxiter=200,
+    ),
+    seed=42,
+)
+```
+
+For a deliberately data-sparse illustration, use only half of the designs and
+the comparisons between them. After filtering the comparisons, we retain
+exactly the designs referenced by those rows. This keeps the two tables
+consistent: every preference labcode exists in the experiment table, and every
+included experiment participates in at least one comparison.
+
+```{python}
+subset_labcodes = set(
+    experiments.sample(n=20, random_state=42)["labcode"]
+)
+strategy_preferences = preferences.loc[
+    preferences["labcode_A"].isin(subset_labcodes)
+    & preferences["labcode_B"].isin(subset_labcodes)
+].reset_index(drop=True)
+referenced_labcodes = pd.unique(
+    strategy_preferences[["labcode_A", "labcode_B"]].to_numpy().ravel()
+)
+strategy_experiments = experiments.loc[
+    experiments["labcode"].isin(referenced_labcodes)
+].reset_index(drop=True)
+
+print("training designs:", len(strategy_experiments))
+print("training comparisons:", len(strategy_preferences))
+```
+
+The strategy now fits that subset and optimizes qEUBO continuously over the
+full input domain.
+
+```{python}
+strategy = strategies.map(strategy_data)
+strategy.tell(strategy_experiments, preferences=strategy_preferences)
+next_pair = strategy.ask(candidate_count=2)
+next_pair
+```
+
+::: {.callout-note title="What makes a qEUBO pair optimal?"}
+The optimization goal is still to identify **one design with the highest latent
+utility**. Two designs are proposed because preference feedback requires a
+comparison. For a pair $(x_A, x_B)$, qEUBO maximizes
+
+$$
+\mathbb{E}\left[\max\{u(x_A), u(x_B)\}\mid\mathcal{D}\right].
+$$
+
+This is the definition implemented by
+[BoTorch's `qExpectedUtilityOfBestOption`](https://botorch.readthedocs.io/en/stable/acquisition.html#botorch.acquisition.preference.qExpectedUtilityOfBestOption)
+and introduced by
+[Astudillo et al. (2023)](https://proceedings.mlr.press/v206/astudillo23a.html).
+BoTorch estimates it by sampling the joint utility posterior for the proposed
+batch, taking the best sampled utility in each draw, and averaging those maxima.
+
+With little data, this often produces a promising option and a plausible
+challenger: the challenger may have a high posterior mean, high uncertainty, or
+both. Thus, qEUBO aims for the pair's *better member* to have high utility; it
+does not require both posterior means to be high. The expert selects the
+preferred member, and that comparison is used to refit the model before the next
+query. The current single-design recommendation is conceptually separate: it is
+the design with the highest posterior expected utility.
+
+As the model becomes confident about one design, qEUBO can become almost
+insensitive to the other member of the pair. In that case the second design may
+look arbitrary because it contributes little to the expected maximum.
+:::
+
+To see where qEUBO wants to query, overlay the proposed pair on the true latent
+utility surface. The labels show the pairwise GP's posterior mean at each
+candidate. These predicted values are useful for ranking candidates, but their
+absolute scale is not directly comparable to the true utility scale.
+
+```{python}
+fig, ax = plt.subplots(figsize=(6.5, 5))
+contour = ax.contourf(gx, gy, true_grid, levels=20, cmap="viridis")
+ax.scatter(
+    strategy_experiments["x_1"],
+    strategy_experiments["x_2"],
+    c="white",
+    edgecolors="black",
+    s=25,
+    alpha=0.65,
+    label="strategy training designs",
+)
+
+candidate_colors = ["tab:red", "tab:orange"]
+for candidate_number, (_, candidate) in enumerate(next_pair.iterrows(), start=1):
+    color = candidate_colors[candidate_number - 1]
+    ax.scatter(
+        candidate["x_1"],
+        candidate["x_2"],
+        c=color,
+        edgecolors="black",
+        marker="*",
+        s=300,
+        linewidth=1.2,
+        label=f"proposed candidate {candidate_number}",
+        zorder=3,
+        clip_on=False,
+    )
+    x_offset = -135 if candidate["x_1"] > 0.85 else 10
+    y_offset = -35 if candidate["x_2"] > 0.8 else 12 - 44 * (candidate_number - 1)
+    ax.annotate(
+        f"candidate {candidate_number}\npredicted utility = {candidate['utility_pred']:.2f}",
+        xy=(candidate["x_1"], candidate["x_2"]),
+        xytext=(x_offset, y_offset),
+        textcoords="offset points",
+        fontsize=9,
+        bbox={"boxstyle": "round,pad=0.3", "facecolor": "white", "alpha": 0.9},
+        arrowprops={"arrowstyle": "->", "color": color},
+    )
+
+ax.set(
+    xlabel="x_1",
+    ylabel="x_2",
+    title="qEUBO proposals on the true latent utility",
+)
+fig.colorbar(contour, ax=ax, label="true latent utility")
+ax.legend(loc="lower left")
+plt.tight_layout()
+plt.show()
+```
+
+The two returned rows are the designs to put in front of the expert next. Before
+recording the response, assign each design a unique `labcode`. Then append the
+new designs and a row such as
+`("new_A", "new_B", 1.0)` to the strategy with another call to
+`strategy.tell(new_experiments, preferences=new_preferences)`. Passing a
+positive preference means A won; passing a negative preference means B won. The
+strategy refits the pairwise GP and the next `ask` proposes a new comparison.
+
+Calling `ask()` without a count defaults to a pair. Larger qEUBO batches are
+supported by passing a value greater than two, provided the experiment can turn
+the selected options into pairwise feedback.
+
+## Separating experiment and feedback acquisition
+
+The workflow above is classic preferential BO: qEUBO proposes the designs that
+will be compared next. A two-stage workflow, such as
+[LILO](https://arxiv.org/abs/2510.17671), separates two decisions:
+
+1. **Experiment acquisition:** qLogNEI selects a new design to measure.
+2. **Feedback acquisition:** after measuring it, either random selection or
+   qEUBO chooses which measured designs should be compared.
+
+This distinction is useful when an experiment is expensive but comparisons can
+be requested retrospectively among all measured outcomes. qLogNEI does not
+simply maximize the posterior mean: it selects the point with the greatest
+expected improvement over the uncertain baseline. The comparison policy then
+determines which preference labels are used to update that model.
+
+As measurements accumulate, the number of possible pairs grows quadratically:
+$n$ measured designs yield $n(n-1)/2$ comparisons. Labeling all of them quickly
+becomes burdensome for a human decision maker and costly when an LLM supplies
+the labels. Feedback acquisition therefore has its own budget. Here we compare
+spending that budget on random pairs with prioritizing pairs by qEUBO.
+
+The following small study gives both policies the same initial data and the
+same qLogNEI experiment acquisition. At each of ten BO iterations, one new
+design is selected continuously over the input domain and a budget of $K=2$
+comparison queries is labeled. The only difference is whether those pairs are
+sampled randomly or selected by their qEUBO values.
+
+::: {.callout-warning title="True utility is used only for simulation and scoring"}
+The optimizer never observes `latent_utility` as a scalar response. It is used
+only to simulate noisy preference feedback and to evaluate the study afterward.
+The pairwise GP is trained exclusively on comparisons.
+:::
+
+```{python}
+STUDY_K_PAIRS = 2
+STUDY_INITIAL_DESIGNS = 4
+STUDY_BO_ITERATIONS = 10
+STUDY_REPLICATES = 10
+STUDY_MC_SAMPLES = 64
+```
+
+The two policies use matched random-number streams for the simulated preference
+noise. They select two distinct pairs within each round, but previously queried
+pairs remain eligible in later rounds and receive a fresh noisy judgment. This
+lets repeated feedback reduce uncertainty about a noisy preference. The qEUBO
+policy evaluates every pair among the measured designs and takes the two
+highest-valued pairs. This is a simple *greedy pair-selection* baseline rather
+than a claim that those two comparisons are jointly optimal.
+
+```{python}
+def label_pairs(experiments, pairs, rng):
+    rows = []
+    for index_a, index_b in pairs:
+        pair = experiments.iloc[[index_a, index_b]]
+        noisy_utility = latent_utility(
+            pair[domain.inputs.get_keys()].to_numpy(dtype=float)
+        ) + rng.normal(scale=0.03, size=2)
+        rows.append(
+            (
+                pair.iloc[0]["labcode"],
+                pair.iloc[1]["labcode"],
+                1.0 if noisy_utility[0] > noisy_utility[1] else -1.0,
+            )
+        )
+    return pd.DataFrame(
+        rows, columns=["labcode_A", "labcode_B", "preference"]
+    )
+
+
+def fit_preference_strategy(
+    experiments, preferences, acquisition_function, seed
+):
+    preference_strategy = strategies.map(
+        PreferenceStrategyDataModel(
+            domain=domain,
+            surrogate_spec=surrogate_data,
+            acquisition_function=acquisition_function,
+            acquisition_optimizer=BotorchOptimizer(
+                n_restarts=5,
+                n_raw_samples=128,
+                maxiter=100,
+            ),
+            seed=seed,
+        )
+    )
+    # A modest fit budget keeps the repeated tutorial study fast.
+    preference_strategy.surrogate.training_specs = {"maxiter": 50}
+    preference_strategy.tell(experiments, preferences=preferences)
+    return preference_strategy
+
+
+def select_feedback_pairs(method, preference_strategy, experiments, rng):
+    pairs = list(combinations(range(len(experiments)), 2))
+    pair_count = min(STUDY_K_PAIRS, len(pairs))
+    if method == "random":
+        selected = rng.choice(len(pairs), size=pair_count, replace=False)
+        return [pairs[index] for index in selected]
+
+    values = np.array(
+        [
+            preference_strategy.calc_acquisition(
+                experiments.iloc[list(pair)][domain.inputs.get_keys()],
+                combined=True,
+            ).item()
+            for pair in pairs
+        ]
+    )
+    selected = np.argsort(values)[-pair_count:]
+    return [pairs[index] for index in selected]
+```
+
+Both acquisition steps now use BoFire's `PreferenceStrategy`, configured with
+qLogNEI for experiment acquisition and qEUBO for feedback acquisition.
+`calc_acquisition(..., combined=True)` tells the qEUBO strategy to score the two
+rows as one $q=2$ batch. We enumerate pairs here because feedback must be
+selected from designs that have already been measured. In contrast, calling
+`ask()` on either configuration optimizes its acquisition function over the
+domain and proposes new designs.
+
+Each arm alternates qLogNEI experiment acquisition and preference-label
+acquisition. We record both the best true utility encountered and the true
+utility of the *measured* design currently recommended by the surrogate
+posterior. qLogNEI is optimized continuously over $[0, 1]^2$; only feedback
+acquisition is discrete because its candidates are pairs of already measured
+designs.
+
+```{python}
+def select_experiment(preference_strategy, experiments):
+    candidate = preference_strategy.ask()[domain.inputs.get_keys()].copy()
+    candidate["labcode"] = f"measurement_{len(experiments):03d}"
+    return candidate
+
+
+def recommendation_utility(preference_strategy, experiments):
+    posterior_mean = preference_strategy.predict(experiments)["utility_pred"]
+    recommendation = experiments.loc[posterior_mean.idxmax()]
+    return float(
+        latent_utility(
+            recommendation[domain.inputs.get_keys()].to_numpy(dtype=float)[None, :]
+        )[0]
+    )
+
+
+def initialize_study(replicate):
+    pair_rng = np.random.default_rng(10_000 + replicate)
+    noise_rng = np.random.default_rng(20_000 + replicate)
+    experiments = domain.inputs.sample(STUDY_INITIAL_DESIGNS, seed=replicate)
+    experiments["labcode"] = [
+        f"measurement_{index:03d}"
+        for index in range(STUDY_INITIAL_DESIGNS)
+    ]
+
+    possible_initial_pairs = list(
+        combinations(range(STUDY_INITIAL_DESIGNS), 2)
+    )
+    initial_pair_indices = pair_rng.choice(
+        len(possible_initial_pairs), size=STUDY_K_PAIRS, replace=False
+    )
+    preferences = label_pairs(
+        experiments,
+        [possible_initial_pairs[index] for index in initial_pair_indices],
+        noise_rng,
+    )
+    return experiments, preferences, pair_rng, noise_rng
+
+
+def run_study(method, replicate):
+    experiments, preferences, pair_rng, noise_rng = initialize_study(
+        replicate
+    )
+    records = []
+
+    for iteration in range(STUDY_BO_ITERATIONS + 1):
+        experiment_strategy = fit_preference_strategy(
+            experiments,
+            preferences,
+            acquisition_function=qLogNEI(
+                n_mc_samples=STUDY_MC_SAMPLES
+            ),
+            seed=replicate * 100 + iteration,
+        )
+        measured_utility = latent_utility(
+            experiments[domain.inputs.get_keys()].to_numpy(dtype=float)
+        )
+        records.append(
+            {
+                "method": method,
+                "replicate": replicate,
+                "iteration": iteration,
+                "best_measured_utility": float(measured_utility.max()),
+                "recommended_utility": recommendation_utility(
+                    experiment_strategy, experiments
+                ),
+            }
+        )
+        if iteration == STUDY_BO_ITERATIONS:
+            break
+
+        feedback_strategy = (
+            fit_preference_strategy(
+                experiments,
+                preferences,
+                acquisition_function=qEUBO(
+                    n_mc_samples=STUDY_MC_SAMPLES
+                ),
+                seed=10_000 + replicate * 100 + iteration,
+            )
+            if method == "qEUBO"
+            else experiment_strategy
+        )
+        next_experiment = select_experiment(experiment_strategy, experiments)
+        experiments = pd.concat(
+            [experiments, next_experiment], ignore_index=True
+        )
+        selected_pairs = select_feedback_pairs(
+            method,
+            feedback_strategy,
+            experiments,
+            pair_rng,
+        )
+        preferences = pd.concat(
+            [
+                preferences,
+                label_pairs(experiments, selected_pairs, noise_rng),
+            ],
+            ignore_index=True,
+        )
+    return records
+
+```
+
+We now repeat the complete sequential loop for both policies across ten matched
+replications.
+
+```{python}
+
+
+study_records = []
+for study_replicate in range(STUDY_REPLICATES):
+    for study_method in ["random", "qEUBO"]:
+        study_records.extend(run_study(study_method, study_replicate))
+
+study_results = pd.DataFrame(study_records)
+study_summary = study_results.groupby(["method", "iteration"])[
+    ["best_measured_utility", "recommended_utility"]
+].mean().round(3)
+print(study_summary.to_string())
+```
+
+```{python}
+study_styles = {
+    "random": ("random pairs", "tab:gray"),
+    "qEUBO": ("qEUBO pairs", "tab:blue"),
+}
+study_metrics = [
+    ("best_measured_utility", "Best utility among measured designs"),
+    ("recommended_utility", "Utility of model recommendation"),
+]
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4.5), sharey=True)
+for ax, (metric, title) in zip(axes, study_metrics):
+    for method, (label, color) in study_styles.items():
+        method_results = study_results.loc[study_results["method"] == method]
+        by_iteration = method_results.groupby("iteration")[metric]
+        mean = by_iteration.mean()
+        std = by_iteration.std()
+        ax.plot(mean.index, mean, marker="o", color=color, label=label)
+        ax.fill_between(
+            mean.index,
+            mean - std,
+            (mean + std).clip(upper=0.0),
+            color=color,
+            alpha=0.15,
+        )
+    ax.axhline(0.0, color="black", linestyle="--", linewidth=1, label="optimum")
+    ax.set(
+        xlabel="qLogNEI experiment iteration",
+        title=title,
+        xticks=range(STUDY_BO_ITERATIONS + 1),
+    )
+    ax.grid(alpha=0.2)
+
+axes[0].set_ylabel("true latent utility (benchmark only)")
+axes[1].legend(loc="lower right")
+plt.tight_layout()
+plt.show()
+```
+
+The shaded regions show one standard deviation across the ten matched
+replications.
+
+In this seeded illustration, the recommendation curves are close for the first
+few iterations, after which qEUBO pulls ahead of random pair selection. The
+best-measured-design curves nearly overlap. Both policies approach the optimum
+as more measurements and labels accumulate. With ten replications, this remains
+an illustrative baseline rather than a performance claim. The key point is
+that, even with the same qLogNEI experiment-acquisition rule, the choice of
+preference pairs changes the learned utility surrogate and therefore changes
+subsequent experiments.
