@@ -111,6 +111,19 @@ def test_tell_preferences_appends_designs_and_comparisons():
     assert len(strategy.preferences) == 4
 
 
+def test_tell_preferences_rejects_duplicate_appended_labcode():
+    strategy = _strategy()
+    experiments, preferences = _data()
+    strategy.tell(experiments.iloc[:3], preferences=preferences.iloc[:2], retrain=False)
+
+    with pytest.raises(ValueError, match="Duplicate labcodes"):
+        strategy.tell(
+            experiments.iloc[[2]],
+            preferences=pd.DataFrame(columns=preferences.columns),
+            retrain=False,
+        )
+
+
 def test_tell_preferences_rejects_unknown_labcode():
     strategy = _strategy()
     experiments, preferences = _data()
@@ -120,12 +133,16 @@ def test_tell_preferences_rejects_unknown_labcode():
         strategy.tell(experiments, preferences=preferences, retrain=False)
 
 
-def test_tell_preferences_rejects_nonfinite_preference():
+@pytest.mark.parametrize(
+    "invalid_preference",
+    [float("nan"), float("inf"), -float("inf"), 0.5, 2.0],
+)
+def test_tell_preferences_rejects_invalid_preference(invalid_preference):
     strategy = _strategy()
     experiments, preferences = _data()
-    preferences.loc[0, "preference"] = float("nan")
+    preferences.loc[0, "preference"] = invalid_preference
 
-    with pytest.raises(ValueError, match="Preference values must be finite"):
+    with pytest.raises(ValueError, match="Preference values must be one of"):
         strategy.tell(experiments, preferences=preferences, retrain=False)
 
 

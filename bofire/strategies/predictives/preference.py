@@ -33,8 +33,6 @@ from bofire.utils.torch_tools import tkwargs
 class PreferenceStrategy(PredictiveStrategy):
     """Preferential Bayesian optimization using a pairwise GP."""
 
-    PREFERENCE_COLUMNS = ("labcode_A", "labcode_B", "preference")
-
     def __init__(self, data_model: DataModel, **kwargs):
         super().__init__(data_model=data_model, **kwargs)
         self.acquisition_function = data_model.acquisition_function
@@ -61,59 +59,9 @@ class PreferenceStrategy(PredictiveStrategy):
         return self.surrogate.input_preprocessing_specs
 
     def _validate_new_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        experiments = experiments.copy()
         if len(experiments) == 0:
             return pd.DataFrame(columns=[*self.domain.inputs.get_keys(), "labcode"])
-        experiments = self.domain.inputs.validate_experiments(experiments, strict=False)
-        if "labcode" not in experiments.columns:
-            raise ValueError(
-                "PreferenceStrategy experiments require a 'labcode' column."
-            )
-        if experiments["labcode"].isna().any():
-            raise ValueError("PreferenceStrategy labcodes must not be missing.")
-        if experiments["labcode"].duplicated().any():
-            duplicates = sorted(
-                experiments.loc[
-                    experiments["labcode"].duplicated(keep=False), "labcode"
-                ]
-                .unique()
-                .tolist()
-            )
-            raise ValueError(f"Duplicate labcodes in experiments: {duplicates}.")
-        return experiments[[*self.domain.inputs.get_keys(), "labcode"]]
-
-    def _validate_preferences(
-        self, preferences: pd.DataFrame, experiments: pd.DataFrame
-    ) -> pd.DataFrame:
-        preferences = preferences.copy()
-        if len(preferences) == 0:
-            return pd.DataFrame(columns=self.PREFERENCE_COLUMNS)
-        missing = set(self.PREFERENCE_COLUMNS) - set(preferences.columns)
-        if missing:
-            raise ValueError(
-                f"`preferences` is missing required columns: {sorted(missing)}."
-            )
-        preferences = preferences[list(self.PREFERENCE_COLUMNS)]
-        preferences["preference"] = pd.to_numeric(
-            preferences["preference"], errors="raise"
-        )
-        if not np.isfinite(preferences["preference"].to_numpy()).all():
-            raise ValueError("Preference values must be finite.")
-        if preferences[["labcode_A", "labcode_B"]].isna().any().any():
-            raise ValueError("Preference labcodes must not be missing.")
-        if (preferences["labcode_A"] == preferences["labcode_B"]).any():
-            raise ValueError("A design cannot be compared with itself.")
-
-        known_labcodes = set(experiments["labcode"].tolist())
-        referenced_labcodes = set(preferences["labcode_A"].tolist()) | set(
-            preferences["labcode_B"].tolist()
-        )
-        unknown = referenced_labcodes - known_labcodes
-        if unknown:
-            raise ValueError(
-                f"`preferences` references unknown labcodes: {sorted(unknown)}."
-            )
-        return preferences
+        return self.surrogate.validate_pairwise_experiments(experiments)
 
     def tell(
         self,
@@ -167,27 +115,20 @@ class PreferenceStrategy(PredictiveStrategy):
             )
         if len(combined_experiments) == 0:
             raise ValueError("No preference experiments have been provided.")
-        if combined_experiments["labcode"].duplicated().any():
-            duplicates = sorted(
-                combined_experiments.loc[
-                    combined_experiments["labcode"].duplicated(keep=False), "labcode"
-                ]
-                .unique()
-                .tolist()
-            )
-            raise ValueError(
-                "Labcodes must remain unique when appending experiments; "
-                f"duplicates: {duplicates}."
-            )
+        combined_experiments = self.surrogate.validate_pairwise_experiments(
+            combined_experiments
+        )
 
-        new_preferences = self._validate_preferences(preferences, combined_experiments)
+        new_preferences = self.surrogate.validate_preferences(
+            preferences, combined_experiments
+        )
         if replace or self.preferences is None:
             combined_preferences = new_preferences.reset_index(drop=True)
         else:
             combined_preferences = pd.concat(
                 [self.preferences, new_preferences], ignore_index=True
             )
-        combined_preferences = self._validate_preferences(
+        combined_preferences = self.surrogate.validate_preferences(
             combined_preferences, combined_experiments
         )
 
