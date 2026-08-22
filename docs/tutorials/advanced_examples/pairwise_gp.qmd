@@ -198,13 +198,12 @@ The `preferences` DataFrame must have exactly these three columns:
 |---|---|
 | `labcode_A` | first design in the comparison (must appear in `experiments`) |
 | `labcode_B` | second design in the comparison (must appear in `experiments`) |
-| `preference` | sign marks the winner: `> 0` → A preferred, `< 0` → B preferred |
+| `preference` | `1` → A preferred, `-1` → B preferred, `0` → tie |
 
-Only the **sign** of `preference` is used — its magnitude is currently ignored.
-A `preference` of exactly `0` denotes a tie; tied rows are dropped with a
+The value must be exactly `-1`, `0`, or `1`. Tied rows are dropped with a
 warning. Because the slot (A vs. B) is just bookkeeping, swapping `labcode_A`
-with `labcode_B` and flipping the sign of `preference` describes the very same
-comparison and yields the same fit.
+with `labcode_B` and flipping `preference` describes the very same comparison
+and yields the same fit.
 
 ## Proposing the next comparison with qEUBO
 
