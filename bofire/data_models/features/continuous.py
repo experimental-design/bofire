@@ -30,36 +30,37 @@ class ContinuousInput(NumericalInput):
             ),
         )
 
-    Attributes:
-        bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.
-        stepsize (PositiveFloat, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
-        local_relative_bounds (Tuple[float, float], optional): A tuple that stores the lower and upper bounds relative to a reference value.
-            Defaults to None.
-        allow_zero (bool): A boolean indicating if the input feature can take inactive values.
-            Useful for features that take values between `bounds`, but can also take a value of 0.
-            One may choose to use a conditional kernel for this, if taking a value of 0
-            represents a distinct behaviour from non-zero values.
-        descriptors (Descriptors, optional): Descriptor data for the single component —
-            numeric columns holding one value each, and/or a one-element SMILES structure.
-            Consumed by N-arity engineered features, not by this feature's own encoding.
-            Defaults to None.
-        unit (str, optional, inherited from `NumericalInput`): The unit of the feature.
-            Defaults to None.
-        key (str, inherited from `Feature`): The unique name of the feature.
-        context (str, optional, inherited from `Feature`): Free-text context for the
-            feature. Defaults to None.
-
+    Examples:
+        >>> ContinuousInput(key="temperature", bounds=(20, 80))
     """
 
     type: Literal["ContinuousInput"] = "ContinuousInput"
     order_id: ClassVar[int] = 1
 
-    bounds: Bounds
+    bounds: Bounds = Field(
+        description="Lower and upper bound of the feature. Unbounded and partially "
+        "bounded features are not supported.",
+    )
     local_relative_bounds: Optional[
         Annotated[List[PositiveFloat], Field(min_length=2, max_length=2)]
-    ] = None
-    stepsize: Optional[PositiveFloat] = None
-    allow_zero: bool = False
+    ] = Field(
+        default=None,
+        description="How far below and above a reference value a candidate may move, "
+        "used by strategies that restrict each step to a local search region. If not "
+        "provided, the full `bounds` are available at every step.",
+    )
+    stepsize: Optional[PositiveFloat] = Field(
+        default=None,
+        description="Spacing of the allowed values between the bounds. If not "
+        "provided, the feature is continuous.",
+    )
+    allow_zero: bool = Field(
+        default=False,
+        description="Whether the feature may also take the value zero, in addition to "
+        "values within `bounds`, making it semi-continuous. Use this for an ingredient "
+        "that can be left out entirely, where being absent is a different state from "
+        "being present in a small amount.",
+    )
 
     @property
     def lower_bound(self) -> float:
@@ -314,19 +315,24 @@ class ContinuousInput(NumericalInput):
 
 
 class ContinuousOutput(Output):
-    """The base class for a continuous output feature
+    """A numerical quantity measured for each candidate.
 
-    Attributes:
-        objective (objective, optional): objective of the feature indicating in which direction it should be optimized. Defaults to `MaximizeObjective`.
-
+    Examples:
+        >>> ContinuousOutput(key="yield", objective=MaximizeObjective())
     """
 
     type: Literal["ContinuousOutput"] = "ContinuousOutput"
     order_id: ClassVar[int] = 9
-    unit: Optional[str] = None
+    unit: Optional[str] = Field(
+        default=None,
+        description="Unit the output is measured in, for example 'g/l'. Recorded for "
+        "documentation; it is not used in any computation.",
+    )
 
     objective: Optional[AnyObjective] = Field(
         default_factory=lambda: MaximizeObjective(w=1.0),
+        description="How this output should be optimized. Defaults to maximization. "
+        "Set to null for an output that is modelled and reported but not optimized.",
     )
 
     def to_description(self) -> str:

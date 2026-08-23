@@ -19,14 +19,20 @@ if TYPE_CHECKING:
 class EngineeredFeature(Feature):
     """Base class for an engineered feature.
 
-    Args:
-        features: The features to be used to compute the engineered feature.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
+    An engineered feature is not proposed or measured. It is computed from other input
+    features and appended as extra columns when the surrogate is built, which lets a
+    model see a derived quantity without it becoming a degree of freedom.
     """
 
-    features: FeatureKeys
-    keep_features: bool = True
+    features: FeatureKeys = Field(
+        description="Keys of the input features this feature is computed from.",
+    )
+    keep_features: bool = Field(
+        default=True,
+        description="Whether the source features are also passed to the surrogate. "
+        "Set to false to replace them with the engineered feature rather than "
+        "supplying both.",
+    )
 
     def validate_features(self, inputs: "Inputs"):
         missing_features = [
@@ -55,10 +61,8 @@ class EngineeredFeature(Feature):
 class SumFeature(EngineeredFeature):
     """Sum feature, which computes the sum over the specified features.
 
-    Args:
-        features: The features to be used to compute the sum.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
+    Appends one column holding the total, for example the overall amount of a set of
+    ingredients.
     """
 
     type: Literal["SumFeature"] = "SumFeature"
@@ -71,10 +75,7 @@ class SumFeature(EngineeredFeature):
 class MeanFeature(EngineeredFeature):
     """Mean feature, which computes the mean over the specified features.
 
-    Args:
-        features: The features to be used to compute the mean.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
+    Appends one column holding the average of the source features.
     """
 
     type: Literal["MeanFeature"] = "MeanFeature"
@@ -92,16 +93,19 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
     The descriptor columns are declared by the :class:`DescriptorSpec` mixin
     (``columns`` for static columns and/or ``generators`` for molecular generators).
 
-    Args:
-        features: The component features to blend.
-        columns / generators / filter_descriptors: see :class:`DescriptorSpec`.
-        normalize: If True, divide by the sum of amounts (weighted mean).
-        keep_features: Whether to keep the original features in surrogate creation.
+    This is how a mixture gets described by the properties of what is in it rather than
+    by the amounts alone: each component contributes its descriptor row in proportion to
+    how much of it is present.
     """
 
     type: Literal["WeightedSumFeature"] = "WeightedSumFeature"
     order_id: ClassVar[int] = 2
-    normalize: bool = False
+    normalize: bool = Field(
+        default=False,
+        description="Whether to divide by the total amount, giving a weighted mean "
+        "instead of a weighted sum. Use this when the composition matters but the "
+        "overall scale does not.",
+    )
 
     def component_table(self, features: List["ContinuousInput"]) -> pd.DataFrame:
         """Descriptor table with one row per component feature (weighted-sum scope).
@@ -150,19 +154,18 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
 
 
 class ProductFeature(EngineeredFeature):
-    """Product feature, which compute the sum over the specified features.
+    """Product feature, which computes the product over the specified features.
 
-    Args:
-        features: The features to be used to compute the product.
-            It is allowed to state a feature more than once to for example
-            an quadratic term.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
+    Appends one column holding the product, which is how an interaction between inputs
+    is made available to a model that would otherwise only see them separately.
     """
 
     type: Literal["ProductFeature"] = "ProductFeature"
     order_id: ClassVar[int] = 4
-    features: Annotated[List[str], Field(min_length=2)]
+    features: Annotated[List[str], Field(min_length=2)] = Field(
+        description="Keys of the input features to multiply. A key may be repeated to "
+        "raise that feature to a power, so ['x', 'x'] gives a quadratic term.",
+    )
 
     def get_names(self, inputs: "Inputs") -> List[str]:
         return [self.key]
@@ -172,33 +175,62 @@ class InterpolateFeature(EngineeredFeature):
     """Interpolation feature, which performs piecewise linear interpolation
     over specified x and y coordinate features.
 
-    Args:
-        x_keys: Feature keys used as x-coordinates for interpolation.
-        y_keys: Feature keys used as y-coordinates for interpolation.
-        interpolation_range: (lower, upper) bounds for the interpolation x-grid.
-        n_interpolation_points: Number of evenly spaced points in the interpolation grid.
-        prepend_x: Extra x-values to prepend before the feature x-values.
-        append_x: Extra x-values to append after the feature x-values.
-        prepend_y: Extra y-values to prepend before the feature y-values.
-        append_y: Extra y-values to append after the feature y-values.
-        normalize_y: Divisor for y-values before interpolation.
-        normalize_x: Whether to normalize x-values to [0, 1] before interpolation.
+    The optimized inputs are the coordinates of a curve; this feature evaluates that
+    curve on a fixed grid and appends one column per grid point. That gives the model a
+    consistent representation of the curve even though the coordinates move, which is
+    how profiles such as a temperature ramp are optimized.
     """
 
     type: Literal["InterpolateFeature"] = "InterpolateFeature"
     order_id: ClassVar[int] = 5
 
-    x_keys: List[str]
-    y_keys: List[str]
-    interpolation_range: Bounds
-    n_interpolation_points: PositiveInt
+    x_keys: List[str] = Field(
+        description="Keys of the input features holding the x-coordinates of the "
+        "curve. Must not overlap `y_keys`, and together with them must cover exactly "
+        "`features`.",
+    )
+    y_keys: List[str] = Field(
+        description="Keys of the input features holding the y-coordinates of the "
+        "curve, paired positionally with the x-coordinates.",
+    )
+    interpolation_range: Bounds = Field(
+        description="Lower and upper end of the grid the curve is evaluated on. Must "
+        "be [0, 1] when `normalize_x` is enabled.",
+    )
+    n_interpolation_points: PositiveInt = Field(
+        description="Number of evenly spaced grid points, and therefore the number of "
+        "columns this feature appends.",
+    )
 
-    prepend_x: List[float] = Field(default_factory=list)
-    append_x: List[float] = Field(default_factory=list)
-    prepend_y: List[float] = Field(default_factory=list)
-    append_y: List[float] = Field(default_factory=list)
-    normalize_y: PositiveFloat = 1.0
-    normalize_x: bool = False
+    prepend_x: List[float] = Field(
+        default_factory=list,
+        description="Fixed x-coordinates placed before those taken from `x_keys`, for "
+        "anchoring the curve at a known starting point that is not optimized.",
+    )
+    append_x: List[float] = Field(
+        default_factory=list,
+        description="Fixed x-coordinates placed after those taken from `x_keys`.",
+    )
+    prepend_y: List[float] = Field(
+        default_factory=list,
+        description="Fixed y-coordinates placed before those taken from `y_keys`. The "
+        "total number of x- and y-coordinates must match.",
+    )
+    append_y: List[float] = Field(
+        default_factory=list,
+        description="Fixed y-coordinates placed after those taken from `y_keys`.",
+    )
+    normalize_y: PositiveFloat = Field(
+        default=1.0,
+        description="Divisor applied to the y-coordinates before interpolation, for "
+        "bringing the curve onto a comparable scale.",
+    )
+    normalize_x: bool = Field(
+        default=False,
+        description="Whether to rescale the x-coordinates onto [0, 1] before "
+        "interpolating, which makes the curve's shape independent of its extent. "
+        "Requires `interpolation_range` to be [0, 1].",
+    )
 
     @model_validator(mode="after")
     def validate_keys(self) -> "InterpolateFeature":
@@ -229,18 +261,15 @@ class CloneFeature(EngineeredFeature):
 
     This is useful if you want to have features undergoing different scalers
     before entering different kernels.
-
-    Args:
-        features: The features to be used to compute the product.
-            It is allowed to state a feature more than once to for example
-            an quadratic term.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
     """
 
     type: Literal["CloneFeature"] = "CloneFeature"
     order_id: ClassVar[int] = 5
-    features: OneFeatureKeys
+    features: OneFeatureKeys = Field(
+        description="Keys of the input features to copy. Each appears once; the copy "
+        "gets its own column so it can be scaled or fed to a different kernel than the "
+        "original.",
+    )
 
     def get_names(self, inputs: "Inputs") -> List[str]:
         return [get_encoded_name(self.key, key) for key in self.features]

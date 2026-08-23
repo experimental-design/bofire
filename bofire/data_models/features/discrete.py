@@ -18,24 +18,24 @@ class DiscreteInput(NumericalInput):
     ``structure`` column hold exactly one value (a restricted amount of a substance
     still describes one substance).
 
-    Attributes:
-        key(str): key of the feature.
-        values(List[float]): the discretized allowed values during the optimization.
-        descriptors (Descriptors, optional): Descriptor data for the single component —
-            numeric columns holding one value each, and/or a one-element SMILES structure.
-            Defaults to None.
-        unit (str, optional, inherited from `NumericalInput`): The unit of the feature.
-            Defaults to None.
-        context (str, optional, inherited from `Feature`): Free-text context for the
-            feature. Defaults to None.
-
+    Examples:
+        >>> DiscreteInput(key="n_layers", values=[1.0, 2.0, 4.0, 8.0])
     """
 
     type: Literal["DiscreteInput"] = "DiscreteInput"
     order_id: ClassVar[int] = 3
 
-    values: DiscreteVals
-    rtol: float = 1e-7
+    values: DiscreteVals = Field(
+        description="The values the feature is allowed to take. They are ordinal, so "
+        "their numeric order is meaningful; use a `CategoricalInput` for unordered "
+        "choices.",
+    )
+    rtol: float = Field(
+        default=1e-7,
+        description="Relative tolerance used when deciding whether a provided value "
+        "matches one of `values`, so that floating point representations of the same "
+        "number are accepted.",
+    )
 
     def _description_prefix(self) -> str:
         """Leading description string identifying this feature kind."""

@@ -1,7 +1,7 @@
 from typing import Any, ClassVar, Literal
 
 import numpy as np
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
@@ -34,8 +34,19 @@ class CategoricalTaskInput(TaskInput, CategoricalInput):
 
     order_id: ClassVar[int] = 8
     type: Literal["CategoricalTaskInput"] = "CategoricalTaskInput"
-    descriptors: None = None
-    fidelities: list[int] = []
+    descriptors: None = Field(
+        default=None,
+        description="Always null. A task input carries no descriptor data: the "
+        "relationship between tasks is learned as the inter-task covariance of the "
+        "surrogate, not read off descriptor columns.",
+    )
+    fidelities: list[int] = Field(
+        default=[],
+        description="Fidelity level of each task, one entry per category in the same "
+        "order, where 0 is the target fidelity and larger values are cheaper "
+        "approximations. Must start at 0 and increase in steps of one. Defaults to "
+        "every task being at fidelity 0.",
+    )
 
     @model_validator(mode="after")
     def validate_fidelities(self):
@@ -60,4 +71,9 @@ class ContinuousTaskInput(TaskInput, ContinuousInput):
 
     order_id: ClassVar[int] = 11
     type: Literal["ContinuousTaskInput"] = "ContinuousTaskInput"  # type: ignore
-    descriptors: None = None
+    descriptors: None = Field(
+        default=None,
+        description="Always null. A task input carries no descriptor data: the "
+        "relationship between fidelities is learned by the surrogate, not read off "
+        "descriptor columns.",
+    )

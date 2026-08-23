@@ -77,13 +77,18 @@ class Descriptors(BaseModel):
             descriptors=Descriptors(columns={"logP": [-0.3]}, structure=["CCO"]),
         )
 
-    Attributes:
-        columns: Numeric property columns, each with one value per level.
-        structure: Optional structure identifiers (SMILES), one per level.
     """
 
-    columns: Dict[str, List[float]] = Field(default_factory=dict)
-    structure: Optional[List[str]] = None
+    columns: Dict[str, List[float]] = Field(
+        default_factory=dict,
+        description="Numeric property columns keyed by name, each holding one value "
+        "per level. Every column must cover the same number of levels.",
+    )
+    structure: Optional[List[str]] = Field(
+        default=None,
+        description="Structure identifiers as SMILES, one per level. Descriptor "
+        "generators on the surrogate side turn these into further columns.",
+    )
 
     @field_validator("structure")
     @classmethod
