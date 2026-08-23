@@ -228,6 +228,7 @@ website:
             - docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.qmd
             - docs/tutorials/basic_examples/Unknown_Constraint_Classification.qmd
             - docs/tutorials/basic_examples/index_kernel.qmd
+            - docs/tutorials/basic_examples/pareto_front_estimation.qmd
         - section: "Advanced Examples"
           contents:
             - docs/tutorials/advanced_examples/index.qmd
@@ -250,7 +251,6 @@ website:
             - docs/tutorials/benchmarks/002-DTLZ2.qmd
             - docs/tutorials/benchmarks/003-Hartmann_with_nchoosek.qmd
             - docs/tutorials/benchmarks/004-30dimBranin.qmd
-            - docs/tutorials/benchmarks/005-Himmelblau_with_outliers.qmd
             - docs/tutorials/benchmarks/006-Bayesian_optimization_over_molecules.qmd
             - docs/tutorials/benchmarks/007-LSRBO.qmd
             - docs/tutorials/benchmarks/008-ZDT1.qmd

@@ -9,8 +9,10 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 ### Added
 - Any input feature can carry a `Descriptors` block — numeric `columns` and/or a SMILES `structure` column — via `descriptors=Descriptors(...)`. This includes `DiscreteInput`, which had no descriptor support before, and allows a single categorical to carry handcrafted columns *and* structures at once, which the previous class hierarchy could not express.
 - Categorical encodings are first-class data models (`OneHotEncoding`, `OrdinalEncoding`, `DescriptorEncoding`), chosen per surrogate via `categorical_encodings` and extensible like kernels or priors.
+- Data model fields are documented in `Field(description=...)`, so the prose now reaches `model_json_schema()` where users and LLM agents configuring BoFire can read it. `tests/bofire/data_models/test_documentation.py` enforces a description on every field and a docstring on every class, with an allowlist of the models that predate the convention that may only shrink. The `constraints` package is migrated; the remaining packages follow.
 
 ### Changed
+- **Breaking**: the outlier-detection layer is **removed**, with no compatibility shim. Gone are the packages `bofire.outlier_detection` and `bofire.data_models.outlier_detection` (`OutlierDetection`, `IterativeTrimming`, `OutlierDetections`) and the `outlier_detection_specs`, `min_experiments_before_outlier_check` and `frequency_check` fields on `BotorchStrategy` — serialized strategies carrying those fields no longer load. Use `RobustSingleTaskGPSurrogate`, which learns a data-point specific noise level and so handles outliers inside the BO loop instead of trimming them in a pre-fit pass.
 - **Breaking**: descriptor data now lives on the feature and the encoding choice on the surrogate. The classes and the enum that fused those two concerns are **removed**, with no compatibility shim — old serialized domains containing them no longer load. Migrate as follows (note that `values` was row-per-category while `columns` is column-wise, so the table is transposed):
 
   | removed | replacement |

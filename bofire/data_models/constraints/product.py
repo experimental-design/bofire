@@ -16,20 +16,19 @@ from bofire.data_models.features.api import ContinuousInput
 class ProductConstraint(IntrapointConstraint):
     """Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en`.
 
-    Attributes:
-        type (str): The type of the constraint.
-        features (FeatureKeys): The keys of the features used in the constraint.
-        exponents (List[float]): The exponents corresponding to each feature.
-        rhs (float): The right-hand side value of the constraint.
-        sign (Literal[1, -1], optional): The sign of the left hand side of the constraint.
-            Defaults to 1.
-
+    Abstract base class for the equality and inequality variants.
     """
 
     type: Any
-    exponents: Annotated[List[float], Field(min_length=2)]
-    rhs: float
-    sign: Literal[1, -1] = 1
+    exponents: Annotated[List[float], Field(min_length=2)] = Field(
+        description="Exponents of the product, one per entry in `features` and in the "
+        "same order.",
+    )
+    rhs: float = Field(description="Right-hand side of the constraint.")
+    sign: Literal[1, -1] = Field(
+        default=1,
+        description="Sign of the left-hand side of the constraint.",
+    )
 
     @model_validator(mode="after")
     def validate_list_lengths(self) -> "ProductConstraint":
@@ -90,14 +89,13 @@ class ProductConstraint(IntrapointConstraint):
 class ProductEqualityConstraint(ProductConstraint, EqualityConstraint):
     """Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en == rhs`.
 
-    Attributes:
-        type (str): The type of the constraint.
-        features (FeatureKeys): The keys of the features used in the constraint.
-        exponents (List[float]): The exponents corresponding to each feature.
-        rhs (float): The right-hand side value of the constraint.
-        sign (Literal[1, -1], optional): The sign of the left hand side of the constraint.
-            Defaults to 1.
+    Use for exact multiplicative relationships between features. For a bound rather
+    than an exact relationship, use `ProductInequalityConstraint`.
 
+    Examples:
+        >>> ProductEqualityConstraint(
+        ...     features=["x1", "x2"], exponents=[2, 3], rhs=1.0, sign=1
+        ... )
     """
 
     type: Literal["ProductEqualityConstraint"] = "ProductEqualityConstraint"
@@ -122,14 +120,13 @@ class ProductEqualityConstraint(ProductConstraint, EqualityConstraint):
 class ProductInequalityConstraint(ProductConstraint, InequalityConstraint):
     """Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en <= rhs`.
 
-    Attributes:
-        type (str): The type of the constraint.
-        features (FeatureKeys): The keys of the features used in the constraint.
-        exponents (List[float]): The exponents corresponding to each feature.
-        rhs (float): The right-hand side value of the constraint.
-        sign (Literal[1, -1], optional): The sign of the left hand side of the constraint.
-            Defaults to 1.
+    Use for multiplicative bounds between features. For an exact relationship, use
+    `ProductEqualityConstraint`.
 
+    Examples:
+        >>> ProductInequalityConstraint(
+        ...     features=["x1", "x2"], exponents=[2, 3], rhs=1.0, sign=1
+        ... )
     """
 
     type: Literal["ProductInequalityConstraint"] = "ProductInequalityConstraint"

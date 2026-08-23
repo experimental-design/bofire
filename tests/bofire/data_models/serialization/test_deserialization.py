@@ -11,7 +11,6 @@ from bofire.data_models.api import (
     AnyLLMProvider,
     AnyLocalSearchConfig,
     AnyObjective,
-    AnyOutlierDetection,
     AnyPrior,
     AnyPriorConstraint,
     AnyStrategy,
@@ -99,12 +98,6 @@ def test_strategy_should_be_deserializable(strategy_spec: Spec):
 def test_condition_should_be_deserializable(condition_spec: Spec):
     obj = condition_spec.obj()
     deserialized = TypeAdapter(AnyCondition).validate_python(obj.model_dump())
-    assert obj == deserialized
-
-
-def test_outlier_detection_should_be_deserializable(outlier_detection_spec: Spec):
-    obj = outlier_detection_spec.obj()
-    deserialized = TypeAdapter(AnyOutlierDetection).validate_python(obj.model_dump())
     assert obj == deserialized
 
 

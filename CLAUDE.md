@@ -200,9 +200,29 @@ def feature_spec(request) -> Spec:
     return request.param
 ```
 
+### Documentation Ratchet
+
+`tests/bofire/data_models/test_documentation.py` requires every field declared on a data
+model class to carry `Field(description=...)`, and every class to carry a docstring. It
+enumerates classes by walking `bofire.data_models` with `pkgutil`, so a new package is
+covered the moment it exists.
+
+Two things about how it is written matter if you touch it:
+
+- It checks **own** fields (those in `cls.__annotations__`), not all of
+  `cls.model_fields`. Inherited fields are documented on the class that declares them;
+  checking them again would report one undocumented base field once per subclass.
+- The two `UNDOCUMENTED_*` sets record what predates the convention and **may only
+  shrink**. `test_field_allowlist_has_no_stale_entries` fails once an entry is
+  documented but not deleted, so documenting a package and pruning its entries happen in
+  the same commit. Never add to these sets.
+
+The migration is running package by package; `constraints` is done.
+
 ### Checklist: Adding a Field to a Base Data Model Class
 
-1. Add the field to the class (e.g., `Feature`, `Constraint`, `Domain`)
+1. Add the field to the class (e.g., `Feature`, `Constraint`, `Domain`) with
+   `Field(description=...)`
 2. Add `"field_name": default_value` to every `add_valid()` spec for that class and all subclasses
 3. Invalid specs and container specs using `.model_dump()` don't need changes
 4. Run `pytest tests/bofire/data_models` to verify
@@ -218,11 +238,14 @@ Create a new file or add to an existing one in `bofire/data_models/{domain}/`. E
 ```python
 # bofire/data_models/kernels/my_kernel.py
 from typing import Literal
+from pydantic import Field
 from bofire.data_models.kernels.kernel import ContinuousKernel
 
 class MyCustomKernel(ContinuousKernel):
+    """One line on what this kernel is, and when to pick it over its siblings."""
+
     type: Literal["MyCustomKernel"] = "MyCustomKernel"
-    my_param: float
+    my_param: float = Field(description="What this parameter controls.")
 ```
 
 #### 2. Register in the type union
@@ -312,6 +335,25 @@ The spec is automatically picked up by `tests/bofire/conftest.py` which imports 
   callers may rely on. Design history, migration rationale ("rather than stored",
   "this is why X asserts") and enumerated call sites belong in the commit message and
   CHANGELOG — in a docstring they go stale and crowd out the contract.
+- **Data model field prose goes in `Field(description=...)`, never an `Attributes:`
+  block.** Only the former reaches `model_json_schema()`, which is the API surface
+  agents read. The class docstring says what the model does, how it behaves and what a
+  sensible value looks like — not how it relates to the rest of the codebase. Compare
+  with a sibling only where the two are genuinely easy to confuse and the names do not
+  reveal the difference (`TargetObjective` vs `CloseToTargetObjective`); a pointer like
+  "use instead of X" that only restates the class name is noise, and goes stale as
+  siblings come and go. Skip notes that matter only to someone reading the source, such
+  as which class something inherits from. An `Examples:` block is encouraged on concrete
+  types but is optional and not executed; keep it to the fields a caller actually needs
+  to set, leaving the rest at their defaults. The `type` discriminator needs no
+  description. `tests/bofire/data_models/test_documentation.py` enforces this — see
+  [Documentation Ratchet](#documentation-ratchet).
+- **Declare a shared field once, on the class that owns it.** Redeclaring a field in a
+  subclass silently drops the inherited `description`, so a field common to every
+  subclass belongs on the base (`Objective.w`, `PriorConstraint.initial_value`). Only
+  reinterpretations that the base description cannot express — such as
+  `MovingMaximizeSigmoidObjective` treating `tp` as relative — belong in the subclass
+  docstring.
 
 ## Documentation
 

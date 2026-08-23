@@ -2,7 +2,6 @@ from typing import List, cast
 
 import numpy as np
 import pandas as pd
-from pydantic import PositiveInt
 from typing_extensions import Self
 
 from bofire.data_models.acquisition_functions.api import (
@@ -10,7 +9,6 @@ from bofire.data_models.acquisition_functions.api import (
 )
 from bofire.data_models.api import Domain
 from bofire.data_models.features.api import CategoricalTaskInput
-from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.convergence_criteria.api import (
     AnyConvergenceCriterion,
 )
@@ -137,9 +135,6 @@ class MultiFidelityVarianceBasedStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
         frequency_hyperopt: int | None = None,
         folds: int | None = None,
         seed: int | None = None,
@@ -166,9 +161,6 @@ class MultiFidelityVarianceBasedStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The acquisition optimizer to use.
             surrogate_specs: The specifications for the surrogate model.
-            outlier_detection_specs: The specifications for the outlier detection.
-            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
-            frequency_check: The frequency of outlier checks.
             frequency_hyperopt: The frequency of hyperparameter optimization.
             folds: The number of folds for cross-validation.
             seed: The random seed to use.

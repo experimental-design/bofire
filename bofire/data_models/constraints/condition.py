@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Callable, List, Literal, Union
 
 import pandas as pd
 from numpy.typing import ArrayLike
+from pydantic import Field
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.features.categorical import CategoricalInput
@@ -55,14 +56,19 @@ class ThresholdCondition(Condition):
     checked if the feature value is above or below a certain threshold depending on the
     operator. If the expression evaluated to true, the condition is fulfilled.
 
-    Attributes:
-        threshold: Threshold value.
-        operator: Operator to use for comparison. Can be one of "<", "<=", ">", ">=".
+    Use this for numerical features; for membership in a set of values use
+    `SelectionCondition`.
+
+    Examples:
+        >>> ThresholdCondition(threshold=50.0, operator=">")
     """
 
     type: Literal["ThresholdCondition"] = "ThresholdCondition"
-    threshold: float
-    operator: Literal["<", "<=", ">", ">="]
+    threshold: float = Field(description="Value to compare the feature value against.")
+    operator: Literal["<", "<=", ">", ">="] = Field(
+        description="Comparison operator applied as `feature_value <operator> "
+        "threshold`.",
+    )
 
     def __call__(self, values: pd.Series) -> pd.Series:
         def evaluate(x: ArrayLike):
@@ -85,14 +91,19 @@ class SelectionCondition(Condition):
     the condition is fulfilled. It can be only applied to CategoricalInput and DiscreteInput
     features.
 
-    Attributes:
-        selection: In case of CategoricalInput, the selection of categories to be included.
-            In case of DiscreteInput, the selection of values to be included.
+    Use this for categorical features or a discrete set of values; for a numerical
+    comparison use `ThresholdCondition`.
+
+    Examples:
+        >>> SelectionCondition(selection=["water", "ethanol"])
     """
 
     type: Literal["SelectionCondition"] = "SelectionCondition"
 
-    selection: List[Union[str, float, int]]
+    selection: List[Union[str, float, int]] = Field(
+        description="Values that fulfill the condition. For a CategoricalInput these "
+        "are categories, for a DiscreteInput they are values.",
+    )
 
     def __call__(self, values: pd.Series) -> pd.Series:
         return values.isin(self.selection)
