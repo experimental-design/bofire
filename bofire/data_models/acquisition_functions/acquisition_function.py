@@ -100,6 +100,8 @@ class MultiObjectiveAcquisitionFunction(AcquisitionFunction):
 
 
 class PreferenceAcquisitionFunction(AcquisitionFunction):
+    """Base class for acquisitions that select alternatives for preference queries."""
+
     type: Any
 
 
@@ -107,7 +109,11 @@ class qEUBO(PreferenceAcquisitionFunction):
     """MC-based expected utility of the best option."""
 
     type: Literal["qEUBO"] = "qEUBO"
-    n_mc_samples: IntPowerOfTwo = 512
+    n_mc_samples: IntPowerOfTwo = Field(
+        default=512,
+        description="Number of Monte Carlo samples used to approximate the expected "
+        "utility of the best option.",
+    )
 
 
 class qNEI(

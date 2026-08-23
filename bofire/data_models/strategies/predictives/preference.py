@@ -19,9 +19,22 @@ class PreferenceStrategy(PredictiveStrategy):
     """Preferential Bayesian optimization with a pairwise GP."""
 
     type: Literal["PreferenceStrategy"] = "PreferenceStrategy"
-    acquisition_function: qEUBO | qLogNEI = Field(default_factory=qEUBO)
-    acquisition_optimizer: AnyAcqfOptimizer = Field(default_factory=BotorchOptimizer)
-    surrogate_spec: PairwiseGPSurrogate | None = None
+    acquisition_function: qEUBO | qLogNEI = Field(
+        default_factory=qEUBO,
+        description="Acquisition function used to propose alternatives. qEUBO "
+        "proposes a pair for a preference query, whereas qLogNEI proposes a single "
+        "candidate from the latent-utility posterior.",
+    )
+    acquisition_optimizer: AnyAcqfOptimizer = Field(
+        default_factory=BotorchOptimizer,
+        description="Optimizer used to maximize the acquisition function over the "
+        "input domain.",
+    )
+    surrogate_spec: PairwiseGPSurrogate | None = Field(
+        default=None,
+        description="Pairwise GP specification for latent utility. When omitted, a "
+        "default specification is constructed from the domain.",
+    )
 
     @model_validator(mode="after")
     def validate_domain_and_surrogate(self):
