@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>data_models_functionals – BoFire</title>
+<title>convergence_criteria – BoFire</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -65,8 +65,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../">
-<link href="../../docs/userguides/custom_types.html" rel="next">
-<link href="../../docs/userguides/surrogates.html" rel="prev">
+<link href="../../docs/userguides/surrogates.html" rel="next">
+<link href="../../docs/userguides/strategies.html" rel="prev">
 <script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
 <script src="../../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
@@ -384,7 +384,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../docs/userguides/data_models_functionals.html">Data Models vs.&nbsp;Functional Components</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../docs/userguides/convergence_criteria.html">Convergence Criteria</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -414,7 +414,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../docs/userguides/convergence_criteria.html" class="sidebar-item-text sidebar-link">
+  <a href="../../docs/userguides/convergence_criteria.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Convergence Criteria</span></a>
   </div>
 </li>
@@ -426,7 +426,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../../docs/userguides/data_models_functionals.html" class="sidebar-item-text sidebar-link active">
+  <a href="../../docs/userguides/data_models_functionals.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Data Models vs.&nbsp;Functional Components</span></a>
   </div>
 </li>
@@ -441,82 +441,136 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-        
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#convergence-criteria" id="toc-convergence-criteria" class="nav-link active" data-scroll-target="#convergence-criteria">Convergence Criteria</a>
+  <ul class="collapse">
+  <li><a href="#available-criteria" id="toc-available-criteria" class="nav-link" data-scroll-target="#available-criteria">Available criteria</a></li>
+  <li><a href="#example-stopping-sobo-with-the-ucb-lcb-regret-bound" id="toc-example-stopping-sobo-with-the-ucb-lcb-regret-bound" class="nav-link" data-scroll-target="#example-stopping-sobo-with-the-ucb-lcb-regret-bound">Example: stopping SOBO with the UCB-LCB regret bound</a></li>
+  <li><a href="#use-within-a-stepwisestrategy" id="toc-use-within-a-stepwisestrategy" class="nav-link" data-scroll-target="#use-within-a-stepwisestrategy">Use within a StepwiseStrategy</a></li>
+  <li><a href="#custom-criteria" id="toc-custom-criteria" class="nav-link" data-scroll-target="#custom-criteria">Custom criteria</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/userguides/convergence_criteria.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
-
-
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Data Models vs.&nbsp;Functional Components</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
-</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><h1 class="title display-7"></h1></header><div class="quarto-title-block"><div class="quarto-title-tools-only"><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
 
 
 
-<div class="quarto-title-meta">
-
-    
-  
-    
-  </div>
-  
 
 
-</header>
-
-
-<p>Data models in BoFire hold static data of an optimization problem. These are input and output features as well as constraints making up the domain. They further include possible optimization objectives, acquisition functions, and kernels.</p>
-<p>All data models in <code>bofire.data_models</code>, are specified as pydantic models and inherit from <code>bofire.data_models.base.BaseModel</code>. These data models can be (de)serialized via <code>.dict()</code> and <code>.model_dump_json()</code> (provided by pydantic). A json schema of each data model can be obtained using <code>.schema()</code>.</p>
-<p>For surrogates and strategies, all functional parts are located in <code>bofire.surrogates</code> and <code>bofire.strategies</code>. These functionalities include the <code>ask</code> and <code>tell</code> as well as <code>fit</code> and <code>predict</code> methods. All class attributes (used by these method) are also removed from the data models. Each functional entity is initialized using the corresponding data model. As an example, consider the following data model of a <code>RandomStrategy</code>:</p>
-<div id="a8ffa95a" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.domain.api <span class="im">as</span> dm_domain</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.features.api <span class="im">as</span> dm_features</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.strategies.api <span class="im">as</span> dm_strategies</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>in1 <span class="op">=</span> dm_features.ContinuousInput(key<span class="op">=</span><span class="st">"in1"</span>, bounds<span class="op">=</span>[<span class="fl">0.0</span>,<span class="fl">1.0</span>])</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>in2 <span class="op">=</span> dm_features.ContinuousInput(key<span class="op">=</span><span class="st">"in2"</span>, bounds<span class="op">=</span>[<span class="fl">0.0</span>,<span class="fl">2.0</span>])</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>in3 <span class="op">=</span> dm_features.ContinuousInput(key<span class="op">=</span><span class="st">"in3"</span>, bounds<span class="op">=</span>[<span class="fl">0.0</span>,<span class="fl">3.0</span>])</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>out1 <span class="op">=</span> dm_features.ContinuousOutput(key<span class="op">=</span><span class="st">"out1"</span>)</span>
+<section id="convergence-criteria" class="level1">
+<h1>Convergence Criteria</h1>
+<p>One of the hardest questions in Bayesian optimization is how to determine whether an optimization has converged, or whether further experiments can still be expected to yield meaningful improvement. The basic approach is budget-based stopping, offered by the <code>StepwiseStrategy</code> conditions (e.g.&nbsp;<code>NumberOfExperimentsCondition</code>). Convergence criteria complement this with more robust, model-informed stopping decisions, listed in the next section.</p>
+<p>A convergence criterion is configured on any predictive strategy via its <code>convergence_criterion</code> field and queried through <code>strategy.has_converged()</code>. If no criterion is configured, <code>has_converged()</code> always returns <code>False</code>.</p>
+<section id="available-criteria" class="level2">
+<h2 class="anchored" data-anchor-id="available-criteria">Available criteria</h2>
+<p>Model-free criteria:</p>
+<ul>
+<li><code>ObjectiveImprovementCriterion</code>: converged when the best observed objective has improved by less than <code>min_improvement</code> over the last <code>n_lookback</code> experiments (single-objective).</li>
+<li><code>HypervolumeImprovementCriterion</code>: the multi-objective analogue, based on the dominated hypervolume.</li>
+<li><code>ProposalDeviationCriterion</code>: converged when consecutive proposals stop moving in normalized input space (objective-free, also usable for active learning).</li>
+</ul>
+<p>Model-based criteria for single-objective Bayesian optimization with GP surrogates:</p>
+<ul>
+<li><code>UcbLcbRegretBoundCriterion</code>: converged when the GP-UCB regret bound <code>min UCB(evaluated) - min LCB(domain)</code> drops below a noise-derived threshold (<a href="https://arxiv.org/abs/2104.08166">Makarova et al., 2022</a>).</li>
+<li><code>ExpMinRegretGapCriterion</code>: converged when an upper bound on the change in expected minimum simple regret between consecutive iterations becomes negligible (<a href="https://proceedings.mlr.press/v206/ishibashi23a.html">Ishibashi et al., 2023</a>).</li>
+<li><code>LogEipcCriterion</code>: cost-aware stopping — converged when no candidate’s expected improvement is worth its evaluation cost (<a href="https://arxiv.org/abs/2507.12453">Xie et al., 2025</a>).</li>
+<li><code>ProbabilisticRegretBoundCriterion</code>: converged when a sequential hypothesis test over GP posterior sample paths certifies that the incumbent’s regret exceeds ε only with small probability (<a href="https://arxiv.org/abs/2402.16811">Wilson, 2024</a>).</li>
+</ul>
+<p>Each criterion declares which settings it applies to (<code>is_applicable_to_singleobjective</code>, <code>is_applicable_to_multiobjective</code>, <code>is_applicable_to_objective_free</code>), and strategies validate this at construction time — e.g.&nbsp;a <code>MoboStrategy</code> rejects the single-objective criteria above.</p>
+</section>
+<section id="example-stopping-sobo-with-the-ucb-lcb-regret-bound" class="level2">
+<h2 class="anchored" data-anchor-id="example-stopping-sobo-with-the-ucb-lcb-regret-bound">Example: stopping SOBO with the UCB-LCB regret bound</h2>
+<p>The following example shows single-objective Bayesian optimization on the Himmelblau benchmark until the regret bound certifies that the best evaluated point is within the noise-derived threshold of the best achievable point, or until a maximum budget is exhausted.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> Himmelblau</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.convergence_criteria.api <span class="im">import</span> (</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    UcbLcbRegretBoundCriterion,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> Himmelblau()</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> benchmark.domain</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> dm_domain.Inputs(features<span class="op">=</span>[in1, in2, in3])</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> dm_domain.Outputs(features<span class="op">=</span>[out1])</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>constraints <span class="op">=</span> dm_domain.Constraints()</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> dm_domain.Domain(</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>constraints,</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> dm_strategies.RandomStrategy(domain<span class="op">=</span>domain)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Such a data model can be (de)serialized as follows:</p>
-<div id="abd86df9" class="cell" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> TypeAdapter</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> AnyStrategy</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>serialized <span class="op">=</span> data_model.model_dump_json()</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>data_model_ <span class="op">=</span> TypeAdapter(AnyStrategy).validate_json(serialized)</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> data_model_ <span class="op">==</span> data_model</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>The data model of a strategy contains its hyperparameters. Using this data model of a strategy, we can create an instance of a (functional) strategy:</p>
-<div id="1e8944e8" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.RandomStrategy(data_model<span class="op">=</span>data_model)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>As each strategy data model should be mapped to a specific (functional) strategy, we provide such a mapping:</p>
-<div id="9cc209c9" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> SoboStrategy(</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    convergence_criterion<span class="op">=</span>UcbLcbRegretBoundCriterion(</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>        noise_variance<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        min_experiments<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(strategy_data)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co"># initial design</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(domain.inputs.sample(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">50</span>):</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> strategy.has_converged():</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"Converged."</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    candidates <span class="op">=</span> strategy.ask(<span class="dv">1</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    strategy.tell(benchmark.f(candidates[domain.inputs.get_keys()], return_complete<span class="op">=</span><span class="va">True</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The threshold of the <code>UcbLcbRegretBoundCriterion</code> is <code>threshold_factor * noise_variance</code>, where <code>noise_variance</code> can be</p>
+<ul>
+<li>a positive float (as above): a known or assumed observation noise variance in the units of the objective,</li>
+<li><code>None</code>: the noise variance estimated by the GP is used,</li>
+<li><code>"cv"</code>: the corrected standard deviation of per-fold cross-validation scores of the incumbent is used (requires <code>cv_fold_columns</code>).</li>
+</ul>
+<p>Since checking convergence is inexpensive relative to a real experiment, the pattern above also works for campaigns where the loop is re-run from the accumulated experiments after each round of lab work. In this case all criteria derive their state from the recorded experiments.</p>
+</section>
+<section id="use-within-a-stepwisestrategy" class="level2">
+<h2 class="anchored" data-anchor-id="use-within-a-stepwisestrategy">Use within a StepwiseStrategy</h2>
+<p>Convergence criteria and stepwise conditions divide the work: a condition decides which step of a <code>StepwiseStrategy</code> is active, while a convergence criterion decides whether the step’s predictive strategy itself is done. The <code>StrategyHasConvergedCondition</code> bridges the two — it keeps a step active until the strategy reports convergence. The following runs a random initial design, then SOBO until the criterion fires; once no condition is satisfied, <code>ask</code> raises an error and the campaign is finished:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> (</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    NumberOfExperimentsCondition,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    RandomStrategy,</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    SoboStrategy,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    Step,</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    StepwiseStrategy,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    StrategyHasConvergedCondition,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.convergence_criteria.api <span class="im">import</span> (</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    UcbLcbRegretBoundCriterion,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> StepwiseStrategy(</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    steps<span class="op">=</span>[</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        Step(</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>RandomStrategy(domain<span class="op">=</span>domain),</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>            condition<span class="op">=</span>NumberOfExperimentsCondition(n_experiments<span class="op">=</span><span class="dv">10</span>),</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        Step(</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>SoboStrategy(</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>                domain<span class="op">=</span>domain,</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>                convergence_criterion<span class="op">=</span>UcbLcbRegretBoundCriterion(noise_variance<span class="op">=</span><span class="fl">1.0</span>),</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>            condition<span class="op">=</span>StrategyHasConvergedCondition(),</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="custom-criteria" class="level2">
+<h2 class="anchored" data-anchor-id="custom-criteria">Custom criteria</h2>
+<p>Custom convergence criteria can be registered analogously to other custom types, see <a href="../../docs/userguides/custom_types.html">Registering Custom Types</a>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.convergence_criteria.api <span class="im">as</span> convergence_criteria</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">@convergence_criteria.register</span>(MyCriterion)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> evaluate_my_criterion(criterion, strategy) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    ...</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>The evaluator must be a pure function of the criterion and the strategy’s recorded history, so that a strategy reconstructed by replaying <code>tell</code> reaches the same decision.</p>
 
 
 <!-- -->
 
+</section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -989,78 +1043,135 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../../docs/userguides/surrogates.html" class="pagination-link" aria-label="Surrogate models">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Surrogate models</span>
+      <a href="../../docs/userguides/strategies.html" class="pagination-link" aria-label="Strategies">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text">Strategies</span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../../docs/userguides/custom_types.html" class="pagination-link" aria-label="Registering Custom Types">
-        <span class="nav-page-text">Registering Custom Types</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../../docs/userguides/surrogates.html" class="pagination-link" aria-label="Surrogate models">
+        <span class="nav-page-text">Surrogate models</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># Data Models vs. Functional Components</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>Data models in BoFire hold static data of an optimization problem. These are input and output features as well as constraints making up the domain. They further include possible optimization objectives, acquisition functions, and kernels.</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>All data models in ```bofire.data_models```, are specified as pydantic models and inherit from ```bofire.data_models.base.BaseModel```. These data models can be (de)serialized via ```.dict()``` and ```.model_dump_json()``` (provided by pydantic). A json schema of each data model can be obtained using ```.schema()```.</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>For surrogates and strategies, all functional parts are located in ```bofire.surrogates``` and ```bofire.strategies```. These functionalities include the ```ask``` and ```tell``` as well as ```fit``` and ```predict``` methods. All class attributes (used by these method) are also removed from the data models. Each functional entity is initialized using the corresponding data model. As an example, consider the following data model of a ```RandomStrategy```:</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.domain.api <span class="im">as</span> dm_domain</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.features.api <span class="im">as</span> dm_features</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.strategies.api <span class="im">as</span> dm_strategies</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>in1 <span class="op">=</span> dm_features.ContinuousInput(key<span class="op">=</span><span class="st">"in1"</span>, bounds<span class="op">=</span>[<span class="fl">0.0</span>,<span class="fl">1.0</span>])</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>in2 <span class="op">=</span> dm_features.ContinuousInput(key<span class="op">=</span><span class="st">"in2"</span>, bounds<span class="op">=</span>[<span class="fl">0.0</span>,<span class="fl">2.0</span>])</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>in3 <span class="op">=</span> dm_features.ContinuousInput(key<span class="op">=</span><span class="st">"in3"</span>, bounds<span class="op">=</span>[<span class="fl">0.0</span>,<span class="fl">3.0</span>])</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>out1 <span class="op">=</span> dm_features.ContinuousOutput(key<span class="op">=</span><span class="st">"out1"</span>)</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>inputs <span class="op">=</span> dm_domain.Inputs(features<span class="op">=</span>[in1, in2, in3])</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>outputs <span class="op">=</span> dm_domain.Outputs(features<span class="op">=</span>[out1])</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>constraints <span class="op">=</span> dm_domain.Constraints()</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> dm_domain.Domain(</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>inputs,</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>outputs,</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>constraints,</span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> dm_strategies.RandomStrategy(domain<span class="op">=</span>domain)</span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>Such a data model can be (de)serialized as follows:</span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pydantic <span class="im">import</span> TypeAdapter</span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> AnyStrategy</span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>serialized <span class="op">=</span> data_model.model_dump_json()</span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>data_model_ <span class="op">=</span> TypeAdapter(AnyStrategy).validate_json(serialized)</span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> data_model_ <span class="op">==</span> data_model</span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>The data model of a strategy contains its hyperparameters.</span>
-<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>Using this data model of a strategy, we can create an instance of a (functional) strategy:</span>
-<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
-<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.RandomStrategy(data_model<span class="op">=</span>data_model)</span>
-<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>As each strategy data model should be mapped to a specific (functional) strategy, we provide such a mapping:</span>
-<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model)</span>
-<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-</code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># Convergence Criteria</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>One of the hardest questions in Bayesian optimization is how to determine whether an optimization has converged, or whether further experiments can still be expected to yield meaningful improvement. The basic approach is budget-based stopping, offered by the <span class="in">`StepwiseStrategy`</span> conditions (e.g. <span class="in">`NumberOfExperimentsCondition`</span>). Convergence criteria complement this with more robust, model-informed stopping decisions, listed in the next section.</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>A convergence criterion is configured on any predictive strategy via its <span class="in">`convergence_criterion`</span> field and queried through <span class="in">`strategy.has_converged()`</span>. If no criterion is configured, <span class="in">`has_converged()`</span> always returns <span class="in">`False`</span>.</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">## Available criteria</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>Model-free criteria:</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`ObjectiveImprovementCriterion`</span>: converged when the best observed objective has improved by less than <span class="in">`min_improvement`</span> over the last <span class="in">`n_lookback`</span> experiments (single-objective).</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`HypervolumeImprovementCriterion`</span>: the multi-objective analogue, based on the dominated hypervolume.</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`ProposalDeviationCriterion`</span>: converged when consecutive proposals stop moving in normalized input space (objective-free, also usable for active learning).</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>Model-based criteria for single-objective Bayesian optimization with GP surrogates:</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`UcbLcbRegretBoundCriterion`</span>: converged when the GP-UCB regret bound <span class="in">`min UCB(evaluated) - min LCB(domain)`</span> drops below a noise-derived threshold (<span class="co">[</span><span class="ot">Makarova et al., 2022</span><span class="co">](https://arxiv.org/abs/2104.08166)</span>).</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`ExpMinRegretGapCriterion`</span>: converged when an upper bound on the change in expected minimum simple regret between consecutive iterations becomes negligible (<span class="co">[</span><span class="ot">Ishibashi et al., 2023</span><span class="co">](https://proceedings.mlr.press/v206/ishibashi23a.html)</span>).</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`LogEipcCriterion`</span>: cost-aware stopping — converged when no candidate's expected improvement is worth its evaluation cost (<span class="co">[</span><span class="ot">Xie et al., 2025</span><span class="co">](https://arxiv.org/abs/2507.12453)</span>).</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`ProbabilisticRegretBoundCriterion`</span>: converged when a sequential hypothesis test over GP posterior sample paths certifies that the incumbent's regret exceeds ε only with small probability (<span class="co">[</span><span class="ot">Wilson, 2024</span><span class="co">](https://arxiv.org/abs/2402.16811)</span>).</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>Each criterion declares which settings it applies to (<span class="in">`is_applicable_to_singleobjective`</span>, <span class="in">`is_applicable_to_multiobjective`</span>, <span class="in">`is_applicable_to_objective_free`</span>), and strategies validate this at construction time — e.g. a <span class="in">`MoboStrategy`</span> rejects the single-objective criteria above.</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example: stopping SOBO with the UCB-LCB regret bound</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>The following example shows single-objective Bayesian optimization on the Himmelblau benchmark until the regret bound certifies that the best evaluated point is within the noise-derived threshold of the best achievable point, or until a maximum budget is exhausted.</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> Himmelblau</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.convergence_criteria.api <span class="im">import</span> (</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    UcbLcbRegretBoundCriterion,</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> Himmelblau()</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> benchmark.domain</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> SoboStrategy(</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>    convergence_criterion<span class="op">=</span>UcbLcbRegretBoundCriterion(</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>        noise_variance<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>        min_experiments<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(strategy_data)</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a><span class="co"># initial design</span></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(domain.inputs.sample(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments)</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">50</span>):</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> strategy.has_converged():</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">"Converged."</span>)</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>    candidates <span class="op">=</span> strategy.ask(<span class="dv">1</span>)</span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>    strategy.tell(benchmark.f(candidates[domain.inputs.get_keys()], return_complete<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>The threshold of the <span class="in">`UcbLcbRegretBoundCriterion`</span> is <span class="in">`threshold_factor * noise_variance`</span>, where <span class="in">`noise_variance`</span> can be</span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>a positive float (as above): a known or assumed observation noise variance in the units of the objective,</span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`None`</span>: the noise variance estimated by the GP is used,</span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`"cv"`</span>: the corrected standard deviation of per-fold cross-validation scores of the incumbent is used (requires <span class="in">`cv_fold_columns`</span>).</span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>Since checking convergence is inexpensive relative to a real experiment, the pattern above also works for campaigns where the loop is re-run from the accumulated experiments after each round of lab work. In this case all criteria derive their state from the recorded experiments.</span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a><span class="fu">## Use within a StepwiseStrategy</span></span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>Convergence criteria and stepwise conditions divide the work: a condition decides which step of a <span class="in">`StepwiseStrategy`</span> is active, while a convergence criterion decides whether the step's predictive strategy itself is done. The <span class="in">`StrategyHasConvergedCondition`</span> bridges the two — it keeps a step active until the strategy reports convergence. The following runs a random initial design, then SOBO until the criterion fires; once no condition is satisfied, <span class="in">`ask`</span> raises an error and the campaign is finished:</span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> (</span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>    NumberOfExperimentsCondition,</span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a>    RandomStrategy,</span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>    SoboStrategy,</span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>    Step,</span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>    StepwiseStrategy,</span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a>    StrategyHasConvergedCondition,</span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.convergence_criteria.api <span class="im">import</span> (</span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a>    UcbLcbRegretBoundCriterion,</span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>strategy_data <span class="op">=</span> StepwiseStrategy(</span>
+<span id="cb4-86"><a href="#cb4-86" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb4-87"><a href="#cb4-87" aria-hidden="true" tabindex="-1"></a>    steps<span class="op">=</span>[</span>
+<span id="cb4-88"><a href="#cb4-88" aria-hidden="true" tabindex="-1"></a>        Step(</span>
+<span id="cb4-89"><a href="#cb4-89" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>RandomStrategy(domain<span class="op">=</span>domain),</span>
+<span id="cb4-90"><a href="#cb4-90" aria-hidden="true" tabindex="-1"></a>            condition<span class="op">=</span>NumberOfExperimentsCondition(n_experiments<span class="op">=</span><span class="dv">10</span>),</span>
+<span id="cb4-91"><a href="#cb4-91" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb4-92"><a href="#cb4-92" aria-hidden="true" tabindex="-1"></a>        Step(</span>
+<span id="cb4-93"><a href="#cb4-93" aria-hidden="true" tabindex="-1"></a>            strategy_data<span class="op">=</span>SoboStrategy(</span>
+<span id="cb4-94"><a href="#cb4-94" aria-hidden="true" tabindex="-1"></a>                domain<span class="op">=</span>domain,</span>
+<span id="cb4-95"><a href="#cb4-95" aria-hidden="true" tabindex="-1"></a>                convergence_criterion<span class="op">=</span>UcbLcbRegretBoundCriterion(noise_variance<span class="op">=</span><span class="fl">1.0</span>),</span>
+<span id="cb4-96"><a href="#cb4-96" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb4-97"><a href="#cb4-97" aria-hidden="true" tabindex="-1"></a>            condition<span class="op">=</span>StrategyHasConvergedCondition(),</span>
+<span id="cb4-98"><a href="#cb4-98" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb4-99"><a href="#cb4-99" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb4-100"><a href="#cb4-100" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-101"><a href="#cb4-101" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-102"><a href="#cb4-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-103"><a href="#cb4-103" aria-hidden="true" tabindex="-1"></a><span class="fu">## Custom criteria</span></span>
+<span id="cb4-104"><a href="#cb4-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-105"><a href="#cb4-105" aria-hidden="true" tabindex="-1"></a>Custom convergence criteria can be registered analogously to other custom types, see <span class="co">[</span><span class="ot">Registering Custom Types</span><span class="co">](custom_types.qmd)</span>:</span>
+<span id="cb4-106"><a href="#cb4-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-107"><a href="#cb4-107" aria-hidden="true" tabindex="-1"></a><span class="in">``` python</span></span>
+<span id="cb4-108"><a href="#cb4-108" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.convergence_criteria.api <span class="im">as</span> convergence_criteria</span>
+<span id="cb4-109"><a href="#cb4-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-110"><a href="#cb4-110" aria-hidden="true" tabindex="-1"></a><span class="at">@convergence_criteria.register</span>(MyCriterion)</span>
+<span id="cb4-111"><a href="#cb4-111" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> evaluate_my_criterion(criterion, strategy) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb4-112"><a href="#cb4-112" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb4-113"><a href="#cb4-113" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-114"><a href="#cb4-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-115"><a href="#cb4-115" aria-hidden="true" tabindex="-1"></a>The evaluator must be a pure function of the criterion and the strategy's recorded history, so that a strategy reconstructed by replaying <span class="in">`tell`</span> reaches the same decision.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/userguides/data_models_functionals.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/userguides/convergence_criteria.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

@@ -65,7 +65,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../../">
-<link href="../../docs/userguides/surrogates.html" rel="next">
+<link href="../../docs/userguides/convergence_criteria.html" rel="next">
 <link href="../../docs/userguides/domain.html" rel="prev">
 <script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -317,6 +317,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  <span class="dropdown-text">Strategies</span></a>
   </li>  
         <li>
+    <a class="dropdown-item" href="../../docs/userguides/convergence_criteria.html">
+ <span class="dropdown-text">Convergence Criteria</span></a>
+  </li>  
+        <li>
     <a class="dropdown-item" href="../../docs/userguides/surrogates.html">
  <span class="dropdown-text">Surrogate Models</span></a>
   </li>  
@@ -406,6 +410,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="../../docs/userguides/strategies.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Strategies</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../docs/userguides/convergence_criteria.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Convergence Criteria</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -535,7 +545,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(strategy_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>When dealing with output constraints, it is often beneficial to ensure that a certain number of experiments satisfy these constraints before proceeding with the main optimization. If no feasible experiments have been found, the strategy should prioritize generating candidates likely to fulfill the output constraints. This can be accomplished by using the <code>qLogPF</code> (Probability of Feasibility) acquisition function together with the <code>FeasibleExperimentCondition</code>. This approach allows the optimization process to focus first on feasibility, and only switch to the main objective once enough feasible experiments are available.</p>
 <p>In the following example, a <code>RandomStrategy</code> is applied for the initial 10 experiments to broadly explore the search space. Afterward, the <code>SoboStrategy</code> with the <code>qLogPF</code> acquisition function is used to prioritize finding at least one feasible experiment that satisfies the output constraints. Once this feasibility criterion is met, the strategy transitions to the standard <code>SoboStrategy</code> to focus on optimizing the main objective.</p>
-<div id="6fc03f9b" class="cell" data-execution_count="1">
+<div id="fe8b6377" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> DTLZ2</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qLogPF</span>
@@ -1060,8 +1070,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../../docs/userguides/surrogates.html" class="pagination-link" aria-label="Surrogate models">
-        <span class="nav-page-text">Surrogate models</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../../docs/userguides/convergence_criteria.html" class="pagination-link" aria-label="Convergence Criteria">
+        <span class="nav-page-text">Convergence Criteria</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
