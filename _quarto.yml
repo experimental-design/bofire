@@ -175,6 +175,8 @@ website:
             href: docs/userguides/domain.qmd
           - text: "Strategies"
             href: docs/userguides/strategies.qmd
+          - text: "Convergence Criteria"
+            href: docs/userguides/convergence_criteria.qmd
           - text: "Surrogate Models"
             href: docs/userguides/surrogates.qmd
           - text: "Data Models vs Functionals"
@@ -211,6 +213,7 @@ website:
       contents:
         - docs/userguides/domain.qmd
         - docs/userguides/strategies.qmd
+        - docs/userguides/convergence_criteria.qmd
         - docs/userguides/surrogates.qmd
         - docs/userguides/data_models_functionals.qmd
         - docs/userguides/custom_types.qmd
