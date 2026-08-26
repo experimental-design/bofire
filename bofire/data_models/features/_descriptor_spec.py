@@ -69,7 +69,7 @@ class DescriptorSpec(BaseModel):
         "columns.",
     )
     generators: List[AnyDescriptorGenerator] = Field(
-        default_factory=list,
+        default=[],
         description="Descriptor generators run on the feature's SMILES structures, "
         "such as fingerprints or Mordred descriptors. Their outputs are concatenated "
         "onto the static columns. Empty means nothing is generated.",

@@ -175,10 +175,10 @@ class InterpolateFeature(EngineeredFeature):
     """Interpolation feature, which performs piecewise linear interpolation
     over specified x and y coordinate features.
 
-    The optimized inputs are the coordinates of a curve; this feature evaluates that
+    The optimized inputs are the coordinates of a curve; this feature interpolates that
     curve on a fixed grid and appends one column per grid point. That gives the model a
     consistent representation of the curve even though the coordinates move, which is
-    how profiles such as a temperature ramp are optimized.
+    how profiles such as a temperature ramp can be optimized.
     """
 
     type: Literal["InterpolateFeature"] = "InterpolateFeature"
@@ -203,21 +203,21 @@ class InterpolateFeature(EngineeredFeature):
     )
 
     prepend_x: List[float] = Field(
-        default_factory=list,
+        default=[],
         description="Fixed x-coordinates placed before those taken from `x_keys`, for "
         "anchoring the curve at a known starting point that is not optimized.",
     )
     append_x: List[float] = Field(
-        default_factory=list,
+        default=[],
         description="Fixed x-coordinates placed after those taken from `x_keys`.",
     )
     prepend_y: List[float] = Field(
-        default_factory=list,
+        default=[],
         description="Fixed y-coordinates placed before those taken from `y_keys`. The "
         "total number of x- and y-coordinates must match.",
     )
     append_y: List[float] = Field(
-        default_factory=list,
+        default=[],
         description="Fixed y-coordinates placed after those taken from `y_keys`.",
     )
     normalize_y: PositiveFloat = Field(

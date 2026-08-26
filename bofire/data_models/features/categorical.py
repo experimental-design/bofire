@@ -57,16 +57,7 @@ class CategoricalInput(Input):
 
     A categorical input has one descriptor level *per category*, so each column of the
     optional ``descriptors`` block holds one value per category, in the same order as
-    ``categories``::
-
-        solvent = CategoricalInput(
-            key="solvent",
-            categories=["water", "ethanol", "thf"],
-            descriptors=Descriptors(
-                columns={"logP": [-1.4, -0.3, 0.5], "MW": [18.0, 46.0, 72.0]},
-                structure=["O", "CCO", "C1CCOC1"],   # one SMILES per category
-            ),
-        )
+    ``categories``.
 
     How those descriptors are turned into model columns is *not* fixed here: it is
     chosen per surrogate via ``categorical_encodings`` (e.g. ``OneHotEncoding`` or a
@@ -75,6 +66,18 @@ class CategoricalInput(Input):
 
     Examples:
         >>> CategoricalInput(key="solvent", categories=["water", "ethanol", "thf"])
+
+        With per-category descriptors — one value per category in each column, and one
+        SMILES per category:
+
+        >>> CategoricalInput(
+        ...     key="solvent",
+        ...     categories=["water", "ethanol", "thf"],
+        ...     descriptors=Descriptors(
+        ...         columns={"logP": [-1.4, -0.3, 0.5], "MW": [18.0, 46.0, 72.0]},
+        ...         structure=["O", "CCO", "C1CCOC1"],
+        ...     ),
+        ... )
     """
 
     type: Literal["CategoricalInput"] = "CategoricalInput"
@@ -163,8 +166,7 @@ class CategoricalInput(Input):
         Subclasses customize the output by overriding ``_description_prefix``
         and/or ``_extra_description_parts``.
 
-        Example::
-
+        Examples:
             >>> feat = CategoricalInput(key="solvent", categories=["water", "ethanol", "toluene"])
             >>> field_type, _ = feat.to_pydantic_field()
             >>> # field_type = Literal['water', 'ethanol', 'toluene']

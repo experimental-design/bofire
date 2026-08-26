@@ -19,19 +19,22 @@ class ContinuousInput(NumericalInput):
     level (the feature itself), so each column of the optional ``descriptors`` block holds
     exactly one value. This is what lets a continuous feature act as one component of a
     mixture, blended by a ``WeightedSumFeature`` — on its own the block has no effect on
-    the feature's own encoding::
-
-        ethanol = ContinuousInput(
-            key="ethanol",
-            bounds=(0, 1),
-            descriptors=Descriptors(
-                columns={"logP": [-0.3], "MW": [46.0]},   # one value per column
-                structure=["CCO"],                        # one SMILES
-            ),
-        )
+    the feature's own encoding.
 
     Examples:
         >>> ContinuousInput(key="temperature", bounds=(20, 80))
+
+        As one component of a mixture, carrying the properties of the substance whose
+        amount it holds — one value per column, one SMILES:
+
+        >>> ContinuousInput(
+        ...     key="ethanol",
+        ...     bounds=(0, 1),
+        ...     descriptors=Descriptors(
+        ...         columns={"logP": [-0.3], "MW": [46.0]},
+        ...         structure=["CCO"],
+        ...     ),
+        ... )
     """
 
     type: Literal["ContinuousInput"] = "ContinuousInput"
@@ -90,8 +93,7 @@ class ContinuousInput(NumericalInput):
         Subclasses customize the output by overriding ``_description_prefix``
         and/or ``_extra_description_parts``.
 
-        Example::
-
+        Examples:
             >>> feat = ContinuousInput(key="temp", bounds=(20.0, 200.0), context="Temperature in C")
             >>> field_type, field_info = feat.to_pydantic_field()
             >>> # field_type = float
@@ -338,8 +340,7 @@ class ContinuousOutput(Output):
     def to_description(self) -> str:
         """Return a human-readable description combining objective and context.
 
-        Example::
-
+        Examples:
             >>> feat = ContinuousOutput(key="yield", objective=MaximizeObjective(w=1.0), context="Target >90%")
             >>> feat.to_description()
             'yield: Maximize — Target >90%'

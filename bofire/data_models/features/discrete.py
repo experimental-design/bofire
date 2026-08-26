@@ -20,6 +20,18 @@ class DiscreteInput(NumericalInput):
 
     Examples:
         >>> DiscreteInput(key="n_layers", values=[1.0, 2.0, 4.0, 8.0])
+
+        As one component of a mixture, where the restricted amounts still describe a
+        single substance — one value per column, one SMILES:
+
+        >>> DiscreteInput(
+        ...     key="ethanol",
+        ...     values=[0.0, 0.25, 0.5],
+        ...     descriptors=Descriptors(
+        ...         columns={"logP": [-0.3], "MW": [46.0]},
+        ...         structure=["CCO"],
+        ...     ),
+        ... )
     """
 
     type: Literal["DiscreteInput"] = "DiscreteInput"
@@ -47,8 +59,7 @@ class DiscreteInput(NumericalInput):
         Subclasses customize the output by overriding ``_description_prefix``
         and/or ``_extra_description_parts``.
 
-        Example::
-
+        Examples:
             >>> feat = DiscreteInput(key="n_steps", values=[1.0, 2.0, 5.0])
             >>> field_type, _ = feat.to_pydantic_field()
             >>> # field_type = Literal[1.0, 2.0, 5.0]

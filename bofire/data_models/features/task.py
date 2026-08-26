@@ -43,7 +43,9 @@ class CategoricalTaskInput(TaskInput, CategoricalInput):
     fidelities: list[int] = Field(
         default=[],
         description="Fidelity level of each task, one entry per category in the same "
-        "order, where 0 is the target fidelity and larger values are cheaper "
+        "order. Note the numbering runs opposite to the everyday sense of the word: 0 "
+        "is the target task, the accurate and expensive one that is being optimized "
+        "for, and larger values are progressively cheaper, less accurate "
         "approximations. Must start at 0 and increase in steps of one. Defaults to "
         "every task being at fidelity 0.",
     )
