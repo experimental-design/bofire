@@ -46,18 +46,17 @@ class CategoricalTaskInput(TaskInput, CategoricalInput):
     type: Literal["CategoricalTaskInput"] = "CategoricalTaskInput"
     descriptors: None = Field(
         default=None,
-        description="Always null. A task input carries no descriptor data: the "
+        description="Always None. A task input carries no descriptor data: the "
         "relationship between tasks is learned as the inter-task covariance of the "
         "surrogate, not read off descriptor columns.",
     )
     fidelities: list[int] = Field(
         default=[],
         description="Fidelity level of each task, one entry per category in the same "
-        "order. Note the numbering runs opposite to the everyday sense of the word: 0 "
-        "is the target task, the accurate and expensive one that is being optimized "
-        "for, and larger values are progressively cheaper, less accurate "
-        "approximations. Must start at 0 and increase in steps of one. Defaults to "
-        "every task being at fidelity 0.",
+        "order. Level 0 is the target task, the accurate and expensive one being "
+        "optimized for; higher levels are progressively cheaper, less accurate "
+        "approximations. The levels used must run from 0 upwards without gaps, though "
+        "several tasks may share a level. Defaults to every task being at level 0.",
     )
 
     @model_validator(mode="after")
@@ -89,7 +88,7 @@ class ContinuousTaskInput(TaskInput, ContinuousInput):
     type: Literal["ContinuousTaskInput"] = "ContinuousTaskInput"  # type: ignore
     descriptors: None = Field(
         default=None,
-        description="Always null. A task input carries no descriptor data: the "
+        description="Always None. A task input carries no descriptor data: the "
         "relationship between fidelities is learned by the surrogate, not read off "
         "descriptor columns.",
     )

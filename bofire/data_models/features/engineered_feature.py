@@ -9,7 +9,7 @@ from bofire.data_models.features._descriptor_spec import DescriptorSpec
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.features.feature import Feature
-from bofire.data_models.types import Bounds, FeatureKeys, OneFeatureKeys
+from bofire.data_models.types import Bounds, FeatureKeys
 
 
 if TYPE_CHECKING:
@@ -20,8 +20,10 @@ class EngineeredFeature(Feature):
     """Base class for an engineered feature.
 
     An engineered feature is not proposed or measured. It is computed from other input
-    features and appended as extra columns when the surrogate is built, which lets a
-    model see a derived quantity without it becoming a degree of freedom.
+    features, and the columns it produces are appended to what the *surrogate* sees --
+    engineered features are configured on the surrogate, via ``engineered_features``,
+    not on the domain. The optimization problem is unchanged: adding one lets a model
+    see a derived quantity without it becoming a degree of freedom.
     """
 
     features: FeatureKeys = Field(
@@ -211,14 +213,19 @@ class InterpolateFeature(EngineeredFeature):
     """Interpolation feature, which performs piecewise linear interpolation
     over specified x and y coordinate features.
 
-    The optimized inputs are the coordinates of a curve; this feature interpolates that
-    curve on a fixed grid and appends one column per grid point. That gives the model a
-    consistent representation of the curve even though the coordinates move, which is
-    how profiles such as a temperature ramp can be optimized.
+    Use it when several continuous inputs are really the coordinates of a curve rather
+    than independent settings. ``x_keys`` and ``y_keys`` both name *input* features; this
+    feature interpolates the curve they describe on a fixed grid and gives the surrogate
+    ``n_interpolation_points`` columns sampled from it. Two candidates whose control
+    points differ but whose curves are alike then look alike to the model, which they
+    would not if it saw the raw coordinates. The number of grid points sets how many
+    columns the surrogate receives; it does not change the dimensionality of the
+    optimization problem, which stays the control points.
 
     Examples:
-        A temperature ramp given by two moving (time, temperature) points, evaluated on
-        a five-point grid:
+        A temperature ramp defined by two control points, where ``t1``/``t2`` are
+        continuous inputs holding the times and ``T1``/``T2`` the temperatures at those
+        times. The curve is sampled at five points between 0 and 1:
 
         >>> InterpolateFeature(
         ...     key="ramp",
@@ -306,10 +313,11 @@ class InterpolateFeature(EngineeredFeature):
 
 
 class CloneFeature(EngineeredFeature):
-    """Engineered feature that creates a copy of the original features.
+    """Engineered feature that creates a copy of a single input feature.
 
     This is useful if you want to have features undergoing different scalers
-    before entering different kernels.
+    before entering different kernels. Clone one feature per ``CloneFeature``; to
+    duplicate several, add one of these for each.
 
     Examples:
         >>> CloneFeature(key="temperature_copy", features=["temperature"])
@@ -317,10 +325,10 @@ class CloneFeature(EngineeredFeature):
 
     type: Literal["CloneFeature"] = "CloneFeature"
     order_id: ClassVar[int] = 5
-    features: OneFeatureKeys = Field(
-        description="Keys of the input features to copy. Each appears once; the copy "
-        "gets its own column so it can be scaled or fed to a different kernel than the "
-        "original.",
+    features: Annotated[List[str], Field(min_length=1, max_length=1)] = Field(
+        description="Key of the input feature to copy, as a single-element list. The "
+        "copy gets its own column so it can be scaled or fed to a different kernel "
+        "than the original.",
     )
 
     def get_names(self, inputs: "Inputs") -> List[str]:

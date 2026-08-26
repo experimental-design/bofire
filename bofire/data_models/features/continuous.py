@@ -334,7 +334,7 @@ class ContinuousOutput(Output):
     objective: Optional[AnyObjective] = Field(
         default_factory=lambda: MaximizeObjective(w=1.0),
         description="How this output should be optimized. Defaults to maximization. "
-        "Set to null for an output that is modelled and reported but not optimized.",
+        "Set to None for an output that is modelled and reported but not optimized.",
     )
 
     def to_description(self) -> str:

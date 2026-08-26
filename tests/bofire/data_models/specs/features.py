@@ -173,20 +173,20 @@ specs.add_valid(
     features.CloneFeature,
     lambda: {
         "key": str(uuid.uuid4()),
-        "features": ["a", "b"],
+        "features": ["a"],
         "keep_features": True,
         "context": None,
     },
 )
 
-specs.add_valid(
+specs.add_invalid(
     features.CloneFeature,
     lambda: {
-        "key": str(uuid.uuid4()),
-        "features": ["a"],
-        "keep_features": True,
-        "context": None,
+        "key": "clone1",
+        "features": ["a", "b"],
     },
+    error=ValueError,
+    message="List should have at most 1 item",
 )
 
 specs.add_valid(

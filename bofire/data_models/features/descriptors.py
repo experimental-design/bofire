@@ -51,23 +51,21 @@ def _validate_smiles(values: List[str]) -> None:
 class Descriptors(BaseModel):
     """A rectangular block of per-level descriptor data.
 
-    A "level" is a row of the block. What the levels *are* depends on the feature the
-    block is attached to, and is the feature's business, not this class's. A
-    ``CategoricalInput`` has **one level per category**, so the block picks the row of
-    the chosen category. A ``ContinuousInput`` or ``DiscreteInput`` has **a single
-    level**, the feature itself: it is one component of a mixture whose amount weights
-    its row, so each column holds one value. For a discrete input the allowed ``values``
-    are not levels — a restricted amount of a substance still describes one substance.
+    A "level" is a row of the block, providing the descriptor data for one distinct
+    thing the feature can refer to — each molecule, say, gets its own level. How many
+    levels a feature has is the feature's business, not this class's; see the examples.
 
     Examples:
-        One level per category, for a categorical:
+        On a ``CategoricalInput``, one level per category — the block supplies the row
+        of whichever category is chosen:
 
         >>> Descriptors(
         ...     columns={"logP": [-1.4, -0.3, 0.5], "MW": [18.0, 46.0, 72.0]},
         ...     structure=["O", "CCO", "C1CCOC1"],
         ... )
 
-        A single level, for one component of a mixture:
+        On a ``ContinuousInput`` or ``DiscreteInput``, a single level — the feature is
+        one component of a mixture, and its amount weights that one row:
 
         >>> Descriptors(columns={"logP": [-0.3]}, structure=["CCO"])
     """

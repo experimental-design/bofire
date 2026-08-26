@@ -65,7 +65,7 @@ class DescriptorSpec(BaseModel):
     columns: Optional[List[str]] = Field(
         default=None,
         description="Which of the feature's stored numeric descriptor columns to use. "
-        "Null means all of them; an empty list means none, leaving only the generated "
+        "None means all of them; an empty list means none, leaving only the generated "
         "columns.",
     )
     generators: List[AnyDescriptorGenerator] = Field(
