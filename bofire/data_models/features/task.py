@@ -30,6 +30,16 @@ class CategoricalTaskInput(TaskInput, CategoricalInput):
     tasks is what the surrogate learns (the inter-task covariance of a ``MultiTaskGP``),
     not something read off descriptor columns. ``descriptors`` is therefore narrowed to
     ``None`` — the constraint is in the type, and visible in the schema.
+
+    Examples:
+        An accurate task and a cheaper approximation of it. Note that the target task
+        is the one at fidelity 0:
+
+        >>> CategoricalTaskInput(
+        ...     key="task",
+        ...     categories=["experiment", "simulation"],
+        ...     fidelities=[0, 1],
+        ... )
     """
 
     order_id: ClassVar[int] = 8
@@ -69,7 +79,11 @@ class CategoricalTaskInput(TaskInput, CategoricalInput):
 
 class ContinuousTaskInput(TaskInput, ContinuousInput):
     """A continuous fidelity parameter. Carries no descriptor data (see
-    :class:`CategoricalTaskInput`)."""
+    :class:`CategoricalTaskInput`).
+
+    Examples:
+        >>> ContinuousTaskInput(key="mesh_resolution", bounds=(0.0, 1.0))
+    """
 
     order_id: ClassVar[int] = 11
     type: Literal["ContinuousTaskInput"] = "ContinuousTaskInput"  # type: ignore

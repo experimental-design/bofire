@@ -63,6 +63,9 @@ class SumFeature(EngineeredFeature):
 
     Appends one column holding the total, for example the overall amount of a set of
     ingredients.
+
+    Examples:
+        >>> SumFeature(key="total_solvent", features=["water", "ethanol"])
     """
 
     type: Literal["SumFeature"] = "SumFeature"
@@ -76,6 +79,9 @@ class MeanFeature(EngineeredFeature):
     """Mean feature, which computes the mean over the specified features.
 
     Appends one column holding the average of the source features.
+
+    Examples:
+        >>> MeanFeature(key="mean_temperature", features=["T_start", "T_end"])
     """
 
     type: Literal["MeanFeature"] = "MeanFeature"
@@ -96,6 +102,29 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
     This is how a mixture gets described by the properties of what is in it rather than
     by the amounts alone: each component contributes its descriptor row in proportion to
     how much of it is present.
+
+    The component features named here must each carry a one-row ``Descriptors`` block,
+    as ``ContinuousInput`` does in its second example.
+
+    Examples:
+        Blend two stored descriptor columns of the components:
+
+        >>> WeightedSumFeature(
+        ...     key="solvent_properties",
+        ...     features=["water", "ethanol"],
+        ...     columns=["logP", "MW"],
+        ... )
+
+        Blend generated columns instead, running a generator over the components'
+        SMILES structures — ``columns=[]`` selects none of the stored ones:
+
+        >>> WeightedSumFeature(
+        ...     key="solvent_fingerprint",
+        ...     features=["water", "ethanol"],
+        ...     columns=[],
+        ...     generators=[Fingerprints(n_bits=32)],
+        ...     normalize=True,
+        ... )
     """
 
     type: Literal["WeightedSumFeature"] = "WeightedSumFeature"
@@ -158,6 +187,13 @@ class ProductFeature(EngineeredFeature):
 
     Appends one column holding the product, which is how an interaction between inputs
     is made available to a model that would otherwise only see them separately.
+
+    Examples:
+        >>> ProductFeature(key="temp_x_time", features=["temperature", "time"])
+
+        Repeat a key for a power term:
+
+        >>> ProductFeature(key="temp_squared", features=["temperature", "temperature"])
     """
 
     type: Literal["ProductFeature"] = "ProductFeature"
@@ -179,6 +215,19 @@ class InterpolateFeature(EngineeredFeature):
     curve on a fixed grid and appends one column per grid point. That gives the model a
     consistent representation of the curve even though the coordinates move, which is
     how profiles such as a temperature ramp can be optimized.
+
+    Examples:
+        A temperature ramp given by two moving (time, temperature) points, evaluated on
+        a five-point grid:
+
+        >>> InterpolateFeature(
+        ...     key="ramp",
+        ...     features=["t1", "t2", "T1", "T2"],
+        ...     x_keys=["t1", "t2"],
+        ...     y_keys=["T1", "T2"],
+        ...     interpolation_range=[0.0, 1.0],
+        ...     n_interpolation_points=5,
+        ... )
     """
 
     type: Literal["InterpolateFeature"] = "InterpolateFeature"
@@ -261,6 +310,9 @@ class CloneFeature(EngineeredFeature):
 
     This is useful if you want to have features undergoing different scalers
     before entering different kernels.
+
+    Examples:
+        >>> CloneFeature(key="temperature_copy", features=["temperature"])
     """
 
     type: Literal["CloneFeature"] = "CloneFeature"
