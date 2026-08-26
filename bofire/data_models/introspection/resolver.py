@@ -214,12 +214,21 @@ def _step_model(cursor: Cursor, segment: PathSegment) -> Cursor:
     if not segment.is_index and name in cls.model_fields:
         field = cls.model_fields[name]
         node = normalize(field.annotation, field)
+        # Stepping explicitly onto a container's own list field keeps that
+        # container's key semantics, so the long form of a keyed path resolves
+        # exactly like the short one: ``surrogate_specs.surrogates.yield`` works
+        # because ``surrogate_specs.yield`` does.
+        own = adapter_for(cls)
+        if own is not None and name == own.list_field:
+            adapter = own
+        else:
+            adapter = adapter_for(node.cls) if node.cls else _element_adapter(node)
         return Cursor(
             node=node,
             field=field,
             view=cursor.view.field(name) if cursor.view is not None else None,
             segments=cursor.segments + (segment,),
-            adapter=adapter_for(node.cls) if node.cls else _element_adapter(node),
+            adapter=adapter,
         )
 
     # Container shortcut: ``domain.inputs.temperature`` and ``domain.constraints[0]``

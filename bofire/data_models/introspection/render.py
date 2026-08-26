@@ -36,7 +36,7 @@ from bofire.data_models.introspection.resolver import Cursor
 from bofire.data_models.introspection.views import View
 
 
-__all__ = ["approx_tokens", "render", "shallow_schema"]
+__all__ = ["approx_tokens", "render", "shallow_schema", "summarize"]
 
 #: Above this many union members, list the count and let the agent drill in.
 MAX_INLINE_OPTIONS = 12
@@ -358,6 +358,39 @@ def _render_concrete(cursor: Cursor, concrete: type) -> Dict[str, Any]:
     if resolved.adapter is not None:
         return _render_container(resolved)
     return _render_class(resolved)
+
+
+def summarize(model: BaseModel) -> Dict[str, Any]:
+    """A few dozen tokens describing the shape of a configured spec.
+
+    Returned after a reconfiguration so the caller can confirm the edit landed
+    without being handed the whole spec back, which for a twenty-input problem is
+    a couple of thousand tokens on every call.
+    """
+    payload: Dict[str, Any] = {"type": type_tag(type(model)) or type(model).__name__}
+
+    acqf = getattr(model, "acquisition_function", None)
+    if isinstance(acqf, BaseModel):
+        payload["acquisition_function"] = type_tag(type(acqf)) or type(acqf).__name__
+
+    domain = getattr(model, "domain", None)
+    if domain is not None:
+        payload["inputs"] = list(domain.inputs.get_keys())
+        payload["objectives"] = {
+            feat.key: type_tag(type(feat.objective)) or type(feat.objective).__name__
+            for feat in domain.outputs
+            if getattr(feat, "objective", None) is not None
+        }
+        payload["n_constraints"] = len(domain.constraints)
+
+    specs = getattr(model, "surrogate_specs", None)
+    if specs is not None:
+        payload["surrogates"] = {
+            key: type_tag(type(surrogate)) or type(surrogate).__name__
+            for surrogate in specs.surrogates
+            for key in surrogate.outputs.get_keys()
+        }
+    return payload
 
 
 def shallow_schema(cls: Type[BaseModel]) -> Dict[str, Any]:

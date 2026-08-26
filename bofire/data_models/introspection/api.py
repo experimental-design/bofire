@@ -19,6 +19,12 @@ grammar.
 
 from typing import Any, Dict, Optional
 
+from bofire.data_models.introspection.patch import (
+    PatchError,
+    ResyncError,
+    reconfigure,
+    reconfigure_json,
+)
 from bofire.data_models.introspection.paths import (
     PathError,
     PathSegment,
@@ -36,6 +42,7 @@ from bofire.data_models.introspection.render import (
     approx_tokens,
     render,
     shallow_schema,
+    summarize,
 )
 from bofire.data_models.introspection.resolver import Cursor, resolve
 
@@ -43,8 +50,10 @@ from bofire.data_models.introspection.resolver import Cursor, resolve
 __all__ = [
     "AmbiguousNameError",
     "Cursor",
+    "PatchError",
     "PathError",
     "PathSegment",
+    "ResyncError",
     "SegmentKind",
     "UnknownNameError",
     "ambiguous_names",
@@ -53,7 +62,10 @@ __all__ = [
     "full_schema",
     "lookup",
     "parse_path",
+    "reconfigure",
+    "reconfigure_json",
     "resolve",
+    "summarize",
     "unparse",
 ]
 
