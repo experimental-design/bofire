@@ -44,6 +44,8 @@ MAX_INLINE_OPTIONS = 12
 MAX_INLINE_DEFAULT_CHARS = 120
 #: Docstrings are truncated to this many characters in the summary form.
 MAX_DOC_CHARS = 240
+#: Above this many plain values, a list reports a prefix and says it truncated.
+MAX_INLINE_ITEMS = 20
 
 
 def approx_tokens(payload: Any) -> int:
@@ -290,7 +292,16 @@ def _render_sequence(cursor: Cursor) -> Dict[str, Any]:
                 list(cursor.view.obj) if isinstance(cursor.view.obj, dict) else []
             )
         else:
-            payload["length"] = len(cursor.view.items())
+            items = cursor.view.items()
+            payload["length"] = len(items)
+            # A list of plain values (``categories``, ``coefficients``) is data
+            # the caller wants to read here; a list of models is something they
+            # navigate into instead, one element at a time.
+            if element is not None and element.kind in ("scalar", "enum", "literal"):
+                shown = items[:MAX_INLINE_ITEMS]
+                payload["value"] = [View(item).json_value() for item in shown]
+                if len(items) > len(shown):
+                    payload["truncated"] = True
     return payload
 
 
