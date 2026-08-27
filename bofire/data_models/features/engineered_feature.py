@@ -9,7 +9,7 @@ from bofire.data_models.features._descriptor_spec import DescriptorSpec
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.features.feature import Feature
-from bofire.data_models.types import Bounds, FeatureKeys
+from bofire.data_models.types import Bounds, FeatureKeys, OneFeatureKeys
 
 
 if TYPE_CHECKING:
@@ -313,22 +313,35 @@ class InterpolateFeature(EngineeredFeature):
 
 
 class CloneFeature(EngineeredFeature):
-    """Engineered feature that creates a copy of a single input feature.
+    """Engineered feature that creates a copy of the original features.
 
     This is useful if you want to have features undergoing different scalers
-    before entering different kernels. Clone one feature per ``CloneFeature``; to
-    duplicate several, add one of these for each.
+    before entering different kernels.
+
+    All the cloned features live under this one key, one column each. That key is how
+    a feature-specific kernel addresses them, so they are selectable only as a group:
+    a kernel naming this feature gets every column it produced. Clone features
+    separately — one ``CloneFeature`` each — when they need to be addressed
+    individually.
 
     Examples:
+        A single clone, addressable on its own:
+
         >>> CloneFeature(key="temperature_copy", features=["temperature"])
+
+        Two features cloned as one group, giving the columns
+        ``rates_copy_flow_a`` and ``rates_copy_flow_b``, which a kernel can only
+        select together as ``rates_copy``:
+
+        >>> CloneFeature(key="rates_copy", features=["flow_a", "flow_b"])
     """
 
     type: Literal["CloneFeature"] = "CloneFeature"
     order_id: ClassVar[int] = 5
-    features: Annotated[List[str], Field(min_length=1, max_length=1)] = Field(
-        description="Key of the input feature to copy, as a single-element list. The "
-        "copy gets its own column so it can be scaled or fed to a different kernel "
-        "than the original.",
+    features: OneFeatureKeys = Field(
+        description="Keys of the input features to copy, at least one. Each produces "
+        "a column named `{key}_{feature}`, and all of them are addressed together "
+        "under this feature's key.",
     )
 
     def get_names(self, inputs: "Inputs") -> List[str]:
