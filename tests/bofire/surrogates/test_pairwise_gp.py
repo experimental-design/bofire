@@ -171,6 +171,19 @@ def test_pairwise_gp_rejects_unknown_labcode():
         surrogate.fit(experiments, preferences)
 
 
+@pytest.mark.parametrize(
+    "invalid_preference",
+    [float("nan"), float("inf"), -float("inf"), 0.5, 2.0],
+)
+def test_pairwise_gp_rejects_invalid_preference(invalid_preference):
+    inputs, outputs = _make_domain()
+    experiments, preferences, _ = _make_data()
+    preferences.loc[0, "preference"] = invalid_preference
+    surrogate = surrogates.map(PairwiseGPSurrogate(inputs=inputs, outputs=outputs))
+    with pytest.raises(ValueError, match="Preference values must be one of"):
+        surrogate.fit(experiments, preferences)
+
+
 def test_pairwise_gp_drops_ties_with_warning():
     inputs, outputs = _make_domain()
     experiments, preferences, _ = _make_data()

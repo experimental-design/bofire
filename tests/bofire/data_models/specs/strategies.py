@@ -2,6 +2,7 @@ import bofire.data_models.strategies.api as strategies
 import bofire.data_models.strategies.predictives.acqf_optimization
 from bofire.data_models.acquisition_functions.api import (
     qEI,
+    qEUBO,
     qLogNEHVI,
     qLogPF,
     qMFHVKG,
@@ -51,6 +52,7 @@ from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     LinearDeterministicSurrogate,
     MultiTaskGPSurrogate,
+    PairwiseGPSurrogate,
 )
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
@@ -73,6 +75,34 @@ strategy_commons = {
     "include_infeasible_exps_in_acqf_calc": False,
     "convergence_criterion": None,
 }
+
+
+def preference_strategy_spec():
+    preference_domain = Domain(
+        inputs=Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))]),
+        outputs=Outputs(
+            features=[ContinuousOutput(key="utility", objective=MaximizeObjective())]
+        ),
+    )
+    return {
+        "domain": preference_domain.model_dump(),
+        "seed": 42,
+        "convergence_criterion": None,
+        "acquisition_function": qEUBO().model_dump(),
+        "acquisition_optimizer": strategies.BotorchOptimizer(
+            n_raw_samples=1024,
+            n_restarts=8,
+            maxiter=2000,
+            batch_limit=6,
+        ).model_dump(),
+        "surrogate_spec": PairwiseGPSurrogate(
+            inputs=preference_domain.inputs,
+            outputs=preference_domain.outputs,
+        ).model_dump(),
+    }
+
+
+specs.add_valid(strategies.PreferenceStrategy, preference_strategy_spec)
 
 
 specs.add_valid(

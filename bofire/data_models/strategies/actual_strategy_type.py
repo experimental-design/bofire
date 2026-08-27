@@ -15,6 +15,7 @@ from bofire.data_models.strategies.predictives.multi_fidelity import (
 from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient import (
     MultiFidelityHVKGStrategy,
 )
+from bofire.data_models.strategies.predictives.preference import PreferenceStrategy
 from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
@@ -38,6 +39,7 @@ _ACTUAL_STRATEGY_TYPES: list[type[Strategy]] = [
     CustomSoboStrategy,
     MultiFidelityVarianceBasedStrategy,
     MultiFidelityHVKGStrategy,
+    PreferenceStrategy,
     QparegoStrategy,
     EntingStrategy,
     RandomStrategy,
