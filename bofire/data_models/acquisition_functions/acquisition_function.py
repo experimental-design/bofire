@@ -282,8 +282,9 @@ class qLogPF(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
     and is especially useful in combination with the FeasibleExperimentCondition
     within the StepwiseStrategy.
 
-    What counts as feasible comes from the outputs whose objective is a
-    `ConstrainedObjective` — the sigmoid objectives, `TargetObjective` and
+    What counts as feasible comes from the outputs carrying one of the objectives that
+    define a constraint, namely `MaximizeSigmoidObjective`, `MinimizeSigmoidObjective`,
+    `MovingMaximizeSigmoidObjective`, `TargetObjective` and
     `ConstrainedCategoricalObjective`. Those still shape the score; what this drops is
     the objective being optimized, so it is a way out of an infeasible region rather
     than a way to a good result.
