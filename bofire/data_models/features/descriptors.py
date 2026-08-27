@@ -51,39 +51,35 @@ def _validate_smiles(values: List[str]) -> None:
 class Descriptors(BaseModel):
     """A rectangular block of per-level descriptor data.
 
-    A "level" is a row of the block. What the levels *are* depends on the feature the
-    block is attached to, and is the feature's business, not this class's:
+    A "level" is a row of the block, providing the descriptor data for one distinct
+    thing the feature can refer to — each molecule, say, gets its own level. How many
+    levels a feature has is the feature's business, not this class's; see the examples.
 
-    ``CategoricalInput`` — **one level per category**, so the block picks the row of the
-    chosen category (select-row)::
+    Examples:
+        On a ``CategoricalInput``, one level per category — the block supplies the row
+        of whichever category is chosen:
 
-        CategoricalInput(
-            key="solvent",
-            categories=["water", "ethanol", "thf"],
-            descriptors=Descriptors(
-                columns={"logP": [-1.4, -0.3, 0.5], "MW": [18.0, 46.0, 72.0]},
-                structure=["O", "CCO", "C1CCOC1"],
-            ),
-        )
+        >>> Descriptors(
+        ...     columns={"logP": [-1.4, -0.3, 0.5], "MW": [18.0, 46.0, 72.0]},
+        ...     structure=["O", "CCO", "C1CCOC1"],
+        ... )
 
-    ``ContinuousInput`` / ``DiscreteInput`` — **a single level**, the feature itself. It
-    is one *component* of a mixture whose amount weights its row, so each column holds one
-    value. For a discrete input the allowed ``values`` are not levels: a restricted amount
-    of a substance still describes one substance::
+        On a ``ContinuousInput`` or ``DiscreteInput``, a single level — the feature is
+        one component of a mixture, and its amount weights that one row:
 
-        ContinuousInput(
-            key="ethanol",
-            bounds=(0, 1),
-            descriptors=Descriptors(columns={"logP": [-0.3]}, structure=["CCO"]),
-        )
-
-    Attributes:
-        columns: Numeric property columns, each with one value per level.
-        structure: Optional structure identifiers (SMILES), one per level.
+        >>> Descriptors(columns={"logP": [-0.3]}, structure=["CCO"])
     """
 
-    columns: Dict[str, List[float]] = Field(default_factory=dict)
-    structure: Optional[List[str]] = None
+    columns: Dict[str, List[float]] = Field(
+        default_factory=dict,
+        description="Numeric property columns keyed by name, each holding one value "
+        "per level. Every column must cover the same number of levels.",
+    )
+    structure: Optional[List[str]] = Field(
+        default=None,
+        description="Structure identifiers as SMILES, one per level. Descriptor "
+        "generators on the surrogate side turn these into further columns.",
+    )
 
     @field_validator("structure")
     @classmethod

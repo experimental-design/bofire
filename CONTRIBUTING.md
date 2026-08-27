@@ -40,10 +40,14 @@ The class doc-string says what the model does, how it behaves and what a sensibl
 looks like. Compare it with a sibling only where the two are genuinely easy to confuse
 and the names do not reveal the difference. An `Examples:` block is encouraged on the
 concrete types, but it is optional, is not executed by the test suite, and should set
-only the fields a caller actually needs.
+only the fields a caller actually needs. Write it as a Google `Examples:` section with
+`>>>` rather than a reStructuredText `Example::` literal block, since the doc-string is
+copied verbatim into the schema description.
 
 A field shared by every subclass is declared once, on the base class: redeclaring it in
-a subclass silently drops the inherited description.
+a subclass silently drops the inherited description. For an empty container default,
+prefer `Field(default=[])` over `default_factory`: pydantic deep-copies defaults, and
+only the literal form appears in the JSON schema.
 
 ```python
 class NChooseKConstraint(IntrapointConstraint):

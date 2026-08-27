@@ -57,42 +57,51 @@ class CategoricalInput(Input):
 
     A categorical input has one descriptor level *per category*, so each column of the
     optional ``descriptors`` block holds one value per category, in the same order as
-    ``categories``::
-
-        solvent = CategoricalInput(
-            key="solvent",
-            categories=["water", "ethanol", "thf"],
-            descriptors=Descriptors(
-                columns={"logP": [-1.4, -0.3, 0.5], "MW": [18.0, 46.0, 72.0]},
-                structure=["O", "CCO", "C1CCOC1"],   # one SMILES per category
-            ),
-        )
+    ``categories``.
 
     How those descriptors are turned into model columns is *not* fixed here: it is
     chosen per surrogate via ``categorical_encodings`` (e.g. ``OneHotEncoding`` or a
     ``DescriptorEncoding`` selecting columns and/or running descriptor generators on
     the structure).
 
-    Attributes:
-        categories (List[str]): Names of the categories.
-        allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
-        descriptors (Descriptors, optional): Per-category descriptor data — numeric
-            columns and/or a SMILES structure column. Defaults to None.
-        key (str, inherited from `Feature`): The unique name of the feature.
-        context (str, optional, inherited from `Feature`): Free-text context for the
-            feature. Defaults to None.
+    Examples:
+        >>> CategoricalInput(key="solvent", categories=["water", "ethanol", "thf"])
 
+        With per-category descriptors — one value per category in each column, and one
+        SMILES per category:
+
+        >>> CategoricalInput(
+        ...     key="solvent",
+        ...     categories=["water", "ethanol", "thf"],
+        ...     descriptors=Descriptors(
+        ...         columns={"logP": [-1.4, -0.3, 0.5], "MW": [18.0, 46.0, 72.0]},
+        ...         structure=["O", "CCO", "C1CCOC1"],
+        ...     ),
+        ... )
     """
 
     type: Literal["CategoricalInput"] = "CategoricalInput"
     # order_id: ClassVar[int] = 5
     order_id: ClassVar[int] = 7
 
-    categories: CategoryVals
-    descriptors: Optional[Descriptors] = None
+    categories: CategoryVals = Field(
+        description="Names of the categories the feature can take. They are unordered; "
+        "use a `DiscreteInput` when the numeric order of the values is meaningful.",
+    )
+    descriptors: Optional[Descriptors] = Field(
+        default=None,
+        description="Per-category descriptor data: numeric columns holding one value "
+        "per category and/or a SMILES structure per category, in the same order as "
+        "`categories`. How it becomes model columns is chosen per surrogate via "
+        "`categorical_encodings`, not here.",
+    )
     allowed: Optional[Annotated[List[bool], Field(min_length=2)]] = Field(
         default=None,
         validate_default=True,
+        description="Whether each category may be proposed, one entry per category in "
+        "`categories` and in the same order. Categories marked false can still appear "
+        "in past experiments but are not offered as candidates. Defaults to all "
+        "categories being allowed.",
     )
 
     @model_validator(mode="after")
@@ -157,8 +166,7 @@ class CategoricalInput(Input):
         Subclasses customize the output by overriding ``_description_prefix``
         and/or ``_extra_description_parts``.
 
-        Example::
-
+        Examples:
             >>> feat = CategoricalInput(key="solvent", categories=["water", "ethanol", "toluene"])
             >>> field_type, _ = feat.to_pydantic_field()
             >>> # field_type = Literal['water', 'ethanol', 'toluene']
@@ -384,11 +392,33 @@ class CategoricalInput(Input):
 
 
 class CategoricalOutput(Output):
+    """An output whose measured value is one of a fixed set of categories.
+
+    The surrogate predicts a probability for each category, and the objective turns
+    those probabilities into a reward by declaring which categories are desirable.
+    Typical use is a pass/fail or graded quality read-out.
+
+    Examples:
+        >>> CategoricalOutput(
+        ...     key="quality",
+        ...     categories=["pass", "fail"],
+        ...     objective=ConstrainedCategoricalObjective(
+        ...         categories=["pass", "fail"], desirability=[True, False]
+        ...     ),
+        ... )
+    """
+
     type: Literal["CategoricalOutput"] = "CategoricalOutput"
     order_id: ClassVar[int] = 10
 
-    categories: CategoryVals
-    objective: AnyCategoricalObjective
+    categories: CategoryVals = Field(
+        description="Names of the categories this output can take.",
+    )
+    objective: AnyCategoricalObjective = Field(
+        description="How the predicted category probabilities are turned into a "
+        "reward. Its `categories` must match this feature's `categories` exactly, "
+        "including their order.",
+    )
 
     def to_description(self) -> str:
         raise NotImplementedError

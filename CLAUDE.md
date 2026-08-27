@@ -345,9 +345,15 @@ The spec is automatically picked up by `tests/bofire/conftest.py` which imports 
   siblings come and go. Skip notes that matter only to someone reading the source, such
   as which class something inherits from. An `Examples:` block is encouraged on concrete
   types but is optional and not executed; keep it to the fields a caller actually needs
-  to set, leaving the rest at their defaults. The `type` discriminator needs no
-  description. `tests/bofire/data_models/test_documentation.py` enforces this — see
+  to set, leaving the rest at their defaults. Write examples as a Google `Examples:`
+  section with `>>>`, never as a reStructuredText `Example::` literal block — the whole
+  docstring is copied verbatim into the schema's `description`, where a bare `::` is a
+  stray artifact. The `type` discriminator needs no description.
+  `tests/bofire/data_models/test_documentation.py` enforces this — see
   [Documentation Ratchet](#documentation-ratchet).
+- **Prefer a literal default over `default_factory` for empty containers.** Pydantic deep
+  copies defaults, so `Field(default=[])` is safe, and unlike `default_factory` it puts
+  the default into `model_json_schema()` where a caller can see it.
 - **Declare a shared field once, on the class that owns it.** Redeclaring a field in a
   subclass silently drops the inherited `description`, so a field common to every
   subclass belongs on the base (`Objective.w`, `PriorConstraint.initial_value`). Only
