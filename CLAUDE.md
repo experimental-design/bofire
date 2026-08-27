@@ -343,7 +343,11 @@ The spec is automatically picked up by `tests/bofire/conftest.py` which imports 
   reveal the difference (`TargetObjective` vs `CloseToTargetObjective`); a pointer like
   "use instead of X" that only restates the class name is noise, and goes stale as
   siblings come and go. Skip notes that matter only to someone reading the source, such
-  as which class something inherits from. An `Examples:` block is encouraged on concrete
+  as which class something inherits from. **Describe only what a caller can set or
+  observe** — never a BoFire-internal artefact such as the naming scheme of generated
+  columns, which a caller cannot address and will only be tempted to try. State the
+  consequence instead: not "produces `{key}_{feature}` columns" but "a kernel can only
+  select them as a group". An `Examples:` block is encouraged on concrete
   types but is optional and not executed; keep it to the fields a caller actually needs
   to set, leaving the rest at their defaults. Write examples as a Google `Examples:`
   section with `>>>`, never as a reStructuredText `Example::` literal block — the whole
