@@ -318,20 +318,17 @@ class CloneFeature(EngineeredFeature):
     This is useful if you want to have features undergoing different scalers
     before entering different kernels.
 
-    All the cloned features live under this one key, one column each. That key is how
-    a feature-specific kernel addresses them, so they are selectable only as a group:
-    a kernel naming this feature gets every column it produced. Clone features
-    separately — one ``CloneFeature`` each — when they need to be addressed
+    All the features cloned here live under this one key, and a feature-specific kernel
+    addresses them through it — so they can only be selected as a group. Clone features
+    separately, one ``CloneFeature`` each, when a kernel needs to reach them
     individually.
 
     Examples:
-        A single clone, addressable on its own:
+        A single clone, which a kernel can select on its own:
 
         >>> CloneFeature(key="temperature_copy", features=["temperature"])
 
-        Two features cloned as one group, giving the columns
-        ``rates_copy_flow_a`` and ``rates_copy_flow_b``, which a kernel can only
-        select together as ``rates_copy``:
+        Two features cloned as one group, which a kernel can only select together:
 
         >>> CloneFeature(key="rates_copy", features=["flow_a", "flow_b"])
     """
@@ -339,9 +336,8 @@ class CloneFeature(EngineeredFeature):
     type: Literal["CloneFeature"] = "CloneFeature"
     order_id: ClassVar[int] = 5
     features: OneFeatureKeys = Field(
-        description="Keys of the input features to copy, at least one. Each produces "
-        "a column named `{key}_{feature}`, and all of them are addressed together "
-        "under this feature's key.",
+        description="Keys of the input features to copy, at least one. They are all "
+        "addressed together under this feature's key.",
     )
 
     def get_names(self, inputs: "Inputs") -> List[str]:
