@@ -36,6 +36,23 @@ class MCAcquisitionFunction(AcquisitionFunction):
     )
 
 
+class NoisyAcquisitionFunction(AcquisitionFunction):
+    """Acquisition function that treats the observed results as noisy.
+
+    Rather than taking the best result so far at face value, these integrate over the
+    model's belief about the points already observed. That is the right choice whenever
+    a repeated experiment would not return exactly the same number.
+    """
+
+    type: Any
+    prune_baseline: bool = Field(
+        default=True,
+        description="Whether to drop already-observed points that cannot plausibly be "
+        "optimal before evaluating. This shrinks the problem and usually speeds "
+        "optimization up without changing the result.",
+    )
+
+
 class SingleObjectiveAcquisitionFunction(AcquisitionFunction):
     """Acquisition function for optimizing one output."""
 
@@ -60,25 +77,21 @@ class MultiObjectiveAcquisitionFunction(AcquisitionFunction):
     )
 
 
-class qNEI(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
+class qNEI(
+    MCAcquisitionFunction, NoisyAcquisitionFunction, SingleObjectiveAcquisitionFunction
+):
     """Noisy expected improvement over the best observed result.
 
-    Unlike `qEI`, it does not treat the best observation as exact: it integrates over
-    the model's belief about the already-observed points, which is the right choice when
-    the measurements are noisy. Prefer `qLogNEI`, whose reformulation optimizes more
-    reliably.
+    Unlike `qEI`, it does not treat the best observation as exact. Prefer `qLogNEI`,
+    whose reformulation optimizes more reliably.
     """
 
     type: Literal["qNEI"] = "qNEI"
-    prune_baseline: bool = Field(
-        default=True,
-        description="Whether to drop already-observed points that are unlikely to be "
-        "the best one before evaluating. This shrinks the problem and usually speeds "
-        "optimization up without changing the result.",
-    )
 
 
-class qLogNEI(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
+class qLogNEI(
+    MCAcquisitionFunction, NoisyAcquisitionFunction, SingleObjectiveAcquisitionFunction
+):
     """Noisy expected improvement, evaluated in log space.
 
     Numerically the best-behaved of the improvement-based acquisition functions and the
@@ -87,12 +100,6 @@ class qLogNEI(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
     """
 
     type: Literal["qLogNEI"] = "qLogNEI"
-    prune_baseline: bool = Field(
-        default=True,
-        description="Whether to drop already-observed points that are unlikely to be "
-        "the best one before evaluating. This shrinks the problem and usually speeds "
-        "optimization up without changing the result.",
-    )
 
 
 class pTS(SingleObjectiveAcquisitionFunction):
@@ -195,24 +202,21 @@ class qLogEHVI(MCAcquisitionFunction, MultiObjectiveAcquisitionFunction):
     type: Literal["qLogEHVI"] = "qLogEHVI"
 
 
-class qNEHVI(MCAcquisitionFunction, MultiObjectiveAcquisitionFunction):
+class qNEHVI(
+    MCAcquisitionFunction, NoisyAcquisitionFunction, MultiObjectiveAcquisitionFunction
+):
     """Noisy expected hypervolume improvement over the current Pareto front.
 
-    Integrates over the model's belief about the already-observed points instead of
-    taking the observed front as exact, which is what makes it suitable for noisy
+    Does not take the observed front as exact, which is what makes it suitable for noisy
     measurements. Prefer `qLogNEHVI`, whose reformulation optimizes more reliably.
     """
 
     type: Literal["qNEHVI"] = "qNEHVI"
-    prune_baseline: bool = Field(
-        default=True,
-        description="Whether to drop already-observed points that are unlikely to lie "
-        "on the Pareto front before evaluating. This shrinks the problem and usually "
-        "speeds optimization up without changing the result.",
-    )
 
 
-class qLogNEHVI(MCAcquisitionFunction, MultiObjectiveAcquisitionFunction):
+class qLogNEHVI(
+    MCAcquisitionFunction, NoisyAcquisitionFunction, MultiObjectiveAcquisitionFunction
+):
     """Noisy expected hypervolume improvement, evaluated in log space.
 
     Numerically the best-behaved of the hypervolume acquisition functions and the usual
@@ -220,12 +224,6 @@ class qLogNEHVI(MCAcquisitionFunction, MultiObjectiveAcquisitionFunction):
     """
 
     type: Literal["qLogNEHVI"] = "qLogNEHVI"
-    prune_baseline: bool = Field(
-        default=True,
-        description="Whether to drop already-observed points that are unlikely to lie "
-        "on the Pareto front before evaluating. This shrinks the problem and usually "
-        "speeds optimization up without changing the result.",
-    )
 
 
 class qMFHVKG(MCAcquisitionFunction, MultiObjectiveAcquisitionFunction):
@@ -269,8 +267,9 @@ class qNegIntPosVar(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
     weights: Optional[Dict[str, PositiveFloat]] = Field(
         default=None,
         description="How much reducing the uncertainty of each output counts, keyed by "
-        "output feature key. If not provided, all outputs count equally. The values are "
-        "normalized, so only their ratios matter.",
+        "output feature key. The outputs are combined additively, as a weighted sum of "
+        "their variances, so only the ratios between the weights affect which candidate "
+        "wins. If not provided, all outputs count equally.",
     )
 
 
@@ -283,8 +282,11 @@ class qLogPF(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
     and is especially useful in combination with the FeasibleExperimentCondition
     within the StepwiseStrategy.
 
-    It optimizes for feasibility alone and ignores the objectives entirely, so it is a
-    way out of an infeasible region rather than a way to a good result.
+    What counts as feasible comes from the outputs whose objective is a
+    `ConstrainedObjective` — the sigmoid objectives, `TargetObjective` and
+    `ConstrainedCategoricalObjective`. Those still shape the score; what this drops is
+    the objective being optimized, so it is a way out of an infeasible region rather
+    than a way to a good result.
     """
 
     type: Literal["qLogPF"] = "qLogPF"
