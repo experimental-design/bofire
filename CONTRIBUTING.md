@@ -38,7 +38,10 @@ they are the API surface for users and for LLM agents alike — and only
 `Field(description=...)` ends up in `model_json_schema()`, which is what an agent reads.
 The class doc-string says what the model does, how it behaves and what a sensible value
 looks like. Compare it with a sibling only where the two are genuinely easy to confuse
-and the names do not reveal the difference. An `Examples:` block is encouraged on the
+and the names do not reveal the difference. Describe only what a caller can set or
+observe — internals such as the naming scheme of generated columns do not belong in a
+doc-string, since nobody can address them; state the consequence instead. An
+`Examples:` block is encouraged on the
 concrete types, but it is optional, is not executed by the test suite, and should set
 only the fields a caller actually needs. Write it as a Google `Examples:` section with
 `>>>` rather than a reStructuredText `Example::` literal block, since the doc-string is

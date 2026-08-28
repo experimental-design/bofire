@@ -776,7 +776,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="imports-and-settings" class="level2">
 <h2 class="anchored" data-anchor-id="imports-and-settings">Imports and settings</h2>
-<div id="48323769" class="cell" data-tags="[]" data-execution_count="1">
+<div id="ffdf230f" class="cell" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -810,7 +810,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="generate-the-training-data" class="level2">
 <h2 class="anchored" data-anchor-id="generate-the-training-data">Generate the training data</h2>
 <p>The benchmark represents the unknown experimental system. We draw a small initial design and evaluate it to obtain the only data used to fit the GPs. There are no Bayesian-optimization iterations in this tutorial.</p>
-<div id="58b461aa" class="cell" data-tags="[]" data-execution_count="2">
+<div id="8cce3b81" class="cell" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample_inputs(</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    benchmark: Benchmark,</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    n_samples: <span class="bu">int</span>,</span>
@@ -901,7 +901,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="fit-the-mobo-surrogate-models" class="level2">
 <h2 class="anchored" data-anchor-id="fit-the-mobo-surrogate-models">Fit the MOBO surrogate models</h2>
 <p><code>MoboStrategy.tell</code> fits one surrogate model per output. The strategy’s <code>predict</code> method then exposes the GP posterior means and standard deviations.</p>
-<div id="501460f8" class="cell" data-tags="[]" data-execution_count="3">
+<div id="0eb4d542" class="cell" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> MoboStrategy(domain<span class="op">=</span>bnh.domain, seed<span class="op">=</span>SEED)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>mobo_strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>mobo_strategy.tell(initial_data)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -917,7 +917,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>We use Sobol samples here instead of independent uniform samples because they spread out a little more evenly, but the basic idea is still the same. For BNH, which has only two inputs, this works surprisingly well and gives us a nice baseline for the GA.</p>
 <p>The approach becomes less fun in higher dimensions: we are basically hoping to get lucky and place enough samples near the Pareto set. That is where the GA starts to earn its keep.</p>
 <p>This tutorial is a showcase rather than a competitive benchmark of Sobol sampling versus the GA. However, as the input dimension grows, space-filling samples become sparse, whereas the GA can concentrate later evaluations around promising trade-offs; it is therefore expected to scale more favorably for front estimation.</p>
-<div id="3973eba5" class="cell" data-tags="[]" data-execution_count="4">
+<div id="a7e43447" class="cell" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gp_mean_experiments(candidates: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    candidates <span class="op">=</span> candidates.reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    predictions <span class="op">=</span> mobo_strategy.predict(candidates)</span>
@@ -951,7 +951,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>gp_mean_objectives</code> evaluates the fitted GP posterior means.</li>
 </ul>
 <p><strong>Why <code>optimization_direction="min"</code> when the domain already defines objectives?</strong> The GA does not read the BoFire domain’s objective directions. Instead, it treats the returned objective vectors as raw values to be optimized in a single uniform sense (all minimized or all maximized). If your problem mixes minimization and maximization objectives, you must flip or transform the relevant columns inside your objective callable so that the returned array has a consistent optimization sense matching <code>optimization_direction</code>.</p>
-<div id="c096ca02" class="cell" data-tags="[]" data-execution_count="5">
+<div id="f6daec3d" class="cell" data-tags="[]" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> stack_individuals(individuals: <span class="bu">list</span>[pd.DataFrame]) <span class="op">-&gt;</span> pd.DataFrame:</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Combine pymoo's one-dataframe-per-individual representation."""</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.concat(individuals, ignore_index<span class="op">=</span><span class="va">True</span>)</span>
@@ -972,7 +972,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="find-a-benchmark-front-with-the-ga" class="level2">
 <h2 class="anchored" data-anchor-id="find-a-benchmark-front-with-the-ga">Find a benchmark front with the GA</h2>
 <p>The first GA run evaluates the benchmark directly. Its result is a numerical approximation, not an exact analytical front: a GA can still have residual search error. We form the numerical reference used below from the nondominated union of the Sobol and GA results. In an application with a known analytical front, prefer that as the reference.</p>
-<div id="13795c20" class="cell" data-tags="[]" data-execution_count="6">
+<div id="078399e1" class="cell" data-tags="[]" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>ga <span class="op">=</span> GeneticAlgorithmOptimizer(</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    population_size<span class="op">=</span>GA_POPULATION_SIZE,</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    n_max_gen<span class="op">=</span>GA_MAX_GENERATIONS,</span>
@@ -1009,7 +1009,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="find-the-gp-posterior-mean-front">Find the GP posterior-mean front</h2>
 <p>The second run uses exactly the same GA configuration, but optimizes the GP posterior means. This removes random input coverage as a confounding factor when comparing the two fronts.</p>
 <p>The GP posterior is a distribution over functions, so it does not define one unique deterministic front. Optimizing the posterior mean provides a useful plug-in estimate of the front that the model currently believes is best.</p>
-<div id="c183726e" class="cell" data-tags="[]" data-execution_count="7">
+<div id="e9dae90f" class="cell" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>np.random.seed(SEED)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>gp_solutions, _ <span class="op">=</span> run_ga(</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>ga,</span>
@@ -1039,7 +1039,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="evaluate-the-gp-selected-inputs-on-the-benchmark" class="level2">
 <h2 class="anchored" data-anchor-id="evaluate-the-gp-selected-inputs-on-the-benchmark">Evaluate the GP-selected inputs on the benchmark</h2>
 <p>In a benchmark study we can evaluate the inputs selected by the GP-based GA on the actual functions. Comparing the predictions and evaluations at identical inputs isolates surrogate-model error around the model’s believed Pareto set.</p>
-<div id="cfe7ffa2" class="cell" data-tags="[]" data-execution_count="8">
+<div id="4ca75f0e" class="cell" data-tags="[]" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>gp_inputs_on_benchmark <span class="op">=</span> bnh.f(gp_inputs, return_complete<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>prediction_errors <span class="op">=</span> pd.DataFrame(</span>
@@ -1067,13 +1067,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">mean</th>
-<td>1.276113</td>
-<td>1.436753</td>
+<td>0.764646</td>
+<td>0.846713</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">max</th>
-<td>6.823347</td>
-<td>11.663912</td>
+<td>4.759004</td>
+<td>5.119717</td>
 </tr>
 </tbody>
 </table>
@@ -1083,7 +1083,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>The hypervolume summary compares search quality within each response source. Benchmark and GP hypervolumes should not be compared directly because one uses actual responses and the other uses model predictions.</p>
 <p>Over the BNH input domain, the largest attainable values are 136 for <code>f1</code> and 50 for <code>f2</code>. Because both objectives are minimized, larger values are worse. We therefore choose a reference point two units beyond those values: <code>(138, 52)</code>. The same fixed reference point is used for every front.</p>
-<div id="97c4c6ce" class="cell" data-tags="[]" data-execution_count="9">
+<div id="c10b82f7" class="cell" data-tags="[]" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>front_summary <span class="op">=</span> pd.DataFrame(</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    [</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        {</span>
@@ -1158,13 +1158,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th data-quarto-table-cell-role="th">1</th>
 <td>Benchmark — GA</td>
 <td>24</td>
-<td>5236.390197</td>
+<td>5227.477821</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
 <td>Benchmark — combined reference</td>
-<td>52</td>
-<td>5359.476633</td>
+<td>46</td>
+<td>5354.849826</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
@@ -1176,7 +1176,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <th data-quarto-table-cell-role="th">4</th>
 <td>GP mean — GA</td>
 <td>24</td>
-<td>4918.681688</td>
+<td>4931.585277</td>
 </tr>
 </tbody>
 </table>
@@ -1194,7 +1194,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>The GP mean front shows what the fitted models predict at their selected inputs, with ±1σ error bars from the GP posterior. Large error bars indicate the model is uncertain about its believed front.</li>
 <li>The benchmark values at those same inputs show whether the GP predictions and selected Pareto set are reliable.</li>
 </ul>
-<div id="a716b82a" class="cell" data-tags="[]" data-execution_count="10">
+<div id="ea6a122e" class="cell" data-tags="[]" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>benchmark_reference_front <span class="op">=</span> benchmark_reference_front.sort_values(<span class="st">"f1"</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>benchmark_ga_front <span class="op">=</span> benchmark_ga_front.sort_values(<span class="st">"f1"</span>)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
