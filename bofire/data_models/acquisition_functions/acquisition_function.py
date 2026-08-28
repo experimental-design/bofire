@@ -18,15 +18,14 @@ class AcquisitionFunction(BaseModel):
     type: Any
 
 
-class MCAcquisitionFunction(AcquisitionFunction):
-    """Acquisition function whose value is approximated by Monte Carlo sampling.
+class MCAcquisitionFunction(BaseModel):
+    """Mixin for an acquisition function approximated by Monte Carlo sampling.
 
-    Sampling is what lets these score a whole batch of candidates jointly rather than one
-    point at a time, at the cost of an approximation whose noise falls as the sample
-    count rises.
+    Sampling is what lets such a function score a whole batch of candidates jointly
+    rather than one point at a time, at the cost of an approximation whose noise falls
+    as the sample count rises.
     """
 
-    type: Any
     n_mc_samples: IntPowerOfTwo = Field(
         default=512,
         description="Number of Monte Carlo samples drawn to approximate the "
@@ -36,15 +35,15 @@ class MCAcquisitionFunction(AcquisitionFunction):
     )
 
 
-class NoisyAcquisitionFunction(AcquisitionFunction):
-    """Acquisition function that treats the observed results as noisy.
+class NoisyAcquisitionFunction(BaseModel):
+    """Mixin for an acquisition function that treats the observed results as noisy.
 
-    Rather than taking the best result so far at face value, these integrate over the
-    model's belief about the points already observed. That is the right choice whenever
-    a repeated experiment would not return exactly the same number.
+    Rather than taking the best result so far at face value, it integrates over the
+    model's belief about the points already observed. Doing so is never wrong — with
+    noise-free data it simply costs more compute for the same answer — so the choice is
+    one of efficiency rather than correctness.
     """
 
-    type: Any
     prune_baseline: bool = Field(
         default=True,
         description="Whether to drop already-observed points that cannot plausibly be "
@@ -62,9 +61,9 @@ class SingleObjectiveAcquisitionFunction(AcquisitionFunction):
 class MultiObjectiveAcquisitionFunction(AcquisitionFunction):
     """Acquisition function for trading off several outputs against each other.
 
-    These score a candidate by how much it would enlarge the dominated hypervolume, so
-    they need a reference point and they reward filling gaps in the Pareto front rather
-    than improving any single output.
+    It scores a candidate by how much that candidate would enlarge the dominated
+    hypervolume, so it needs a reference point and it rewards filling gaps in the Pareto
+    front rather than improving any single output.
     """
 
     type: Any
@@ -107,8 +106,7 @@ class pTS(SingleObjectiveAcquisitionFunction):
 
     Draws a sample function from the model and proposes its optimum, so exploration
     comes from the randomness of the draw rather than from an explicit trade-off
-    parameter. It takes no settings, and being sample-path based it needs no Monte Carlo
-    sample count.
+    parameter.
     """
 
     type: Literal["pTS"] = "pTS"
@@ -140,8 +138,7 @@ class qSR(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
 
     Purely exploitative — it ignores uncertainty and heads for wherever the model
     predicts the best mean, which makes it a reasonable final-step choice but prone to
-    getting stuck if used throughout a campaign. It cannot handle output constraints
-    separately and falls back to a constrained Monte Carlo objective.
+    getting stuck if used throughout a campaign.
     """
 
     type: Literal["qSR"] = "qSR"
@@ -150,10 +147,10 @@ class qSR(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
 class qUCB(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
     """Upper confidence bound: predicted mean plus a multiple of the uncertainty.
 
-    The one acquisition function whose exploration is set explicitly rather than implied,
-    which makes it the natural choice when you want direct control over that trade-off.
-    It cannot handle output constraints separately and falls back to a constrained Monte
-    Carlo objective.
+    The exploration of this acquisition function is set explicitly, by `beta`, rather
+    than following from the form of the score. That parameter is not easy to tune, so
+    the explicitness is worth having mainly when a particular trade-off is being
+    imposed deliberately.
     """
 
     type: Literal["qUCB"] = "qUCB"
@@ -229,10 +226,11 @@ class qLogNEHVI(
 class qMFHVKG(MCAcquisitionFunction, MultiObjectiveAcquisitionFunction):
     """Multi-fidelity hypervolume knowledge gradient.
 
-    Scores how much running a candidate would improve the Pareto front you could report
-    afterwards, rather than how good the candidate itself looks. That look-ahead is what
-    lets it decide to spend a cheap low-fidelity evaluation for information alone, so it
-    is the multi-objective choice for a domain with a task or fidelity input.
+    Proposes the candidate that maximizes the *global reward* — the maximum of the
+    surrogate's mean prediction after the experiment at that candidate has been
+    observed. This encourages proposing cheap, low-fidelity candidates now in order to
+    know more about the best experiment next time. Use it for a domain with a task or
+    fidelity input.
     """
 
     type: Literal["qMFHVKG"] = "qMFHVKG"
@@ -282,12 +280,9 @@ class qLogPF(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
     and is especially useful in combination with the FeasibleExperimentCondition
     within the StepwiseStrategy.
 
-    What counts as feasible comes from the outputs carrying one of the objectives that
-    define a constraint, namely `MaximizeSigmoidObjective`, `MinimizeSigmoidObjective`,
-    `MovingMaximizeSigmoidObjective`, `TargetObjective` and
-    `ConstrainedCategoricalObjective`. Those still shape the score; what this drops is
-    the objective being optimized, so it is a way out of an infeasible region rather
-    than a way to a good result.
+    It is evaluated against all of the outputs carrying a *constrained* objective. It
+    does not account for the optimization objectives, so it provides a way out of an
+    infeasible region rather than a high objective value.
     """
 
     type: Literal["qLogPF"] = "qLogPF"
