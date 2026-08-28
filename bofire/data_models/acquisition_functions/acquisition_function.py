@@ -1,6 +1,7 @@
-from typing import Annotated, Any, Dict, Literal, Optional
+import warnings
+from typing import Annotated, Any, ClassVar, Dict, Literal, Optional
 
-from pydantic import Field, PositiveFloat
+from pydantic import Field, PositiveFloat, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.types import IntPowerOfTwo
@@ -33,6 +34,28 @@ class MCAcquisitionFunction(BaseModel):
         "candidate selection more reproducible, at proportionally higher cost per "
         "optimization step. Must be a power of two.",
     )
+
+
+class SupersededByLogVariant(BaseModel):
+    """Mixin for an acquisition function whose log-space variant should be used instead.
+
+    The plain formulations underflow to zero once improvements become small, leaving the
+    optimizer without a gradient to follow, which the log variants fix. Subclasses name
+    their replacement in `log_variant`.
+    """
+
+    log_variant: ClassVar[str]
+
+    @model_validator(mode="after")
+    def warn_superseded_by_log_variant(self):
+        warnings.warn(
+            f"{type(self).__name__} is deprecated and will be removed in a future "
+            f"release. Use {self.log_variant} instead: it optimizes the same quantity "
+            "in log space, which is numerically better behaved.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self
 
 
 class NoisyAcquisitionFunction(BaseModel):
@@ -77,15 +100,19 @@ class MultiObjectiveAcquisitionFunction(AcquisitionFunction):
 
 
 class qNEI(
-    MCAcquisitionFunction, NoisyAcquisitionFunction, SingleObjectiveAcquisitionFunction
+    MCAcquisitionFunction,
+    NoisyAcquisitionFunction,
+    SupersededByLogVariant,
+    SingleObjectiveAcquisitionFunction,
 ):
     """Noisy expected improvement over the best observed result.
 
-    Unlike `qEI`, it does not treat the best observation as exact. Prefer `qLogNEI`,
-    whose reformulation optimizes more reliably.
+    Deprecated in favour of `qLogNEI`. Unlike `qEI`, it does not treat the best
+    observation as exact.
     """
 
     type: Literal["qNEI"] = "qNEI"
+    log_variant: ClassVar[str] = "qLogNEI"
 
 
 class qLogNEI(
@@ -112,15 +139,17 @@ class pTS(SingleObjectiveAcquisitionFunction):
     type: Literal["pTS"] = "pTS"
 
 
-class qEI(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
+class qEI(
+    MCAcquisitionFunction, SupersededByLogVariant, SingleObjectiveAcquisitionFunction
+):
     """Expected improvement over the best observed result.
 
-    Assumes the best observation is exact, so it suits noise-free evaluations; use
-    `qNEI` when measurements are noisy. Prefer `qLogEI`, whose reformulation optimizes
-    more reliably.
+    Deprecated in favour of `qLogEI`. Assumes the best observation is exact, so it suits
+    noise-free evaluations; use `qNEI` when measurements are noisy.
     """
 
     type: Literal["qEI"] = "qEI"
+    log_variant: ClassVar[str] = "qLogEI"
 
 
 class qLogEI(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
@@ -178,15 +207,17 @@ class qPI(MCAcquisitionFunction, SingleObjectiveAcquisitionFunction):
     )
 
 
-class qEHVI(MCAcquisitionFunction, MultiObjectiveAcquisitionFunction):
+class qEHVI(
+    MCAcquisitionFunction, SupersededByLogVariant, MultiObjectiveAcquisitionFunction
+):
     """Expected hypervolume improvement over the current Pareto front.
 
-    Assumes the observed front is exact, so it suits noise-free evaluations; use
-    `qNEHVI` when measurements are noisy. Prefer `qLogEHVI`, whose reformulation
-    optimizes more reliably.
+    Deprecated in favour of `qLogEHVI`. Assumes the observed front is exact, so it suits
+    noise-free evaluations; use `qNEHVI` when measurements are noisy.
     """
 
     type: Literal["qEHVI"] = "qEHVI"
+    log_variant: ClassVar[str] = "qLogEHVI"
 
 
 class qLogEHVI(MCAcquisitionFunction, MultiObjectiveAcquisitionFunction):
@@ -200,15 +231,19 @@ class qLogEHVI(MCAcquisitionFunction, MultiObjectiveAcquisitionFunction):
 
 
 class qNEHVI(
-    MCAcquisitionFunction, NoisyAcquisitionFunction, MultiObjectiveAcquisitionFunction
+    MCAcquisitionFunction,
+    NoisyAcquisitionFunction,
+    SupersededByLogVariant,
+    MultiObjectiveAcquisitionFunction,
 ):
     """Noisy expected hypervolume improvement over the current Pareto front.
 
-    Does not take the observed front as exact, which is what makes it suitable for noisy
-    measurements. Prefer `qLogNEHVI`, whose reformulation optimizes more reliably.
+    Deprecated in favour of `qLogNEHVI`. Does not take the observed front as exact,
+    which is what makes it suitable for noisy measurements.
     """
 
     type: Literal["qNEHVI"] = "qNEHVI"
+    log_variant: ClassVar[str] = "qLogNEHVI"
 
 
 class qLogNEHVI(
