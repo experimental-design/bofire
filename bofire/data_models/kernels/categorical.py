@@ -2,20 +2,30 @@ from typing import Annotated, Literal, Optional
 
 from pydantic import Field, model_validator
 
-from bofire.data_models.kernels.kernel import FeatureSpecificKernel
+from bofire.data_models.kernels.kernel import (
+    ARDKernel,
+    FeatureSpecificKernel,
+    LengthscaleKernel,
+)
 from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 from bofire.data_models.priors.constraint import Positive
 
 
 class CategoricalKernel(FeatureSpecificKernel):
+    """Kernel acting on categorical inputs."""
+
     pass
 
 
-class HammingDistanceKernel(CategoricalKernel):
+class HammingDistanceKernel(ARDKernel, LengthscaleKernel, CategoricalKernel):
+    """Kernel measuring similarity as the number of categories two candidates share.
+
+    Treats the categories as unordered and equally distant from one another, which is
+    the right default unless there is structure among them that `IndexKernel` could
+    learn instead.
+    """
+
     type: Literal["HammingDistanceKernel"] = "HammingDistanceKernel"
-    ard: bool = True
-    lengthscale_prior: Optional[AnyPrior] = None
-    lengthscale_constraint: Optional[AnyPriorConstraint] = None
 
 
 class IndexKernel(CategoricalKernel):
@@ -32,22 +42,31 @@ class IndexKernel(CategoricalKernel):
 
     where $B$ is a low-rank matrix, and $\mathbf v$ is a  non-negative vector.
 
-    Attributes:
-        num_categories (int): Number of categorical values, must be ≥ 2.
-        rank (int): Rank of the kernel approximation, must be ≥ 1 and ≤ num_categories.
-                    Lower rank provides more regularization.
-        prior (Optional[AnyPrior]): Prior distribution over kernel hyperparameters.
-        var_constraint (Optional[AnyPriorConstraint]): Constraint on variance parameter,
-                                                         defaults to Positive().
-    Raises:
-        ValueError: If rank > num_categories.
+    Unlike `HammingDistanceKernel`, which holds all categories equally distant, this
+    learns how similar the categories are from the data.
     """
 
     type: Literal["IndexKernel"] = "IndexKernel"
-    num_categories: Annotated[int, Field(ge=2)]
-    rank: Annotated[int, Field(ge=1)] = 1
-    prior: Optional[AnyPrior] = None
-    var_constraint: Optional[AnyPriorConstraint] = Positive()
+    num_categories: Annotated[int, Field(ge=2)] = Field(
+        description="Number of categories the kernel covers.",
+    )
+    rank: Annotated[int, Field(ge=1)] = Field(
+        default=1,
+        description="Rank of the learned similarity matrix, at most `num_categories`. "
+        "A low rank forces the categories onto a few shared dimensions, which "
+        "regularizes the fit; raising it allows a richer relationship at the cost of "
+        "more parameters.",
+    )
+    prior: Optional[AnyPrior] = Field(
+        default=None,
+        description="Prior over the entries of the low-rank matrix. If not provided, "
+        "the surrogate's default is used.",
+    )
+    var_constraint: Optional[AnyPriorConstraint] = Field(
+        default=Positive(),
+        description="Constraint on the per-category variance added on the diagonal, "
+        "which keeps it non-negative.",
+    )
 
     @model_validator(mode="after")
     def validate_rank_vs_categories(self):
@@ -72,34 +91,55 @@ class PositiveIndexKernel(CategoricalKernel):
 
     NOTE: This kernel should only be used when the correlation between different categories
     is expected to be positive.
-
-    Attributes:
-        num_categories (int): Number of categorical values, must be ≥ 2.
-        rank (int): Rank of the kernel approximation, must be ≥ 1 and ≤ num_categories.
-                    Lower rank provides more regularization.
-        prior (Optional[AnyPrior]): Prior distribution over kernel hyperparameters.
-        var_constraint (Optional[AnyPriorConstraint]): Constraint on variance parameter,
-                                                         defaults to Positive().
-        task_prior (Optional[AnyPrior]): Prior distribution over task-specific parameters.
-        diag_prior (Optional[AnyPrior]): Prior distribution over diagonal elements.
-        normalize_covar_matrix (bool): Whether to normalize the covariance matrix.
-        target_task_index (int): Index of the target task for normalization to value 1,
-                                default to 0 (first category).
-        unit_scale_for_target (bool): Whether to use unit scale for the target task.
-    Raises:
-        ValueError: If rank > num_categories.
     """
 
     type: Literal["PositiveIndexKernel"] = "PositiveIndexKernel"
-    num_categories: Annotated[int, Field(ge=2)]
-    rank: Annotated[int, Field(ge=1)] = 1
-    prior: Optional[AnyPrior] = None
-    var_constraint: Optional[AnyPriorConstraint] = Positive()
-    task_prior: Optional[AnyPrior] = None
-    diag_prior: Optional[AnyPrior] = None
-    normalize_covar_matrix: bool = False
-    target_task_index: Annotated[int, Field(ge=0)] = 0
-    unit_scale_for_target: bool = True
+    num_categories: Annotated[int, Field(ge=2)] = Field(
+        description="Number of categories the kernel covers.",
+    )
+    rank: Annotated[int, Field(ge=1)] = Field(
+        default=1,
+        description="Rank of the learned similarity matrix, at most `num_categories`. "
+        "A low rank forces the categories onto a few shared dimensions, which "
+        "regularizes the fit; raising it allows a richer relationship at the cost of "
+        "more parameters.",
+    )
+    prior: Optional[AnyPrior] = Field(
+        default=None,
+        description="Prior over the entries of the triangular factor. If not provided, "
+        "the surrogate's default is used.",
+    )
+    var_constraint: Optional[AnyPriorConstraint] = Field(
+        default=Positive(),
+        description="Constraint on the per-category variance added on the diagonal, "
+        "which keeps it non-negative.",
+    )
+    task_prior: Optional[AnyPrior] = Field(
+        default=None,
+        description="Prior over the off-diagonal entries, which govern how strongly "
+        "the categories are correlated with one another.",
+    )
+    diag_prior: Optional[AnyPrior] = Field(
+        default=None,
+        description="Prior over the diagonal entries, which govern how much variance "
+        "each category has of its own.",
+    )
+    normalize_covar_matrix: bool = Field(
+        default=False,
+        description="Whether to rescale the whole matrix so that the correlations are "
+        "read on a common scale.",
+    )
+    target_task_index: Annotated[int, Field(ge=0)] = Field(
+        default=0,
+        description="Index into the categories of the one treated as the target, whose "
+        "diagonal entry is normalized to 1 so the others are expressed relative to it. "
+        "Must be below `num_categories` - 1.",
+    )
+    unit_scale_for_target: bool = Field(
+        default=True,
+        description="Whether the target category is held at unit variance rather than "
+        "having its own fitted.",
+    )
 
     @model_validator(mode="after")
     def validate_rank_vs_categories(self):

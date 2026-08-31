@@ -1,6 +1,8 @@
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
 
+from pydantic import Field
+
 from bofire.data_models.kernels.categorical import (
     HammingDistanceKernel,
     IndexKernel,
@@ -23,6 +25,12 @@ from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 
 
 class AdditiveKernel(AggregationKernel):
+    """Sum of several kernels.
+
+    Two candidates count as similar if they are similar under any one of the summed
+    kernels, which suits a response made of separable contributions.
+    """
+
     type: Literal["AdditiveKernel"] = "AdditiveKernel"
     kernels: Sequence[
         Union[
@@ -42,11 +50,16 @@ class AdditiveKernel(AggregationKernel):
             "MultiplicativeKernel",
             "ScaleKernel",
         ]
-    ]
-    type: Literal["AdditiveKernel"] = "AdditiveKernel"
+    ] = Field(description="The kernels to sum.")
 
 
 class MultiplicativeKernel(AggregationKernel):
+    """Product of several kernels.
+
+    Two candidates count as similar only if they are similar under every one of the
+    multiplied kernels, which is how an interaction between input types is expressed.
+    """
+
     type: Literal["MultiplicativeKernel"] = "MultiplicativeKernel"
     kernels: Sequence[
         Union[
@@ -66,10 +79,16 @@ class MultiplicativeKernel(AggregationKernel):
             "MultiplicativeKernel",
             "ScaleKernel",
         ]
-    ]
+    ] = Field(description="The kernels to multiply.")
 
 
 class ScaleKernel(AggregationKernel):
+    """Wraps another kernel with a fitted output scale.
+
+    The base kernel decides which candidates are similar; this decides how much the
+    response actually varies, which is why most kernels are wrapped in one before use.
+    """
+
     type: Literal["ScaleKernel"] = "ScaleKernel"
     base_kernel: Union[
         RBFKernel,
@@ -87,11 +106,19 @@ class ScaleKernel(AggregationKernel):
         "ScaleKernel",
         WassersteinKernel,
         ExactWassersteinKernel,
-    ]
+    ] = Field(description="The kernel whose output is scaled.")
     # the ScaleKernel mapper forwards the dimensionality d to the outputscale prior, so
     # dimensionality-scaled priors are supported here.
-    outputscale_prior: Optional[AnyPrior] = None
-    outputscale_constraint: Optional[AnyPriorConstraint] = None
+    outputscale_prior: Optional[AnyPrior] = Field(
+        default=None,
+        description="Prior over the output scale, which sets how far the response is "
+        "expected to vary. If not provided, the surrogate's default is used.",
+    )
+    outputscale_constraint: Optional[AnyPriorConstraint] = Field(
+        default=None,
+        description="Hard bounds on the output scale, enforced during fitting rather "
+        "than merely preferred as a prior is.",
+    )
 
 
 class PolynomialFeatureInteractionKernel(AggregationKernel):
@@ -127,11 +154,6 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
     ])
     ```
 
-    Attributes:
-        kernels: The base kernels that should interact.
-        max_degree: Maximum degree of interactions computed.
-        include_self_interactions: Whether a kernel is allowed to interact with itself.
-        outputscale_prior: The prior used to scale each interaction term before summing.
     """
 
     type: Literal["PolynomialFeatureInteractionKernel"] = (
@@ -153,10 +175,24 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
             WassersteinKernel,
             ExactWassersteinKernel,
         ]
-    ]
-    max_degree: int
-    include_self_interactions: bool
-    outputscale_prior: Optional[AnyPrior] = None
+    ] = Field(
+        description="The kernels whose interactions are computed. Typically one per "
+        "kind of input, so that the interactions run across the kinds.",
+    )
+    max_degree: int = Field(
+        description="Highest interaction order computed. 1 keeps the kernels "
+        "independent; 2 adds every pairwise interaction, and so on. The number of terms "
+        "grows quickly with this.",
+    )
+    include_self_interactions: bool = Field(
+        description="Whether a kernel may interact with itself, which adds the "
+        "quadratic and higher powers of each kernel alongside the cross terms.",
+    )
+    outputscale_prior: Optional[AnyPrior] = Field(
+        default=None,
+        description="Prior over the output scale applied to each interaction term "
+        "before the terms are summed. If not provided, the surrogate's default is used.",
+    )
 
 
 AdditiveKernel.model_rebuild()
