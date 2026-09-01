@@ -10,11 +10,16 @@ class MolecularKernel(FeatureSpecificKernel):
 
 
 class TanimotoKernel(ARDKernel, MolecularKernel):
-    """Kernel measuring molecular similarity as the overlap of two fingerprints.
+    r"""Kernel over molecular fingerprints, based on the Tanimoto similarity.
 
-    Compares which descriptor bits two molecules share relative to how many they have
-    between them, which is the standard similarity measure for fingerprints and suits
-    the sparse binary vectors they produce.
+    $$
+    k(\mathbf x, \mathbf x') = \frac{\mathbf x^{\top}\mathbf x'}
+        {\lVert \mathbf x \rVert^2 + \lVert \mathbf x' \rVert^2
+         - \mathbf x^{\top}\mathbf x'}
+    $$
+
+    Normalizing the shared bits by the bits present in either input is what makes this
+    the standard similarity for the sparse binary vectors a fingerprint produces.
     """
 
     type: Literal["TanimotoKernel"] = "TanimotoKernel"

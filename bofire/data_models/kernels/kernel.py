@@ -8,11 +8,12 @@ from bofire.data_models.types import NonRestrictedFeatureKeys
 
 
 class Kernel(BaseModel):
-    """Defines how similar the surrogate expects two candidates to behave.
+    r"""Covariance function of a Gaussian process.
 
-    The kernel is the assumption a Gaussian process makes about the response surface:
-    how smooth it is, over what distance points inform each other, and which inputs
-    matter at all. It is the main thing to change when a surrogate fits the data badly.
+    A kernel $k(\mathbf x, \mathbf x')$ gives the prior covariance between the function
+    values at two points of the input space. It encodes the assumptions the surrogate
+    makes about the response: how smooth it is, over what distance observations carry
+    information, and which inputs matter at all.
     """
 
     type: Any
@@ -25,41 +26,44 @@ class AggregationKernel(Kernel):
 
 
 class FeatureSpecificKernel(Kernel):
-    """Kernel that can be restricted to a subset of the inputs."""
+    """Kernel that can be restricted to a subset of the input dimensions."""
 
     features: Optional[NonRestrictedFeatureKeys] = Field(
         default=None,
-        description="Keys of the features this kernel acts on. Naming an engineered "
-        "feature selects every input it contributes. If not provided, the kernel acts "
-        "on all inputs of the surrogate.",
+        description="Keys of the features this kernel is evaluated on. An engineered "
+        "feature is referred to by its own key, and contributes all of the dimensions "
+        "it expands to. If not provided, the kernel is evaluated on every input of the "
+        "surrogate.",
     )
 
 
 class ARDKernel(BaseModel):
-    """Mixin for a kernel that can learn a separate lengthscale per input."""
+    r"""Mixin for a kernel supporting automatic relevance determination."""
 
     ard: bool = Field(
         default=True,
-        description="Whether to fit one lengthscale per input rather than a single "
-        "shared one. Separate lengthscales let the model discover that some inputs "
-        "matter more than others, at the cost of more parameters to fit, so turning "
-        "this off can help when there is little data.",
+        description="Whether to fit a separate lengthscale per input dimension rather "
+        "than one shared lengthscale. Separate lengthscales let the model down-weight "
+        "dimensions the response does not depend on, at the cost of one more parameter "
+        "per dimension, so a single lengthscale can fit better when data is scarce.",
     )
 
 
 class LengthscaleKernel(BaseModel):
-    """Mixin for a kernel with a fitted lengthscale."""
+    r"""Mixin for a kernel parametrized by a lengthscale $\ell$."""
 
     lengthscale_prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the lengthscale, which sets how far apart two "
-        "candidates can be and still inform each other. Worth setting when there is "
-        "little data, since the fitted value is otherwise driven by whatever few "
-        "points are available. If not provided, the surrogate's default is used.",
+        description="Prior over the lengthscale, which governs the distance over which "
+        "the function values stay correlated: a short lengthscale means a response "
+        "that varies rapidly. Worth setting when data is scarce, since the marginal "
+        "likelihood alone identifies it poorly. If not provided, no prior is placed on "
+        "the lengthscale and it is fitted from the data alone.",
     )
     lengthscale_constraint: Optional[AnyPriorConstraint] = Field(
         default=None,
-        description="Hard bounds on the lengthscale, enforced during fitting rather "
-        "than merely preferred as a prior is. If not provided, the surrogate's default "
-        "is used.",
+        description="Bounds the lengthscale is reparametrized into, so that values "
+        "outside them cannot be reached during fitting. This is a hard restriction, "
+        "unlike a prior, which only shifts the optimum. If not provided, GPyTorch's "
+        "default positivity constraint applies.",
     )

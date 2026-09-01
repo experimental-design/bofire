@@ -18,11 +18,16 @@ class CategoricalKernel(FeatureSpecificKernel):
 
 
 class HammingDistanceKernel(ARDKernel, LengthscaleKernel, CategoricalKernel):
-    """Kernel measuring similarity as the number of categories two candidates share.
+    r"""Kernel over categorical inputs based on the Hamming distance.
 
-    Treats the categories as unordered and equally distant from one another, which is
-    the right default unless there is structure among them that `IndexKernel` could
-    learn instead.
+    $$
+    k(\mathbf x, \mathbf x') = \exp\left(-\frac{d_H(\mathbf x, \mathbf x')}{\ell}\right)
+    $$
+
+    where $d_H$ counts the positions at which the two inputs hold different categories.
+    Every pair of distinct categories is therefore equally far apart, which is the right
+    assumption unless the categories have structure that `IndexKernel` could learn
+    instead.
     """
 
     type: Literal["HammingDistanceKernel"] = "HammingDistanceKernel"
@@ -43,7 +48,7 @@ class IndexKernel(CategoricalKernel):
     where $B$ is a low-rank matrix, and $\mathbf v$ is a  non-negative vector.
 
     Unlike `HammingDistanceKernel`, which holds all categories equally distant, this
-    learns how similar the categories are from the data.
+    learns from the data how similar the categories are.
     """
 
     type: Literal["IndexKernel"] = "IndexKernel"
@@ -59,13 +64,14 @@ class IndexKernel(CategoricalKernel):
     )
     prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the entries of the low-rank matrix. If not provided, "
-        "the surrogate's default is used.",
+        description="Prior over the entries of $B$. If not provided, no prior is "
+        "placed on them and they are fitted from the data alone.",
     )
     var_constraint: Optional[AnyPriorConstraint] = Field(
         default=Positive(),
-        description="Constraint on the per-category variance added on the diagonal, "
-        "which keeps it non-negative.",
+        description="Bounds the diagonal entries $\\mathbf v$ are reparametrized into. "
+        "Unlike `prior`, which only shifts the fitted value, this makes values outside "
+        "the bounds unreachable; the default keeps the variances positive.",
     )
 
     @model_validator(mode="after")
@@ -77,7 +83,7 @@ class IndexKernel(CategoricalKernel):
 
 class PositiveIndexKernel(CategoricalKernel):
     r"""
-    Many a times the IndexKernel is not positive definite. This kernel addresses this
+    The IndexKernel is often not positive definite. This kernel addresses that
     by using Cholesky decomposition with positive elements only. So, off diagonal
     elements are always positive and the diagonal elements are normalized to 1 for a
     target task. Mathematically, the kernel is defined as:
@@ -106,13 +112,14 @@ class PositiveIndexKernel(CategoricalKernel):
     )
     prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the entries of the triangular factor. If not provided, "
-        "the surrogate's default is used.",
+        description="Prior over the entries of $L$. If not provided, no prior is "
+        "placed on them and they are fitted from the data alone.",
     )
     var_constraint: Optional[AnyPriorConstraint] = Field(
         default=Positive(),
-        description="Constraint on the per-category variance added on the diagonal, "
-        "which keeps it non-negative.",
+        description="Bounds the diagonal entries $\\mathbf v$ are reparametrized into. "
+        "Unlike `prior`, which only shifts the fitted value, this makes values outside "
+        "the bounds unreachable; the default keeps the variances positive.",
     )
     task_prior: Optional[AnyPrior] = Field(
         default=None,

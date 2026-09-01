@@ -21,34 +21,41 @@ class FidelityKernel(FeatureSpecificKernel):
 
 
 class DownsamplingKernel(FidelityKernel):
-    """Kernel encoding that a task becomes more like the target as fidelity rises.
+    r"""Kernel encoding that a task approaches the target as its fidelity rises.
 
-    Rather than learning the relationship between fidelities freely, it assumes the
-    approximation improves monotonically, which needs far less data than an
-    unconstrained multi-task kernel.
+    $$
+    k(s, s') = c + (1 - s)^{1+\delta}(1 - s')^{1+\delta}
+    $$
+
+    where $s$ is the fidelity input, $c$ the offset and $\delta$ the power. Assuming the
+    approximation improves monotonically with fidelity needs far less data than learning
+    an unconstrained relationship between the tasks would.
     """
 
     type: Literal["DownsamplingKernel"] = "DownsamplingKernel"
     offset_prior: AnyPrior | None = Field(
         default=None,
-        description="Prior over the offset, which sets how much the cheapest fidelity "
-        "still tells you about the target. If not provided, the surrogate's default is "
-        "used.",
+        description="Prior over the offset $c$, which sets how much a low-fidelity "
+        "observation still says about the target fidelity. If not provided, no prior is "
+        "placed on it and it is fitted from the data alone.",
     )
     offset_constraint: AnyPriorConstraint | None = Field(
         default=None,
-        description="Hard bounds on the offset, enforced during fitting rather than "
-        "merely preferred as a prior is.",
+        description="Bounds the offset is reparametrized into, making values outside "
+        "them unreachable during fitting, unlike a prior which only shifts the fitted "
+        "value.",
     )
     power_prior: AnyPrior | None = Field(
         default=None,
-        description="Prior over the power, which sets how quickly the approximation "
-        "improves as fidelity rises. If not provided, the surrogate's default is used.",
+        description="Prior over the power $\\delta$, which sets how quickly the "
+        "approximation improves as the fidelity rises. If not provided, no prior is "
+        "placed on it and it is fitted from the data alone.",
     )
     power_constraint: AnyPriorConstraint | None = Field(
         default=None,
-        description="Hard bounds on the power, enforced during fitting rather than "
-        "merely preferred as a prior is.",
+        description="Bounds the power is reparametrized into, making values outside "
+        "them unreachable during fitting, unlike a prior which only shifts the fitted "
+        "value.",
     )
 
     @field_validator("features", mode="after")

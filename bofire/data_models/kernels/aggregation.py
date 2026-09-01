@@ -25,10 +25,10 @@ from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 
 
 class AdditiveKernel(AggregationKernel):
-    """Sum of several kernels.
+    r"""Sum of several kernels, $k(\mathbf x, \mathbf x') = \sum_i k_i(\mathbf x, \mathbf x')$.
 
-    Two candidates count as similar if they are similar under any one of the summed
-    kernels, which suits a response made of separable contributions.
+    A sum models a response made of independent additive contributions, and the
+    covariance stays high if any one of the summed kernels is high.
     """
 
     type: Literal["AdditiveKernel"] = "AdditiveKernel"
@@ -54,10 +54,11 @@ class AdditiveKernel(AggregationKernel):
 
 
 class MultiplicativeKernel(AggregationKernel):
-    """Product of several kernels.
+    r"""Product of several kernels, $k(\mathbf x, \mathbf x') = \prod_i k_i(\mathbf x, \mathbf x')$.
 
-    Two candidates count as similar only if they are similar under every one of the
-    multiplied kernels, which is how an interaction between input types is expressed.
+    A product models an interaction: the covariance is high only where every one of the
+    multiplied kernels is high, so this is how a dependence across input types is
+    expressed.
     """
 
     type: Literal["MultiplicativeKernel"] = "MultiplicativeKernel"
@@ -83,10 +84,12 @@ class MultiplicativeKernel(AggregationKernel):
 
 
 class ScaleKernel(AggregationKernel):
-    """Wraps another kernel with a fitted output scale.
+    r"""Wraps another kernel with a fitted output scale,
+    $k(\mathbf x, \mathbf x') = \theta\, k_{\text{base}}(\mathbf x, \mathbf x')$.
 
-    The base kernel decides which candidates are similar; this decides how much the
-    response actually varies, which is why most kernels are wrapped in one before use.
+    The base kernel sets the shape of the covariance and this sets its magnitude, which
+    is the variance of the response. Most kernels are wrapped in one before use, since
+    the base kernels are normalized.
     """
 
     type: Literal["ScaleKernel"] = "ScaleKernel"
@@ -111,13 +114,15 @@ class ScaleKernel(AggregationKernel):
     # dimensionality-scaled priors are supported here.
     outputscale_prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the output scale, which sets how far the response is "
-        "expected to vary. If not provided, the surrogate's default is used.",
+        description="Prior over the output scale $\\theta$, which sets the variance of "
+        "the response. If not provided, no prior is placed on it and it is fitted from "
+        "the data alone.",
     )
     outputscale_constraint: Optional[AnyPriorConstraint] = Field(
         default=None,
-        description="Hard bounds on the output scale, enforced during fitting rather "
-        "than merely preferred as a prior is.",
+        description="Bounds the output scale is reparametrized into, making values "
+        "outside them unreachable during fitting, unlike a prior which only shifts the "
+        "fitted value.",
     )
 
 
@@ -191,7 +196,8 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
     outputscale_prior: Optional[AnyPrior] = Field(
         default=None,
         description="Prior over the output scale applied to each interaction term "
-        "before the terms are summed. If not provided, the surrogate's default is used.",
+        "before the terms are summed. If not provided, no prior is placed on them and "
+        "they are fitted from the data alone.",
     )
 
 

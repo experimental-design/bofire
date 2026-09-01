@@ -67,21 +67,21 @@ class ConditionalEmbeddingKernel(Kernel):
 class WedgeKernel(ARDKernel, LengthscaleKernel, ConditionalEmbeddingKernel):
     """Conditional kernel embedding each input into a wedge-shaped space.
 
-    Two candidates that both switch a feature off are treated as alike regardless of
-    what value that inactive feature nominally holds, which is what stops a
-    conditionally irrelevant input from driving the similarity.
+    Two points that both leave a feature inactive have the same embedding for it,
+    whatever value that inactive feature nominally holds. That is what stops a
+    conditionally irrelevant dimension from contributing to the covariance.
     """
 
     type: Literal["WedgeKernel"] = "WedgeKernel"
     angle_prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the wedge's opening angle, which sets how different an "
-        "active candidate is taken to be from an inactive one.",
+        description="Prior over the wedge's opening angle, which sets how far apart "
+        "the embeddings of an active and an inactive point are placed.",
     )
     radius_prior: Optional[AnyPrior] = Field(
         default=None,
         description="Prior over the wedge's radius, which sets how much the value of "
-        "an active feature matters relative to whether it is active at all.",
+        "an active feature contributes relative to the fact of it being active.",
     )
 
     @field_validator("base_kernel")

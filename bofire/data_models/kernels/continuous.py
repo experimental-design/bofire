@@ -17,29 +17,42 @@ class ContinuousKernel(FeatureSpecificKernel):
 
 
 class RBFKernel(ARDKernel, LengthscaleKernel, ContinuousKernel):
-    """Radial basis function kernel, the usual default for continuous inputs.
+    r"""Radial basis function kernel, the usual default for continuous inputs.
 
-    Assumes the response is infinitely smooth, which makes it the most optimistic of the
-    continuous kernels about what happens between observed points. Use `MaternKernel`
-    where the response is expected to be rougher.
+    $$
+    k(\mathbf x, \mathbf x') = \exp\left(-\frac{\lVert \mathbf x - \mathbf x' \rVert^2}
+                                              {2\ell^2}\right)
+    $$
+
+    Samples from this kernel are infinitely differentiable, so it assumes a very smooth
+    response. Use `MaternKernel` where the response is expected to be rougher.
     """
 
     type: Literal["RBFKernel"] = "RBFKernel"
 
 
 class MaternKernel(ARDKernel, LengthscaleKernel, ContinuousKernel):
-    """Matern kernel, a less smooth alternative to the RBF kernel.
+    r"""Matern kernel, a less smooth alternative to the RBF kernel.
 
-    `nu` controls how rough the fitted response may be, so this is the kernel to reach
-    for when an RBF fit looks implausibly smooth between observations.
+    $$
+    k(\mathbf x, \mathbf x') = \frac{2^{1-\nu}}{\Gamma(\nu)}
+        \left(\sqrt{2\nu}\,\frac{d}{\ell}\right)^{\nu}
+        K_{\nu}\!\left(\sqrt{2\nu}\,\frac{d}{\ell}\right),
+    \qquad d = \lVert \mathbf x - \mathbf x' \rVert
+    $$
+
+    Samples are $\lceil \nu \rceil - 1$ times differentiable, so $\nu$ sets how rough
+    the response may be. Reach for this when an RBF fit looks implausibly smooth
+    between observations.
     """
 
     type: Literal["MaternKernel"] = "MaternKernel"
     nu: float = Field(
         default=2.5,
-        description="Smoothness of the response the kernel assumes. Only 0.5, 1.5 and "
-        "2.5 are supported: 0.5 gives a rough, non-differentiable surface, 2.5 a nearly "
-        "smooth one, and larger values approach the RBF kernel.",
+        description="Smoothness parameter. Only 0.5, 1.5 and 2.5 are supported: 0.5 "
+        "gives a nowhere-differentiable response, 1.5 a once-differentiable one and "
+        "2.5 a twice-differentiable one. In the limit of large nu the kernel becomes "
+        "the RBF kernel.",
     )
 
     @field_validator("nu")
@@ -50,33 +63,44 @@ class MaternKernel(ARDKernel, LengthscaleKernel, ContinuousKernel):
 
 
 class LinearKernel(ContinuousKernel):
-    """Linear kernel, fitting a straight-line response in the inputs.
+    r"""Linear kernel, equivalent to Bayesian linear regression on the inputs.
 
-    Has no lengthscale, so unlike the RBF and Matern kernels it extrapolates rather than
-    reverting to the mean away from the data.
+    $$
+    k(\mathbf x, \mathbf x') = v\,\mathbf x^{\top} \mathbf x'
+    $$
+
+    Having no lengthscale, it does not revert to the prior mean away from the data, so
+    unlike the RBF and Matern kernels it extrapolates a trend.
     """
 
     type: Literal["LinearKernel"] = "LinearKernel"
     variance_prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the slope's variance, which sets how steep the fitted "
-        "linear response may be. If not provided, the surrogate's default is used.",
+        description="Prior over the variance $v$, which scales the whole kernel and so "
+        "sets the magnitude of the linear response. If not provided, no prior is "
+        "placed on it and it is fitted from the data alone.",
     )
 
 
 class PolynomialKernel(ContinuousKernel):
-    """Polynomial kernel, fitting a response of a fixed degree in the inputs."""
+    r"""Polynomial kernel, of a fixed degree in the inputs.
+
+    $$
+    k(\mathbf x, \mathbf x') = (\mathbf x^{\top} \mathbf x' + c)^{p}
+    $$
+    """
 
     type: Literal["PolynomialKernel"] = "PolynomialKernel"
     offset_prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the constant added before raising to `power`, which "
-        "sets how much weight the lower-order terms carry relative to the highest one. "
-        "If not provided, the surrogate's default is used.",
+        description="Prior over the offset $c$. Expanding the bracket shows that $c$ "
+        "weights the lower-order terms against the highest one, so a large offset makes "
+        "the kernel behave more like a linear one. If not provided, no prior is placed "
+        "on it and it is fitted from the data alone.",
     )
     power: int = Field(
         default=2,
-        description="Degree of the polynomial. 2 captures pairwise interactions and "
+        description="Degree $p$ of the polynomial. 2 captures pairwise interactions and "
         "curvature; higher degrees fit more shapes but extrapolate increasingly badly.",
     )
 

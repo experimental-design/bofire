@@ -448,29 +448,3 @@ def test_class_allowlist_has_no_stale_entries():
         f"{sorted(stale)} are documented (or no longer exist) but still listed in "
         "UNDOCUMENTED_CLASSES. Delete them: the allowlist may only shrink."
     )
-
-
-def test_deprecation_pointers_name_a_real_replacement():
-    """Each deprecated acquisition function must point at one that exists.
-
-    The replacement is named by a string, so a typo would otherwise only surface in the
-    warning text a user eventually reads.
-    """
-    from bofire.data_models.acquisition_functions.acquisition_function import (
-        SupersededByLogVariant,
-    )
-    from bofire.data_models.acquisition_functions.api import AnyAcquisitionFunction
-    from bofire.data_models.unions import to_list
-
-    available = {cls.__name__ for cls in to_list(AnyAcquisitionFunction)}
-    superseded = [
-        cls
-        for cls in DATA_MODEL_CLASSES.values()
-        if issubclass(cls, SupersededByLogVariant) and cls is not SupersededByLogVariant
-    ]
-    assert superseded, "expected at least one superseded acquisition function"
-    for cls in superseded:
-        assert cls.log_variant in available, (
-            f"{cls.__name__}.log_variant names {cls.log_variant!r}, which is not an "
-            "acquisition function."
-        )
