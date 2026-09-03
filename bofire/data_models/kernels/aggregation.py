@@ -88,8 +88,7 @@ class ScaleKernel(AggregationKernel):
     $k(\mathbf x, \mathbf x') = \theta\, k_{\text{base}}(\mathbf x, \mathbf x')$.
 
     The base kernel sets the shape of the covariance and this sets its magnitude, which
-    is the variance of the response. Most kernels are wrapped in one before use, since
-    the base kernels are normalized.
+    is the variance of the response.
     """
 
     type: Literal["ScaleKernel"] = "ScaleKernel"
@@ -120,9 +119,8 @@ class ScaleKernel(AggregationKernel):
     )
     outputscale_constraint: Optional[AnyPriorConstraint] = Field(
         default=None,
-        description="Bounds the output scale is reparametrized into, making values "
-        "outside them unreachable during fitting, unlike a prior which only shifts the "
-        "fitted value.",
+        description="Bounds the output scale $\\theta$ is restricted to during "
+        "fitting.",
     )
 
 
@@ -181,13 +179,11 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
             ExactWassersteinKernel,
         ]
     ] = Field(
-        description="The kernels whose interactions are computed. Typically one per "
-        "kind of input, so that the interactions run across the kinds.",
+        description="The kernels whose interactions are computed.",
     )
     max_degree: int = Field(
         description="Highest interaction order computed. 1 keeps the kernels "
-        "independent; 2 adds every pairwise interaction, and so on. The number of terms "
-        "grows quickly with this.",
+        "independent; 2 adds every pairwise interaction, and so on.",
     )
     include_self_interactions: bool = Field(
         description="Whether a kernel may interact with itself, which adds the "

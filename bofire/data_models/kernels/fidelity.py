@@ -41,9 +41,7 @@ class DownsamplingKernel(FidelityKernel):
     )
     offset_constraint: AnyPriorConstraint | None = Field(
         default=None,
-        description="Bounds the offset is reparametrized into, making values outside "
-        "them unreachable during fitting, unlike a prior which only shifts the fitted "
-        "value.",
+        description="Bounds the offset $c$ is restricted to during fitting.",
     )
     power_prior: AnyPrior | None = Field(
         default=None,
@@ -53,9 +51,7 @@ class DownsamplingKernel(FidelityKernel):
     )
     power_constraint: AnyPriorConstraint | None = Field(
         default=None,
-        description="Bounds the power is reparametrized into, making values outside "
-        "them unreachable during fitting, unlike a prior which only shifts the fitted "
-        "value.",
+        description="Bounds the power $\\delta$ is restricted to during fitting.",
     )
 
     @field_validator("features", mode="after")

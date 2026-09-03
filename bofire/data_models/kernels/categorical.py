@@ -18,16 +18,16 @@ class CategoricalKernel(FeatureSpecificKernel):
 
 
 class HammingDistanceKernel(ARDKernel, LengthscaleKernel, CategoricalKernel):
-    r"""Kernel over categorical inputs based on the Hamming distance.
+    r"""Kernel over categorical inputs, based on the Hamming distance.
 
     $$
-    k(\mathbf x, \mathbf x') = \exp\left(-\frac{d_H(\mathbf x, \mathbf x')}{\ell}\right)
+    k(\mathbf x, \mathbf x') = \exp\left(-\frac{d(\mathbf x, \mathbf x')}{\ell}\right)
     $$
 
-    where $d_H$ counts the positions at which the two inputs hold different categories.
-    Every pair of distinct categories is therefore equally far apart, which is the right
-    assumption unless the categories have structure that `IndexKernel` could learn
-    instead.
+    where $d$ is zero where two inputs hold the same category and one where they differ,
+    averaged over the categorical dimensions. With `ard` there is one lengthscale per
+    categorical feature, so a change of category can matter more in some features than
+    in others. The kernel is not differentiable with respect to its inputs.
     """
 
     type: Literal["HammingDistanceKernel"] = "HammingDistanceKernel"
@@ -69,9 +69,8 @@ class IndexKernel(CategoricalKernel):
     )
     var_constraint: Optional[AnyPriorConstraint] = Field(
         default=Positive(),
-        description="Bounds the diagonal entries $\\mathbf v$ are reparametrized into. "
-        "Unlike `prior`, which only shifts the fitted value, this makes values outside "
-        "the bounds unreachable; the default keeps the variances positive.",
+        description="Bounds the diagonal entries $\\mathbf v$ are restricted to during "
+        "fitting. The default keeps them positive.",
     )
 
     @model_validator(mode="after")
@@ -117,9 +116,8 @@ class PositiveIndexKernel(CategoricalKernel):
     )
     var_constraint: Optional[AnyPriorConstraint] = Field(
         default=Positive(),
-        description="Bounds the diagonal entries $\\mathbf v$ are reparametrized into. "
-        "Unlike `prior`, which only shifts the fitted value, this makes values outside "
-        "the bounds unreachable; the default keeps the variances positive.",
+        description="Bounds the diagonal entries $\\mathbf v$ are restricted to during "
+        "fitting. The default keeps them positive.",
     )
     task_prior: Optional[AnyPrior] = Field(
         default=None,
@@ -138,9 +136,9 @@ class PositiveIndexKernel(CategoricalKernel):
     )
     target_task_index: Annotated[int, Field(ge=0)] = Field(
         default=0,
-        description="Index into the categories of the one treated as the target, whose "
-        "diagonal entry is normalized to 1 so the others are expressed relative to it. "
-        "Must be below `num_categories` - 1.",
+        description="Position of the target category, the one the covariance matrix is "
+        "normalized against: $(LL^\\top)_{t,t}$ becomes the denominator, so the target "
+        "has unit variance and every other category is expressed relative to it.",
     )
     unit_scale_for_target: bool = Field(
         default=True,

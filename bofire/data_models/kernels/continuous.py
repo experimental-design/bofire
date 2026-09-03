@@ -130,8 +130,7 @@ class SphericalLinearKernel(ARDKernel, LengthscaleKernel, ContinuousKernel):
 
     This kernel projects the inputs onto a unit sphere and computes the linear kernel in
     this space, so it responds to the direction of an input vector rather than its
-    magnitude. That suits compositions and other inputs where the ratios matter more
-    than the total.
+    magnitude.
     """
 
     type: Literal["SphericalLinearKernel"] = "SphericalLinearKernel"
