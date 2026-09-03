@@ -1,6 +1,6 @@
 from typing import Literal, Optional, Sequence, Union
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.constraints.condition import Condition
 from bofire.data_models.kernels.categorical import HammingDistanceKernel
@@ -10,8 +10,8 @@ from bofire.data_models.kernels.continuous import (
     RBFKernel,
     SphericalLinearKernel,
 )
-from bofire.data_models.kernels.kernel import Kernel
-from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
+from bofire.data_models.kernels.kernel import ARDKernel, Kernel, LengthscaleKernel
+from bofire.data_models.priors.api import AnyPrior
 
 
 class ConditionalEmbeddingKernel(Kernel):
@@ -50,18 +50,39 @@ class ConditionalEmbeddingKernel(Kernel):
         # AdditiveKernel,
         # MultiplicativeKernel,
         # ScaleKernel,
-    ]
+    ] = Field(
+        description="Kernel applied to the embedded inputs. Its own lengthscale "
+        "settings are ignored, so leave them unset and configure the lengthscale on "
+        "this kernel instead.",
+    )
 
-    conditions: Sequence[tuple[str, str, Condition]]
+    conditions: Sequence[tuple[str, str, Condition]] = Field(
+        description="Which feature is active under which circumstances, as triples of "
+        "the dependent feature, the feature it depends on, and the condition that must "
+        "hold. A feature may depend on itself, which expresses that it is only "
+        "meaningful at certain of its own values.",
+    )
 
 
-class WedgeKernel(ConditionalEmbeddingKernel):
+class WedgeKernel(ARDKernel, LengthscaleKernel, ConditionalEmbeddingKernel):
+    """Conditional kernel embedding each input into a wedge-shaped space.
+
+    Two points that both leave a feature inactive have the same embedding for it,
+    whatever value that inactive feature nominally holds. That is what stops a
+    conditionally irrelevant dimension from contributing to the covariance.
+    """
+
     type: Literal["WedgeKernel"] = "WedgeKernel"
-    ard: bool = True
-    lengthscale_prior: Optional[AnyPrior] = None
-    lengthscale_constraint: Optional[AnyPriorConstraint] = None
-    angle_prior: Optional[AnyPrior] = None
-    radius_prior: Optional[AnyPrior] = None
+    angle_prior: Optional[AnyPrior] = Field(
+        default=None,
+        description="Prior over the wedge's opening angle, which sets how far apart "
+        "the embeddings of an active and an inactive point are placed.",
+    )
+    radius_prior: Optional[AnyPrior] = Field(
+        default=None,
+        description="Prior over the wedge's radius, which sets how much the value of "
+        "an active feature contributes relative to the fact of it being active.",
+    )
 
     @field_validator("base_kernel")
     @classmethod
