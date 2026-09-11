@@ -7,7 +7,7 @@ import pandas as pd
 import shap
 
 from bofire.data_models.enum import RegressionMetricsEnum
-from bofire.data_models.features.api import ContinuousOutput
+from bofire.data_models.features.api import CategoricalOutput, ContinuousOutput
 from bofire.protocols import Predictor
 from bofire.surrogates.diagnostics import metrics
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
@@ -82,10 +82,10 @@ def shap_importance(
 ) -> Dict[str, shap.Explanation]:
     """Compute the SHAP importance values for a surrogate or a strategy
     and returns a dictionary with the SHAP explanations for each continuous
-    output key.
+    and categorical output key.
 
     Args:
-        surrogate: Surrogate for which the SHAP values should be computed.
+        predictor: Predictor for which the SHAP values should be computed.
         experiments: Experiments for which the SHAP values should be computed.
         bg_experiments: Background experiments to use for the kernel SHAP
             computation. Defaults to None, in which case `experiments` is used.
@@ -118,6 +118,23 @@ def shap_importance(
         )[output_key + "_pred"].to_numpy()
         return preds
 
+    def predict_categorical(
+        X: np.ndarray, output_key: str, categories: Sequence[str]
+    ) -> np.ndarray:
+        """Predict function for the categorical output of the surrogate."""
+        frame = pd.DataFrame(X, columns=predictor.inputs.get_keys())
+        predictions = predictor.predict(frame)
+        probability_columns = [
+            f"{output_key}_{category}_prob" for category in categories
+        ]
+        missing_columns = set(probability_columns) - set(predictions.columns)
+        if missing_columns:
+            raise ValueError(
+                f"Missing categorical probability columns {sorted(missing_columns)}; "
+                f"available columns are {list(predictions.columns)}."
+            )
+        return predictions[probability_columns].to_numpy()
+
     explanations = {}
 
     for output_key in predictor.outputs.get_keys(ContinuousOutput):
@@ -129,6 +146,23 @@ def shap_importance(
         explanations[output_key] = explainer(
             experiments[predictor.inputs.get_keys()].to_numpy(), silent=True
         )
+
+    for output_key in predictor.outputs.get_keys(CategoricalOutput):
+        categories = predictor.outputs.get_by_key(output_key).categories
+        explainer = shap.KernelExplainer(
+            model=partial(
+                predict_categorical,
+                output_key=output_key,
+                categories=categories,
+            ),
+            data=bg_experiments[predictor.inputs.get_keys()],
+            link="identity",
+        )
+        explanation = explainer(
+            experiments[predictor.inputs.get_keys()].to_numpy(), silent=True
+        )
+        explanation.output_names = categories
+        explanations[output_key] = explanation
 
     return explanations
 
@@ -177,6 +211,10 @@ def combine_shap_importances(
                 raise ValueError(
                     "All SHAP explanations must have the same feature names."
                 )
+            if expl.output_names != explanations[0].output_names:
+                raise ValueError(
+                    "All SHAP explanations must have the same output names."
+                )
 
         return shap.Explanation(
             values=np.concatenate([expl.values for expl in explanations], axis=0),
@@ -187,7 +225,7 @@ def combine_shap_importances(
             display_data=None,
             instance_names=None,
             feature_names=explanations[0].feature_names,
-            output_names=None,
+            output_names=explanations[0].output_names,
             output_indexes=None,
             lower_bounds=None,
             upper_bounds=None,

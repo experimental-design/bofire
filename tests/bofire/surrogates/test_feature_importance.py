@@ -6,9 +6,17 @@ import shap
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.api import DTLZ2
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.features.api import (
+    CategoricalOutput,
+    ContinuousInput,
+    ContinuousOutput,
+)
 from bofire.data_models.kernels.api import RBFKernel, ScaleKernel
-from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
+from bofire.data_models.surrogates.api import (
+    ClassificationMLPEnsemble,
+    SingleTaskGPSurrogate,
+)
 from bofire.strategies.api import MoboStrategy
 from bofire.surrogates.diagnostics import metrics
 from bofire.surrogates.feature_importance import (
@@ -71,6 +79,164 @@ def test_shap_importance_for_surrogate():
     )
     assert sorted(importance.keys()) == sorted(surrogate.outputs.get_keys())
     assert isinstance(importance["y"], shap.Explanation)
+
+
+def test_shap_importance_for_categorical_output():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x_1", bounds=(-1, 1)),
+            ContinuousInput(key="x_2", bounds=(-1, 1)),
+        ],
+    )
+    outputs = Outputs(
+        features=[
+            CategoricalOutput(
+                key="f_1",
+                categories=["unacceptable", "acceptable", "excellent"],
+                objective=ConstrainedCategoricalObjective(
+                    categories=["unacceptable", "acceptable", "excellent"],
+                    desirability=[False, True, True],
+                ),
+            ),
+        ],
+    )
+    experiments = inputs.sample(n=15, seed=42)
+    experiments["f_1"] = np.select(
+        [experiments["x_1"] < -0.25, experiments["x_1"] < 0.25],
+        ["acceptable", "excellent"],
+        default="unacceptable",
+    )
+    experiments["valid_f_1"] = 1
+    surrogate = surrogates.map(
+        ClassificationMLPEnsemble(
+            inputs=inputs,
+            outputs=outputs,
+            n_estimators=2,
+            n_epochs=5,
+        )
+    )
+    surrogate.fit(experiments)
+    candidates = experiments.iloc[:2][inputs.get_keys()]
+
+    importance = shap_importance(
+        predictor=surrogate,
+        experiments=candidates,
+        bg_experiments=experiments,
+        bg_sample_size=None,
+    )
+
+    explanation = importance["f_1"]
+    assert isinstance(explanation, shap.Explanation)
+    assert explanation.output_names == outputs[0].categories
+    assert explanation.values.shape == (
+        len(candidates),
+        len(inputs),
+        len(outputs[0].categories),
+    )
+    probability_columns = [f"f_1_{category}_prob" for category in outputs[0].categories]
+    probabilities = surrogate.predict(candidates)[probability_columns].to_numpy()
+    np.testing.assert_allclose(
+        explanation.base_values + explanation.values.sum(axis=1), probabilities
+    )
+    combined = combine_shap_importances([importance, importance])["f_1"]
+    assert combined.output_names == outputs[0].categories
+    assert combined.values.shape == (
+        2 * len(candidates),
+        len(inputs),
+        len(outputs[0].categories),
+    )
+
+
+def test_shap_importance_for_continuous_and_categorical_outputs():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x_1", bounds=(-1, 1)),
+            ContinuousInput(key="x_2", bounds=(-1, 1)),
+        ],
+    )
+    continuous_output = ContinuousOutput(key="y")
+    categorical_output = CategoricalOutput(
+        key="f_1",
+        categories=["unacceptable", "acceptable"],
+        objective=ConstrainedCategoricalObjective(
+            categories=["unacceptable", "acceptable"],
+            desirability=[False, True],
+        ),
+    )
+    experiments = inputs.sample(n=10, seed=42)
+    experiments["y"] = experiments["x_1"] + experiments["x_2"]
+    experiments["valid_y"] = 1
+    experiments["f_1"] = np.where(
+        experiments["x_1"] < 0.0, "acceptable", "unacceptable"
+    )
+    experiments["valid_f_1"] = 1
+
+    continuous_surrogate = surrogates.map(
+        SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=Outputs(features=[continuous_output]),
+        )
+    )
+    categorical_surrogate = surrogates.map(
+        ClassificationMLPEnsemble(
+            inputs=inputs,
+            outputs=Outputs(features=[categorical_output]),
+            n_estimators=2,
+            n_epochs=5,
+        )
+    )
+    continuous_surrogate.fit(experiments)
+    categorical_surrogate.fit(experiments)
+
+    class MultiOutputPredictor:
+        is_fitted = True
+        outputs = Outputs(features=[continuous_output, categorical_output])
+
+        def __init__(self):
+            self.inputs = inputs
+
+        def predict(self, candidates):
+            return pd.concat(
+                [
+                    continuous_surrogate.predict(candidates),
+                    categorical_surrogate.predict(candidates),
+                ],
+                axis=1,
+            )
+
+    predictor = MultiOutputPredictor()
+    candidates = experiments.iloc[:2][inputs.get_keys()]
+    importance = shap_importance(
+        predictor=predictor,
+        experiments=candidates,
+        bg_experiments=experiments,
+        bg_sample_size=None,
+    )
+
+    assert sorted(importance) == ["f_1", "y"]
+    predictions = predictor.predict(candidates)
+    continuous_explanation = importance["y"]
+    assert continuous_explanation.values.shape == (len(candidates), len(inputs))
+    np.testing.assert_allclose(
+        continuous_explanation.base_values + continuous_explanation.values.sum(axis=1),
+        predictions["y_pred"].to_numpy(),
+    )
+
+    categorical_explanation = importance["f_1"]
+    assert categorical_explanation.output_names == categorical_output.categories
+    assert categorical_explanation.values.shape == (
+        len(candidates),
+        len(inputs),
+        len(categorical_output.categories),
+    )
+    probability_columns = [
+        f"f_1_{category}_prob" for category in categorical_output.categories
+    ]
+    np.testing.assert_allclose(
+        categorical_explanation.base_values
+        + categorical_explanation.values.sum(axis=1),
+        predictions[probability_columns].to_numpy(),
+    )
 
 
 def test_shap_importance_for_predictive_strategy():
