@@ -127,12 +127,6 @@ def shap_importance(
         probability_columns = [
             f"{output_key}_{category}_prob" for category in categories
         ]
-        missing_columns = set(probability_columns) - set(predictions.columns)
-        if missing_columns:
-            raise ValueError(
-                f"Missing categorical probability columns {sorted(missing_columns)}; "
-                f"available columns are {list(predictions.columns)}."
-            )
         return predictions[probability_columns].to_numpy()
 
     explanations = {}
