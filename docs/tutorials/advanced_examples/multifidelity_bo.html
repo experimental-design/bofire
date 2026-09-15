@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-ef50085ffa0a8bbae5860f282a05e1be.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-6c5449043777d02e3d3fa6b5adb36893.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-ef50085ffa0a8bbae5860f282a05e1be.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-2e8ec9f882556a9115144b9e4a0fb948.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-47c64cbc1635c9e92b74ef8dbe39d519.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-2e8ec9f882556a9115144b9e4a0fb948.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -770,7 +770,7 @@ window.Quarto = {
 
 
 
-<div id="6eda93c5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.980124,&quot;end_time&quot;:&quot;2024-10-10T20:34:18.797038&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:15.816914&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="a9c25386" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.980124,&quot;end_time&quot;:&quot;2024-10-10T20:34:18.797038&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:15.816914&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -783,23 +783,29 @@ window.Quarto = {
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Domain</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> CategoricalTaskInput</span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> BotorchSurrogates, MultiTaskGPSurrogate</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(</code></pre>
 </div>
-<div id="9bf19476" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.262804,&quot;end_time&quot;:&quot;2024-10-10T20:34:19.062415&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:18.799611&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.axes <span class="im">import</span> Axes</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="f0292c07" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>NUM_INIT_HF <span class="op">=</span> <span class="dv">4</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>NUM_INIT_LF <span class="op">=</span> <span class="dv">10</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> SMOKE_TEST:</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    num_runs <span class="op">=</span> <span class="dv">5</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    num_iters <span class="op">=</span> <span class="dv">2</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    verbose <span class="op">=</span> <span class="va">False</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    num_runs <span class="op">=</span> <span class="dv">10</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    num_iters <span class="op">=</span> <span class="dv">10</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    verbose <span class="op">=</span> <span class="va">True</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="2c1fb03f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.262804,&quot;end_time&quot;:&quot;2024-10-10T20:34:19.062415&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:18.799611&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.axes <span class="im">import</span> Axes</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="98d0cf5b" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>NUM_INIT_HF <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>NUM_INIT_LF <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> SMOKE_TEST:</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    num_runs <span class="op">=</span> <span class="dv">5</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    num_iters <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    verbose <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    num_runs <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    num_iters <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    verbose <span class="op">=</span> <span class="va">True</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p><em>This notebook is a sequel to “Transfer Learning in BO”.</em></p>
 <section id="multi-fidelity-bayesian-optimization" class="level1">
@@ -810,56 +816,56 @@ window.Quarto = {
 <p>We use the same problem as the transfer learning notebook; optimizing the Branin benchmark, with a low-fidelity function biased by the Ackley function (with fewer initial points, to demonstrate the strength of being able to query low fidelities). Below, we define the problem domain, and the strategies we will use to optimize.</p>
 <p>As a baseline, we use the <code>SoboStrategy</code> with the <code>MultiTaskSurrogate</code>, as in the previous notebook. We also introduce the <code>MultiFidelityVarianceBasedStrategy</code> here, which uses the same surrogate, but is able to query the lower fidelity functions using a variance-based acquisition function [Kandasamy et al.&nbsp;2016, Folch et al.&nbsp;2023].</p>
 <p>Both strategies first select a design point <span class="math inline">\(x\)</span> by optimizing the target fidelity. The <code>MultiFidelityVarianceBasedStrategy</code> then selects the fidelity, <span class="math inline">\(m\)</span>, by selecting the lowest fidelity that has a variance over a fixed threshold. This means that the strategy will explore the cheapest fidelities first, and only query the expensive fidelities when there is no information to be gained by the cheap approximations.</p>
-<div id="44fc4e1f" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> BraninMultiTask(Benchmark):</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, low_fidelity_allowed<span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs):</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(<span class="op">**</span>kwargs)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._branin <span class="op">=</span> Branin()</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._ackley <span class="op">=</span> Ackley()</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        task_input <span class="op">=</span> CategoricalTaskInput(</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>            key<span class="op">=</span><span class="st">"task"</span>,</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>            categories<span class="op">=</span>[<span class="st">"task_hf"</span>, <span class="st">"task_lf"</span>],</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>            allowed<span class="op">=</span>[<span class="va">True</span>, low_fidelity_allowed],</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>            fidelities<span class="op">=</span>[<span class="dv">0</span>, <span class="dv">1</span>],</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._domain <span class="op">=</span> Domain(</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>            inputs<span class="op">=</span><span class="va">self</span>._branin.domain.inputs <span class="op">+</span> (task_input,),</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>            outputs<span class="op">=</span><span class="va">self</span>._branin.domain.outputs,</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _f(<span class="va">self</span>, candidates: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>        candidates_no_task <span class="op">=</span> candidates.drop(columns<span class="op">=</span>[<span class="st">"task"</span>])</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        f_branin <span class="op">=</span> <span class="va">self</span>._branin.f(candidates_no_task)</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        f_ackley <span class="op">=</span> <span class="va">self</span>._ackley.f(candidates_no_task)</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>        bias_scale <span class="op">=</span> np.where(candidates[<span class="st">"task"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>, <span class="fl">0.0</span>, <span class="fl">0.15</span>).reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        bias_scale <span class="op">=</span> pd.DataFrame(bias_scale, columns<span class="op">=</span><span class="va">self</span>._domain.outputs.get_keys())</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>        bias_scale[<span class="st">"valid_y"</span>] <span class="op">=</span> <span class="fl">0.0</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> f_branin <span class="op">+</span> bias_scale <span class="op">*</span> f_ackley</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> get_optima(<span class="va">self</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>        optima <span class="op">=</span> <span class="va">self</span>._branin.get_optima()</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>        optima[<span class="st">"task"</span>] <span class="op">=</span> <span class="st">"task_hf"</span></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> optima</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>mf_benchmark <span class="op">=</span> BraninMultiTask(low_fidelity_allowed<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>tl_benchmark <span class="op">=</span> BraninMultiTask(low_fidelity_allowed<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="10961715" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> BraninMultiTask(Benchmark):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, low_fidelity_allowed<span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs):</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(<span class="op">**</span>kwargs)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._branin <span class="op">=</span> Branin()</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._ackley <span class="op">=</span> Ackley()</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        task_input <span class="op">=</span> CategoricalTaskInput(</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>            key<span class="op">=</span><span class="st">"task"</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>            categories<span class="op">=</span>[<span class="st">"task_hf"</span>, <span class="st">"task_lf"</span>],</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>            allowed<span class="op">=</span>[<span class="va">True</span>, low_fidelity_allowed],</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>            fidelities<span class="op">=</span>[<span class="dv">0</span>, <span class="dv">1</span>],</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._domain <span class="op">=</span> Domain(</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>            inputs<span class="op">=</span><span class="va">self</span>._branin.domain.inputs <span class="op">+</span> (task_input,),</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>            outputs<span class="op">=</span><span class="va">self</span>._branin.domain.outputs,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _f(<span class="va">self</span>, candidates: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>        candidates_no_task <span class="op">=</span> candidates.drop(columns<span class="op">=</span>[<span class="st">"task"</span>])</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        f_branin <span class="op">=</span> <span class="va">self</span>._branin.f(candidates_no_task)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        f_ackley <span class="op">=</span> <span class="va">self</span>._ackley.f(candidates_no_task)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        bias_scale <span class="op">=</span> np.where(candidates[<span class="st">"task"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>, <span class="fl">0.0</span>, <span class="fl">0.15</span>).reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        bias_scale <span class="op">=</span> pd.DataFrame(bias_scale, columns<span class="op">=</span><span class="va">self</span>._domain.outputs.get_keys())</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        bias_scale[<span class="st">"valid_y"</span>] <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> f_branin <span class="op">+</span> bias_scale <span class="op">*</span> f_ackley</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> get_optima(<span class="va">self</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>        optima <span class="op">=</span> <span class="va">self</span>._branin.get_optima()</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>        optima[<span class="st">"task"</span>] <span class="op">=</span> <span class="st">"task_hf"</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> optima</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>mf_benchmark <span class="op">=</span> BraninMultiTask(low_fidelity_allowed<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>tl_benchmark <span class="op">=</span> BraninMultiTask(low_fidelity_allowed<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="69ec8e6c" class="cell" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_data_set(seed: <span class="bu">int</span>):</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># use the tl_benchmark to sample without the low fidelity</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> tl_benchmark.domain.inputs.sample(</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        NUM_INIT_HF <span class="op">+</span> NUM_INIT_LF, seed<span class="op">=</span>seed</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    experiments[<span class="st">"task"</span>] <span class="op">=</span> np.where(</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        experiments.index <span class="op">&lt;</span> NUM_INIT_LF, <span class="st">"task_lf"</span>, <span class="st">"task_hf"</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># then use the ml_benchmark to evaluate the low fidelity</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> mf_benchmark.f(experiments, return_complete<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>create_data_set(<span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f521ec68" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_data_set(seed: <span class="bu">int</span>):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># use the tl_benchmark to sample without the low fidelity</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> tl_benchmark.domain.inputs.sample(</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        NUM_INIT_HF <span class="op">+</span> NUM_INIT_LF, seed<span class="op">=</span>seed</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    experiments[<span class="st">"task"</span>] <span class="op">=</span> np.where(</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        experiments.index <span class="op">&lt;</span> NUM_INIT_LF, <span class="st">"task_lf"</span>, <span class="st">"task_hf"</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># then use the ml_benchmark to evaluate the low fidelity</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> mf_benchmark.f(experiments, return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>create_data_set(<span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="5">
 <div>
 
@@ -994,188 +1000,188 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<div id="814422ec" class="cell" data-execution_count="6">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> MultiFidelityVarianceBasedStrategy</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># It isn't necessary to define the surrogate specs here, as the MFStrategy</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># will use a MultiTaskGP by default.</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>mf_data_model <span class="op">=</span> MultiFidelityVarianceBasedStrategy(</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>mf_benchmark.domain,</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span>qLogEI(),</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    fidelity_thresholds<span class="op">=</span><span class="fl">0.1</span>,</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>mf_data_model.surrogate_specs.surrogates[<span class="dv">0</span>].inputs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="2a65e2d3" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> MultiFidelityVarianceBasedStrategy</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># It isn't necessary to define the surrogate specs here, as the MFStrategy</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># will use a MultiTaskGP by default.</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>mf_data_model <span class="op">=</span> MultiFidelityVarianceBasedStrategy(</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>mf_benchmark.domain,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span>qLogEI(),</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    fidelity_thresholds<span class="op">=</span><span class="fl">0.1</span>,</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>mf_data_model.surrogate_specs.surrogates[<span class="dv">0</span>].inputs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
 <pre><code>Inputs(type='Inputs', features=[ContinuousInput(type='ContinuousInput', key='x_1', context=None, unit=None, descriptors=None, bounds=[-5.0, 10.0], local_relative_bounds=None, stepsize=None, allow_zero=False), ContinuousInput(type='ContinuousInput', key='x_2', context=None, unit=None, descriptors=None, bounds=[0.0, 15.0], local_relative_bounds=None, stepsize=None, allow_zero=False), CategoricalTaskInput(type='CategoricalTaskInput', key='task', context=None, categories=['task_hf', 'task_lf'], descriptors=None, allowed=[True, True], fidelities=[0, 1])])</code></pre>
 </div>
 </div>
-<div id="0340d81c" class="cell" data-execution_count="7">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>surrogate_specs <span class="op">=</span> BotorchSurrogates(</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    surrogates<span class="op">=</span>[</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        MultiTaskGPSurrogate(</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>            inputs<span class="op">=</span>tl_benchmark.domain.inputs,</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>            outputs<span class="op">=</span>tl_benchmark.domain.outputs,</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>tl_data_model <span class="op">=</span> SoboStrategy(</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>tl_benchmark.domain,</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span>qLogEI(),</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    surrogate_specs<span class="op">=</span>surrogate_specs,</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f8f83d44" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>surrogate_specs <span class="op">=</span> BotorchSurrogates(</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    surrogates<span class="op">=</span>[</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>        MultiTaskGPSurrogate(</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>            inputs<span class="op">=</span>tl_benchmark.domain.inputs,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>            outputs<span class="op">=</span>tl_benchmark.domain.outputs,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>tl_data_model <span class="op">=</span> SoboStrategy(</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>tl_benchmark.domain,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span>qLogEI(),</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    surrogate_specs<span class="op">=</span>surrogate_specs,</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 </section>
 <section id="multi-fidelity-bayesian-optimisation" class="level1">
 <h1>Multi-fidelity Bayesian Optimisation</h1>
 <p>We first optimize only on the target fidelity (the “Transfer Learning” baseline). This uses the <code>SoboStrategy</code> defined above.</p>
-<div id="c13405f3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>tl_results <span class="op">=</span> pd.DataFrame(columns<span class="op">=</span>pd.MultiIndex.from_tuples([], names<span class="op">=</span>(<span class="st">"col"</span>, <span class="st">"run"</span>)))</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run <span class="kw">in</span> <span class="bu">range</span>(num_runs):</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    seed <span class="op">=</span> <span class="dv">2048</span> <span class="op">*</span> run <span class="op">+</span> <span class="dv">123</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> create_data_set(seed)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    tl_strategy <span class="op">=</span> strategies.<span class="bu">map</span>(tl_data_model)</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    tl_strategy.tell(experiments)</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> tl_strategy.experiments <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    pbar <span class="op">=</span> tqdm(<span class="bu">range</span>(num_iters), desc<span class="op">=</span><span class="st">"Optimizing"</span>)</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> pbar:</span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        candidate <span class="op">=</span> tl_strategy.ask(<span class="dv">1</span>)</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> tl_benchmark.f(candidate, return_complete<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        tl_strategy.tell(y)</span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        hf_experiments <span class="op">=</span> tl_strategy.experiments[</span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>            tl_strategy.experiments[<span class="st">"task"</span>] <span class="op">==</span> <span class="st">"task_hf"</span></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>        ]</span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>        regret <span class="op">=</span> hf_experiments[<span class="st">"y"</span>].<span class="bu">min</span>() <span class="op">-</span> tl_benchmark.get_optima()[<span class="st">"y"</span>][<span class="dv">0</span>].item()</span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>        pbar.set_postfix({<span class="st">"Regret"</span>: <span class="ss">f"</span><span class="sc">{</span>regret<span class="sc">:.4f}</span><span class="ss">"</span>})</span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    tl_results[<span class="st">"fidelity"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> tl_strategy.experiments[<span class="st">"task"</span>]</span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    tl_results[<span class="st">"y"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> tl_strategy.experiments[<span class="st">"y"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="37764ab6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>tl_results <span class="op">=</span> pd.DataFrame(columns<span class="op">=</span>pd.MultiIndex.from_tuples([], names<span class="op">=</span>(<span class="st">"col"</span>, <span class="st">"run"</span>)))</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run <span class="kw">in</span> <span class="bu">range</span>(num_runs):</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    seed <span class="op">=</span> <span class="dv">2048</span> <span class="op">*</span> run <span class="op">+</span> <span class="dv">123</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> create_data_set(seed)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    tl_strategy <span class="op">=</span> strategies.<span class="bu">map</span>(tl_data_model)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    tl_strategy.tell(experiments)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> tl_strategy.experiments <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    pbar <span class="op">=</span> tqdm(<span class="bu">range</span>(num_iters), desc<span class="op">=</span><span class="st">"Optimizing"</span>)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> pbar:</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>        candidate <span class="op">=</span> tl_strategy.ask(<span class="dv">1</span>)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> tl_benchmark.f(candidate, return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>        tl_strategy.tell(y)</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>        hf_experiments <span class="op">=</span> tl_strategy.experiments[</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>            tl_strategy.experiments[<span class="st">"task"</span>] <span class="op">==</span> <span class="st">"task_hf"</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>        regret <span class="op">=</span> hf_experiments[<span class="st">"y"</span>].<span class="bu">min</span>() <span class="op">-</span> tl_benchmark.get_optima()[<span class="st">"y"</span>][<span class="dv">0</span>].item()</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>        pbar.set_postfix({<span class="st">"Regret"</span>: <span class="ss">f"</span><span class="sc">{</span>regret<span class="sc">:.4f}</span><span class="ss">"</span>})</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>    tl_results[<span class="st">"fidelity"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> tl_strategy.experiments[<span class="st">"task"</span>]</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    tl_results[<span class="st">"y"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> tl_strategy.experiments[<span class="st">"y"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/bofire/surrogates/botorch.py:185: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
   torch.from_numpy(Y.values).to(**tkwargs),
-/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/linear_operator/utils/interpolation.py:66: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:816.)
+/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/linear_operator/utils/interpolation.py:66: UserWarning: Sparse invariant checks are implicitly disabled. Memory errors (e.g. SEGFAULT) will occur when operating on a sparse tensor which violates the invariants, but checks incur performance overhead. To silence this warning, explicitly opt in or out. See `torch.sparse.check_sparse_tensor_invariants.__doc__` for guidance.  (Triggered internally at /__w/pytorch/pytorch/aten/src/ATen/Context.cpp:848.)
   summing_matrix = torch.sparse_coo_tensor(
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.23s/it, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.23s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.32s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.31s/it, Regret=0.9919]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=4.0130]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.23s/it, Regret=4.0130]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.23s/it, Regret=3.7169]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.30s/it, Regret=3.7169]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.29s/it, Regret=3.7169]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.95s/it, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.95s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.56s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.62s/it, Regret=1.9016]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=2.4187]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.54s/it, Regret=2.4187]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.54s/it, Regret=2.4187]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.45s/it, Regret=2.4187]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.47s/it, Regret=2.4187]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=8.3156]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.75s/it, Regret=8.3156]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.75s/it, Regret=4.9676]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.61s/it, Regret=4.9676]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.63s/it, Regret=4.9676]</code></pre>
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:00&lt;00:00,  1.13it/s, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:00,  1.13it/s, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:01&lt;00:00,  1.07it/s, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:01&lt;00:00,  1.08it/s, Regret=0.9919]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=4.0328]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.16s/it, Regret=4.0328]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.16s/it, Regret=3.7530]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.30s/it, Regret=3.7530]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.27s/it, Regret=3.7530]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.49s/it, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.49s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.43s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.44s/it, Regret=1.9016]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=2.4192]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.28s/it, Regret=2.4192]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.28s/it, Regret=2.4192]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.23s/it, Regret=2.4192]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.24s/it, Regret=2.4192]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=0.6580]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.30s/it, Regret=0.6580]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.30s/it, Regret=0.6580]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.25s/it, Regret=0.6580]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.26s/it, Regret=0.6580]</code></pre>
 </div>
 </div>
 <p>We now repeat the experiment using multi-fidelity BO, allowing the strategy to query the low fidelity function as well as the high fidelity function:</p>
-<div id="c2dcb8f1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>mf_results <span class="op">=</span> pd.DataFrame(columns<span class="op">=</span>pd.MultiIndex.from_tuples([], names<span class="op">=</span>(<span class="st">"col"</span>, <span class="st">"run"</span>)))</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run <span class="kw">in</span> <span class="bu">range</span>(num_runs):</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    seed <span class="op">=</span> <span class="dv">2048</span> <span class="op">*</span> run <span class="op">+</span> <span class="dv">123</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> create_data_set(seed)</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    mf_strategy <span class="op">=</span> strategies.<span class="bu">map</span>(mf_data_model)</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    mf_strategy.tell(experiments)</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> mf_strategy.experiments <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    pbar <span class="op">=</span> tqdm(<span class="bu">range</span>(num_iters), desc<span class="op">=</span><span class="st">"Optimizing"</span>)</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> pbar:</span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        candidate <span class="op">=</span> mf_strategy.ask(<span class="dv">1</span>)</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> mf_benchmark.f(candidate, return_complete<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>        mf_strategy.tell(y)</span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>        hf_experiments <span class="op">=</span> mf_strategy.experiments[</span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>            mf_strategy.experiments[<span class="st">"task"</span>] <span class="op">==</span> <span class="st">"task_hf"</span></span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>        ]</span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>        regret <span class="op">=</span> hf_experiments[<span class="st">"y"</span>].<span class="bu">min</span>() <span class="op">-</span> mf_benchmark.get_optima()[<span class="st">"y"</span>][<span class="dv">0</span>].item()</span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>        pbar.set_postfix({<span class="st">"Regret"</span>: <span class="ss">f"</span><span class="sc">{</span>regret<span class="sc">:.4f}</span><span class="ss">"</span>})</span>
-<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    mf_results[<span class="st">"fidelity"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> mf_strategy.experiments[<span class="st">"task"</span>]</span>
-<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    mf_results[<span class="st">"y"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> mf_strategy.experiments[<span class="st">"y"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="92d272c1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>mf_results <span class="op">=</span> pd.DataFrame(columns<span class="op">=</span>pd.MultiIndex.from_tuples([], names<span class="op">=</span>(<span class="st">"col"</span>, <span class="st">"run"</span>)))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run <span class="kw">in</span> <span class="bu">range</span>(num_runs):</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    seed <span class="op">=</span> <span class="dv">2048</span> <span class="op">*</span> run <span class="op">+</span> <span class="dv">123</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> create_data_set(seed)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    mf_strategy <span class="op">=</span> strategies.<span class="bu">map</span>(mf_data_model)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    mf_strategy.tell(experiments)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> mf_strategy.experiments <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    pbar <span class="op">=</span> tqdm(<span class="bu">range</span>(num_iters), desc<span class="op">=</span><span class="st">"Optimizing"</span>)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> pbar:</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>        candidate <span class="op">=</span> mf_strategy.ask(<span class="dv">1</span>)</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> mf_benchmark.f(candidate, return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>        mf_strategy.tell(y)</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        hf_experiments <span class="op">=</span> mf_strategy.experiments[</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>            mf_strategy.experiments[<span class="st">"task"</span>] <span class="op">==</span> <span class="st">"task_hf"</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>        regret <span class="op">=</span> hf_experiments[<span class="st">"y"</span>].<span class="bu">min</span>() <span class="op">-</span> mf_benchmark.get_optima()[<span class="st">"y"</span>][<span class="dv">0</span>].item()</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>        pbar.set_postfix({<span class="st">"Regret"</span>: <span class="ss">f"</span><span class="sc">{</span>regret<span class="sc">:.4f}</span><span class="ss">"</span>})</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    mf_results[<span class="st">"fidelity"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> mf_strategy.experiments[<span class="st">"task"</span>]</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    mf_results[<span class="st">"y"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> mf_strategy.experiments[<span class="st">"y"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.12s/it, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.12s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.26s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.24s/it, Regret=0.9919]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=48.0924]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.04s/it, Regret=48.0924]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.04s/it, Regret=48.0924]Optimizing: 100%|██████████| 2/2 [00:01&lt;00:00,  1.01it/s, Regret=48.0924]Optimizing: 100%|██████████| 2/2 [00:01&lt;00:00,  1.00it/s, Regret=48.0924]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.37s/it, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.37s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.42s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.42s/it, Regret=1.9016]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=23.7592]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.37s/it, Regret=23.7592]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.37s/it, Regret=23.7592]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.51s/it, Regret=23.7592]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.49s/it, Regret=23.7592]
-Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=21.4244]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.50s/it, Regret=21.4244]Optimizing:  50%|█████     | 1/2 [00:03&lt;00:01,  1.50s/it, Regret=3.7654] Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.55s/it, Regret=3.7654]Optimizing: 100%|██████████| 2/2 [00:03&lt;00:00,  1.54s/it, Regret=3.7654]</code></pre>
+<pre><code>Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.13s/it, Regret=0.9919]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.13s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.16s/it, Regret=0.9919]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.16s/it, Regret=0.9919]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=48.0924]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.25s/it, Regret=48.0924]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.25s/it, Regret=48.0924]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.03s/it, Regret=48.0924]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.06s/it, Regret=48.0924]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.31s/it, Regret=1.9016]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.31s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.43s/it, Regret=1.9016]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.42s/it, Regret=1.9016]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=23.7592]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.71s/it, Regret=23.7592]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.71s/it, Regret=23.7592]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.43s/it, Regret=23.7592]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.47s/it, Regret=23.7592]
+Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          | 0/2 [00:01&lt;?, ?it/s, Regret=21.4244]Optimizing:  50%|█████     | 1/2 [00:01&lt;00:01,  1.46s/it, Regret=21.4244]Optimizing:  50%|█████     | 1/2 [00:02&lt;00:01,  1.46s/it, Regret=21.4244]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.47s/it, Regret=21.4244]Optimizing: 100%|██████████| 2/2 [00:02&lt;00:00,  1.46s/it, Regret=21.4244]</code></pre>
 </div>
 </div>
 <p>When evaluating the performance, we need to consider how cheap the low-fidelity (LF) is to query. When the LF has the same cost as the target fidelity, then we gain very little from the multi-fidelity approach. However, if the LF is cheaper than the target (in the example below, 3x cheaper) then we observe an improvement in BO performance.</p>
 <p>Specifically, although both strategies have a budget of 10 function queries, the MF approach uses some of them on</p>
-<div id="1f5d756a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_regret(</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    ax: Axes, bo_results: pd.DataFrame, fidelity_cost_ratio: <span class="bu">float</span>, <span class="op">**</span>plot_kwargs</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>):</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    cummin <span class="op">=</span> (</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>        bo_results[<span class="st">"y"</span>]</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>        .where(bo_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>, other<span class="op">=</span>np.inf)</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        .cummin(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># only select iterations, and the final training point</span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    cummin <span class="op">=</span> cummin.iloc[<span class="op">-</span>num_iters <span class="op">-</span> <span class="dv">1</span> :]</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    regret: np.ndarray <span class="op">=</span> (cummin <span class="op">-</span> mf_benchmark.get_optima()[<span class="st">"y"</span>][<span class="dv">0</span>].item()).to_numpy()</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># keep track of "real time", where low fidelities are cheaper to evaluate.</span></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    time_taken <span class="op">=</span> np.where(bo_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>, fidelity_cost_ratio, <span class="dv">1</span>)[</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span>num_iters <span class="op">-</span> <span class="dv">1</span> :</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    ].cumsum(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    time_taken <span class="op">-=</span> time_taken[<span class="dv">0</span>, <span class="dv">0</span>]  <span class="co"># start from T=0 after training data</span></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    iterations <span class="op">=</span> np.arange(num_iters <span class="op">*</span> fidelity_cost_ratio)</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    before_time <span class="op">=</span> time_taken[:, :, np.newaxis] <span class="op">&lt;=</span> iterations[np.newaxis, np.newaxis, :]</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    regret_before_time <span class="op">=</span> regret[:, :, np.newaxis] <span class="op">*</span> np.where(before_time, <span class="fl">1.0</span>, np.inf)</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># regret_before_time.shape == (num_iters+1, num_runs, len(iterations))</span></span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># project into time dimension</span></span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    regret <span class="op">=</span> regret_before_time.<span class="bu">min</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>    ax.plot(</span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>        iterations,</span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>        np.median(regret, axis<span class="op">=</span><span class="dv">0</span>),</span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span>plot_kwargs.get(<span class="st">"label"</span>),</span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>plot_kwargs.get(<span class="st">"color"</span>),</span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>    ax.fill_between(</span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>        iterations,</span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>        np.quantile(regret, <span class="fl">0.75</span>, axis<span class="op">=</span><span class="dv">0</span>),</span>
-<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>        np.quantile(regret, <span class="fl">0.25</span>, axis<span class="op">=</span><span class="dv">0</span>),</span>
-<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>plot_kwargs.get(<span class="st">"color"</span>),</span>
-<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>        alpha<span class="op">=</span><span class="fl">0.2</span>,</span>
-<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(ncols<span class="op">=</span><span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">4</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>cost_ratios <span class="op">=</span> (<span class="dv">1</span>, <span class="dv">3</span>)</span>
-<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, cost_ratio <span class="kw">in</span> <span class="bu">zip</span>(axs, cost_ratios):</span>
-<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>    plot_regret(</span>
-<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>        ax,</span>
-<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>        tl_results,</span>
-<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>        fidelity_cost_ratio<span class="op">=</span>cost_ratio,</span>
-<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"Transfer Learning"</span>,</span>
-<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"blue"</span>,</span>
-<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>    plot_regret(</span>
-<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>        ax,</span>
-<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>        mf_results,</span>
-<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a>        fidelity_cost_ratio<span class="op">=</span>cost_ratio,</span>
-<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"Multi-fidelity"</span>,</span>
-<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"green"</span>,</span>
-<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"Time step"</span>)</span>
-<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="ss">f"Fidelity cost ratio = </span><span class="sc">{</span>cost_ratio<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].legend()</span>
-<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_ylabel(<span class="st">"Regret"</span>)</span>
-<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="3a5f5550" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_regret(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    ax: Axes, bo_results: pd.DataFrame, fidelity_cost_ratio: <span class="bu">float</span>, <span class="op">**</span>plot_kwargs</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    cummin <span class="op">=</span> (</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>        bo_results[<span class="st">"y"</span>]</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>        .where(bo_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>, other<span class="op">=</span>np.inf)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        .cummin(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># only select iterations, and the final training point</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    cummin <span class="op">=</span> cummin.iloc[<span class="op">-</span>num_iters <span class="op">-</span> <span class="dv">1</span> :]</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    regret: np.ndarray <span class="op">=</span> (cummin <span class="op">-</span> mf_benchmark.get_optima()[<span class="st">"y"</span>][<span class="dv">0</span>].item()).to_numpy()</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># keep track of "real time", where low fidelities are cheaper to evaluate.</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    time_taken <span class="op">=</span> np.where(bo_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>, fidelity_cost_ratio, <span class="dv">1</span>)[</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span>num_iters <span class="op">-</span> <span class="dv">1</span> :</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    ].cumsum(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    time_taken <span class="op">-=</span> time_taken[<span class="dv">0</span>, <span class="dv">0</span>]  <span class="co"># start from T=0 after training data</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    iterations <span class="op">=</span> np.arange(num_iters <span class="op">*</span> fidelity_cost_ratio)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    before_time <span class="op">=</span> time_taken[:, :, np.newaxis] <span class="op">&lt;=</span> iterations[np.newaxis, np.newaxis, :]</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    regret_before_time <span class="op">=</span> regret[:, :, np.newaxis] <span class="op">*</span> np.where(before_time, <span class="fl">1.0</span>, np.inf)</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    <span class="co"># regret_before_time.shape == (num_iters+1, num_runs, len(iterations))</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># project into time dimension</span></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    regret <span class="op">=</span> regret_before_time.<span class="bu">min</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>    ax.plot(</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>        iterations,</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>        np.median(regret, axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span>plot_kwargs.get(<span class="st">"label"</span>),</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>plot_kwargs.get(<span class="st">"color"</span>),</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>    ax.fill_between(</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>        iterations,</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>        np.quantile(regret, <span class="fl">0.75</span>, axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>        np.quantile(regret, <span class="fl">0.25</span>, axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>plot_kwargs.get(<span class="st">"color"</span>),</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>        alpha<span class="op">=</span><span class="fl">0.2</span>,</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(ncols<span class="op">=</span><span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">4</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>cost_ratios <span class="op">=</span> (<span class="dv">1</span>, <span class="dv">3</span>)</span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, cost_ratio <span class="kw">in</span> <span class="bu">zip</span>(axs, cost_ratios):</span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>    plot_regret(</span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>        ax,</span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>        tl_results,</span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>        fidelity_cost_ratio<span class="op">=</span>cost_ratio,</span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"Transfer Learning"</span>,</span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"blue"</span>,</span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>    plot_regret(</span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>        ax,</span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>        mf_results,</span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>        fidelity_cost_ratio<span class="op">=</span>cost_ratio,</span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"Multi-fidelity"</span>,</span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"green"</span>,</span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"Time step"</span>)</span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="ss">f"Fidelity cost ratio = </span><span class="sc">{</span>cost_ratio<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].legend()</span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_ylabel(<span class="st">"Regret"</span>)</span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -1185,11 +1191,11 @@ Optimizing:   0%|          | 0/2 [00:00&lt;?, ?it/s]Optimizing:   0%|          |
 </div>
 </div>
 <p>We can see that allowing the lower fidelities to be queries leads to stronger optimization performance. We can also see below that the MF approach only samples the target fidelity in later iterations, once the variance of the LF has been sufficiently reduced.</p>
-<div id="b8ce2928" class="cell" data-execution_count="11">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>(mf_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>)[<span class="op">-</span>num_iters:].mean(axis<span class="op">=</span><span class="dv">1</span>)  <span class="co"># type: ignore</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="4b01d937" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>(mf_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>)[<span class="op">-</span>num_iters:].mean(axis<span class="op">=</span><span class="dv">1</span>)  <span class="co"># type: ignore</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="11">
 <pre><code>14    0.0
-15    0.4
+15    0.2
 dtype: float64</code></pre>
 </div>
 </div>
@@ -1680,317 +1686,317 @@ dtype: float64</code></pre>
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: 2.980124, end_time: '2024-10-10T20:34:18.797038', exception: false, start_time: '2024-10-10T20:34:15.816914', status: completed}</span></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> tqdm <span class="im">import</span> tqdm</span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> Ackley, Benchmark, Branin</span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qLogEI</span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Domain</span>
-<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> CategoricalTaskInput</span>
-<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> BotorchSurrogates, MultiTaskGPSurrogate</span>
-<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: 0.262804, end_time: '2024-10-10T20:34:19.062415', exception: false, start_time: '2024-10-10T20:34:18.799611', status: completed}</span></span>
-<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.axes <span class="im">import</span> Axes</span>
-<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span>
-<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>NUM_INIT_HF <span class="op">=</span> <span class="dv">4</span></span>
-<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>NUM_INIT_LF <span class="op">=</span> <span class="dv">10</span></span>
-<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> SMOKE_TEST:</span>
-<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>    num_runs <span class="op">=</span> <span class="dv">5</span></span>
-<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>    num_iters <span class="op">=</span> <span class="dv">2</span></span>
-<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>    verbose <span class="op">=</span> <span class="va">False</span></span>
-<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
-<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a>    num_runs <span class="op">=</span> <span class="dv">10</span></span>
-<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a>    num_iters <span class="op">=</span> <span class="dv">10</span></span>
-<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>    verbose <span class="op">=</span> <span class="va">True</span></span>
-<span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-48"><a href="#cb16-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-49"><a href="#cb16-49" aria-hidden="true" tabindex="-1"></a>*This notebook is a sequel to "Transfer Learning in BO".*</span>
-<span id="cb16-50"><a href="#cb16-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-51"><a href="#cb16-51" aria-hidden="true" tabindex="-1"></a><span class="fu"># Multi-fidelity Bayesian Optimization</span></span>
-<span id="cb16-52"><a href="#cb16-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-53"><a href="#cb16-53" aria-hidden="true" tabindex="-1"></a>In the previous notebook, we saw how using low-fidelity approximations to our</span>
-<span id="cb16-54"><a href="#cb16-54" aria-hidden="true" tabindex="-1"></a>target function can improve the predictions from our surrogate model, leading to</span>
-<span id="cb16-55"><a href="#cb16-55" aria-hidden="true" tabindex="-1"></a>a faster optimization procedure. In this notebook, we show how we can gain even</span>
-<span id="cb16-56"><a href="#cb16-56" aria-hidden="true" tabindex="-1"></a>further performance gains by querying the cheap low-fidelity approximations during</span>
-<span id="cb16-57"><a href="#cb16-57" aria-hidden="true" tabindex="-1"></a>the BO loop.</span>
-<span id="cb16-58"><a href="#cb16-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-59"><a href="#cb16-59" aria-hidden="true" tabindex="-1"></a><span class="fu">## Problem definition</span></span>
-<span id="cb16-60"><a href="#cb16-60" aria-hidden="true" tabindex="-1"></a>We use the same problem as the transfer learning notebook; optimizing the Branin</span>
-<span id="cb16-61"><a href="#cb16-61" aria-hidden="true" tabindex="-1"></a>benchmark, with a low-fidelity function biased by the Ackley function (with fewer initial</span>
-<span id="cb16-62"><a href="#cb16-62" aria-hidden="true" tabindex="-1"></a>points, to demonstrate the strength of being able to query low fidelities). Below, we</span>
-<span id="cb16-63"><a href="#cb16-63" aria-hidden="true" tabindex="-1"></a>define the problem domain, and the strategies we will use to optimize.</span>
-<span id="cb16-64"><a href="#cb16-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-65"><a href="#cb16-65" aria-hidden="true" tabindex="-1"></a>As a baseline, we use the <span class="in">`SoboStrategy`</span> with the <span class="in">`MultiTaskSurrogate`</span>, as in the</span>
-<span id="cb16-66"><a href="#cb16-66" aria-hidden="true" tabindex="-1"></a>previous notebook. We also introduce the <span class="in">`MultiFidelityVarianceBasedStrategy`</span> here, which uses</span>
-<span id="cb16-67"><a href="#cb16-67" aria-hidden="true" tabindex="-1"></a>the same surrogate, but is able to query the lower fidelity functions using a</span>
-<span id="cb16-68"><a href="#cb16-68" aria-hidden="true" tabindex="-1"></a>variance-based acquisition function <span class="co">[</span><span class="ot">Kandasamy et al. 2016, Folch et al. 2023</span><span class="co">]</span>.</span>
-<span id="cb16-69"><a href="#cb16-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-70"><a href="#cb16-70" aria-hidden="true" tabindex="-1"></a>Both strategies first select a design point $x$ by optimizing the target fidelity.</span>
-<span id="cb16-71"><a href="#cb16-71" aria-hidden="true" tabindex="-1"></a>The <span class="in">`MultiFidelityVarianceBasedStrategy`</span> then selects the fidelity, $m$, by selecting the</span>
-<span id="cb16-72"><a href="#cb16-72" aria-hidden="true" tabindex="-1"></a>lowest fidelity that has a variance over a fixed threshold. This means that the</span>
-<span id="cb16-73"><a href="#cb16-73" aria-hidden="true" tabindex="-1"></a>strategy will explore the cheapest fidelities first, and only query the expensive</span>
-<span id="cb16-74"><a href="#cb16-74" aria-hidden="true" tabindex="-1"></a>fidelities when there is no information to be gained by the cheap approximations.</span>
-<span id="cb16-75"><a href="#cb16-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-78"><a href="#cb16-78" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb16-79"><a href="#cb16-79" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> BraninMultiTask(Benchmark):</span>
-<span id="cb16-80"><a href="#cb16-80" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, low_fidelity_allowed<span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs):</span>
-<span id="cb16-81"><a href="#cb16-81" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(<span class="op">**</span>kwargs)</span>
-<span id="cb16-82"><a href="#cb16-82" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._branin <span class="op">=</span> Branin()</span>
-<span id="cb16-83"><a href="#cb16-83" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._ackley <span class="op">=</span> Ackley()</span>
-<span id="cb16-84"><a href="#cb16-84" aria-hidden="true" tabindex="-1"></a>        task_input <span class="op">=</span> CategoricalTaskInput(</span>
-<span id="cb16-85"><a href="#cb16-85" aria-hidden="true" tabindex="-1"></a>            key<span class="op">=</span><span class="st">"task"</span>,</span>
-<span id="cb16-86"><a href="#cb16-86" aria-hidden="true" tabindex="-1"></a>            categories<span class="op">=</span>[<span class="st">"task_hf"</span>, <span class="st">"task_lf"</span>],</span>
-<span id="cb16-87"><a href="#cb16-87" aria-hidden="true" tabindex="-1"></a>            allowed<span class="op">=</span>[<span class="va">True</span>, low_fidelity_allowed],</span>
-<span id="cb16-88"><a href="#cb16-88" aria-hidden="true" tabindex="-1"></a>            fidelities<span class="op">=</span>[<span class="dv">0</span>, <span class="dv">1</span>],</span>
-<span id="cb16-89"><a href="#cb16-89" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb16-90"><a href="#cb16-90" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._domain <span class="op">=</span> Domain(</span>
-<span id="cb16-91"><a href="#cb16-91" aria-hidden="true" tabindex="-1"></a>            inputs<span class="op">=</span><span class="va">self</span>._branin.domain.inputs <span class="op">+</span> (task_input,),</span>
-<span id="cb16-92"><a href="#cb16-92" aria-hidden="true" tabindex="-1"></a>            outputs<span class="op">=</span><span class="va">self</span>._branin.domain.outputs,</span>
-<span id="cb16-93"><a href="#cb16-93" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb16-94"><a href="#cb16-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-95"><a href="#cb16-95" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _f(<span class="va">self</span>, candidates: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
-<span id="cb16-96"><a href="#cb16-96" aria-hidden="true" tabindex="-1"></a>        candidates_no_task <span class="op">=</span> candidates.drop(columns<span class="op">=</span>[<span class="st">"task"</span>])</span>
-<span id="cb16-97"><a href="#cb16-97" aria-hidden="true" tabindex="-1"></a>        f_branin <span class="op">=</span> <span class="va">self</span>._branin.f(candidates_no_task)</span>
-<span id="cb16-98"><a href="#cb16-98" aria-hidden="true" tabindex="-1"></a>        f_ackley <span class="op">=</span> <span class="va">self</span>._ackley.f(candidates_no_task)</span>
-<span id="cb16-99"><a href="#cb16-99" aria-hidden="true" tabindex="-1"></a>        bias_scale <span class="op">=</span> np.where(candidates[<span class="st">"task"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>, <span class="fl">0.0</span>, <span class="fl">0.15</span>).reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)</span>
-<span id="cb16-100"><a href="#cb16-100" aria-hidden="true" tabindex="-1"></a>        bias_scale <span class="op">=</span> pd.DataFrame(bias_scale, columns<span class="op">=</span><span class="va">self</span>._domain.outputs.get_keys())</span>
-<span id="cb16-101"><a href="#cb16-101" aria-hidden="true" tabindex="-1"></a>        bias_scale[<span class="st">"valid_y"</span>] <span class="op">=</span> <span class="fl">0.0</span></span>
-<span id="cb16-102"><a href="#cb16-102" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> f_branin <span class="op">+</span> bias_scale <span class="op">*</span> f_ackley</span>
-<span id="cb16-103"><a href="#cb16-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-104"><a href="#cb16-104" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> get_optima(<span class="va">self</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
-<span id="cb16-105"><a href="#cb16-105" aria-hidden="true" tabindex="-1"></a>        optima <span class="op">=</span> <span class="va">self</span>._branin.get_optima()</span>
-<span id="cb16-106"><a href="#cb16-106" aria-hidden="true" tabindex="-1"></a>        optima[<span class="st">"task"</span>] <span class="op">=</span> <span class="st">"task_hf"</span></span>
-<span id="cb16-107"><a href="#cb16-107" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> optima</span>
-<span id="cb16-108"><a href="#cb16-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-109"><a href="#cb16-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-110"><a href="#cb16-110" aria-hidden="true" tabindex="-1"></a>mf_benchmark <span class="op">=</span> BraninMultiTask(low_fidelity_allowed<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb16-111"><a href="#cb16-111" aria-hidden="true" tabindex="-1"></a>tl_benchmark <span class="op">=</span> BraninMultiTask(low_fidelity_allowed<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb16-112"><a href="#cb16-112" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-113"><a href="#cb16-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-116"><a href="#cb16-116" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb16-117"><a href="#cb16-117" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_data_set(seed: <span class="bu">int</span>):</span>
-<span id="cb16-118"><a href="#cb16-118" aria-hidden="true" tabindex="-1"></a>    <span class="co"># use the tl_benchmark to sample without the low fidelity</span></span>
-<span id="cb16-119"><a href="#cb16-119" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> tl_benchmark.domain.inputs.sample(</span>
-<span id="cb16-120"><a href="#cb16-120" aria-hidden="true" tabindex="-1"></a>        NUM_INIT_HF <span class="op">+</span> NUM_INIT_LF, seed<span class="op">=</span>seed</span>
-<span id="cb16-121"><a href="#cb16-121" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb16-122"><a href="#cb16-122" aria-hidden="true" tabindex="-1"></a>    experiments[<span class="st">"task"</span>] <span class="op">=</span> np.where(</span>
-<span id="cb16-123"><a href="#cb16-123" aria-hidden="true" tabindex="-1"></a>        experiments.index <span class="op">&lt;</span> NUM_INIT_LF, <span class="st">"task_lf"</span>, <span class="st">"task_hf"</span></span>
-<span id="cb16-124"><a href="#cb16-124" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb16-125"><a href="#cb16-125" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-126"><a href="#cb16-126" aria-hidden="true" tabindex="-1"></a>    <span class="co"># then use the ml_benchmark to evaluate the low fidelity</span></span>
-<span id="cb16-127"><a href="#cb16-127" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> mf_benchmark.f(experiments, return_complete<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb16-128"><a href="#cb16-128" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-129"><a href="#cb16-129" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-130"><a href="#cb16-130" aria-hidden="true" tabindex="-1"></a>create_data_set(<span class="dv">0</span>)</span>
-<span id="cb16-131"><a href="#cb16-131" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-132"><a href="#cb16-132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-135"><a href="#cb16-135" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb16-136"><a href="#cb16-136" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> MultiFidelityVarianceBasedStrategy</span>
-<span id="cb16-137"><a href="#cb16-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-138"><a href="#cb16-138" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-139"><a href="#cb16-139" aria-hidden="true" tabindex="-1"></a><span class="co"># It isn't necessary to define the surrogate specs here, as the MFStrategy</span></span>
-<span id="cb16-140"><a href="#cb16-140" aria-hidden="true" tabindex="-1"></a><span class="co"># will use a MultiTaskGP by default.</span></span>
-<span id="cb16-141"><a href="#cb16-141" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-142"><a href="#cb16-142" aria-hidden="true" tabindex="-1"></a>mf_data_model <span class="op">=</span> MultiFidelityVarianceBasedStrategy(</span>
-<span id="cb16-143"><a href="#cb16-143" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>mf_benchmark.domain,</span>
-<span id="cb16-144"><a href="#cb16-144" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span>qLogEI(),</span>
-<span id="cb16-145"><a href="#cb16-145" aria-hidden="true" tabindex="-1"></a>    fidelity_thresholds<span class="op">=</span><span class="fl">0.1</span>,</span>
-<span id="cb16-146"><a href="#cb16-146" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-147"><a href="#cb16-147" aria-hidden="true" tabindex="-1"></a>mf_data_model.surrogate_specs.surrogates[<span class="dv">0</span>].inputs</span>
-<span id="cb16-148"><a href="#cb16-148" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-149"><a href="#cb16-149" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-152"><a href="#cb16-152" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb16-153"><a href="#cb16-153" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
-<span id="cb16-154"><a href="#cb16-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-155"><a href="#cb16-155" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-156"><a href="#cb16-156" aria-hidden="true" tabindex="-1"></a>surrogate_specs <span class="op">=</span> BotorchSurrogates(</span>
-<span id="cb16-157"><a href="#cb16-157" aria-hidden="true" tabindex="-1"></a>    surrogates<span class="op">=</span>[</span>
-<span id="cb16-158"><a href="#cb16-158" aria-hidden="true" tabindex="-1"></a>        MultiTaskGPSurrogate(</span>
-<span id="cb16-159"><a href="#cb16-159" aria-hidden="true" tabindex="-1"></a>            inputs<span class="op">=</span>tl_benchmark.domain.inputs,</span>
-<span id="cb16-160"><a href="#cb16-160" aria-hidden="true" tabindex="-1"></a>            outputs<span class="op">=</span>tl_benchmark.domain.outputs,</span>
-<span id="cb16-161"><a href="#cb16-161" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb16-162"><a href="#cb16-162" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb16-163"><a href="#cb16-163" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-164"><a href="#cb16-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-165"><a href="#cb16-165" aria-hidden="true" tabindex="-1"></a>tl_data_model <span class="op">=</span> SoboStrategy(</span>
-<span id="cb16-166"><a href="#cb16-166" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>tl_benchmark.domain,</span>
-<span id="cb16-167"><a href="#cb16-167" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span>qLogEI(),</span>
-<span id="cb16-168"><a href="#cb16-168" aria-hidden="true" tabindex="-1"></a>    surrogate_specs<span class="op">=</span>surrogate_specs,</span>
-<span id="cb16-169"><a href="#cb16-169" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb16-170"><a href="#cb16-170" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-171"><a href="#cb16-171" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-172"><a href="#cb16-172" aria-hidden="true" tabindex="-1"></a><span class="fu"># Multi-fidelity Bayesian Optimisation</span></span>
-<span id="cb16-173"><a href="#cb16-173" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-174"><a href="#cb16-174" aria-hidden="true" tabindex="-1"></a>We first optimize only on the target fidelity (the "Transfer Learning" baseline).</span>
-<span id="cb16-175"><a href="#cb16-175" aria-hidden="true" tabindex="-1"></a>This uses the <span class="in">`SoboStrategy`</span> defined above.</span>
-<span id="cb16-176"><a href="#cb16-176" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-179"><a href="#cb16-179" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb16-180"><a href="#cb16-180" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
-<span id="cb16-181"><a href="#cb16-181" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb16-182"><a href="#cb16-182" aria-hidden="true" tabindex="-1"></a>tl_results <span class="op">=</span> pd.DataFrame(columns<span class="op">=</span>pd.MultiIndex.from_tuples([], names<span class="op">=</span>(<span class="st">"col"</span>, <span class="st">"run"</span>)))</span>
-<span id="cb16-183"><a href="#cb16-183" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run <span class="kw">in</span> <span class="bu">range</span>(num_runs):</span>
-<span id="cb16-184"><a href="#cb16-184" aria-hidden="true" tabindex="-1"></a>    seed <span class="op">=</span> <span class="dv">2048</span> <span class="op">*</span> run <span class="op">+</span> <span class="dv">123</span></span>
-<span id="cb16-185"><a href="#cb16-185" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> create_data_set(seed)</span>
-<span id="cb16-186"><a href="#cb16-186" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-187"><a href="#cb16-187" aria-hidden="true" tabindex="-1"></a>    tl_strategy <span class="op">=</span> strategies.<span class="bu">map</span>(tl_data_model)</span>
-<span id="cb16-188"><a href="#cb16-188" aria-hidden="true" tabindex="-1"></a>    tl_strategy.tell(experiments)</span>
-<span id="cb16-189"><a href="#cb16-189" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-190"><a href="#cb16-190" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> tl_strategy.experiments <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
-<span id="cb16-191"><a href="#cb16-191" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-192"><a href="#cb16-192" aria-hidden="true" tabindex="-1"></a>    pbar <span class="op">=</span> tqdm(<span class="bu">range</span>(num_iters), desc<span class="op">=</span><span class="st">"Optimizing"</span>)</span>
-<span id="cb16-193"><a href="#cb16-193" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> pbar:</span>
-<span id="cb16-194"><a href="#cb16-194" aria-hidden="true" tabindex="-1"></a>        candidate <span class="op">=</span> tl_strategy.ask(<span class="dv">1</span>)</span>
-<span id="cb16-195"><a href="#cb16-195" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> tl_benchmark.f(candidate, return_complete<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb16-196"><a href="#cb16-196" aria-hidden="true" tabindex="-1"></a>        tl_strategy.tell(y)</span>
-<span id="cb16-197"><a href="#cb16-197" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-198"><a href="#cb16-198" aria-hidden="true" tabindex="-1"></a>        hf_experiments <span class="op">=</span> tl_strategy.experiments[</span>
-<span id="cb16-199"><a href="#cb16-199" aria-hidden="true" tabindex="-1"></a>            tl_strategy.experiments[<span class="st">"task"</span>] <span class="op">==</span> <span class="st">"task_hf"</span></span>
-<span id="cb16-200"><a href="#cb16-200" aria-hidden="true" tabindex="-1"></a>        ]</span>
-<span id="cb16-201"><a href="#cb16-201" aria-hidden="true" tabindex="-1"></a>        regret <span class="op">=</span> hf_experiments[<span class="st">"y"</span>].<span class="bu">min</span>() <span class="op">-</span> tl_benchmark.get_optima()[<span class="st">"y"</span>][<span class="dv">0</span>].item()</span>
-<span id="cb16-202"><a href="#cb16-202" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-203"><a href="#cb16-203" aria-hidden="true" tabindex="-1"></a>        pbar.set_postfix({<span class="st">"Regret"</span>: <span class="ss">f"</span><span class="sc">{</span>regret<span class="sc">:.4f}</span><span class="ss">"</span>})</span>
-<span id="cb16-204"><a href="#cb16-204" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-205"><a href="#cb16-205" aria-hidden="true" tabindex="-1"></a>    tl_results[<span class="st">"fidelity"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> tl_strategy.experiments[<span class="st">"task"</span>]</span>
-<span id="cb16-206"><a href="#cb16-206" aria-hidden="true" tabindex="-1"></a>    tl_results[<span class="st">"y"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> tl_strategy.experiments[<span class="st">"y"</span>]</span>
-<span id="cb16-207"><a href="#cb16-207" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-208"><a href="#cb16-208" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-209"><a href="#cb16-209" aria-hidden="true" tabindex="-1"></a>We now repeat the experiment using multi-fidelity BO, allowing the strategy to query</span>
-<span id="cb16-210"><a href="#cb16-210" aria-hidden="true" tabindex="-1"></a>the low fidelity function as well as the high fidelity function:</span>
-<span id="cb16-211"><a href="#cb16-211" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-214"><a href="#cb16-214" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb16-215"><a href="#cb16-215" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
-<span id="cb16-216"><a href="#cb16-216" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb16-217"><a href="#cb16-217" aria-hidden="true" tabindex="-1"></a>mf_results <span class="op">=</span> pd.DataFrame(columns<span class="op">=</span>pd.MultiIndex.from_tuples([], names<span class="op">=</span>(<span class="st">"col"</span>, <span class="st">"run"</span>)))</span>
-<span id="cb16-218"><a href="#cb16-218" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run <span class="kw">in</span> <span class="bu">range</span>(num_runs):</span>
-<span id="cb16-219"><a href="#cb16-219" aria-hidden="true" tabindex="-1"></a>    seed <span class="op">=</span> <span class="dv">2048</span> <span class="op">*</span> run <span class="op">+</span> <span class="dv">123</span></span>
-<span id="cb16-220"><a href="#cb16-220" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> create_data_set(seed)</span>
-<span id="cb16-221"><a href="#cb16-221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-222"><a href="#cb16-222" aria-hidden="true" tabindex="-1"></a>    mf_strategy <span class="op">=</span> strategies.<span class="bu">map</span>(mf_data_model)</span>
-<span id="cb16-223"><a href="#cb16-223" aria-hidden="true" tabindex="-1"></a>    mf_strategy.tell(experiments)</span>
-<span id="cb16-224"><a href="#cb16-224" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-225"><a href="#cb16-225" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> mf_strategy.experiments <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
-<span id="cb16-226"><a href="#cb16-226" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-227"><a href="#cb16-227" aria-hidden="true" tabindex="-1"></a>    pbar <span class="op">=</span> tqdm(<span class="bu">range</span>(num_iters), desc<span class="op">=</span><span class="st">"Optimizing"</span>)</span>
-<span id="cb16-228"><a href="#cb16-228" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> pbar:</span>
-<span id="cb16-229"><a href="#cb16-229" aria-hidden="true" tabindex="-1"></a>        candidate <span class="op">=</span> mf_strategy.ask(<span class="dv">1</span>)</span>
-<span id="cb16-230"><a href="#cb16-230" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> mf_benchmark.f(candidate, return_complete<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb16-231"><a href="#cb16-231" aria-hidden="true" tabindex="-1"></a>        mf_strategy.tell(y)</span>
-<span id="cb16-232"><a href="#cb16-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-233"><a href="#cb16-233" aria-hidden="true" tabindex="-1"></a>        hf_experiments <span class="op">=</span> mf_strategy.experiments[</span>
-<span id="cb16-234"><a href="#cb16-234" aria-hidden="true" tabindex="-1"></a>            mf_strategy.experiments[<span class="st">"task"</span>] <span class="op">==</span> <span class="st">"task_hf"</span></span>
-<span id="cb16-235"><a href="#cb16-235" aria-hidden="true" tabindex="-1"></a>        ]</span>
-<span id="cb16-236"><a href="#cb16-236" aria-hidden="true" tabindex="-1"></a>        regret <span class="op">=</span> hf_experiments[<span class="st">"y"</span>].<span class="bu">min</span>() <span class="op">-</span> mf_benchmark.get_optima()[<span class="st">"y"</span>][<span class="dv">0</span>].item()</span>
-<span id="cb16-237"><a href="#cb16-237" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-238"><a href="#cb16-238" aria-hidden="true" tabindex="-1"></a>        pbar.set_postfix({<span class="st">"Regret"</span>: <span class="ss">f"</span><span class="sc">{</span>regret<span class="sc">:.4f}</span><span class="ss">"</span>})</span>
-<span id="cb16-239"><a href="#cb16-239" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-240"><a href="#cb16-240" aria-hidden="true" tabindex="-1"></a>    mf_results[<span class="st">"fidelity"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> mf_strategy.experiments[<span class="st">"task"</span>]</span>
-<span id="cb16-241"><a href="#cb16-241" aria-hidden="true" tabindex="-1"></a>    mf_results[<span class="st">"y"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> mf_strategy.experiments[<span class="st">"y"</span>]</span>
-<span id="cb16-242"><a href="#cb16-242" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-243"><a href="#cb16-243" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-244"><a href="#cb16-244" aria-hidden="true" tabindex="-1"></a>When evaluating the performance, we need to consider how cheap the low-fidelity (LF) is</span>
-<span id="cb16-245"><a href="#cb16-245" aria-hidden="true" tabindex="-1"></a>to query. When the LF has the same cost as the target fidelity, then we</span>
-<span id="cb16-246"><a href="#cb16-246" aria-hidden="true" tabindex="-1"></a>gain very little from the multi-fidelity approach. However, if the LF is cheaper</span>
-<span id="cb16-247"><a href="#cb16-247" aria-hidden="true" tabindex="-1"></a>than the target (in the example below, 3x cheaper) then we observe an improvement in</span>
-<span id="cb16-248"><a href="#cb16-248" aria-hidden="true" tabindex="-1"></a>BO performance.</span>
-<span id="cb16-249"><a href="#cb16-249" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-250"><a href="#cb16-250" aria-hidden="true" tabindex="-1"></a>Specifically, although both strategies have a budget of 10 function queries, the MF</span>
-<span id="cb16-251"><a href="#cb16-251" aria-hidden="true" tabindex="-1"></a>approach uses some of them on</span>
-<span id="cb16-252"><a href="#cb16-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-255"><a href="#cb16-255" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb16-256"><a href="#cb16-256" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
-<span id="cb16-257"><a href="#cb16-257" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb16-258"><a href="#cb16-258" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_regret(</span>
-<span id="cb16-259"><a href="#cb16-259" aria-hidden="true" tabindex="-1"></a>    ax: Axes, bo_results: pd.DataFrame, fidelity_cost_ratio: <span class="bu">float</span>, <span class="op">**</span>plot_kwargs</span>
-<span id="cb16-260"><a href="#cb16-260" aria-hidden="true" tabindex="-1"></a>):</span>
-<span id="cb16-261"><a href="#cb16-261" aria-hidden="true" tabindex="-1"></a>    cummin <span class="op">=</span> (</span>
-<span id="cb16-262"><a href="#cb16-262" aria-hidden="true" tabindex="-1"></a>        bo_results[<span class="st">"y"</span>]</span>
-<span id="cb16-263"><a href="#cb16-263" aria-hidden="true" tabindex="-1"></a>        .where(bo_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>, other<span class="op">=</span>np.inf)</span>
-<span id="cb16-264"><a href="#cb16-264" aria-hidden="true" tabindex="-1"></a>        .cummin(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb16-265"><a href="#cb16-265" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb16-266"><a href="#cb16-266" aria-hidden="true" tabindex="-1"></a>    <span class="co"># only select iterations, and the final training point</span></span>
-<span id="cb16-267"><a href="#cb16-267" aria-hidden="true" tabindex="-1"></a>    cummin <span class="op">=</span> cummin.iloc[<span class="op">-</span>num_iters <span class="op">-</span> <span class="dv">1</span> :]</span>
-<span id="cb16-268"><a href="#cb16-268" aria-hidden="true" tabindex="-1"></a>    regret: np.ndarray <span class="op">=</span> (cummin <span class="op">-</span> mf_benchmark.get_optima()[<span class="st">"y"</span>][<span class="dv">0</span>].item()).to_numpy()</span>
-<span id="cb16-269"><a href="#cb16-269" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-270"><a href="#cb16-270" aria-hidden="true" tabindex="-1"></a>    <span class="co"># keep track of "real time", where low fidelities are cheaper to evaluate.</span></span>
-<span id="cb16-271"><a href="#cb16-271" aria-hidden="true" tabindex="-1"></a>    time_taken <span class="op">=</span> np.where(bo_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>, fidelity_cost_ratio, <span class="dv">1</span>)[</span>
-<span id="cb16-272"><a href="#cb16-272" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span>num_iters <span class="op">-</span> <span class="dv">1</span> :</span>
-<span id="cb16-273"><a href="#cb16-273" aria-hidden="true" tabindex="-1"></a>    ].cumsum(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb16-274"><a href="#cb16-274" aria-hidden="true" tabindex="-1"></a>    time_taken <span class="op">-=</span> time_taken[<span class="dv">0</span>, <span class="dv">0</span>]  <span class="co"># start from T=0 after training data</span></span>
-<span id="cb16-275"><a href="#cb16-275" aria-hidden="true" tabindex="-1"></a>    iterations <span class="op">=</span> np.arange(num_iters <span class="op">*</span> fidelity_cost_ratio)</span>
-<span id="cb16-276"><a href="#cb16-276" aria-hidden="true" tabindex="-1"></a>    before_time <span class="op">=</span> time_taken[:, :, np.newaxis] <span class="op">&lt;=</span> iterations[np.newaxis, np.newaxis, :]</span>
-<span id="cb16-277"><a href="#cb16-277" aria-hidden="true" tabindex="-1"></a>    regret_before_time <span class="op">=</span> regret[:, :, np.newaxis] <span class="op">*</span> np.where(before_time, <span class="fl">1.0</span>, np.inf)</span>
-<span id="cb16-278"><a href="#cb16-278" aria-hidden="true" tabindex="-1"></a>    <span class="co"># regret_before_time.shape == (num_iters+1, num_runs, len(iterations))</span></span>
-<span id="cb16-279"><a href="#cb16-279" aria-hidden="true" tabindex="-1"></a>    <span class="co"># project into time dimension</span></span>
-<span id="cb16-280"><a href="#cb16-280" aria-hidden="true" tabindex="-1"></a>    regret <span class="op">=</span> regret_before_time.<span class="bu">min</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb16-281"><a href="#cb16-281" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-282"><a href="#cb16-282" aria-hidden="true" tabindex="-1"></a>    ax.plot(</span>
-<span id="cb16-283"><a href="#cb16-283" aria-hidden="true" tabindex="-1"></a>        iterations,</span>
-<span id="cb16-284"><a href="#cb16-284" aria-hidden="true" tabindex="-1"></a>        np.median(regret, axis<span class="op">=</span><span class="dv">0</span>),</span>
-<span id="cb16-285"><a href="#cb16-285" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span>plot_kwargs.get(<span class="st">"label"</span>),</span>
-<span id="cb16-286"><a href="#cb16-286" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>plot_kwargs.get(<span class="st">"color"</span>),</span>
-<span id="cb16-287"><a href="#cb16-287" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb16-288"><a href="#cb16-288" aria-hidden="true" tabindex="-1"></a>    ax.fill_between(</span>
-<span id="cb16-289"><a href="#cb16-289" aria-hidden="true" tabindex="-1"></a>        iterations,</span>
-<span id="cb16-290"><a href="#cb16-290" aria-hidden="true" tabindex="-1"></a>        np.quantile(regret, <span class="fl">0.75</span>, axis<span class="op">=</span><span class="dv">0</span>),</span>
-<span id="cb16-291"><a href="#cb16-291" aria-hidden="true" tabindex="-1"></a>        np.quantile(regret, <span class="fl">0.25</span>, axis<span class="op">=</span><span class="dv">0</span>),</span>
-<span id="cb16-292"><a href="#cb16-292" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>plot_kwargs.get(<span class="st">"color"</span>),</span>
-<span id="cb16-293"><a href="#cb16-293" aria-hidden="true" tabindex="-1"></a>        alpha<span class="op">=</span><span class="fl">0.2</span>,</span>
-<span id="cb16-294"><a href="#cb16-294" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb16-295"><a href="#cb16-295" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-296"><a href="#cb16-296" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-297"><a href="#cb16-297" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(ncols<span class="op">=</span><span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">4</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb16-298"><a href="#cb16-298" aria-hidden="true" tabindex="-1"></a>cost_ratios <span class="op">=</span> (<span class="dv">1</span>, <span class="dv">3</span>)</span>
-<span id="cb16-299"><a href="#cb16-299" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-300"><a href="#cb16-300" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, cost_ratio <span class="kw">in</span> <span class="bu">zip</span>(axs, cost_ratios):</span>
-<span id="cb16-301"><a href="#cb16-301" aria-hidden="true" tabindex="-1"></a>    plot_regret(</span>
-<span id="cb16-302"><a href="#cb16-302" aria-hidden="true" tabindex="-1"></a>        ax,</span>
-<span id="cb16-303"><a href="#cb16-303" aria-hidden="true" tabindex="-1"></a>        tl_results,</span>
-<span id="cb16-304"><a href="#cb16-304" aria-hidden="true" tabindex="-1"></a>        fidelity_cost_ratio<span class="op">=</span>cost_ratio,</span>
-<span id="cb16-305"><a href="#cb16-305" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"Transfer Learning"</span>,</span>
-<span id="cb16-306"><a href="#cb16-306" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"blue"</span>,</span>
-<span id="cb16-307"><a href="#cb16-307" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb16-308"><a href="#cb16-308" aria-hidden="true" tabindex="-1"></a>    plot_regret(</span>
-<span id="cb16-309"><a href="#cb16-309" aria-hidden="true" tabindex="-1"></a>        ax,</span>
-<span id="cb16-310"><a href="#cb16-310" aria-hidden="true" tabindex="-1"></a>        mf_results,</span>
-<span id="cb16-311"><a href="#cb16-311" aria-hidden="true" tabindex="-1"></a>        fidelity_cost_ratio<span class="op">=</span>cost_ratio,</span>
-<span id="cb16-312"><a href="#cb16-312" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"Multi-fidelity"</span>,</span>
-<span id="cb16-313"><a href="#cb16-313" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"green"</span>,</span>
-<span id="cb16-314"><a href="#cb16-314" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb16-315"><a href="#cb16-315" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"Time step"</span>)</span>
-<span id="cb16-316"><a href="#cb16-316" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="ss">f"Fidelity cost ratio = </span><span class="sc">{</span>cost_ratio<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb16-317"><a href="#cb16-317" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-318"><a href="#cb16-318" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-319"><a href="#cb16-319" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].legend()</span>
-<span id="cb16-320"><a href="#cb16-320" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_ylabel(<span class="st">"Regret"</span>)</span>
-<span id="cb16-321"><a href="#cb16-321" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-322"><a href="#cb16-322" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
-<span id="cb16-323"><a href="#cb16-323" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb16-324"><a href="#cb16-324" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-325"><a href="#cb16-325" aria-hidden="true" tabindex="-1"></a>We can see that allowing the lower fidelities to be queries leads to stronger optimization performance.</span>
-<span id="cb16-326"><a href="#cb16-326" aria-hidden="true" tabindex="-1"></a>We can also see below that the MF approach only samples the target fidelity in later</span>
-<span id="cb16-327"><a href="#cb16-327" aria-hidden="true" tabindex="-1"></a>iterations, once the variance of the LF has been sufficiently reduced.</span>
-<span id="cb16-328"><a href="#cb16-328" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-331"><a href="#cb16-331" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb16-332"><a href="#cb16-332" aria-hidden="true" tabindex="-1"></a>(mf_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>)[<span class="op">-</span>num_iters:].mean(axis<span class="op">=</span><span class="dv">1</span>)  <span class="co"># type: ignore</span></span>
-<span id="cb16-333"><a href="#cb16-333" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: 2.980124, end_time: '2024-10-10T20:34:18.797038', exception: false, start_time: '2024-10-10T20:34:15.816914', status: completed}</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> tqdm <span class="im">import</span> tqdm</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> Ackley, Benchmark, Branin</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qLogEI</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Domain</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> CategoricalTaskInput</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> BotorchSurrogates, MultiTaskGPSurrogate</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: 0.262804, end_time: '2024-10-10T20:34:19.062415', exception: false, start_time: '2024-10-10T20:34:18.799611', status: completed}</span></span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.axes <span class="im">import</span> Axes</span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span>
+<span id="cb17-37"><a href="#cb17-37" aria-hidden="true" tabindex="-1"></a>NUM_INIT_HF <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb17-38"><a href="#cb17-38" aria-hidden="true" tabindex="-1"></a>NUM_INIT_LF <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb17-39"><a href="#cb17-39" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> SMOKE_TEST:</span>
+<span id="cb17-40"><a href="#cb17-40" aria-hidden="true" tabindex="-1"></a>    num_runs <span class="op">=</span> <span class="dv">5</span></span>
+<span id="cb17-41"><a href="#cb17-41" aria-hidden="true" tabindex="-1"></a>    num_iters <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb17-42"><a href="#cb17-42" aria-hidden="true" tabindex="-1"></a>    verbose <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb17-43"><a href="#cb17-43" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb17-44"><a href="#cb17-44" aria-hidden="true" tabindex="-1"></a>    num_runs <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb17-45"><a href="#cb17-45" aria-hidden="true" tabindex="-1"></a>    num_iters <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb17-46"><a href="#cb17-46" aria-hidden="true" tabindex="-1"></a>    verbose <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb17-47"><a href="#cb17-47" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-48"><a href="#cb17-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-49"><a href="#cb17-49" aria-hidden="true" tabindex="-1"></a>*This notebook is a sequel to "Transfer Learning in BO".*</span>
+<span id="cb17-50"><a href="#cb17-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-51"><a href="#cb17-51" aria-hidden="true" tabindex="-1"></a><span class="fu"># Multi-fidelity Bayesian Optimization</span></span>
+<span id="cb17-52"><a href="#cb17-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-53"><a href="#cb17-53" aria-hidden="true" tabindex="-1"></a>In the previous notebook, we saw how using low-fidelity approximations to our</span>
+<span id="cb17-54"><a href="#cb17-54" aria-hidden="true" tabindex="-1"></a>target function can improve the predictions from our surrogate model, leading to</span>
+<span id="cb17-55"><a href="#cb17-55" aria-hidden="true" tabindex="-1"></a>a faster optimization procedure. In this notebook, we show how we can gain even</span>
+<span id="cb17-56"><a href="#cb17-56" aria-hidden="true" tabindex="-1"></a>further performance gains by querying the cheap low-fidelity approximations during</span>
+<span id="cb17-57"><a href="#cb17-57" aria-hidden="true" tabindex="-1"></a>the BO loop.</span>
+<span id="cb17-58"><a href="#cb17-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-59"><a href="#cb17-59" aria-hidden="true" tabindex="-1"></a><span class="fu">## Problem definition</span></span>
+<span id="cb17-60"><a href="#cb17-60" aria-hidden="true" tabindex="-1"></a>We use the same problem as the transfer learning notebook; optimizing the Branin</span>
+<span id="cb17-61"><a href="#cb17-61" aria-hidden="true" tabindex="-1"></a>benchmark, with a low-fidelity function biased by the Ackley function (with fewer initial</span>
+<span id="cb17-62"><a href="#cb17-62" aria-hidden="true" tabindex="-1"></a>points, to demonstrate the strength of being able to query low fidelities). Below, we</span>
+<span id="cb17-63"><a href="#cb17-63" aria-hidden="true" tabindex="-1"></a>define the problem domain, and the strategies we will use to optimize.</span>
+<span id="cb17-64"><a href="#cb17-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-65"><a href="#cb17-65" aria-hidden="true" tabindex="-1"></a>As a baseline, we use the <span class="in">`SoboStrategy`</span> with the <span class="in">`MultiTaskSurrogate`</span>, as in the</span>
+<span id="cb17-66"><a href="#cb17-66" aria-hidden="true" tabindex="-1"></a>previous notebook. We also introduce the <span class="in">`MultiFidelityVarianceBasedStrategy`</span> here, which uses</span>
+<span id="cb17-67"><a href="#cb17-67" aria-hidden="true" tabindex="-1"></a>the same surrogate, but is able to query the lower fidelity functions using a</span>
+<span id="cb17-68"><a href="#cb17-68" aria-hidden="true" tabindex="-1"></a>variance-based acquisition function <span class="co">[</span><span class="ot">Kandasamy et al. 2016, Folch et al. 2023</span><span class="co">]</span>.</span>
+<span id="cb17-69"><a href="#cb17-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-70"><a href="#cb17-70" aria-hidden="true" tabindex="-1"></a>Both strategies first select a design point $x$ by optimizing the target fidelity.</span>
+<span id="cb17-71"><a href="#cb17-71" aria-hidden="true" tabindex="-1"></a>The <span class="in">`MultiFidelityVarianceBasedStrategy`</span> then selects the fidelity, $m$, by selecting the</span>
+<span id="cb17-72"><a href="#cb17-72" aria-hidden="true" tabindex="-1"></a>lowest fidelity that has a variance over a fixed threshold. This means that the</span>
+<span id="cb17-73"><a href="#cb17-73" aria-hidden="true" tabindex="-1"></a>strategy will explore the cheapest fidelities first, and only query the expensive</span>
+<span id="cb17-74"><a href="#cb17-74" aria-hidden="true" tabindex="-1"></a>fidelities when there is no information to be gained by the cheap approximations.</span>
+<span id="cb17-75"><a href="#cb17-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-78"><a href="#cb17-78" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb17-79"><a href="#cb17-79" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> BraninMultiTask(Benchmark):</span>
+<span id="cb17-80"><a href="#cb17-80" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, low_fidelity_allowed<span class="op">=</span><span class="va">False</span>, <span class="op">**</span>kwargs):</span>
+<span id="cb17-81"><a href="#cb17-81" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(<span class="op">**</span>kwargs)</span>
+<span id="cb17-82"><a href="#cb17-82" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._branin <span class="op">=</span> Branin()</span>
+<span id="cb17-83"><a href="#cb17-83" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._ackley <span class="op">=</span> Ackley()</span>
+<span id="cb17-84"><a href="#cb17-84" aria-hidden="true" tabindex="-1"></a>        task_input <span class="op">=</span> CategoricalTaskInput(</span>
+<span id="cb17-85"><a href="#cb17-85" aria-hidden="true" tabindex="-1"></a>            key<span class="op">=</span><span class="st">"task"</span>,</span>
+<span id="cb17-86"><a href="#cb17-86" aria-hidden="true" tabindex="-1"></a>            categories<span class="op">=</span>[<span class="st">"task_hf"</span>, <span class="st">"task_lf"</span>],</span>
+<span id="cb17-87"><a href="#cb17-87" aria-hidden="true" tabindex="-1"></a>            allowed<span class="op">=</span>[<span class="va">True</span>, low_fidelity_allowed],</span>
+<span id="cb17-88"><a href="#cb17-88" aria-hidden="true" tabindex="-1"></a>            fidelities<span class="op">=</span>[<span class="dv">0</span>, <span class="dv">1</span>],</span>
+<span id="cb17-89"><a href="#cb17-89" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb17-90"><a href="#cb17-90" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._domain <span class="op">=</span> Domain(</span>
+<span id="cb17-91"><a href="#cb17-91" aria-hidden="true" tabindex="-1"></a>            inputs<span class="op">=</span><span class="va">self</span>._branin.domain.inputs <span class="op">+</span> (task_input,),</span>
+<span id="cb17-92"><a href="#cb17-92" aria-hidden="true" tabindex="-1"></a>            outputs<span class="op">=</span><span class="va">self</span>._branin.domain.outputs,</span>
+<span id="cb17-93"><a href="#cb17-93" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb17-94"><a href="#cb17-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-95"><a href="#cb17-95" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _f(<span class="va">self</span>, candidates: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb17-96"><a href="#cb17-96" aria-hidden="true" tabindex="-1"></a>        candidates_no_task <span class="op">=</span> candidates.drop(columns<span class="op">=</span>[<span class="st">"task"</span>])</span>
+<span id="cb17-97"><a href="#cb17-97" aria-hidden="true" tabindex="-1"></a>        f_branin <span class="op">=</span> <span class="va">self</span>._branin.f(candidates_no_task)</span>
+<span id="cb17-98"><a href="#cb17-98" aria-hidden="true" tabindex="-1"></a>        f_ackley <span class="op">=</span> <span class="va">self</span>._ackley.f(candidates_no_task)</span>
+<span id="cb17-99"><a href="#cb17-99" aria-hidden="true" tabindex="-1"></a>        bias_scale <span class="op">=</span> np.where(candidates[<span class="st">"task"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>, <span class="fl">0.0</span>, <span class="fl">0.15</span>).reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb17-100"><a href="#cb17-100" aria-hidden="true" tabindex="-1"></a>        bias_scale <span class="op">=</span> pd.DataFrame(bias_scale, columns<span class="op">=</span><span class="va">self</span>._domain.outputs.get_keys())</span>
+<span id="cb17-101"><a href="#cb17-101" aria-hidden="true" tabindex="-1"></a>        bias_scale[<span class="st">"valid_y"</span>] <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb17-102"><a href="#cb17-102" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> f_branin <span class="op">+</span> bias_scale <span class="op">*</span> f_ackley</span>
+<span id="cb17-103"><a href="#cb17-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-104"><a href="#cb17-104" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> get_optima(<span class="va">self</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb17-105"><a href="#cb17-105" aria-hidden="true" tabindex="-1"></a>        optima <span class="op">=</span> <span class="va">self</span>._branin.get_optima()</span>
+<span id="cb17-106"><a href="#cb17-106" aria-hidden="true" tabindex="-1"></a>        optima[<span class="st">"task"</span>] <span class="op">=</span> <span class="st">"task_hf"</span></span>
+<span id="cb17-107"><a href="#cb17-107" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> optima</span>
+<span id="cb17-108"><a href="#cb17-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-109"><a href="#cb17-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-110"><a href="#cb17-110" aria-hidden="true" tabindex="-1"></a>mf_benchmark <span class="op">=</span> BraninMultiTask(low_fidelity_allowed<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb17-111"><a href="#cb17-111" aria-hidden="true" tabindex="-1"></a>tl_benchmark <span class="op">=</span> BraninMultiTask(low_fidelity_allowed<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb17-112"><a href="#cb17-112" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-113"><a href="#cb17-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-116"><a href="#cb17-116" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb17-117"><a href="#cb17-117" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_data_set(seed: <span class="bu">int</span>):</span>
+<span id="cb17-118"><a href="#cb17-118" aria-hidden="true" tabindex="-1"></a>    <span class="co"># use the tl_benchmark to sample without the low fidelity</span></span>
+<span id="cb17-119"><a href="#cb17-119" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> tl_benchmark.domain.inputs.sample(</span>
+<span id="cb17-120"><a href="#cb17-120" aria-hidden="true" tabindex="-1"></a>        NUM_INIT_HF <span class="op">+</span> NUM_INIT_LF, seed<span class="op">=</span>seed</span>
+<span id="cb17-121"><a href="#cb17-121" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb17-122"><a href="#cb17-122" aria-hidden="true" tabindex="-1"></a>    experiments[<span class="st">"task"</span>] <span class="op">=</span> np.where(</span>
+<span id="cb17-123"><a href="#cb17-123" aria-hidden="true" tabindex="-1"></a>        experiments.index <span class="op">&lt;</span> NUM_INIT_LF, <span class="st">"task_lf"</span>, <span class="st">"task_hf"</span></span>
+<span id="cb17-124"><a href="#cb17-124" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb17-125"><a href="#cb17-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-126"><a href="#cb17-126" aria-hidden="true" tabindex="-1"></a>    <span class="co"># then use the ml_benchmark to evaluate the low fidelity</span></span>
+<span id="cb17-127"><a href="#cb17-127" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> mf_benchmark.f(experiments, return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb17-128"><a href="#cb17-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-129"><a href="#cb17-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-130"><a href="#cb17-130" aria-hidden="true" tabindex="-1"></a>create_data_set(<span class="dv">0</span>)</span>
+<span id="cb17-131"><a href="#cb17-131" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-132"><a href="#cb17-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-135"><a href="#cb17-135" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb17-136"><a href="#cb17-136" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> MultiFidelityVarianceBasedStrategy</span>
+<span id="cb17-137"><a href="#cb17-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-138"><a href="#cb17-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-139"><a href="#cb17-139" aria-hidden="true" tabindex="-1"></a><span class="co"># It isn't necessary to define the surrogate specs here, as the MFStrategy</span></span>
+<span id="cb17-140"><a href="#cb17-140" aria-hidden="true" tabindex="-1"></a><span class="co"># will use a MultiTaskGP by default.</span></span>
+<span id="cb17-141"><a href="#cb17-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-142"><a href="#cb17-142" aria-hidden="true" tabindex="-1"></a>mf_data_model <span class="op">=</span> MultiFidelityVarianceBasedStrategy(</span>
+<span id="cb17-143"><a href="#cb17-143" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>mf_benchmark.domain,</span>
+<span id="cb17-144"><a href="#cb17-144" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span>qLogEI(),</span>
+<span id="cb17-145"><a href="#cb17-145" aria-hidden="true" tabindex="-1"></a>    fidelity_thresholds<span class="op">=</span><span class="fl">0.1</span>,</span>
+<span id="cb17-146"><a href="#cb17-146" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-147"><a href="#cb17-147" aria-hidden="true" tabindex="-1"></a>mf_data_model.surrogate_specs.surrogates[<span class="dv">0</span>].inputs</span>
+<span id="cb17-148"><a href="#cb17-148" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-149"><a href="#cb17-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-152"><a href="#cb17-152" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb17-153"><a href="#cb17-153" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
+<span id="cb17-154"><a href="#cb17-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-155"><a href="#cb17-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-156"><a href="#cb17-156" aria-hidden="true" tabindex="-1"></a>surrogate_specs <span class="op">=</span> BotorchSurrogates(</span>
+<span id="cb17-157"><a href="#cb17-157" aria-hidden="true" tabindex="-1"></a>    surrogates<span class="op">=</span>[</span>
+<span id="cb17-158"><a href="#cb17-158" aria-hidden="true" tabindex="-1"></a>        MultiTaskGPSurrogate(</span>
+<span id="cb17-159"><a href="#cb17-159" aria-hidden="true" tabindex="-1"></a>            inputs<span class="op">=</span>tl_benchmark.domain.inputs,</span>
+<span id="cb17-160"><a href="#cb17-160" aria-hidden="true" tabindex="-1"></a>            outputs<span class="op">=</span>tl_benchmark.domain.outputs,</span>
+<span id="cb17-161"><a href="#cb17-161" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb17-162"><a href="#cb17-162" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb17-163"><a href="#cb17-163" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-164"><a href="#cb17-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-165"><a href="#cb17-165" aria-hidden="true" tabindex="-1"></a>tl_data_model <span class="op">=</span> SoboStrategy(</span>
+<span id="cb17-166"><a href="#cb17-166" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>tl_benchmark.domain,</span>
+<span id="cb17-167"><a href="#cb17-167" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span>qLogEI(),</span>
+<span id="cb17-168"><a href="#cb17-168" aria-hidden="true" tabindex="-1"></a>    surrogate_specs<span class="op">=</span>surrogate_specs,</span>
+<span id="cb17-169"><a href="#cb17-169" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-170"><a href="#cb17-170" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-171"><a href="#cb17-171" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-172"><a href="#cb17-172" aria-hidden="true" tabindex="-1"></a><span class="fu"># Multi-fidelity Bayesian Optimisation</span></span>
+<span id="cb17-173"><a href="#cb17-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-174"><a href="#cb17-174" aria-hidden="true" tabindex="-1"></a>We first optimize only on the target fidelity (the "Transfer Learning" baseline).</span>
+<span id="cb17-175"><a href="#cb17-175" aria-hidden="true" tabindex="-1"></a>This uses the <span class="in">`SoboStrategy`</span> defined above.</span>
+<span id="cb17-176"><a href="#cb17-176" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-179"><a href="#cb17-179" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb17-180"><a href="#cb17-180" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
+<span id="cb17-181"><a href="#cb17-181" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb17-182"><a href="#cb17-182" aria-hidden="true" tabindex="-1"></a>tl_results <span class="op">=</span> pd.DataFrame(columns<span class="op">=</span>pd.MultiIndex.from_tuples([], names<span class="op">=</span>(<span class="st">"col"</span>, <span class="st">"run"</span>)))</span>
+<span id="cb17-183"><a href="#cb17-183" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run <span class="kw">in</span> <span class="bu">range</span>(num_runs):</span>
+<span id="cb17-184"><a href="#cb17-184" aria-hidden="true" tabindex="-1"></a>    seed <span class="op">=</span> <span class="dv">2048</span> <span class="op">*</span> run <span class="op">+</span> <span class="dv">123</span></span>
+<span id="cb17-185"><a href="#cb17-185" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> create_data_set(seed)</span>
+<span id="cb17-186"><a href="#cb17-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-187"><a href="#cb17-187" aria-hidden="true" tabindex="-1"></a>    tl_strategy <span class="op">=</span> strategies.<span class="bu">map</span>(tl_data_model)</span>
+<span id="cb17-188"><a href="#cb17-188" aria-hidden="true" tabindex="-1"></a>    tl_strategy.tell(experiments)</span>
+<span id="cb17-189"><a href="#cb17-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-190"><a href="#cb17-190" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> tl_strategy.experiments <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
+<span id="cb17-191"><a href="#cb17-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-192"><a href="#cb17-192" aria-hidden="true" tabindex="-1"></a>    pbar <span class="op">=</span> tqdm(<span class="bu">range</span>(num_iters), desc<span class="op">=</span><span class="st">"Optimizing"</span>)</span>
+<span id="cb17-193"><a href="#cb17-193" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> pbar:</span>
+<span id="cb17-194"><a href="#cb17-194" aria-hidden="true" tabindex="-1"></a>        candidate <span class="op">=</span> tl_strategy.ask(<span class="dv">1</span>)</span>
+<span id="cb17-195"><a href="#cb17-195" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> tl_benchmark.f(candidate, return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb17-196"><a href="#cb17-196" aria-hidden="true" tabindex="-1"></a>        tl_strategy.tell(y)</span>
+<span id="cb17-197"><a href="#cb17-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-198"><a href="#cb17-198" aria-hidden="true" tabindex="-1"></a>        hf_experiments <span class="op">=</span> tl_strategy.experiments[</span>
+<span id="cb17-199"><a href="#cb17-199" aria-hidden="true" tabindex="-1"></a>            tl_strategy.experiments[<span class="st">"task"</span>] <span class="op">==</span> <span class="st">"task_hf"</span></span>
+<span id="cb17-200"><a href="#cb17-200" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb17-201"><a href="#cb17-201" aria-hidden="true" tabindex="-1"></a>        regret <span class="op">=</span> hf_experiments[<span class="st">"y"</span>].<span class="bu">min</span>() <span class="op">-</span> tl_benchmark.get_optima()[<span class="st">"y"</span>][<span class="dv">0</span>].item()</span>
+<span id="cb17-202"><a href="#cb17-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-203"><a href="#cb17-203" aria-hidden="true" tabindex="-1"></a>        pbar.set_postfix({<span class="st">"Regret"</span>: <span class="ss">f"</span><span class="sc">{</span>regret<span class="sc">:.4f}</span><span class="ss">"</span>})</span>
+<span id="cb17-204"><a href="#cb17-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-205"><a href="#cb17-205" aria-hidden="true" tabindex="-1"></a>    tl_results[<span class="st">"fidelity"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> tl_strategy.experiments[<span class="st">"task"</span>]</span>
+<span id="cb17-206"><a href="#cb17-206" aria-hidden="true" tabindex="-1"></a>    tl_results[<span class="st">"y"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> tl_strategy.experiments[<span class="st">"y"</span>]</span>
+<span id="cb17-207"><a href="#cb17-207" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-208"><a href="#cb17-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-209"><a href="#cb17-209" aria-hidden="true" tabindex="-1"></a>We now repeat the experiment using multi-fidelity BO, allowing the strategy to query</span>
+<span id="cb17-210"><a href="#cb17-210" aria-hidden="true" tabindex="-1"></a>the low fidelity function as well as the high fidelity function:</span>
+<span id="cb17-211"><a href="#cb17-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-214"><a href="#cb17-214" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb17-215"><a href="#cb17-215" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
+<span id="cb17-216"><a href="#cb17-216" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb17-217"><a href="#cb17-217" aria-hidden="true" tabindex="-1"></a>mf_results <span class="op">=</span> pd.DataFrame(columns<span class="op">=</span>pd.MultiIndex.from_tuples([], names<span class="op">=</span>(<span class="st">"col"</span>, <span class="st">"run"</span>)))</span>
+<span id="cb17-218"><a href="#cb17-218" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> run <span class="kw">in</span> <span class="bu">range</span>(num_runs):</span>
+<span id="cb17-219"><a href="#cb17-219" aria-hidden="true" tabindex="-1"></a>    seed <span class="op">=</span> <span class="dv">2048</span> <span class="op">*</span> run <span class="op">+</span> <span class="dv">123</span></span>
+<span id="cb17-220"><a href="#cb17-220" aria-hidden="true" tabindex="-1"></a>    experiments <span class="op">=</span> create_data_set(seed)</span>
+<span id="cb17-221"><a href="#cb17-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-222"><a href="#cb17-222" aria-hidden="true" tabindex="-1"></a>    mf_strategy <span class="op">=</span> strategies.<span class="bu">map</span>(mf_data_model)</span>
+<span id="cb17-223"><a href="#cb17-223" aria-hidden="true" tabindex="-1"></a>    mf_strategy.tell(experiments)</span>
+<span id="cb17-224"><a href="#cb17-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-225"><a href="#cb17-225" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> mf_strategy.experiments <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span></span>
+<span id="cb17-226"><a href="#cb17-226" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-227"><a href="#cb17-227" aria-hidden="true" tabindex="-1"></a>    pbar <span class="op">=</span> tqdm(<span class="bu">range</span>(num_iters), desc<span class="op">=</span><span class="st">"Optimizing"</span>)</span>
+<span id="cb17-228"><a href="#cb17-228" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> pbar:</span>
+<span id="cb17-229"><a href="#cb17-229" aria-hidden="true" tabindex="-1"></a>        candidate <span class="op">=</span> mf_strategy.ask(<span class="dv">1</span>)</span>
+<span id="cb17-230"><a href="#cb17-230" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> mf_benchmark.f(candidate, return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb17-231"><a href="#cb17-231" aria-hidden="true" tabindex="-1"></a>        mf_strategy.tell(y)</span>
+<span id="cb17-232"><a href="#cb17-232" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-233"><a href="#cb17-233" aria-hidden="true" tabindex="-1"></a>        hf_experiments <span class="op">=</span> mf_strategy.experiments[</span>
+<span id="cb17-234"><a href="#cb17-234" aria-hidden="true" tabindex="-1"></a>            mf_strategy.experiments[<span class="st">"task"</span>] <span class="op">==</span> <span class="st">"task_hf"</span></span>
+<span id="cb17-235"><a href="#cb17-235" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb17-236"><a href="#cb17-236" aria-hidden="true" tabindex="-1"></a>        regret <span class="op">=</span> hf_experiments[<span class="st">"y"</span>].<span class="bu">min</span>() <span class="op">-</span> mf_benchmark.get_optima()[<span class="st">"y"</span>][<span class="dv">0</span>].item()</span>
+<span id="cb17-237"><a href="#cb17-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-238"><a href="#cb17-238" aria-hidden="true" tabindex="-1"></a>        pbar.set_postfix({<span class="st">"Regret"</span>: <span class="ss">f"</span><span class="sc">{</span>regret<span class="sc">:.4f}</span><span class="ss">"</span>})</span>
+<span id="cb17-239"><a href="#cb17-239" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-240"><a href="#cb17-240" aria-hidden="true" tabindex="-1"></a>    mf_results[<span class="st">"fidelity"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> mf_strategy.experiments[<span class="st">"task"</span>]</span>
+<span id="cb17-241"><a href="#cb17-241" aria-hidden="true" tabindex="-1"></a>    mf_results[<span class="st">"y"</span>, <span class="ss">f"</span><span class="sc">{</span>run<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> mf_strategy.experiments[<span class="st">"y"</span>]</span>
+<span id="cb17-242"><a href="#cb17-242" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-243"><a href="#cb17-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-244"><a href="#cb17-244" aria-hidden="true" tabindex="-1"></a>When evaluating the performance, we need to consider how cheap the low-fidelity (LF) is</span>
+<span id="cb17-245"><a href="#cb17-245" aria-hidden="true" tabindex="-1"></a>to query. When the LF has the same cost as the target fidelity, then we</span>
+<span id="cb17-246"><a href="#cb17-246" aria-hidden="true" tabindex="-1"></a>gain very little from the multi-fidelity approach. However, if the LF is cheaper</span>
+<span id="cb17-247"><a href="#cb17-247" aria-hidden="true" tabindex="-1"></a>than the target (in the example below, 3x cheaper) then we observe an improvement in</span>
+<span id="cb17-248"><a href="#cb17-248" aria-hidden="true" tabindex="-1"></a>BO performance.</span>
+<span id="cb17-249"><a href="#cb17-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-250"><a href="#cb17-250" aria-hidden="true" tabindex="-1"></a>Specifically, although both strategies have a budget of 10 function queries, the MF</span>
+<span id="cb17-251"><a href="#cb17-251" aria-hidden="true" tabindex="-1"></a>approach uses some of them on</span>
+<span id="cb17-252"><a href="#cb17-252" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-255"><a href="#cb17-255" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb17-256"><a href="#cb17-256" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
+<span id="cb17-257"><a href="#cb17-257" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb17-258"><a href="#cb17-258" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_regret(</span>
+<span id="cb17-259"><a href="#cb17-259" aria-hidden="true" tabindex="-1"></a>    ax: Axes, bo_results: pd.DataFrame, fidelity_cost_ratio: <span class="bu">float</span>, <span class="op">**</span>plot_kwargs</span>
+<span id="cb17-260"><a href="#cb17-260" aria-hidden="true" tabindex="-1"></a>):</span>
+<span id="cb17-261"><a href="#cb17-261" aria-hidden="true" tabindex="-1"></a>    cummin <span class="op">=</span> (</span>
+<span id="cb17-262"><a href="#cb17-262" aria-hidden="true" tabindex="-1"></a>        bo_results[<span class="st">"y"</span>]</span>
+<span id="cb17-263"><a href="#cb17-263" aria-hidden="true" tabindex="-1"></a>        .where(bo_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>, other<span class="op">=</span>np.inf)</span>
+<span id="cb17-264"><a href="#cb17-264" aria-hidden="true" tabindex="-1"></a>        .cummin(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb17-265"><a href="#cb17-265" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb17-266"><a href="#cb17-266" aria-hidden="true" tabindex="-1"></a>    <span class="co"># only select iterations, and the final training point</span></span>
+<span id="cb17-267"><a href="#cb17-267" aria-hidden="true" tabindex="-1"></a>    cummin <span class="op">=</span> cummin.iloc[<span class="op">-</span>num_iters <span class="op">-</span> <span class="dv">1</span> :]</span>
+<span id="cb17-268"><a href="#cb17-268" aria-hidden="true" tabindex="-1"></a>    regret: np.ndarray <span class="op">=</span> (cummin <span class="op">-</span> mf_benchmark.get_optima()[<span class="st">"y"</span>][<span class="dv">0</span>].item()).to_numpy()</span>
+<span id="cb17-269"><a href="#cb17-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-270"><a href="#cb17-270" aria-hidden="true" tabindex="-1"></a>    <span class="co"># keep track of "real time", where low fidelities are cheaper to evaluate.</span></span>
+<span id="cb17-271"><a href="#cb17-271" aria-hidden="true" tabindex="-1"></a>    time_taken <span class="op">=</span> np.where(bo_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>, fidelity_cost_ratio, <span class="dv">1</span>)[</span>
+<span id="cb17-272"><a href="#cb17-272" aria-hidden="true" tabindex="-1"></a>        <span class="op">-</span>num_iters <span class="op">-</span> <span class="dv">1</span> :</span>
+<span id="cb17-273"><a href="#cb17-273" aria-hidden="true" tabindex="-1"></a>    ].cumsum(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb17-274"><a href="#cb17-274" aria-hidden="true" tabindex="-1"></a>    time_taken <span class="op">-=</span> time_taken[<span class="dv">0</span>, <span class="dv">0</span>]  <span class="co"># start from T=0 after training data</span></span>
+<span id="cb17-275"><a href="#cb17-275" aria-hidden="true" tabindex="-1"></a>    iterations <span class="op">=</span> np.arange(num_iters <span class="op">*</span> fidelity_cost_ratio)</span>
+<span id="cb17-276"><a href="#cb17-276" aria-hidden="true" tabindex="-1"></a>    before_time <span class="op">=</span> time_taken[:, :, np.newaxis] <span class="op">&lt;=</span> iterations[np.newaxis, np.newaxis, :]</span>
+<span id="cb17-277"><a href="#cb17-277" aria-hidden="true" tabindex="-1"></a>    regret_before_time <span class="op">=</span> regret[:, :, np.newaxis] <span class="op">*</span> np.where(before_time, <span class="fl">1.0</span>, np.inf)</span>
+<span id="cb17-278"><a href="#cb17-278" aria-hidden="true" tabindex="-1"></a>    <span class="co"># regret_before_time.shape == (num_iters+1, num_runs, len(iterations))</span></span>
+<span id="cb17-279"><a href="#cb17-279" aria-hidden="true" tabindex="-1"></a>    <span class="co"># project into time dimension</span></span>
+<span id="cb17-280"><a href="#cb17-280" aria-hidden="true" tabindex="-1"></a>    regret <span class="op">=</span> regret_before_time.<span class="bu">min</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb17-281"><a href="#cb17-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-282"><a href="#cb17-282" aria-hidden="true" tabindex="-1"></a>    ax.plot(</span>
+<span id="cb17-283"><a href="#cb17-283" aria-hidden="true" tabindex="-1"></a>        iterations,</span>
+<span id="cb17-284"><a href="#cb17-284" aria-hidden="true" tabindex="-1"></a>        np.median(regret, axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb17-285"><a href="#cb17-285" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span>plot_kwargs.get(<span class="st">"label"</span>),</span>
+<span id="cb17-286"><a href="#cb17-286" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>plot_kwargs.get(<span class="st">"color"</span>),</span>
+<span id="cb17-287"><a href="#cb17-287" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb17-288"><a href="#cb17-288" aria-hidden="true" tabindex="-1"></a>    ax.fill_between(</span>
+<span id="cb17-289"><a href="#cb17-289" aria-hidden="true" tabindex="-1"></a>        iterations,</span>
+<span id="cb17-290"><a href="#cb17-290" aria-hidden="true" tabindex="-1"></a>        np.quantile(regret, <span class="fl">0.75</span>, axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb17-291"><a href="#cb17-291" aria-hidden="true" tabindex="-1"></a>        np.quantile(regret, <span class="fl">0.25</span>, axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb17-292"><a href="#cb17-292" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>plot_kwargs.get(<span class="st">"color"</span>),</span>
+<span id="cb17-293"><a href="#cb17-293" aria-hidden="true" tabindex="-1"></a>        alpha<span class="op">=</span><span class="fl">0.2</span>,</span>
+<span id="cb17-294"><a href="#cb17-294" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb17-295"><a href="#cb17-295" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-296"><a href="#cb17-296" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-297"><a href="#cb17-297" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(ncols<span class="op">=</span><span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">4</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb17-298"><a href="#cb17-298" aria-hidden="true" tabindex="-1"></a>cost_ratios <span class="op">=</span> (<span class="dv">1</span>, <span class="dv">3</span>)</span>
+<span id="cb17-299"><a href="#cb17-299" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-300"><a href="#cb17-300" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, cost_ratio <span class="kw">in</span> <span class="bu">zip</span>(axs, cost_ratios):</span>
+<span id="cb17-301"><a href="#cb17-301" aria-hidden="true" tabindex="-1"></a>    plot_regret(</span>
+<span id="cb17-302"><a href="#cb17-302" aria-hidden="true" tabindex="-1"></a>        ax,</span>
+<span id="cb17-303"><a href="#cb17-303" aria-hidden="true" tabindex="-1"></a>        tl_results,</span>
+<span id="cb17-304"><a href="#cb17-304" aria-hidden="true" tabindex="-1"></a>        fidelity_cost_ratio<span class="op">=</span>cost_ratio,</span>
+<span id="cb17-305"><a href="#cb17-305" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"Transfer Learning"</span>,</span>
+<span id="cb17-306"><a href="#cb17-306" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"blue"</span>,</span>
+<span id="cb17-307"><a href="#cb17-307" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb17-308"><a href="#cb17-308" aria-hidden="true" tabindex="-1"></a>    plot_regret(</span>
+<span id="cb17-309"><a href="#cb17-309" aria-hidden="true" tabindex="-1"></a>        ax,</span>
+<span id="cb17-310"><a href="#cb17-310" aria-hidden="true" tabindex="-1"></a>        mf_results,</span>
+<span id="cb17-311"><a href="#cb17-311" aria-hidden="true" tabindex="-1"></a>        fidelity_cost_ratio<span class="op">=</span>cost_ratio,</span>
+<span id="cb17-312"><a href="#cb17-312" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"Multi-fidelity"</span>,</span>
+<span id="cb17-313"><a href="#cb17-313" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"green"</span>,</span>
+<span id="cb17-314"><a href="#cb17-314" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb17-315"><a href="#cb17-315" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"Time step"</span>)</span>
+<span id="cb17-316"><a href="#cb17-316" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="ss">f"Fidelity cost ratio = </span><span class="sc">{</span>cost_ratio<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb17-317"><a href="#cb17-317" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-318"><a href="#cb17-318" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-319"><a href="#cb17-319" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].legend()</span>
+<span id="cb17-320"><a href="#cb17-320" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_ylabel(<span class="st">"Regret"</span>)</span>
+<span id="cb17-321"><a href="#cb17-321" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-322"><a href="#cb17-322" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb17-323"><a href="#cb17-323" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb17-324"><a href="#cb17-324" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-325"><a href="#cb17-325" aria-hidden="true" tabindex="-1"></a>We can see that allowing the lower fidelities to be queries leads to stronger optimization performance.</span>
+<span id="cb17-326"><a href="#cb17-326" aria-hidden="true" tabindex="-1"></a>We can also see below that the MF approach only samples the target fidelity in later</span>
+<span id="cb17-327"><a href="#cb17-327" aria-hidden="true" tabindex="-1"></a>iterations, once the variance of the LF has been sufficiently reduced.</span>
+<span id="cb17-328"><a href="#cb17-328" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-331"><a href="#cb17-331" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb17-332"><a href="#cb17-332" aria-hidden="true" tabindex="-1"></a>(mf_results[<span class="st">"fidelity"</span>] <span class="op">==</span> <span class="st">"task_hf"</span>)[<span class="op">-</span>num_iters:].mean(axis<span class="op">=</span><span class="dv">1</span>)  <span class="co"># type: ignore</span></span>
+<span id="cb17-333"><a href="#cb17-333" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
