@@ -1,6 +1,6 @@
 from typing import List, Literal, Optional, Union
 
-from pydantic import Field, PositiveInt, field_validator, model_validator
+from pydantic import Field, PositiveInt, model_validator
 
 from bofire.data_models.kernels.kernel import (
     ARDKernel,
@@ -47,19 +47,12 @@ class MaternKernel(ARDKernel, LengthscaleKernel, ContinuousKernel):
     """
 
     type: Literal["MaternKernel"] = "MaternKernel"
-    nu: float = Field(
+    nu: Literal[0.5, 1.5, 2.5] = Field(
         default=2.5,
-        description="Smoothness parameter. Only 0.5, 1.5 and 2.5 are supported: 0.5 "
-        "gives a nowhere-differentiable response, 1.5 a once-differentiable one and "
-        "2.5 a twice-differentiable one. In the limit of large nu the kernel becomes "
-        "the RBF kernel.",
+        description="Smoothness parameter. 0.5 gives a nowhere-differentiable "
+        "response, 1.5 a once-differentiable one and 2.5 a twice-differentiable one. "
+        "In the limit of large nu the kernel becomes the RBF kernel.",
     )
-
-    @field_validator("nu")
-    def validate_nu(cls, nu):
-        if nu not in {0.5, 1.5, 2.5}:
-            raise ValueError("nu expected to be 0.5, 1.5, or 2.5")
-        return nu
 
 
 class LinearKernel(ContinuousKernel):
@@ -68,9 +61,6 @@ class LinearKernel(ContinuousKernel):
     $$
     k(\mathbf x, \mathbf x') = v\,\mathbf x^{\top} \mathbf x'
     $$
-
-    Having no lengthscale, it does not revert to the prior mean away from the data, so
-    unlike the RBF and Matern kernels it extrapolates a trend.
     """
 
     type: Literal["LinearKernel"] = "LinearKernel"
@@ -112,11 +102,6 @@ class InfiniteWidthBNNKernel(ContinuousKernel):
     rather than assuming one lengthscale applies across the whole space.
     """
 
-    features: Optional[List[str]] = Field(
-        default=None,
-        description="Keys of the features this kernel acts on. If not provided, the "
-        "kernel acts on all inputs of the surrogate.",
-    )
     type: Literal["InfiniteWidthBNNKernel"] = "InfiniteWidthBNNKernel"
     depth: PositiveInt = Field(
         default=3,
