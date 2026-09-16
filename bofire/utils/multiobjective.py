@@ -101,7 +101,9 @@ def get_pareto_front(
     pareto_mask = np.array(
         is_non_dominated(
             objective(
-                torch.from_numpy(df[output_feature_keys].values).to(**tkwargs),
+                torch.from_numpy(
+                    np.ascontiguousarray(df[output_feature_keys].to_numpy()),
+                ).to(**tkwargs),
                 None,
             ),
         ),
