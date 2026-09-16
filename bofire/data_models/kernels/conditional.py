@@ -24,21 +24,22 @@ class ConditionalEmbeddingKernel(Kernel):
     will not provide any useful information beyond their role as an indicator. This
     avoids "double-dipping" these indicator features.
 
-    Example:
-        >>> # Feature that is conditional on another (indicator) feature.
-        >>> # eg. only include catalyst concentration if catalyst != None
-        >>> inter_dependent_condition = (
-        >>>     "catalyst_concentration", "catalyst", SelectionCondition(selection=["Pt", "Pd"])
-        >>> )
-        >>> # Feature that depends on itself taking certain values
-        >>> self_dependent_condition = (
-        >>>     "acid_concentration", "acid_concentration", NonZeroCondition()
-        >>> )
-        >>> conditions = [inter_dependent_condition, self_dependent_condition]
-        >>> conditional_kernel = ConditionalEmebeddingKernel(
-        >>>     base_kernel=LinearKernel(),
-        >>>     conditions=conditions
-        >>> )
+    Examples:
+        A feature conditional on another, and one conditional on itself:
+
+        >>> conditions = [
+        ...     # only use the catalyst concentration if a catalyst is present
+        ...     (
+        ...         "catalyst_concentration",
+        ...         "catalyst",
+        ...         SelectionCondition(selection=["Pt", "Pd"]),
+        ...     ),
+        ...     # only use the acid concentration where it is non-zero
+        ...     ("acid_concentration", "acid_concentration", NonZeroCondition()),
+        ... ]
+        >>> ConditionalEmbeddingKernel(
+        ...     base_kernel=LinearKernel(), conditions=conditions
+        ... )
     """
 
     base_kernel: Union[
@@ -52,15 +53,14 @@ class ConditionalEmbeddingKernel(Kernel):
         # ScaleKernel,
     ] = Field(
         description="Kernel applied to the embedded inputs. Its own lengthscale "
-        "settings are ignored, so leave them unset and configure the lengthscale on "
-        "this kernel instead.",
+        "settings are ignored; configure the lengthscale on this kernel instead.",
     )
 
     conditions: Sequence[tuple[str, str, Condition]] = Field(
         description="Which feature is active under which circumstances, as triples of "
         "the dependent feature, the feature it depends on, and the condition that must "
-        "hold. A feature may depend on itself, which expresses that it is only "
-        "meaningful at certain of its own values.",
+        "hold. A feature may depend on itself, which expresses that it is only relevant "
+        "to the model under some conditions, e.g. if it is positive.",
     )
 
 
@@ -75,13 +75,14 @@ class WedgeKernel(ARDKernel, LengthscaleKernel, ConditionalEmbeddingKernel):
     type: Literal["WedgeKernel"] = "WedgeKernel"
     angle_prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the wedge's opening angle, which sets how far apart "
-        "the embeddings of an active and an inactive point are placed.",
+        description="Prior over the wedge's opening angle, which sets the distance "
+        "between the lower and upper bound of the feature, when active, in the "
+        "embedded space.",
     )
     radius_prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the wedge's radius, which sets how much the value of "
-        "an active feature contributes relative to the fact of it being active.",
+        description="Prior over the wedge's radius, which sets the distance between "
+        "the inactive point and the active points in the embedded space.",
     )
 
     @field_validator("base_kernel")

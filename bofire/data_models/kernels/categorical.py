@@ -58,14 +58,12 @@ class IndexKernel(CategoricalKernel):
     rank: Annotated[int, Field(ge=1)] = Field(
         default=1,
         description="Rank of the learned similarity matrix, at most `num_categories`. "
-        "A low rank forces the categories onto a few shared dimensions, which "
-        "regularizes the fit; raising it allows a richer relationship at the cost of "
-        "more parameters.",
+        "A low rank forces the categories onto a few shared dimensions, regularizing "
+        "the fit.",
     )
     prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the entries of $B$. If not provided, no prior is "
-        "placed on them and they are fitted from the data alone.",
+        description="Prior over the entries of $B$.",
     )
     var_constraint: Optional[AnyPriorConstraint] = Field(
         default=Positive(),
@@ -105,14 +103,12 @@ class PositiveIndexKernel(CategoricalKernel):
     rank: Annotated[int, Field(ge=1)] = Field(
         default=1,
         description="Rank of the learned similarity matrix, at most `num_categories`. "
-        "A low rank forces the categories onto a few shared dimensions, which "
-        "regularizes the fit; raising it allows a richer relationship at the cost of "
-        "more parameters.",
+        "A low rank forces the categories onto a few shared dimensions, regularizing "
+        "the fit.",
     )
     prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the entries of $L$. If not provided, no prior is "
-        "placed on them and they are fitted from the data alone.",
+        description="Prior over the entries of $L$.",
     )
     var_constraint: Optional[AnyPriorConstraint] = Field(
         default=Positive(),

@@ -23,7 +23,7 @@ class WassersteinKernel(LengthscaleKernel, FeatureSpecificKernel):
         default=False,
         description="Whether to use the squared exponential form rather than the "
         "absolute exponential one. The squared form is not positive definite at every "
-        "lengthscale, which is why the absolute form is the default.",
+        "lengthscale.",
     )
 
 
@@ -55,7 +55,7 @@ class ExactWassersteinKernel(LengthscaleKernel, FeatureSpecificKernel):
     )
     prepend_x: List[float] = Field(
         default=[],
-        description="Fixed x-coordinates placed before the variable ones, for anchoring "
+        description="Fixed x-coordinates placed before the variable ones, anchoring "
         "every curve at a known starting point.",
     )
     prepend_y: List[float] = Field(
@@ -65,7 +65,7 @@ class ExactWassersteinKernel(LengthscaleKernel, FeatureSpecificKernel):
     )
     append_x: List[float] = Field(
         default=[],
-        description="Fixed x-coordinates placed after the variable ones, for anchoring "
+        description="Fixed x-coordinates placed after the variable ones, anchoring "
         "every curve at a known end point.",
     )
     append_y: List[float] = Field(
@@ -76,12 +76,12 @@ class ExactWassersteinKernel(LengthscaleKernel, FeatureSpecificKernel):
     normalize_y: float = Field(
         default=1.0,
         description="Divisor applied to the y-coordinates before the distance is "
-        "computed, for bringing curves onto a comparable scale.",
+        "computed, bringing curves onto a comparable scale.",
     )
     normalize_x: bool = Field(
         default=True,
         description="Whether to rescale each curve's x-coordinates by its own maximum, "
-        "so that only the shape of the curve is compared and not its extent.",
+        "so only the shape is compared and not the extent.",
     )
     order: Literal[1, 2] = Field(
         default=1,

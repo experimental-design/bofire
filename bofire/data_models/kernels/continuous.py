@@ -50,8 +50,7 @@ class MaternKernel(ARDKernel, LengthscaleKernel, ContinuousKernel):
     nu: Literal[0.5, 1.5, 2.5] = Field(
         default=2.5,
         description="Smoothness parameter. 0.5 gives a nowhere-differentiable "
-        "response, 1.5 a once-differentiable one and 2.5 a twice-differentiable one. "
-        "In the limit of large nu the kernel becomes the RBF kernel.",
+        "response, 1.5 a once-differentiable one and 2.5 a twice-differentiable one.",
     )
 
 
@@ -67,8 +66,7 @@ class LinearKernel(ContinuousKernel):
     variance_prior: Optional[AnyPrior] = Field(
         default=None,
         description="Prior over the variance $v$, which scales the whole kernel and so "
-        "sets the magnitude of the linear response. If not provided, no prior is "
-        "placed on it and it is fitted from the data alone.",
+        "sets the magnitude of the linear response.",
     )
 
 
@@ -83,15 +81,14 @@ class PolynomialKernel(ContinuousKernel):
     type: Literal["PolynomialKernel"] = "PolynomialKernel"
     offset_prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the offset $c$. Expanding the bracket shows that $c$ "
-        "weights the lower-order terms against the highest one, so a large offset makes "
-        "the kernel behave more like a linear one. If not provided, no prior is placed "
-        "on it and it is fitted from the data alone.",
+        description="Prior over the offset $c$, which weights the lower-order terms "
+        "against the highest one: a large offset makes the kernel more nearly linear.",
     )
     power: int = Field(
         default=2,
-        description="Degree $p$ of the polynomial. 2 captures pairwise interactions and "
-        "curvature; higher degrees fit more shapes but extrapolate increasingly badly.",
+        description="Degree $p$ of the polynomial. $p=2$ captures pairwise "
+        "interactions and quadratic curvature; higher degrees fit more complex "
+        "functions, but lead to worse extrapolation and overfitting.",
     )
 
 
@@ -106,7 +103,7 @@ class InfiniteWidthBNNKernel(ContinuousKernel):
     depth: PositiveInt = Field(
         default=3,
         description="Number of layers in the equivalent network. More layers allow a "
-        "less stationary response, at the cost of a harder fit.",
+        "less stationary response.",
     )
 
 
@@ -121,10 +118,9 @@ class SphericalLinearKernel(ARDKernel, LengthscaleKernel, ContinuousKernel):
     type: Literal["SphericalLinearKernel"] = "SphericalLinearKernel"
     bounds: Union[tuple[float, float], List[tuple[float, float]]] = Field(
         default=(0.0, 1.0),
-        description="Range the inputs are rescaled from before being projected onto "
-        "the sphere. A single pair applies to every input; a list gives one pair per "
-        "input, which is required when `ard` is disabled since the number of inputs "
-        "cannot otherwise be determined.",
+        description="Range the inputs are rescaled from before projection onto the "
+        "sphere. A single pair applies to every input; a list gives one pair per input, "
+        "and is required when `ard` is disabled.",
     )
 
     @model_validator(mode="after")

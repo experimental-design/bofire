@@ -36,8 +36,7 @@ class DownsamplingKernel(FidelityKernel):
     offset_prior: AnyPrior | None = Field(
         default=None,
         description="Prior over the offset $c$, which sets how much a low-fidelity "
-        "observation still says about the target fidelity. If not provided, no prior is "
-        "placed on it and it is fitted from the data alone.",
+        "observation still says about the target fidelity.",
     )
     offset_constraint: AnyPriorConstraint | None = Field(
         default=None,
@@ -46,8 +45,7 @@ class DownsamplingKernel(FidelityKernel):
     power_prior: AnyPrior | None = Field(
         default=None,
         description="Prior over the power $\\delta$, which sets how quickly the "
-        "approximation improves as the fidelity rises. If not provided, no prior is "
-        "placed on it and it is fitted from the data alone.",
+        "approximation improves as the fidelity rises.",
     )
     power_constraint: AnyPriorConstraint | None = Field(
         default=None,
