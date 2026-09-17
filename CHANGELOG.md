@@ -45,7 +45,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - LLM field descriptions report descriptor data uniformly for every feature type: a prefix stating what the feature is and its range or options, then the data — `Categorical, allowed: [...] — descriptors per category: {...} — structure: [...]`, `Continuous, bounds [...] — descriptors: {...} — structure: CCO`. Previously the kind was announced in the prefix (`Categorical with descriptors`, `Continuous molecular (SMILES: CCO)`) and only the two descriptor-carrying classes emitted anything.
 
 ### Fixed
-- Fix `get_pareto_front` raising a negative-stride error with pandas 3 when experiment columns are reordered to match the output features.
+- Fix crashes caused by reordered pandas columns in optimization calculations, model training, prediction, dataset utilities and benchmarks. Updated bofire/utils/multiobjective.py, bofire/strategies/predictives/mobo.py, bofire/surrogates/botorch.py, bofire/utils/torch_tools.py, bofire/benchmarks/benchmark.py, and bofire/benchmarks/single.py.
 - **Descriptor widths no longer depend on evaluation order.** `MolFeatures.get_descriptor_names()` returned the filtered list only once `remove_correlated_descriptors()` had run and mutated the model, so with `filter_descriptors` defaulting to `True` the width reported for an engineered feature could be the *unfiltered* count depending on call order. Widths are now derived on demand from the same block the matrix is built from.
 
 ## [0.5.0] - 2026-08-11 - BREAKING
