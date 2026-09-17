@@ -1029,9 +1029,15 @@ def create_supervised_dataset(
         filtered_experiments,
         input_preprocessing_specs,
     )
-    X = torch.from_numpy(transformed.values).to(**tkwargs)
+    X = torch.from_numpy(
+        np.ascontiguousarray(transformed.to_numpy()),
+    ).to(**tkwargs)
     # Todo: catch it for categoricals
-    Y = torch.from_numpy(filtered_experiments[outputs.get_keys()]).to(**tkwargs)
+    Y = torch.from_numpy(
+        np.ascontiguousarray(
+            filtered_experiments[outputs.get_keys()].to_numpy(),
+        ),
+    ).to(**tkwargs)
 
     return SupervisedDataset(
         X=X,
