@@ -216,7 +216,11 @@ class Hartmann(Benchmark):
             {
                 "y": self._hartmann(
                     torch.from_numpy(
-                        candidates[[f"x_{i}" for i in range(self.dim)]].values,
+                        np.ascontiguousarray(
+                            candidates[
+                                [f"x_{i}" for i in range(self.dim)]
+                            ].to_numpy(),
+                        ),
                     ),
                 ),
                 "valid_y": [1 for _ in range(len(candidates))],
@@ -271,7 +275,11 @@ class Hartmann6plus(Benchmark):
         return pd.DataFrame(
             {
                 "y": self._hartmann(
-                    torch.from_numpy(candidates[[f"x_{i}" for i in range(6)]].values)
+                    torch.from_numpy(
+                        np.ascontiguousarray(
+                            candidates[[f"x_{i}" for i in range(6)]].to_numpy(),
+                        ),
+                    )
                 ),
                 "valid_y": [1 for _ in range(len(candidates))],
             }
@@ -313,7 +321,11 @@ class Branin(Benchmark):
         self.branin = torchBranin().to(**tkwargs)
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
+        c = torch.from_numpy(
+            np.ascontiguousarray(
+                candidates[self.domain.inputs.get_keys()].to_numpy(),
+            ),
+        ).to(**tkwargs)
             **tkwargs,
         )
         return pd.DataFrame(
@@ -358,7 +370,11 @@ class Branin30(Benchmark):
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
         lb, ub = self.branin.bounds
-        c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
+        c = torch.from_numpy(
+            np.ascontiguousarray(
+                candidates[self.domain.inputs.get_keys()].to_numpy(),
+            ),
+        ).to(**tkwargs)
             **tkwargs,
         )
         return pd.DataFrame(
