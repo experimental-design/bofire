@@ -342,9 +342,11 @@ class SyntheticBoTorch(Benchmark):
         )
 
     def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
-        Xt = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
-            **tkwargs
-        )
+        Xt = torch.from_numpy(
+            np.ascontiguousarray(
+                candidates[self.domain.inputs.get_keys()].to_numpy(),
+            ),
+        ).to(**tkwargs)
         # botorch is very picky regarding the candidates being exactly within the bounds
         # and does not tolerate any numerical noise here. For this reason we clamp the
         # values here.
