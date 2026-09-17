@@ -155,15 +155,17 @@ def compute_hypervolume(
     return hv.compute(
         objective(
             torch.from_numpy(
-                optimal_experiments[
-                    domain.outputs.get_keys_by_objective(
-                        includes=[
-                            MaximizeObjective,
-                            MinimizeObjective,
-                            CloseToTargetObjective,
-                        ],
-                    )
-                ].values,
+                np.ascontiguousarray(
+                    optimal_experiments[
+                        domain.outputs.get_keys_by_objective(
+                            includes=[
+                                MaximizeObjective,
+                                MinimizeObjective,
+                                CloseToTargetObjective,
+                            ],
+                        )
+                    ].to_numpy(),
+                ),
             ).to(**tkwargs),
             None,
         ),
@@ -208,13 +210,23 @@ def infer_ref_point(
     )
 
     worst_values_array = (
-        objective(torch.from_numpy(df[keys].values).to(**tkwargs), None)
+        objective(
+            torch.from_numpy(
+                np.ascontiguousarray(df[keys].to_numpy()),
+            ).to(**tkwargs),
+            None,
+        )
         .numpy()
         .min(axis=0)
     )
 
     best_values_array = (
-        objective(torch.from_numpy(df[keys].values).to(**tkwargs), None)
+        objective(
+            torch.from_numpy(
+                np.ascontiguousarray(df[keys].to_numpy()),
+            ).to(**tkwargs),
+            None,
+        )
         .numpy()
         .max(axis=0)
     )
