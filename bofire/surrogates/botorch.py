@@ -45,7 +45,9 @@ class BotorchSurrogate(Surrogate):
 
     def _predict(self, transformed_X: pd.DataFrame):
         # transform to tensor
-        X = torch.from_numpy(transformed_X.values).to(**tkwargs)
+        X = torch.from_numpy(
+            np.ascontiguousarray(transformed_X.to_numpy()),
+        ).to(**tkwargs)
         with torch.no_grad():
             preds = (
                 self.model.posterior(X=X, observation_noise=True)
@@ -181,8 +183,12 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
                 {col: Y[col].map(label_mapping) for col in Y.columns},
             )
         tX, tY = (
-            torch.from_numpy(transformed_X.values).to(**tkwargs),
-            torch.from_numpy(Y.values).to(**tkwargs),
+            torch.from_numpy(
+                np.ascontiguousarray(transformed_X.to_numpy()),
+            ).to(**tkwargs),
+            torch.from_numpy(
+                np.ascontiguousarray(Y.to_numpy()),
+            ).to(**tkwargs),
         )
         if self.output_scaler == ScalerEnum.STANDARDIZE:
             outcome_transform = Standardize(m=tY.shape[-1])
