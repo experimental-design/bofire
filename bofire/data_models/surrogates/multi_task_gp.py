@@ -25,26 +25,47 @@ from bofire.data_models.priors.api import (
     GreaterThan,
 )
 from bofire.data_models.priors.lkj import LKJPrior
-from bofire.data_models.surrogates.trainable import Hyperconfig
-from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
+from bofire.data_models.surrogates.trainable import (
+    HYPERCONFIG_INPUTS_DESCRIPTION,
+    HYPERSTRATEGY_DESCRIPTION,
+    TARGET_METRIC_DESCRIPTION,
+    Hyperconfig,
+)
+from bofire.data_models.surrogates.trainable_botorch import (
+    HYPERCONFIG_DESCRIPTION,
+    NOISE_CONSTRAINT_DESCRIPTION,
+    NOISE_PRIOR_DESCRIPTION,
+    TrainableBotorchSurrogate,
+)
 
 
 class MultiTaskGPHyperconfig(Hyperconfig):
+    """Hyperparameter search for a multi-task GP: kernel, prior family, ARD."""
+
     type: Literal["MultiTaskGPHyperconfig"] = "MultiTaskGPHyperconfig"
-    inputs: Inputs = Inputs(
-        features=[
-            CategoricalInput(
-                key="kernel",
-                categories=["rbf", "matern_1.5", "matern_2.5"],
-            ),
-            CategoricalInput(key="prior", categories=["mbo", "threesix", "hvarfner"]),
-            CategoricalInput(key="ard", categories=["True", "False"]),
-        ],
+    inputs: Inputs = Field(
+        default=Inputs(
+            features=[
+                CategoricalInput(
+                    key="kernel",
+                    categories=["rbf", "matern_1.5", "matern_2.5"],
+                ),
+                CategoricalInput(
+                    key="prior", categories=["mbo", "threesix", "hvarfner"]
+                ),
+                CategoricalInput(key="ard", categories=["True", "False"]),
+            ],
+        ),
+        description=HYPERCONFIG_INPUTS_DESCRIPTION,
     )
-    target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
+    target_metric: RegressionMetricsEnum = Field(
+        default=RegressionMetricsEnum.MAE, description=TARGET_METRIC_DESCRIPTION
+    )
     hyperstrategy: Literal[
         "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
-    ] = "FractionalFactorialStrategy"
+    ] = Field(
+        default="FractionalFactorialStrategy", description=HYPERSTRATEGY_DESCRIPTION
+    )
 
     @staticmethod
     def _update_hyperparameters(
@@ -94,20 +115,37 @@ class MultiTaskGPHyperconfig(Hyperconfig):
 
 
 class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
+    """Gaussian process fitted jointly across several related tasks.
+
+    Learns how strongly the tasks correlate, so observations of a cheap or abundant task
+    inform the target one. Needs a `CategoricalTaskInput` naming the tasks.
+    """
+
     type: Literal["MultiTaskGPSurrogate"] = "MultiTaskGPSurrogate"
     kernel: AnyKernel = Field(
         default_factory=lambda: RBFKernel(
             ard=True,
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-        )
+        ),
+        description="Covariance function, encoding what the model assumes about the "
+        "response: how smooth it is and which inputs matter.",
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(
+        default_factory=lambda: HVARFNER_NOISE_PRIOR(),
+        description=NOISE_PRIOR_DESCRIPTION,
+    )
     noise_constraint: Optional[AnyPriorConstraint] = Field(
         default_factory=lambda: GreaterThan(lower_bound=1e-4),
+        description=NOISE_CONSTRAINT_DESCRIPTION,
     )
-    task_prior: Optional[LKJPrior] = Field(default_factory=lambda: None)
+    task_prior: Optional[LKJPrior] = Field(
+        default=None,
+        description="Prior over the correlations between tasks. If not provided, they "
+        "are fitted without one.",
+    )
     hyperconfig: Optional[MultiTaskGPHyperconfig] = Field(
         default_factory=lambda: MultiTaskGPHyperconfig(),
+        description=HYPERCONFIG_DESCRIPTION,
     )
 
     @classmethod

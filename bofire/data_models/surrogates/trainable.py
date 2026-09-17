@@ -27,14 +27,45 @@ metrics2objectives = {
 }
 
 
+# reused by every Hyperconfig subclass, which must redeclare these fields to narrow
+# their types or fix their defaults
+HYPERSTRATEGY_DESCRIPTION = (
+    "Strategy used to search the hyperparameters. A fractional factorial covers the "
+    "space in a fixed number of runs, random and SOBO take `n_iterations`."
+)
+HYPERCONFIG_INPUTS_DESCRIPTION = (
+    "The hyperparameters to search over, as input features. Each subclass fixes these "
+    "to the hyperparameters of its own surrogate."
+)
+TARGET_METRIC_DESCRIPTION = (
+    "Cross-validation metric the search optimizes. Whether it is maximized or "
+    "minimized follows from the metric."
+)
+
+
 class Hyperconfig(BaseModel):
+    """Search over a surrogate's own hyperparameters, run before it is fitted.
+
+    The surrogate's hyperparameters become the inputs of a small optimization problem
+    whose output is a cross-validation metric, so choosing a kernel or a prior family is
+    itself optimized rather than guessed.
+    """
+
     type: Any
     hyperstrategy: Literal[
         "RandomStrategy", "FractionalFactorialStrategy", "SoboStrategy"
-    ]
-    inputs: Inputs
-    n_iterations: Optional[Annotated[int, Field(ge=1)]] = None
-    target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
+    ] = Field(description=HYPERSTRATEGY_DESCRIPTION)
+    inputs: Inputs = Field(description=HYPERCONFIG_INPUTS_DESCRIPTION)
+    n_iterations: Optional[Annotated[int, Field(ge=1)]] = Field(
+        default=None,
+        description="Number of hyperparameter configurations to try. Must be at least "
+        "the number of hyperparameters plus two, and must not be set for a fractional "
+        "factorial, whose size is fixed. Defaults to the number of hyperparameters "
+        "plus ten.",
+    )
+    target_metric: RegressionMetricsEnum = Field(
+        default=RegressionMetricsEnum.MAE, description=TARGET_METRIC_DESCRIPTION
+    )
 
     @field_validator("n_iterations")
     @classmethod
@@ -75,7 +106,17 @@ class Hyperconfig(BaseModel):
 
 
 class TrainableSurrogate(BaseModel):
-    hyperconfig: Optional[Hyperconfig] = None
+    """Surrogate whose parameters are learned from the experiments.
+
+    Such a surrogate can also have its hyperparameters — the settings that are not
+    learned by the fit itself — searched over before fitting.
+    """
+
+    hyperconfig: Optional[Hyperconfig] = Field(
+        default=None,
+        description="Search over the surrogate's own hyperparameters, run before "
+        "fitting. If not provided, the hyperparameters are used as configured.",
+    )
 
     def update_hyperparameters(self, hyperparameters: pd.Series):
         if self.hyperconfig is not None:

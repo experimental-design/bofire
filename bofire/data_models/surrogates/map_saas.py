@@ -1,30 +1,37 @@
 from typing import Literal, Type
 
-from pydantic import PositiveInt, field_validator
+from pydantic import Field, PositiveInt, field_validator
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class TestSurrogate:
-    pass
-
-
 class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
-    """Additive MAP SAAS single-task GP
+    """GP whose kernel sums several sparse Matern terms, at different sparsity levels.
 
-    Maximum-a-posteriori (MAP) version of the sparse axis-aligned subspace
-    `FullyBayesianSingleTaskGPSurrogate` with `model_type` equals to "saas".
+    The sparse axis-aligned subspace (SAAS) prior on each term pulls most
+    lengthscales towards infinity, so only a few inputs are left with any influence,
+    and summing terms at different sparsity levels avoids having to commit to how
+    many that is. Fitting by maximum a posteriori rather than by sampling makes it
+    orders of magnitude cheaper than `FullyBayesianSingleTaskGPSurrogate`, at the
+    price of a point estimate of the hyperparameters. Pick it for many inputs and few
+    experiments, where only a handful of inputs are expected to drive the response.
 
-    Attributes:
-        n_taus (PositiveInt): Number of sub-kernels to use in the SAAS model.
+    Examples:
+        >>> surrogate = AdditiveMapSaasSingleTaskGPSurrogate(
+        ...     inputs=inputs, outputs=outputs, n_taus=8
+        ... )
     """
 
     type: Literal["AdditiveMapSaasSingleTaskGPSurrogate"] = (
         "AdditiveMapSaasSingleTaskGPSurrogate"
     )
-    n_taus: PositiveInt = 4
+    n_taus: PositiveInt = Field(
+        default=4,
+        description="Number of sparsity levels combined in the model. More levels let it "
+        "hedge over how many inputs actually matter, at proportionally higher cost.",
+    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
@@ -38,20 +45,27 @@ class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
 
 
 class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
-    """Ensemble MAP SAAS single-task GP
+    """Ensemble of sparse GPs, each assuming a different number of inputs matters.
 
-    Batched ensemble of ``SingleTaskGP``s with the Matern-5/2 kernel and a SAAS prior.
-
-    Attributes:
-        n_taus (PositiveInt): Number of sub-kernels to use in the SAAS model.
-        output_scaler (ScalerEnum): Scaler for the output transformation.
+    Same sparse axis-aligned subspace (SAAS) prior and same Matern-5/2 kernel as
+    `AdditiveMapSaasSingleTaskGPSurrogate`, but the sparsity levels are kept as
+    separate models and averaged rather than summed, so the spread between them
+    feeds into the predicted uncertainty.
     """
 
     type: Literal["EnsembleMapSaasSingleTaskGPSurrogate"] = (
         "EnsembleMapSaasSingleTaskGPSurrogate"
     )
-    n_taus: PositiveInt = 4
-    output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
+    n_taus: PositiveInt = Field(
+        default=4,
+        description="Number of sparsity levels combined in the model. More levels let it "
+        "hedge over how many inputs actually matter, at proportionally higher cost.",
+    )
+    output_scaler: ScalerEnum = Field(
+        default=ScalerEnum.STANDARDIZE,
+        description="How the outputs are rescaled before fitting. The log-based "
+        "scalers are not supported here.",
+    )
 
     @field_validator("output_scaler")
     @classmethod

@@ -14,10 +14,19 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
-from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
+from bofire.data_models.surrogates.trainable_botorch import (
+    NOISE_CONSTRAINT_DESCRIPTION,
+    NOISE_PRIOR_DESCRIPTION,
+    TrainableBotorchSurrogate,
+)
 
 
 class TanimotoGPSurrogate(TrainableBotorchSurrogate):
+    """Gaussian process over molecules, comparing them by fingerprint overlap.
+
+    Requires at least one input encoded into fingerprints or fragments.
+    """
+
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
 
     kernel: AnyKernel = Field(
@@ -26,13 +35,24 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                 ard=True,
             ),
             outputscale_prior=THREESIX_SCALE_PRIOR(),
-        )
+        ),
+        description="Covariance function, encoding what the model assumes about the "
+        "response: how smooth it is and which inputs matter.",
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(
+        default_factory=lambda: THREESIX_NOISE_PRIOR(),
+        description=NOISE_PRIOR_DESCRIPTION,
+    )
     noise_constraint: Optional[AnyPriorConstraint] = Field(
         default_factory=lambda: GreaterThan(lower_bound=1e-4),
+        description=NOISE_CONSTRAINT_DESCRIPTION,
     )
-    tanimoto_calculation_mode: Literal["pre_computed", "on_the_fly"] = "pre_computed"
+    tanimoto_calculation_mode: Literal["pre_computed", "on_the_fly"] = Field(
+        default="pre_computed",
+        description="Whether to compute the pairwise molecular similarities once up "
+        "front or on demand. Precomputing is faster to fit but holds a matrix "
+        "quadratic in the number of distinct molecules.",
+    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
