@@ -67,9 +67,11 @@ class MoboStrategy(BotorchStrategy):
         # in case that qehvi, qlogehvi is used we need also y
         if isinstance(self.acquisition_function, (qLogEHVI, qEHVI)):
             Y = torch.from_numpy(
-                self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                    self.experiments,
-                )[self.domain.outputs.get_keys()].values,
+                np.ascontiguousarray(
+                    self.domain.outputs.preprocess_experiments_all_valid_outputs(
+                        self.experiments,
+                    )[self.domain.outputs.get_keys()].to_numpy(),
+                ),
             ).to(**tkwargs)
         else:
             Y = None
