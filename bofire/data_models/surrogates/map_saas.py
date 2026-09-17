@@ -8,20 +8,11 @@ from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurr
 
 
 class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
-    """GP whose kernel sums several sparse Matern terms, at different sparsity levels.
+    """Maximum-a-posteriori approximation of the fully Bayesian SAAS model.
 
-    The sparse axis-aligned subspace (SAAS) prior on each term pulls most
-    lengthscales towards infinity, so only a few inputs are left with any influence,
-    and summing terms at different sparsity levels avoids having to commit to how
-    many that is. Fitting by maximum a posteriori rather than by sampling makes it
-    orders of magnitude cheaper than `FullyBayesianSingleTaskGPSurrogate`, at the
-    price of a point estimate of the hyperparameters. Pick it for many inputs and few
-    experiments, where only a handful of inputs are expected to drive the response.
-
-    Examples:
-        >>> surrogate = AdditiveMapSaasSingleTaskGPSurrogate(
-        ...     inputs=inputs, outputs=outputs, n_taus=8
-        ... )
+    Pick it for many inputs and few experiments, where only a handful of inputs are
+    expected to drive the response, and the sampling that
+    `FullyBayesianSingleTaskGPSurrogate` with `model_type="saas"` does is too expensive.
     """
 
     type: Literal["AdditiveMapSaasSingleTaskGPSurrogate"] = (
@@ -29,8 +20,8 @@ class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     )
     n_taus: PositiveInt = Field(
         default=4,
-        description="Number of sparsity levels combined in the model. More levels let it "
-        "hedge over how many inputs actually matter, at proportionally higher cost.",
+        description="Number of sparse Matern kernels that are summed up, each at its "
+        "own sparsity level.",
     )
 
     @classmethod
@@ -45,12 +36,11 @@ class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
 
 
 class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
-    """Ensemble of sparse GPs, each assuming a different number of inputs matters.
+    """Maximum-a-posteriori approximation of the fully Bayesian SAAS model.
 
-    Same sparse axis-aligned subspace (SAAS) prior and same Matern-5/2 kernel as
-    `AdditiveMapSaasSingleTaskGPSurrogate`, but the sparsity levels are kept as
-    separate models and averaged rather than summed, so the spread between them
-    feeds into the predicted uncertainty.
+    Approximates the same model as `AdditiveMapSaasSingleTaskGPSurrogate` by a different
+    mechanism -- the sparsity levels are kept as separate models and their predictions
+    mixed, rather than summed into one kernel. This is the preferred of the two.
     """
 
     type: Literal["EnsembleMapSaasSingleTaskGPSurrogate"] = (
@@ -58,8 +48,8 @@ class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     )
     n_taus: PositiveInt = Field(
         default=4,
-        description="Number of sparsity levels combined in the model. More levels let it "
-        "hedge over how many inputs actually matter, at proportionally higher cost.",
+        description="Number of sparse Matern kernels in the ensemble, each at its own "
+        "sparsity level.",
     )
     output_scaler: ScalerEnum = Field(
         default=ScalerEnum.STANDARDIZE,

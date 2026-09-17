@@ -11,6 +11,7 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
+from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION
 from bofire.data_models.surrogates.trainable_botorch import (
     NOISE_CONSTRAINT_DESCRIPTION,
     NOISE_PRIOR_DESCRIPTION,
@@ -35,8 +36,9 @@ class PolynomialSurrogate(TrainableBotorchSurrogate):
 
     kernel: PolynomialKernel = Field(
         default_factory=lambda: PolynomialKernel(power=2),
-        description="Covariance function. Fixed to the polynomial kernel, whose "
-        "`power` sets the degree of the response.",
+        description=KERNEL_DESCRIPTION
+        + " Fixed to the polynomial kernel, whose `power` sets the degree of the "
+        "response.",
     )
     noise_prior: AnyPrior = Field(
         default_factory=lambda: THREESIX_NOISE_PRIOR(),

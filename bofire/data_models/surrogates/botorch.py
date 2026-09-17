@@ -9,6 +9,14 @@ from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.types import InputTransformSpecs
 
 
+# reused by the surrogates that expose a kernel, each of which narrows its type and so
+# has to redeclare the field, which drops any inherited description
+KERNEL_DESCRIPTION = (
+    "The module computing the covariance matrix, which encodes the similarity between "
+    "inputs."
+)
+
+
 class BotorchSurrogate(Surrogate):
     """Surrogate built on BoTorch, and so usable by the BoTorch-based strategies.
 

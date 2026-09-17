@@ -14,6 +14,7 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
+from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION
 from bofire.data_models.surrogates.trainable_botorch import (
     NOISE_CONSTRAINT_DESCRIPTION,
     NOISE_PRIOR_DESCRIPTION,
@@ -36,8 +37,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
             ),
             outputscale_prior=THREESIX_SCALE_PRIOR(),
         ),
-        description="Covariance function, encoding what the model assumes about the "
-        "response: how smooth it is and which inputs matter.",
+        description=KERNEL_DESCRIPTION,
     )
     noise_prior: AnyPrior = Field(
         default_factory=lambda: THREESIX_NOISE_PRIOR(),

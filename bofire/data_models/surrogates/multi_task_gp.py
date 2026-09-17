@@ -5,7 +5,6 @@ from pydantic import Field, model_validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.encodings.api import OneHotEncoding, OrdinalEncoding
-from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
@@ -25,10 +24,10 @@ from bofire.data_models.priors.api import (
     GreaterThan,
 )
 from bofire.data_models.priors.lkj import LKJPrior
+from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION
 from bofire.data_models.surrogates.trainable import (
     HYPERCONFIG_INPUTS_DESCRIPTION,
     HYPERSTRATEGY_DESCRIPTION,
-    TARGET_METRIC_DESCRIPTION,
     Hyperconfig,
 )
 from bofire.data_models.surrogates.trainable_botorch import (
@@ -40,7 +39,11 @@ from bofire.data_models.surrogates.trainable_botorch import (
 
 
 class MultiTaskGPHyperconfig(Hyperconfig):
-    """Hyperparameter search for a multi-task GP: kernel, prior family, ARD."""
+    """Hyperparameter optimization config for a multi-task GP.
+
+    Optimizes over the kernel, the prior family and whether the lengthscale is
+    per-input.
+    """
 
     type: Literal["MultiTaskGPHyperconfig"] = "MultiTaskGPHyperconfig"
     inputs: Inputs = Field(
@@ -57,9 +60,6 @@ class MultiTaskGPHyperconfig(Hyperconfig):
             ],
         ),
         description=HYPERCONFIG_INPUTS_DESCRIPTION,
-    )
-    target_metric: RegressionMetricsEnum = Field(
-        default=RegressionMetricsEnum.MAE, description=TARGET_METRIC_DESCRIPTION
     )
     hyperstrategy: Literal[
         "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
@@ -127,8 +127,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             ard=True,
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
         ),
-        description="Covariance function, encoding what the model assumes about the "
-        "response: how smooth it is and which inputs matter.",
+        description=KERNEL_DESCRIPTION,
     )
     noise_prior: AnyPrior = Field(
         default_factory=lambda: HVARFNER_NOISE_PRIOR(),

@@ -11,16 +11,13 @@ from bofire.data_models.types import InputTransformSpecs
 
 
 class Surrogate(BaseModel):
-    """Model of how the outputs respond to the inputs, fitted to past experiments.
-
-    A strategy uses a surrogate to predict what an untried candidate would give, so the
-    choice of surrogate is the choice of what the optimizer believes about the response.
-    """
+    """Model of the relation between the inputs and the outputs."""
 
     type: Any
     inputs: Inputs = Field(
-        description="Input features the surrogate is fitted on. Need not be the whole "
-        "domain, but every key must exist in it.",
+        description="Input features the surrogate acts on. When the surrogate is used "
+        "by a strategy, these may be a subset of the strategy's inputs, so that "
+        "different outputs can be modelled from different inputs.",
     )
     outputs: Outputs = Field(
         description="Output features the surrogate predicts. Most surrogates take "

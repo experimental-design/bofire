@@ -31,13 +31,14 @@ class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     )
     num_samples: Annotated[int, Field(ge=1)] = Field(
         default=128,
-        description="MCMC steps kept after warm-up, before thinning.",
+        description="MCMC steps run after warm-up. Only every `thinning`-th of them "
+        "is retained.",
     )
     thinning: Annotated[int, Field(ge=1)] = Field(
         default=16,
-        description="Keep every nth sample, reducing the correlation between "
-        "consecutive draws. The model ends up with `num_samples / thinning` "
-        "hyperparameter sets.",
+        description="Retain only every nth of the sampled steps, reducing the "
+        "correlation between consecutive draws. The model ends up with "
+        "`num_samples / thinning` hyperparameter sets.",
     )
     features_to_warp: Annotated[
         List[str], AfterValidator(make_unique_validator("Features"))

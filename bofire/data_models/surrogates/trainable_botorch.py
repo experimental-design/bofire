@@ -16,16 +16,16 @@ NOISE_CONSTRAINT_DESCRIPTION = (
     "bound keeps the fit numerically stable."
 )
 HYPERCONFIG_DESCRIPTION = (
-    "Search over this surrogate's own hyperparameters, run before fitting. Set to null "
-    "to use the hyperparameters as configured."
+    "Configuration of a hyperparameter optimization for this surrogate. Carrying it "
+    "does not run anything; without it, no hyperparameter optimization is possible."
 )
 
 
 class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
-    """BoTorch surrogate fitted to the experiments, with rescaling on both sides.
+    """BoTorch based surrogate fitted to the experiments.
 
-    Fitting is scale-sensitive, so the inputs and the output are rescaled before the
-    fit and the output scaling is undone when predicting.
+    Fitting is often scale-sensitive, so the inputs and the output are rescaled by
+    default before the fit, and the output scaling is undone when predicting.
     """
 
     scaler: AnyScaler = Field(
@@ -36,8 +36,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
     output_scaler: ScalerEnum = Field(
         default=ScalerEnum.STANDARDIZE,
         description="How the outputs are rescaled before fitting, and undone when "
-        "predicting. Standardizing lets one set of priors suit outputs of any "
-        "magnitude.",
+        "predicting.",
     )
 
     @model_validator(mode="after")

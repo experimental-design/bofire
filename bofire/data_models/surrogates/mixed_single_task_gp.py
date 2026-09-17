@@ -5,7 +5,6 @@ from pydantic import Field, model_validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.encodings.api import OrdinalEncoding
-from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
@@ -35,7 +34,6 @@ from bofire.data_models.priors.api import (
 from bofire.data_models.surrogates.trainable import (
     HYPERCONFIG_INPUTS_DESCRIPTION,
     HYPERSTRATEGY_DESCRIPTION,
-    TARGET_METRIC_DESCRIPTION,
     Hyperconfig,
 )
 from bofire.data_models.surrogates.trainable_botorch import (
@@ -47,7 +45,11 @@ from bofire.data_models.surrogates.trainable_botorch import (
 
 
 class MixedSingleTaskGPHyperconfig(Hyperconfig):
-    """Hyperparameter search for a mixed GP: continuous kernel, prior family, ARD."""
+    """Hyperparameter optimization config for a mixed GP.
+
+    Optimizes over the continuous kernel, the prior family and whether the lengthscale
+    is per-input.
+    """
 
     type: Literal["MixedSingleTaskGPHyperconfig"] = "MixedSingleTaskGPHyperconfig"
     inputs: Inputs = Field(
@@ -64,9 +66,6 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
             ],
         ),
         description=HYPERCONFIG_INPUTS_DESCRIPTION,
-    )
-    target_metric: RegressionMetricsEnum = Field(
-        default=RegressionMetricsEnum.MAE, description=TARGET_METRIC_DESCRIPTION
     )
     hyperstrategy: Literal[
         "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
@@ -125,10 +124,10 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
 class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     """Gaussian process over a mix of continuous and categorical inputs.
 
-    Combines a kernel over the continuous inputs with one over the categoricals, both
-    additively and multiplicatively, so the model can express both an effect that is
-    common to every category and one that differs between them. Requires at least one
-    ordinal-encoded categorical input.
+    The covariance is `s1 * (k_cont + s2 * k_cat) + s3 * (k_cont * k_cat)`, with `s1` to
+    `s3` fitted output scales, so the model can express both an effect common to every
+    category and one that differs between them. With no continuous inputs it reduces to
+    `s1 * k_cat`. Requires at least one ordinal-encoded categorical input.
     """
 
     type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
@@ -138,16 +137,17 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
             lengthscale_constraint=GreaterThan(lower_bound=2.500e-02),
         ),
-        description="Covariance function over the continuous inputs. Its `features` "
-        "are filled in from the inputs that are not ordinal-encoded categoricals, so "
-        "they need not be set.",
+        description="The module computing the covariance matrix over the continuous "
+        "inputs. When its `features` are left empty, they are set to the inputs that "
+        "are not ordinal-encoded categoricals.",
     )
     categorical_kernel: AnyCategoricalKernel = Field(
         default_factory=lambda: HammingDistanceKernel(
             ard=True, lengthscale_constraint=GreaterThan(lower_bound=1.000e-06)
         ),
-        description="Covariance function over the categorical inputs. Its `features` "
-        "are filled in from the ordinal-encoded categoricals, so they need not be set.",
+        description="The module computing the covariance matrix over the categorical "
+        "inputs. When its `features` are left empty, they are set to the "
+        "ordinal-encoded categoricals.",
     )
     noise_prior: AnyPrior = Field(
         default_factory=lambda: HVARFNER_NOISE_PRIOR(),

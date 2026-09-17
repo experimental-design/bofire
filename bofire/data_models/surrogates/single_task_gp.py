@@ -4,7 +4,6 @@ import pandas as pd
 from pydantic import Field
 
 from bofire.data_models.domain.api import Inputs
-from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
@@ -29,10 +28,10 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
+from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION
 from bofire.data_models.surrogates.trainable import (
     HYPERCONFIG_INPUTS_DESCRIPTION,
     HYPERSTRATEGY_DESCRIPTION,
-    TARGET_METRIC_DESCRIPTION,
     Hyperconfig,
 )
 from bofire.data_models.surrogates.trainable_botorch import (
@@ -44,7 +43,11 @@ from bofire.data_models.surrogates.trainable_botorch import (
 
 
 class SingleTaskGPHyperconfig(Hyperconfig):
-    """Hyperparameter search for a single-task GP: kernel, prior family, scaling, ARD."""
+    """Hyperparameter optimization config for a single-task GP.
+
+    Optimizes over the kernel, the prior family, whether the kernel is scaled and
+    whether the lengthscale is per-input.
+    """
 
     type: Literal["SingleTaskGPHyperconfig"] = "SingleTaskGPHyperconfig"
     inputs: Inputs = Field(
@@ -72,9 +75,6 @@ class SingleTaskGPHyperconfig(Hyperconfig):
         default=None,
         description="Bounds applied to the output scale when the search selects a "
         "scaled kernel.",
-    )
-    target_metric: RegressionMetricsEnum = Field(
-        default=RegressionMetricsEnum.MAE, description=TARGET_METRIC_DESCRIPTION
     )
     hyperstrategy: Literal[
         "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
@@ -165,20 +165,7 @@ class SingleTaskGPHyperconfig(Hyperconfig):
 
 
 class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
-    """Gaussian process over one output, the usual starting point.
-
-    Predicts a mean and an uncertainty everywhere, which is what lets a Bayesian
-    optimization strategy trade exploration against exploitation.
-
-    Examples:
-        >>> surrogate = SingleTaskGPSurrogate(inputs=inputs, outputs=outputs)
-
-        A rougher response than the default RBF assumes:
-
-        >>> surrogate = SingleTaskGPSurrogate(
-        ...     inputs=inputs, outputs=outputs, kernel=MaternKernel(nu=1.5, ard=True)
-        ... )
-    """
+    """Gaussian process over a single output."""
 
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
@@ -187,8 +174,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
             ard=True,
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
         ),
-        description="Covariance function, encoding what the model assumes about the "
-        "response: how smooth it is and which inputs matter.",
+        description=KERNEL_DESCRIPTION,
     )
     noise_prior: AnyPrior = Field(
         default_factory=lambda: HVARFNER_NOISE_PRIOR(),

@@ -13,6 +13,7 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
+from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from bofire.data_models.surrogates.trainable_botorch import (
     HYPERCONFIG_DESCRIPTION,
@@ -48,9 +49,9 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
             lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
         ),
-        description="Covariance function. Restricted to the stationary kernels, and "
-        "its lengthscale is bounded from below, because what counts as an outlier "
-        "depends on how flexible the model is allowed to be.",
+        description=KERNEL_DESCRIPTION
+        + " Its lengthscale is bounded from below, because what counts as an outlier "
+        "depends on how flexible the model may be.",
     )
     noise_prior: AnyPrior = Field(
         default_factory=lambda: HVARFNER_NOISE_PRIOR(),
@@ -70,8 +71,9 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
 
     prior_mean_of_support: Optional[int] = Field(
         default=None,
-        description="Expected number of points treated as outliers. If not provided, "
-        "it is inferred during fitting.",
+        description="Mean of the default exponential prior over the support size, "
+        "that is over how many data points carry their own extra noise. If not "
+        "provided, BoTorch's own default is used.",
     )
     convex_parametrization: bool = Field(
         default=True,

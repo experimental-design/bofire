@@ -11,6 +11,7 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
+from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION
 from bofire.data_models.surrogates.trainable_botorch import (
     NOISE_CONSTRAINT_DESCRIPTION,
     NOISE_PRIOR_DESCRIPTION,
@@ -30,8 +31,9 @@ class LinearSurrogate(TrainableBotorchSurrogate):
 
     kernel: LinearKernel = Field(
         default_factory=lambda: LinearKernel(),
-        description="Covariance function. Fixed to the linear kernel, which is what "
-        "restricts the response to a linear one.",
+        description=KERNEL_DESCRIPTION
+        + " Fixed to the linear kernel, which is what restricts the response to a "
+        "linear one.",
     )
     noise_prior: AnyPrior = Field(
         default_factory=lambda: THREESIX_NOISE_PRIOR(),

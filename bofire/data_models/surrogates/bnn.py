@@ -3,6 +3,7 @@ from typing import Literal, Optional
 from pydantic import Field
 
 from bofire.data_models.kernels.api import InfiniteWidthBNNKernel
+from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.trainable import Hyperconfig
 
@@ -18,12 +19,13 @@ class SingleTaskIBNNSurrogate(SingleTaskGPSurrogate):
     type: Literal["SingleTaskIBNNSurrogate"] = "SingleTaskIBNNSurrogate"
     kernel: InfiniteWidthBNNKernel = Field(
         default=InfiniteWidthBNNKernel(),
-        description="Covariance function. Only the depth of the equivalent network is "
-        "configurable; there is no lengthscale to set.",
+        description=KERNEL_DESCRIPTION
+        + " Only the depth of the equivalent network is configurable; there is no "
+        "lengthscale to set.",
     )
     hyperconfig: Optional[Hyperconfig] = Field(
         default=None,
-        description="Search over this surrogate's own hyperparameters, run before "
-        "fitting. There is no default search, since the hyperparameters the GP search "
+        description="Configuration of a hyperparameter optimization for this surrogate. "
+        "There is no default one, since the hyperparameters the single-task GP config "
         "varies do not apply to this kernel.",
     )

@@ -49,11 +49,7 @@ class Normalize(Scaler):
 
 
 class Standardize(Scaler):
-    """Rescales each feature to zero mean and unit variance, using the observed data.
-
-    Unlike `Normalize`, which uses the declared bounds, this follows the experiments, so
-    it suits a feature whose bounds are wide relative to the region actually explored.
-    """
+    """Rescales each feature to zero mean and unit variance, using the observed data."""
 
     type: Literal["Standardize"] = "Standardize"
 
