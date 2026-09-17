@@ -45,6 +45,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - LLM field descriptions report descriptor data uniformly for every feature type: a prefix stating what the feature is and its range or options, then the data — `Categorical, allowed: [...] — descriptors per category: {...} — structure: [...]`, `Continuous, bounds [...] — descriptors: {...} — structure: CCO`. Previously the kind was announced in the prefix (`Categorical with descriptors`, `Continuous molecular (SMILES: CCO)`) and only the two descriptor-carrying classes emitted anything.
 
 ### Fixed
+- `InfiniteWidthBNNKernel.features` is validated like every other kernel's. It redeclared the field as a plain list of strings, which silently dropped the uniqueness check the shared type carries, so a kernel could name the same feature twice.
 - **Descriptor widths no longer depend on evaluation order.** `MolFeatures.get_descriptor_names()` returned the filtered list only once `remove_correlated_descriptors()` had run and mutated the model, so with `filter_descriptors` defaulting to `True` the width reported for an engineered feature could be the *unfiltered* count depending on call order. Widths are now derived on demand from the same block the matrix is built from.
 
 ## [0.5.0] - 2026-08-11 - BREAKING

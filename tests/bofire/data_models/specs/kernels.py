@@ -246,8 +246,8 @@ specs.add_invalid(
         .model_dump(),
         "features": None,
     },
-    error=ValueError,
-    message="nu expected to be 0.5, 1.5, or 2.5",
+    error=ValidationError,
+    message="Input should be 0.5, 1.5 or 2.5",
 )
 specs.add_valid(
     kernels.InfiniteWidthBNNKernel,
