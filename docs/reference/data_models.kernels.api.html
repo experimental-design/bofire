@@ -108,6 +108,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../../styles.css">
 </head>
@@ -429,43 +458,43 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td><a href="#bofire.data_models.kernels.api.Kernel">Kernel</a></td>
-<td></td>
+<td>Covariance function of a Gaussian process.</td>
 </tr>
 <tr class="even">
 <td><a href="#bofire.data_models.kernels.api.AdditiveKernel">AdditiveKernel</a></td>
-<td></td>
+<td>Sum of several kernels, <span class="math inline">\(k(\mathbf x, \mathbf x') = \sum_i k_i(\mathbf x, \mathbf x')\)</span>.</td>
 </tr>
 <tr class="odd">
 <td><a href="#bofire.data_models.kernels.api.MultiplicativeKernel">MultiplicativeKernel</a></td>
-<td></td>
+<td>Product of several kernels, <span class="math inline">\(k(\mathbf x, \mathbf x') = \prod_i k_i(\mathbf x, \mathbf x')\)</span>.</td>
 </tr>
 <tr class="even">
 <td><a href="#bofire.data_models.kernels.api.ScaleKernel">ScaleKernel</a></td>
-<td></td>
+<td>Wraps another kernel with a fitted output scale,</td>
 </tr>
 <tr class="odd">
 <td><a href="#bofire.data_models.kernels.api.MaternKernel">MaternKernel</a></td>
-<td></td>
+<td>Matern kernel, a less smooth alternative to the RBF kernel.</td>
 </tr>
 <tr class="even">
 <td><a href="#bofire.data_models.kernels.api.RBFKernel">RBFKernel</a></td>
-<td></td>
+<td>Radial basis function kernel, the usual default for continuous inputs.</td>
 </tr>
 <tr class="odd">
 <td><a href="#bofire.data_models.kernels.api.LinearKernel">LinearKernel</a></td>
-<td></td>
+<td>Linear kernel, equivalent to Bayesian linear regression on the inputs.</td>
 </tr>
 <tr class="even">
 <td><a href="#bofire.data_models.kernels.api.PolynomialKernel">PolynomialKernel</a></td>
-<td></td>
+<td>Polynomial kernel, of a fixed degree in the inputs.</td>
 </tr>
 <tr class="odd">
 <td><a href="#bofire.data_models.kernels.api.HammingDistanceKernel">HammingDistanceKernel</a></td>
-<td></td>
+<td>Kernel over categorical inputs, based on the Hamming distance.</td>
 </tr>
 <tr class="even">
 <td><a href="#bofire.data_models.kernels.api.TanimotoKernel">TanimotoKernel</a></td>
-<td></td>
+<td>Kernel over molecular fingerprints, based on the Tanimoto similarity.</td>
 </tr>
 <tr class="odd">
 <td><a href="#bofire.data_models.kernels.api.WassersteinKernel">WassersteinKernel</a></td>
@@ -476,42 +505,82 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="bofire.data_models.kernels.api.Kernel" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.Kernel">Kernel</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.Kernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Covariance function of a Gaussian process.</p>
+<p>A kernel <span class="math inline">\(k(\mathbf x, \mathbf x')\)</span> gives the prior covariance between the function values at two points of the input space. It encodes the assumptions the surrogate makes about the response: how smooth it is, over what distance observations carry information, and which inputs matter at all.</p>
 </section>
 <section id="bofire.data_models.kernels.api.AdditiveKernel" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.AdditiveKernel">AdditiveKernel</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.AdditiveKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Sum of several kernels, <span class="math inline">\(k(\mathbf x, \mathbf x') = \sum_i k_i(\mathbf x, \mathbf x')\)</span>.</p>
 </section>
 <section id="bofire.data_models.kernels.api.MultiplicativeKernel" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.MultiplicativeKernel">MultiplicativeKernel</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.MultiplicativeKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Product of several kernels, <span class="math inline">\(k(\mathbf x, \mathbf x') = \prod_i k_i(\mathbf x, \mathbf x')\)</span>.</p>
 </section>
 <section id="bofire.data_models.kernels.api.ScaleKernel" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.ScaleKernel">ScaleKernel</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.ScaleKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Wraps another kernel with a fitted output scale, <span class="math inline">\(k(\mathbf x, \mathbf x') = \theta\, k_{\text{base}}(\mathbf x, \mathbf x')\)</span>.</p>
+<p>The base kernel sets the shape of the covariance and this sets its magnitude, which is the variance of the noiseless signal.</p>
 </section>
 <section id="bofire.data_models.kernels.api.MaternKernel" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.MaternKernel">MaternKernel</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.MaternKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Matern kernel, a less smooth alternative to the RBF kernel.</p>
+<p><span class="math display">\[
+k(\mathbf x, \mathbf x') = \frac{2^{1-\nu}}{\Gamma(\nu)}
+    \left(\sqrt{2\nu}\,\frac{d}{\ell}\right)^{\nu}
+    K_{\nu}\!\left(\sqrt{2\nu}\,\frac{d}{\ell}\right),
+\qquad d = \lVert \mathbf x - \mathbf x' \rVert
+\]</span></p>
+<p>Samples are <span class="math inline">\(\lceil \nu \rceil - 1\)</span> times differentiable, so <span class="math inline">\(\nu\)</span> sets how rough the response may be. Reach for this when an RBF fit looks implausibly smooth between observations.</p>
 </section>
 <section id="bofire.data_models.kernels.api.RBFKernel" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.RBFKernel">RBFKernel</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.RBFKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Radial basis function kernel, the usual default for continuous inputs.</p>
+<p><span class="math display">\[
+k(\mathbf x, \mathbf x') = \exp\left(-\frac{\lVert \mathbf x - \mathbf x' \rVert^2}
+                                          {2\ell^2}\right)
+\]</span></p>
+<p>Samples from this kernel are infinitely differentiable, so it assumes a very smooth response. Use <code>MaternKernel</code> where the response is expected to be rougher.</p>
 </section>
 <section id="bofire.data_models.kernels.api.LinearKernel" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.LinearKernel">LinearKernel</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.LinearKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Linear kernel, equivalent to Bayesian linear regression on the inputs.</p>
+<p><span class="math display">\[
+k(\mathbf x, \mathbf x') = v\,\mathbf x^{\top} \mathbf x'
+\]</span></p>
 </section>
 <section id="bofire.data_models.kernels.api.PolynomialKernel" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.PolynomialKernel">PolynomialKernel</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.PolynomialKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Polynomial kernel, of a fixed degree in the inputs.</p>
+<p><span class="math display">\[
+k(\mathbf x, \mathbf x') = (\mathbf x^{\top} \mathbf x' + c)^{p}
+\]</span></p>
 </section>
 <section id="bofire.data_models.kernels.api.HammingDistanceKernel" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.HammingDistanceKernel">HammingDistanceKernel</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.HammingDistanceKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Kernel over categorical inputs, based on the Hamming distance.</p>
+<p><span class="math display">\[
+k(\mathbf x, \mathbf x') = \exp\left(-\frac{d(\mathbf x, \mathbf x')}{\ell}\right)
+\]</span></p>
+<p>where <span class="math inline">\(d\)</span> is zero where two inputs hold the same category and one where they differ, averaged over the categorical dimensions. With <code>ard</code> there is one lengthscale per categorical feature, so a change of category can matter more in some features than in others. The kernel is not differentiable with respect to its inputs.</p>
 </section>
 <section id="bofire.data_models.kernels.api.TanimotoKernel" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.TanimotoKernel">TanimotoKernel</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.TanimotoKernel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Kernel over molecular fingerprints, based on the Tanimoto similarity.</p>
+<p><span class="math display">\[
+k(\mathbf x, \mathbf x') = \frac{\mathbf x^{\top}\mathbf x'}
+    {\lVert \mathbf x \rVert^2 + \lVert \mathbf x' \rVert^2
+     - \mathbf x^{\top}\mathbf x'}
+\]</span></p>
+<p>Normalizing the shared bits by the bits present in either input is what makes this the standard similarity for the sparse binary vectors a fingerprint produces.</p>
 </section>
 <section id="bofire.data_models.kernels.api.WassersteinKernel" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.kernels.api.WassersteinKernel">WassersteinKernel</h3>
@@ -519,39 +588,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Kernel based on the Wasserstein distance.</p>
 <p>It only works for 1D data that is monotonically increasing, as it is just calculating the integral of the absolute difference between two shapes. Only when both shapes are monotonically increasing, this integral is also a Wasserstein distance (https://arxiv.org/abs/2002.01878).</p>
 <p>The shape are assumed to be discretized as a set of points. Make sure that the discretization is fine enough to capture the shape of the data.</p>
-<section id="attributes" class="level4 doc-section doc-section-attributes">
-<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes">Attributes</h4>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 6%">
-<col style="width: 7%">
-<col style="width: 86%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>squared</td>
-<td>bool</td>
-<td>If True, the squared exponential Wasserstein distance is used. Note that the squared exponential Wasserstein distance kernel is not positive definite for all lengthscales. For this reason, as default the absolute exponential Wasserstein distance is used.</td>
-</tr>
-<tr class="even">
-<td>lengthscale_prior</td>
-<td>Optional[AnyPrior]</td>
-<td>Prior for the lengthscale of the kernel.</td>
-</tr>
-</tbody>
-</table>
 
 
 <!-- -->
 
-</section>
 </section>
 </section>
 </section>
@@ -1035,16 +1075,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Kernel</span><span class="co">](#bofire.data_models.kernels.api.Kernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">AdditiveKernel</span><span class="co">](#bofire.data_models.kernels.api.AdditiveKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MultiplicativeKernel</span><span class="co">](#bofire.data_models.kernels.api.MultiplicativeKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">ScaleKernel</span><span class="co">](#bofire.data_models.kernels.api.ScaleKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MaternKernel</span><span class="co">](#bofire.data_models.kernels.api.MaternKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">RBFKernel</span><span class="co">](#bofire.data_models.kernels.api.RBFKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">LinearKernel</span><span class="co">](#bofire.data_models.kernels.api.LinearKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">PolynomialKernel</span><span class="co">](#bofire.data_models.kernels.api.PolynomialKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">HammingDistanceKernel</span><span class="co">](#bofire.data_models.kernels.api.HammingDistanceKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">TanimotoKernel</span><span class="co">](#bofire.data_models.kernels.api.TanimotoKernel)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Kernel</span><span class="co">](#bofire.data_models.kernels.api.Kernel)</span> <span class="pp">|</span> Covariance function of a Gaussian process. <span class="pp">|</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">AdditiveKernel</span><span class="co">](#bofire.data_models.kernels.api.AdditiveKernel)</span> <span class="pp">|</span> Sum of several kernels, $k(\mathbf x, \mathbf x') = \sum_i k_i(\mathbf x, \mathbf x')$. <span class="pp">|</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MultiplicativeKernel</span><span class="co">](#bofire.data_models.kernels.api.MultiplicativeKernel)</span> <span class="pp">|</span> Product of several kernels, $k(\mathbf x, \mathbf x') = \prod_i k_i(\mathbf x, \mathbf x')$. <span class="pp">|</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">ScaleKernel</span><span class="co">](#bofire.data_models.kernels.api.ScaleKernel)</span> <span class="pp">|</span> Wraps another kernel with a fitted output scale, <span class="pp">|</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MaternKernel</span><span class="co">](#bofire.data_models.kernels.api.MaternKernel)</span> <span class="pp">|</span> Matern kernel, a less smooth alternative to the RBF kernel. <span class="pp">|</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">RBFKernel</span><span class="co">](#bofire.data_models.kernels.api.RBFKernel)</span> <span class="pp">|</span> Radial basis function kernel, the usual default for continuous inputs. <span class="pp">|</span></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">LinearKernel</span><span class="co">](#bofire.data_models.kernels.api.LinearKernel)</span> <span class="pp">|</span> Linear kernel, equivalent to Bayesian linear regression on the inputs. <span class="pp">|</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">PolynomialKernel</span><span class="co">](#bofire.data_models.kernels.api.PolynomialKernel)</span> <span class="pp">|</span> Polynomial kernel, of a fixed degree in the inputs. <span class="pp">|</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">HammingDistanceKernel</span><span class="co">](#bofire.data_models.kernels.api.HammingDistanceKernel)</span> <span class="pp">|</span> Kernel over categorical inputs, based on the Hamming distance. <span class="pp">|</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">TanimotoKernel</span><span class="co">](#bofire.data_models.kernels.api.TanimotoKernel)</span> <span class="pp">|</span> Kernel over molecular fingerprints, based on the Tanimoto similarity. <span class="pp">|</span></span>
 <span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">WassersteinKernel</span><span class="co">](#bofire.data_models.kernels.api.WassersteinKernel)</span> <span class="pp">|</span> Kernel based on the Wasserstein distance. <span class="pp">|</span></span>
 <span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a><span class="fu">### Kernel { #bofire.data_models.kernels.api.Kernel }</span></span>
@@ -1053,102 +1093,149 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.Kernel()</span>
 <span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>Covariance function of a Gaussian process.</span>
 <span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a><span class="fu">### AdditiveKernel { #bofire.data_models.kernels.api.AdditiveKernel }</span></span>
-<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.AdditiveKernel()</span>
-<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>A kernel $k(\mathbf x, \mathbf x')$ gives the prior covariance between the function</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>values at two points of the input space. It encodes the assumptions the surrogate</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>makes about the response: how smooth it is, over what distance observations carry</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>information, and which inputs matter at all.</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a><span class="fu">### AdditiveKernel { #bofire.data_models.kernels.api.AdditiveKernel }</span></span>
 <span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiplicativeKernel { #bofire.data_models.kernels.api.MultiplicativeKernel }</span></span>
-<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.MultiplicativeKernel()</span>
-<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.AdditiveKernel()</span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>Sum of several kernels, $k(\mathbf x, \mathbf x') = \sum_i k_i(\mathbf x, \mathbf x')$.</span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiplicativeKernel { #bofire.data_models.kernels.api.MultiplicativeKernel }</span></span>
 <span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a><span class="fu">### ScaleKernel { #bofire.data_models.kernels.api.ScaleKernel }</span></span>
-<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.ScaleKernel()</span>
-<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-46"><a href="#cb12-46" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.MultiplicativeKernel()</span>
+<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a>Product of several kernels, $k(\mathbf x, \mathbf x') = \prod_i k_i(\mathbf x, \mathbf x')$.</span>
+<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a><span class="fu">### ScaleKernel { #bofire.data_models.kernels.api.ScaleKernel }</span></span>
 <span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a><span class="fu">### MaternKernel { #bofire.data_models.kernels.api.MaternKernel }</span></span>
-<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.MaternKernel()</span>
-<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.ScaleKernel()</span>
+<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a>Wraps another kernel with a fitted output scale,</span>
+<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a>$k(\mathbf x, \mathbf x') = \theta\, k_{\text{base}}(\mathbf x, \mathbf x')$.</span>
 <span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a><span class="fu">### RBFKernel { #bofire.data_models.kernels.api.RBFKernel }</span></span>
-<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-65"><a href="#cb12-65" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.RBFKernel()</span>
-<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a>The base kernel sets the shape of the covariance and this sets its magnitude, which</span>
+<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>is the variance of the noiseless signal.</span>
+<span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a><span class="fu">### MaternKernel { #bofire.data_models.kernels.api.MaternKernel }</span></span>
+<span id="cb12-65"><a href="#cb12-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-66"><a href="#cb12-66" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb12-67"><a href="#cb12-67" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.MaternKernel()</span>
+<span id="cb12-68"><a href="#cb12-68" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb12-69"><a href="#cb12-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a><span class="fu">### LinearKernel { #bofire.data_models.kernels.api.LinearKernel }</span></span>
-<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-73"><a href="#cb12-73" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-74"><a href="#cb12-74" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.LinearKernel()</span>
-<span id="cb12-75"><a href="#cb12-75" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-76"><a href="#cb12-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-77"><a href="#cb12-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a>Matern kernel, a less smooth alternative to the RBF kernel.</span>
+<span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb12-73"><a href="#cb12-73" aria-hidden="true" tabindex="-1"></a>k(\mathbf x, \mathbf x') = \frac{2^{1-\nu}}{\Gamma(\nu)}</span>
+<span id="cb12-74"><a href="#cb12-74" aria-hidden="true" tabindex="-1"></a>    \left(\sqrt{2\nu}\,\frac{d}{\ell}\right)^{\nu}</span>
+<span id="cb12-75"><a href="#cb12-75" aria-hidden="true" tabindex="-1"></a>    K_{\nu}<span class="sc">\!</span>\left(\sqrt{2\nu}\,\frac{d}{\ell}\right),</span>
+<span id="cb12-76"><a href="#cb12-76" aria-hidden="true" tabindex="-1"></a>\qquad d = \lVert \mathbf x - \mathbf x' \rVert</span>
+<span id="cb12-77"><a href="#cb12-77" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb12-78"><a href="#cb12-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-79"><a href="#cb12-79" aria-hidden="true" tabindex="-1"></a><span class="fu">### PolynomialKernel { #bofire.data_models.kernels.api.PolynomialKernel }</span></span>
-<span id="cb12-80"><a href="#cb12-80" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-81"><a href="#cb12-81" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-82"><a href="#cb12-82" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.PolynomialKernel()</span>
-<span id="cb12-83"><a href="#cb12-83" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-79"><a href="#cb12-79" aria-hidden="true" tabindex="-1"></a>Samples are $\lceil \nu \rceil - 1$ times differentiable, so $\nu$ sets how rough</span>
+<span id="cb12-80"><a href="#cb12-80" aria-hidden="true" tabindex="-1"></a>the response may be. Reach for this when an RBF fit looks implausibly smooth</span>
+<span id="cb12-81"><a href="#cb12-81" aria-hidden="true" tabindex="-1"></a>between observations.</span>
+<span id="cb12-82"><a href="#cb12-82" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-83"><a href="#cb12-83" aria-hidden="true" tabindex="-1"></a><span class="fu">### RBFKernel { #bofire.data_models.kernels.api.RBFKernel }</span></span>
 <span id="cb12-84"><a href="#cb12-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-85"><a href="#cb12-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-86"><a href="#cb12-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-87"><a href="#cb12-87" aria-hidden="true" tabindex="-1"></a><span class="fu">### HammingDistanceKernel { #bofire.data_models.kernels.api.HammingDistanceKernel }</span></span>
+<span id="cb12-85"><a href="#cb12-85" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb12-86"><a href="#cb12-86" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.RBFKernel()</span>
+<span id="cb12-87"><a href="#cb12-87" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb12-88"><a href="#cb12-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-89"><a href="#cb12-89" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-90"><a href="#cb12-90" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.HammingDistanceKernel()</span>
-<span id="cb12-91"><a href="#cb12-91" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-92"><a href="#cb12-92" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-93"><a href="#cb12-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-94"><a href="#cb12-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-95"><a href="#cb12-95" aria-hidden="true" tabindex="-1"></a><span class="fu">### TanimotoKernel { #bofire.data_models.kernels.api.TanimotoKernel }</span></span>
-<span id="cb12-96"><a href="#cb12-96" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-97"><a href="#cb12-97" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-98"><a href="#cb12-98" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.TanimotoKernel()</span>
-<span id="cb12-99"><a href="#cb12-99" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-89"><a href="#cb12-89" aria-hidden="true" tabindex="-1"></a>Radial basis function kernel, the usual default for continuous inputs.</span>
+<span id="cb12-90"><a href="#cb12-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-91"><a href="#cb12-91" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb12-92"><a href="#cb12-92" aria-hidden="true" tabindex="-1"></a>k(\mathbf x, \mathbf x') = \exp\left(-\frac{\lVert \mathbf x - \mathbf x' \rVert^2}</span>
+<span id="cb12-93"><a href="#cb12-93" aria-hidden="true" tabindex="-1"></a>                                          {2\ell^2}\right)</span>
+<span id="cb12-94"><a href="#cb12-94" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb12-95"><a href="#cb12-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-96"><a href="#cb12-96" aria-hidden="true" tabindex="-1"></a>Samples from this kernel are infinitely differentiable, so it assumes a very smooth</span>
+<span id="cb12-97"><a href="#cb12-97" aria-hidden="true" tabindex="-1"></a>response. Use <span class="in">`MaternKernel`</span> where the response is expected to be rougher.</span>
+<span id="cb12-98"><a href="#cb12-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-99"><a href="#cb12-99" aria-hidden="true" tabindex="-1"></a><span class="fu">### LinearKernel { #bofire.data_models.kernels.api.LinearKernel }</span></span>
 <span id="cb12-100"><a href="#cb12-100" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-101"><a href="#cb12-101" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-102"><a href="#cb12-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-103"><a href="#cb12-103" aria-hidden="true" tabindex="-1"></a><span class="fu">### WassersteinKernel { #bofire.data_models.kernels.api.WassersteinKernel }</span></span>
+<span id="cb12-101"><a href="#cb12-101" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb12-102"><a href="#cb12-102" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.LinearKernel()</span>
+<span id="cb12-103"><a href="#cb12-103" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb12-104"><a href="#cb12-104" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-105"><a href="#cb12-105" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb12-106"><a href="#cb12-106" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.WassersteinKernel()</span>
-<span id="cb12-107"><a href="#cb12-107" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb12-108"><a href="#cb12-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-109"><a href="#cb12-109" aria-hidden="true" tabindex="-1"></a>Kernel based on the Wasserstein distance.</span>
+<span id="cb12-105"><a href="#cb12-105" aria-hidden="true" tabindex="-1"></a>Linear kernel, equivalent to Bayesian linear regression on the inputs.</span>
+<span id="cb12-106"><a href="#cb12-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-107"><a href="#cb12-107" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb12-108"><a href="#cb12-108" aria-hidden="true" tabindex="-1"></a>k(\mathbf x, \mathbf x') = v\,\mathbf x^{\top} \mathbf x'</span>
+<span id="cb12-109"><a href="#cb12-109" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb12-110"><a href="#cb12-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-111"><a href="#cb12-111" aria-hidden="true" tabindex="-1"></a>It only works for 1D data that is monotonically increasing, as it is just</span>
-<span id="cb12-112"><a href="#cb12-112" aria-hidden="true" tabindex="-1"></a>calculating the integral of the absolute difference between two shapes.</span>
-<span id="cb12-113"><a href="#cb12-113" aria-hidden="true" tabindex="-1"></a>Only when both shapes are monotonically increasing, this integral is also</span>
-<span id="cb12-114"><a href="#cb12-114" aria-hidden="true" tabindex="-1"></a>a Wasserstein distance (https://arxiv.org/abs/2002.01878).</span>
-<span id="cb12-115"><a href="#cb12-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-116"><a href="#cb12-116" aria-hidden="true" tabindex="-1"></a>The shape are assumed to be discretized as a set of points. Make sure that</span>
-<span id="cb12-117"><a href="#cb12-117" aria-hidden="true" tabindex="-1"></a>the discretization is fine enough to capture the shape of the data.</span>
+<span id="cb12-111"><a href="#cb12-111" aria-hidden="true" tabindex="-1"></a><span class="fu">### PolynomialKernel { #bofire.data_models.kernels.api.PolynomialKernel }</span></span>
+<span id="cb12-112"><a href="#cb12-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-113"><a href="#cb12-113" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb12-114"><a href="#cb12-114" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.PolynomialKernel()</span>
+<span id="cb12-115"><a href="#cb12-115" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-116"><a href="#cb12-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-117"><a href="#cb12-117" aria-hidden="true" tabindex="-1"></a>Polynomial kernel, of a fixed degree in the inputs.</span>
 <span id="cb12-118"><a href="#cb12-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-119"><a href="#cb12-119" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes {.doc-section .doc-section-attributes}</span></span>
-<span id="cb12-120"><a href="#cb12-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-121"><a href="#cb12-121" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name              <span class="pp">|</span> Type                 <span class="pp">|</span> Description                                                                                                                                                                                                                                                    <span class="pp">|</span></span>
-<span id="cb12-122"><a href="#cb12-122" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|</span></span>
-<span id="cb12-123"><a href="#cb12-123" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> squared           <span class="pp">|</span> bool                 <span class="pp">|</span> If True, the squared exponential Wasserstein distance is used. Note that the squared exponential Wasserstein distance kernel is not positive definite for all lengthscales. For this reason, as default the absolute exponential Wasserstein distance is used. <span class="pp">|</span></span>
-<span id="cb12-124"><a href="#cb12-124" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> lengthscale_prior <span class="pp">|</span> Optional<span class="sc">\[</span>AnyPrior<span class="sc">\]</span> <span class="pp">|</span> Prior for the lengthscale of the kernel.                                                                                                                                                                                                                       <span class="pp">|</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb12-119"><a href="#cb12-119" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb12-120"><a href="#cb12-120" aria-hidden="true" tabindex="-1"></a>k(\mathbf x, \mathbf x') = (\mathbf x^{\top} \mathbf x' + c)^{p}</span>
+<span id="cb12-121"><a href="#cb12-121" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb12-122"><a href="#cb12-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-123"><a href="#cb12-123" aria-hidden="true" tabindex="-1"></a><span class="fu">### HammingDistanceKernel { #bofire.data_models.kernels.api.HammingDistanceKernel }</span></span>
+<span id="cb12-124"><a href="#cb12-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-125"><a href="#cb12-125" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb12-126"><a href="#cb12-126" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.HammingDistanceKernel()</span>
+<span id="cb12-127"><a href="#cb12-127" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-128"><a href="#cb12-128" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-129"><a href="#cb12-129" aria-hidden="true" tabindex="-1"></a>Kernel over categorical inputs, based on the Hamming distance.</span>
+<span id="cb12-130"><a href="#cb12-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-131"><a href="#cb12-131" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb12-132"><a href="#cb12-132" aria-hidden="true" tabindex="-1"></a>k(\mathbf x, \mathbf x') = \exp\left(-\frac{d(\mathbf x, \mathbf x')}{\ell}\right)</span>
+<span id="cb12-133"><a href="#cb12-133" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb12-134"><a href="#cb12-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-135"><a href="#cb12-135" aria-hidden="true" tabindex="-1"></a>where $d$ is zero where two inputs hold the same category and one where they differ,</span>
+<span id="cb12-136"><a href="#cb12-136" aria-hidden="true" tabindex="-1"></a>averaged over the categorical dimensions. With <span class="in">`ard`</span> there is one lengthscale per</span>
+<span id="cb12-137"><a href="#cb12-137" aria-hidden="true" tabindex="-1"></a>categorical feature, so a change of category can matter more in some features than</span>
+<span id="cb12-138"><a href="#cb12-138" aria-hidden="true" tabindex="-1"></a>in others. The kernel is not differentiable with respect to its inputs.</span>
+<span id="cb12-139"><a href="#cb12-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-140"><a href="#cb12-140" aria-hidden="true" tabindex="-1"></a><span class="fu">### TanimotoKernel { #bofire.data_models.kernels.api.TanimotoKernel }</span></span>
+<span id="cb12-141"><a href="#cb12-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-142"><a href="#cb12-142" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb12-143"><a href="#cb12-143" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.TanimotoKernel()</span>
+<span id="cb12-144"><a href="#cb12-144" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-145"><a href="#cb12-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-146"><a href="#cb12-146" aria-hidden="true" tabindex="-1"></a>Kernel over molecular fingerprints, based on the Tanimoto similarity.</span>
+<span id="cb12-147"><a href="#cb12-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-148"><a href="#cb12-148" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb12-149"><a href="#cb12-149" aria-hidden="true" tabindex="-1"></a>k(\mathbf x, \mathbf x') = \frac{\mathbf x^{\top}\mathbf x'}</span>
+<span id="cb12-150"><a href="#cb12-150" aria-hidden="true" tabindex="-1"></a>    {\lVert \mathbf x \rVert^2 + \lVert \mathbf x' \rVert^2</span>
+<span id="cb12-151"><a href="#cb12-151" aria-hidden="true" tabindex="-1"></a><span class="ss">     - </span>\mathbf x^{\top}\mathbf x'}</span>
+<span id="cb12-152"><a href="#cb12-152" aria-hidden="true" tabindex="-1"></a>$$</span>
+<span id="cb12-153"><a href="#cb12-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-154"><a href="#cb12-154" aria-hidden="true" tabindex="-1"></a>Normalizing the shared bits by the bits present in either input is what makes this</span>
+<span id="cb12-155"><a href="#cb12-155" aria-hidden="true" tabindex="-1"></a>the standard similarity for the sparse binary vectors a fingerprint produces.</span>
+<span id="cb12-156"><a href="#cb12-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-157"><a href="#cb12-157" aria-hidden="true" tabindex="-1"></a><span class="fu">### WassersteinKernel { #bofire.data_models.kernels.api.WassersteinKernel }</span></span>
+<span id="cb12-158"><a href="#cb12-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-159"><a href="#cb12-159" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb12-160"><a href="#cb12-160" aria-hidden="true" tabindex="-1"></a>data_models.kernels.api.WassersteinKernel()</span>
+<span id="cb12-161"><a href="#cb12-161" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-162"><a href="#cb12-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-163"><a href="#cb12-163" aria-hidden="true" tabindex="-1"></a>Kernel based on the Wasserstein distance.</span>
+<span id="cb12-164"><a href="#cb12-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-165"><a href="#cb12-165" aria-hidden="true" tabindex="-1"></a>It only works for 1D data that is monotonically increasing, as it is just</span>
+<span id="cb12-166"><a href="#cb12-166" aria-hidden="true" tabindex="-1"></a>calculating the integral of the absolute difference between two shapes.</span>
+<span id="cb12-167"><a href="#cb12-167" aria-hidden="true" tabindex="-1"></a>Only when both shapes are monotonically increasing, this integral is also</span>
+<span id="cb12-168"><a href="#cb12-168" aria-hidden="true" tabindex="-1"></a>a Wasserstein distance (https://arxiv.org/abs/2002.01878).</span>
+<span id="cb12-169"><a href="#cb12-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-170"><a href="#cb12-170" aria-hidden="true" tabindex="-1"></a>The shape are assumed to be discretized as a set of points. Make sure that</span>
+<span id="cb12-171"><a href="#cb12-171" aria-hidden="true" tabindex="-1"></a>the discretization is fine enough to capture the shape of the data.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
