@@ -11,16 +11,35 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
-from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
+from bofire.data_models.surrogates.trainable_botorch import (
+    NOISE_CONSTRAINT_DESCRIPTION,
+    NOISE_PRIOR_DESCRIPTION,
+    TrainableBotorchSurrogate,
+)
 
 
 class LinearSurrogate(TrainableBotorchSurrogate):
+    """Gaussian process restricted to linear responses.
+
+    Still predicts an uncertainty, so it can be used in a Bayesian optimization loop,
+    but it cannot represent curvature. Pick it when the response is known to be linear,
+    or when there are too few experiments to support anything richer.
+    """
+
     type: Literal["LinearSurrogate"] = "LinearSurrogate"
 
-    kernel: LinearKernel = Field(default_factory=lambda: LinearKernel())
-    noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
+    kernel: LinearKernel = Field(
+        default_factory=lambda: LinearKernel(),
+        description="Covariance function. Fixed to the linear kernel, which is what "
+        "restricts the response to a linear one.",
+    )
+    noise_prior: AnyPrior = Field(
+        default_factory=lambda: THREESIX_NOISE_PRIOR(),
+        description=NOISE_PRIOR_DESCRIPTION,
+    )
     noise_constraint: Optional[AnyPriorConstraint] = Field(
         default_factory=lambda: GreaterThan(lower_bound=1e-4),
+        description=NOISE_CONSTRAINT_DESCRIPTION,
     )
 
     @classmethod

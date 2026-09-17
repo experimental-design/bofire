@@ -1,11 +1,29 @@
 from typing import Literal, Optional
 
+from pydantic import Field
+
 from bofire.data_models.kernels.api import InfiniteWidthBNNKernel
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.trainable import Hyperconfig
 
 
 class SingleTaskIBNNSurrogate(SingleTaskGPSurrogate):
+    """Gaussian process that behaves like a Bayesian neural network of infinite width.
+
+    Unlike the stationary kernels, it does not assume one notion of "close" holds
+    everywhere, so it suits a response that is flat over part of the space and sharp
+    over another.
+    """
+
     type: Literal["SingleTaskIBNNSurrogate"] = "SingleTaskIBNNSurrogate"
-    kernel: InfiniteWidthBNNKernel = InfiniteWidthBNNKernel()
-    hyperconfig: Optional[Hyperconfig] = None
+    kernel: InfiniteWidthBNNKernel = Field(
+        default=InfiniteWidthBNNKernel(),
+        description="Covariance function. Only the depth of the equivalent network is "
+        "configurable; there is no lengthscale to set.",
+    )
+    hyperconfig: Optional[Hyperconfig] = Field(
+        default=None,
+        description="Search over this surrogate's own hyperparameters, run before "
+        "fitting. There is no default search, since the hyperparameters the GP search "
+        "varies do not apply to this kernel.",
+    )
