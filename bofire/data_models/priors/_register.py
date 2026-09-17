@@ -33,12 +33,10 @@ def _rebuild_dependent_models() -> None:
         WassersteinKernel,
     )
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
-    from bofire.data_models.surrogates.linear import LinearSurrogate
     from bofire.data_models.surrogates.mixed_single_task_gp import (
         MixedSingleTaskGPSurrogate,
     )
     from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
-    from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
     from bofire.data_models.surrogates.robust_single_task_gp import (
         RobustSingleTaskGPSurrogate,
     )
@@ -74,8 +72,6 @@ def _rebuild_dependent_models() -> None:
         (MultiTaskGPSurrogate, "noise_prior"),
         (MixedSingleTaskGPSurrogate, "noise_prior"),
         (TanimotoGPSurrogate, "noise_prior"),
-        (PolynomialSurrogate, "noise_prior"),
-        (LinearSurrogate, "noise_prior"),
         (RobustSingleTaskGPSurrogate, "noise_prior"),
     ]:
         patch_field(model_cls, field_name, AnyPrior)
@@ -94,8 +90,6 @@ def _rebuild_dependent_models() -> None:
         (MultiTaskGPSurrogate, "noise_constraint"),
         (MixedSingleTaskGPSurrogate, "noise_constraint"),
         (TanimotoGPSurrogate, "noise_constraint"),
-        (PolynomialSurrogate, "noise_constraint"),
-        (LinearSurrogate, "noise_constraint"),
         (RobustSingleTaskGPSurrogate, "noise_constraint"),
         (SingleTaskGPHyperconfig, "lengthscale_constraint"),
         (SingleTaskGPHyperconfig, "outputscale_constraint"),
@@ -137,8 +131,6 @@ def _rebuild_dependent_models() -> None:
         MultiTaskGPSurrogate,
         MixedSingleTaskGPSurrogate,
         TanimotoGPSurrogate,
-        PolynomialSurrogate,
-        LinearSurrogate,
         RobustSingleTaskGPSurrogate,
     ]:
         cls.model_rebuild(force=True)

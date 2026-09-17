@@ -1,30 +1,28 @@
 from typing import Literal, Type
 
-from pydantic import PositiveInt, field_validator
+from pydantic import Field, PositiveInt, field_validator
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class TestSurrogate:
-    pass
-
-
 class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
-    """Additive MAP SAAS single-task GP
+    """Maximum-a-posteriori approximation of the fully Bayesian SAAS model.
 
-    Maximum-a-posteriori (MAP) version of the sparse axis-aligned subspace
-    `FullyBayesianSingleTaskGPSurrogate` with `model_type` equals to "saas".
-
-    Attributes:
-        n_taus (PositiveInt): Number of sub-kernels to use in the SAAS model.
+    Pick it for many inputs and few experiments, where only a handful of inputs are
+    expected to drive the response, and the sampling that
+    `FullyBayesianSingleTaskGPSurrogate` with `model_type="saas"` does is too expensive.
     """
 
     type: Literal["AdditiveMapSaasSingleTaskGPSurrogate"] = (
         "AdditiveMapSaasSingleTaskGPSurrogate"
     )
-    n_taus: PositiveInt = 4
+    n_taus: PositiveInt = Field(
+        default=4,
+        description="Number of sparse Matern kernels that are summed up, each at its "
+        "own sparsity level.",
+    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
@@ -38,20 +36,26 @@ class AdditiveMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
 
 
 class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
-    """Ensemble MAP SAAS single-task GP
+    """Maximum-a-posteriori approximation of the fully Bayesian SAAS model.
 
-    Batched ensemble of ``SingleTaskGP``s with the Matern-5/2 kernel and a SAAS prior.
-
-    Attributes:
-        n_taus (PositiveInt): Number of sub-kernels to use in the SAAS model.
-        output_scaler (ScalerEnum): Scaler for the output transformation.
+    Approximates the same model as `AdditiveMapSaasSingleTaskGPSurrogate` by a different
+    mechanism -- the sparsity levels are kept as separate models and their predictions
+    mixed, rather than summed into one kernel. This is the preferred of the two.
     """
 
     type: Literal["EnsembleMapSaasSingleTaskGPSurrogate"] = (
         "EnsembleMapSaasSingleTaskGPSurrogate"
     )
-    n_taus: PositiveInt = 4
-    output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
+    n_taus: PositiveInt = Field(
+        default=4,
+        description="Number of sparse Matern kernels in the ensemble, each at its own "
+        "sparsity level.",
+    )
+    output_scaler: ScalerEnum = Field(
+        default=ScalerEnum.STANDARDIZE,
+        description="How the outputs are rescaled before fitting. The log-based "
+        "scalers are not supported here.",
+    )
 
     @field_validator("output_scaler")
     @classmethod

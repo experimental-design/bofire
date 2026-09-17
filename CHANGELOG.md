@@ -18,6 +18,15 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - The non-log acquisition functions `qEI`, `qNEI`, `qEHVI` and `qNEHVI` now emit a `DeprecationWarning` on construction and will be removed in a future release. Use `qLogEI`, `qLogNEI`, `qLogEHVI` and `qLogNEHVI` instead: they optimize the same quantity in log space, which keeps a usable gradient where the plain formulations underflow to zero.
 
 ### Changed
+- **Breaking**: `LinearSurrogate` and `PolynomialSurrogate` are **functions**, not data models, and `SingleTaskIBNNSurrogate` is **removed**. All three only narrowed `SingleTaskGPSurrogate`'s kernel and mapped to its functional class, so they bought a serialization type each for nothing. Construction is unchanged — `LinearSurrogate(inputs=..., outputs=...)` still works and now returns a `SingleTaskGPSurrogate` — but they are gone from `AnySurrogate`, so serialized surrogates carrying `{"type": "LinearSurrogate"}`, `"PolynomialSurrogate"` or `"SingleTaskIBNNSurrogate"` no longer load. Migrate as follows:
+
+  | removed | replacement |
+  |---|---|
+  | `PolynomialSurrogate.from_power(power=p, inputs=i, outputs=o)` | `PolynomialSurrogate(inputs=i, outputs=o, power=p)` |
+  | `SingleTaskIBNNSurrogate(inputs=i, outputs=o)` | `SingleTaskGPSurrogate(inputs=i, outputs=o, kernel=InfiniteWidthBNNKernel(), hyperconfig=None)` |
+
+  Both functions take any other `SingleTaskGPSurrogate` field as a keyword argument, and default `hyperconfig` to `None` because the single-task GP search varies over RBF and Matern and would discard the kernel the preset exists to set.
+- `PairwiseGPSurrogate` inherits from the new `InputScaledBotorchSurrogate`, which carries `scaler` for the surrogates that rescale their inputs but have no output values to rescale. `TrainableBotorchSurrogate` now adds `output_scaler` on top of it, so no other surrogate changes. `PairwiseGPSurrogate` gains the validation that `scaler.features` name features that exist, which it silently skipped before.
 - **Breaking**: the outlier-detection layer is **removed**, with no compatibility shim. Gone are the packages `bofire.outlier_detection` and `bofire.data_models.outlier_detection` (`OutlierDetection`, `IterativeTrimming`, `OutlierDetections`) and the `outlier_detection_specs`, `min_experiments_before_outlier_check` and `frequency_check` fields on `BotorchStrategy` — serialized strategies carrying those fields no longer load. Use `RobustSingleTaskGPSurrogate`, which learns a data-point specific noise level and so handles outliers inside the BO loop instead of trimming them in a pre-fit pass.
 - **Breaking**: descriptor data now lives on the feature and the encoding choice on the surrogate. The classes and the enum that fused those two concerns are **removed**, with no compatibility shim — old serialized domains containing them no longer load. Migrate as follows (note that `values` was row-per-category while `columns` is column-wise, so the table is transposed):
 
@@ -43,6 +52,8 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - **Breaking**: `CategoricalTaskInput` and `ContinuousTaskInput` declare `descriptors: None`, so they now serialize a `"descriptors": null` key and reject descriptor data at the type level — a task input is an index, not a described entity.
 - **Breaking**: `LinearDeterministicSurrogate` rejects engineered features with `filter_descriptors=True`. A linear model binds one coefficient per column, so the width must follow from the configuration rather than the data.
 - LLM field descriptions report descriptor data uniformly for every feature type: a prefix stating what the feature is and its range or options, then the data — `Categorical, allowed: [...] — descriptors per category: {...} — structure: [...]`, `Continuous, bounds [...] — descriptors: {...} — structure: CCO`. Previously the kind was announced in the prefix (`Categorical with descriptors`, `Continuous molecular (SMILES: CCO)`) and only the two descriptor-carrying classes emitted anything.
+
+- The default values of `BotorchSurrogate.categorical_encodings` and `engineered_features`, and of `MultiTaskGPSurrogate.task_prior`, appear in `model_json_schema()`. They were declared with `default_factory`, which pydantic omits from the schema, so a caller reading the schema could not see what they default to.
 
 ### Fixed
 - `InfiniteWidthBNNKernel.features` is validated like every other kernel's. It redeclared the field as a plain list of strings, which silently dropped the uniqueness check the shared type carries, so a kernel could name the same feature twice.

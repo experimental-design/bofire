@@ -5,9 +5,34 @@ from bofire.data_models.surrogates.scaler import AnyScaler, Normalize, ScalerEnu
 from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 
-class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
-    scaler: AnyScaler = Field(default_factory=Normalize)
-    output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
+# reused by the GP surrogates, which must redeclare these fields because their defaults
+# differ and pydantic cannot override a default without redeclaring
+NOISE_PRIOR_DESCRIPTION = (
+    "Prior over the observation noise, which sets how much of the spread in the data "
+    "the model attributes to measurement error rather than to the response."
+)
+NOISE_CONSTRAINT_DESCRIPTION = (
+    "Bounds the observation noise is restricted to during fitting. A positive lower "
+    "bound keeps the fit numerically stable."
+)
+HYPERCONFIG_DESCRIPTION = (
+    "Configuration of a hyperparameter optimization for this surrogate. Carrying it "
+    "does not run anything; without it, no hyperparameter optimization is possible."
+)
+
+
+class InputScaledBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
+    """BoTorch based surrogate fitted to the experiments, rescaling its inputs.
+
+    Fitting is often scale-sensitive, so the inputs are rescaled by default before the
+    fit.
+    """
+
+    scaler: AnyScaler = Field(
+        default_factory=Normalize,
+        description="How the inputs are rescaled before fitting. Set to null to leave "
+        "them as they are.",
+    )
 
     @model_validator(mode="after")
     def validate_scaler_features(self):
@@ -19,3 +44,17 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
                     f"The following features are missing in inputs: {missing_features}"
                 )
         return self
+
+
+class TrainableBotorchSurrogate(InputScaledBotorchSurrogate):
+    """BoTorch based surrogate fitted to the experiments, rescaling both sides.
+
+    Fitting is often scale-sensitive, so the output is rescaled alongside the inputs,
+    and the output scaling is undone when predicting.
+    """
+
+    output_scaler: ScalerEnum = Field(
+        default=ScalerEnum.STANDARDIZE,
+        description="How the outputs are rescaled before fitting, and undone when "
+        "predicting.",
+    )

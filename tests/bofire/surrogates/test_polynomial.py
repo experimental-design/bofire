@@ -6,7 +6,11 @@ from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.kernels.api import PolynomialKernel
 from bofire.data_models.priors.api import GreaterThan
-from bofire.data_models.surrogates.api import BotorchSurrogates, PolynomialSurrogate
+from bofire.data_models.surrogates.api import (
+    BotorchSurrogates,
+    PolynomialSurrogate,
+    SingleTaskGPSurrogate,
+)
 
 
 def test_polynomial_surrogate():
@@ -29,10 +33,10 @@ def test_polynomial_surrogate():
     )
     experiments["valid_c"] = 1
 
-    surrogate_data = PolynomialSurrogate.from_power(
-        power=2,
+    surrogate_data = PolynomialSurrogate(
         inputs=inputs,
         outputs=outputs,
+        power=2,
     )
     surrogate_data.noise_constraint = GreaterThan(lower_bound=5e-4)
     surrogate = surrogates.map(surrogate_data)
@@ -76,3 +80,17 @@ def test_can_define_botorch_surrogate():
             ],
         ),
     )
+
+
+def test_polynomial_surrogate_is_a_single_task_gp():
+    """The preset is a function, so what it returns serializes as a plain GP."""
+    inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
+    outputs = Outputs(features=[ContinuousOutput(key="c")])
+
+    surrogate_data = PolynomialSurrogate(inputs=inputs, outputs=outputs, power=3)
+
+    assert isinstance(surrogate_data, SingleTaskGPSurrogate)
+    assert surrogate_data.type == "SingleTaskGPSurrogate"
+    assert surrogate_data.kernel == PolynomialKernel(power=3)
+    # the single-task GP search would replace the polynomial kernel
+    assert surrogate_data.hyperconfig is None

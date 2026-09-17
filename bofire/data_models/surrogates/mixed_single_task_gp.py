@@ -5,7 +5,6 @@ from pydantic import Field, model_validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.encodings.api import OrdinalEncoding
-from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
@@ -32,26 +31,47 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
-from bofire.data_models.surrogates.trainable import Hyperconfig
-from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
+from bofire.data_models.surrogates.trainable import (
+    HYPERCONFIG_INPUTS_DESCRIPTION,
+    HYPERSTRATEGY_DESCRIPTION,
+    Hyperconfig,
+)
+from bofire.data_models.surrogates.trainable_botorch import (
+    HYPERCONFIG_DESCRIPTION,
+    NOISE_CONSTRAINT_DESCRIPTION,
+    NOISE_PRIOR_DESCRIPTION,
+    TrainableBotorchSurrogate,
+)
 
 
 class MixedSingleTaskGPHyperconfig(Hyperconfig):
+    """Hyperparameter optimization config for a mixed GP.
+
+    Optimizes over the continuous kernel, the prior family and whether the lengthscale
+    is per-input.
+    """
+
     type: Literal["MixedSingleTaskGPHyperconfig"] = "MixedSingleTaskGPHyperconfig"
-    inputs: Inputs = Inputs(
-        features=[
-            CategoricalInput(
-                key="continuous_kernel",
-                categories=["rbf", "matern_1.5", "matern_2.5"],
-            ),
-            CategoricalInput(key="prior", categories=["mbo", "threesix", "hvarfner"]),
-            CategoricalInput(key="ard", categories=["True", "False"]),
-        ],
+    inputs: Inputs = Field(
+        default=Inputs(
+            features=[
+                CategoricalInput(
+                    key="continuous_kernel",
+                    categories=["rbf", "matern_1.5", "matern_2.5"],
+                ),
+                CategoricalInput(
+                    key="prior", categories=["mbo", "threesix", "hvarfner"]
+                ),
+                CategoricalInput(key="ard", categories=["True", "False"]),
+            ],
+        ),
+        description=HYPERCONFIG_INPUTS_DESCRIPTION,
     )
-    target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
     hyperstrategy: Literal[
         "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
-    ] = "FractionalFactorialStrategy"
+    ] = Field(
+        default="FractionalFactorialStrategy", description=HYPERSTRATEGY_DESCRIPTION
+    )
 
     @staticmethod
     def _update_hyperparameters(
@@ -102,25 +122,44 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
 
 
 class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
+    """Gaussian process over a mix of continuous and categorical inputs.
+
+    The covariance is `s1 * (k_cont + s2 * k_cat) + s3 * (k_cont * k_cat)`, with `s1` to
+    `s3` fitted output scales, so the model can express both an effect common to every
+    category and one that differs between them. With no continuous inputs it reduces to
+    `s1 * k_cat`. Requires at least one ordinal-encoded categorical input.
+    """
+
     type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
     continuous_kernel: AnyContinuousKernel = Field(
         default_factory=lambda: RBFKernel(
             ard=True,
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
             lengthscale_constraint=GreaterThan(lower_bound=2.500e-02),
-        )
+        ),
+        description="The module computing the covariance matrix over the continuous "
+        "inputs. When its `features` are left empty, they are set to the inputs that "
+        "are not ordinal-encoded categoricals.",
     )
     categorical_kernel: AnyCategoricalKernel = Field(
         default_factory=lambda: HammingDistanceKernel(
             ard=True, lengthscale_constraint=GreaterThan(lower_bound=1.000e-06)
         ),
+        description="The module computing the covariance matrix over the categorical "
+        "inputs. When its `features` are left empty, they are set to the "
+        "ordinal-encoded categoricals.",
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(
+        default_factory=lambda: HVARFNER_NOISE_PRIOR(),
+        description=NOISE_PRIOR_DESCRIPTION,
+    )
     noise_constraint: Optional[AnyPriorConstraint] = Field(
         default_factory=lambda: GreaterThan(lower_bound=1e-4),
+        description=NOISE_CONSTRAINT_DESCRIPTION,
     )
     hyperconfig: Optional[MixedSingleTaskGPHyperconfig] = Field(
         default_factory=lambda: MixedSingleTaskGPHyperconfig(),
+        description=HYPERCONFIG_DESCRIPTION,
     )
 
     @classmethod
