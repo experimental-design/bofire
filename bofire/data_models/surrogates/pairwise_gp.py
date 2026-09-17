@@ -10,12 +10,11 @@ from bofire.data_models.priors.api import (
     PAIRWISEGP_OUTPUTSCALE_CONSTRAINT,
     PAIRWISEGP_OUTPUTSCALE_PRIOR,
 )
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
-from bofire.data_models.surrogates.scaler import AnyScaler, Normalize
-from bofire.data_models.surrogates.trainable import TrainableSurrogate
+from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION
+from bofire.data_models.surrogates.trainable_botorch import InputScaledBotorchSurrogate
 
 
-class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+class PairwiseGPSurrogate(InputScaledBotorchSurrogate):
     """Gaussian process fitted to pairwise preferences rather than measured values.
 
     Use it when the response can only be judged by comparison — which of two samples
@@ -36,13 +35,8 @@ class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             outputscale_prior=PAIRWISEGP_OUTPUTSCALE_PRIOR(),
             outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
         ),
-        description="Covariance function of the latent utility, encoding how similar "
-        "two candidates' preferences are expected to be.",
-    )
-    scaler: AnyScaler = Field(
-        default_factory=Normalize,
-        description="How the inputs are rescaled before fitting. Set to null to leave "
-        "them as they are.",
+        description=KERNEL_DESCRIPTION
+        + " Here the inputs are the compared candidates.",
     )
     likelihood: Literal["probit", "logit"] = Field(
         default="probit",

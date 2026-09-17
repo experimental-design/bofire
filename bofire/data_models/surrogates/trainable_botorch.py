@@ -21,22 +21,17 @@ HYPERCONFIG_DESCRIPTION = (
 )
 
 
-class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
-    """BoTorch based surrogate fitted to the experiments.
+class InputScaledBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
+    """BoTorch based surrogate fitted to the experiments, rescaling its inputs.
 
-    Fitting is often scale-sensitive, so the inputs and the output are rescaled by
-    default before the fit, and the output scaling is undone when predicting.
+    Fitting is often scale-sensitive, so the inputs are rescaled by default before the
+    fit.
     """
 
     scaler: AnyScaler = Field(
         default_factory=Normalize,
         description="How the inputs are rescaled before fitting. Set to null to leave "
         "them as they are.",
-    )
-    output_scaler: ScalerEnum = Field(
-        default=ScalerEnum.STANDARDIZE,
-        description="How the outputs are rescaled before fitting, and undone when "
-        "predicting.",
     )
 
     @model_validator(mode="after")
@@ -49,3 +44,17 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
                     f"The following features are missing in inputs: {missing_features}"
                 )
         return self
+
+
+class TrainableBotorchSurrogate(InputScaledBotorchSurrogate):
+    """BoTorch based surrogate fitted to the experiments, rescaling both sides.
+
+    Fitting is often scale-sensitive, so the output is rescaled alongside the inputs,
+    and the output scaling is undone when predicting.
+    """
+
+    output_scaler: ScalerEnum = Field(
+        default=ScalerEnum.STANDARDIZE,
+        description="How the outputs are rescaled before fitting, and undone when "
+        "predicting.",
+    )

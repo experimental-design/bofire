@@ -6,7 +6,11 @@ from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.kernels.api import LinearKernel
 from bofire.data_models.priors.api import GreaterThan
-from bofire.data_models.surrogates.api import BotorchSurrogates, LinearSurrogate
+from bofire.data_models.surrogates.api import (
+    BotorchSurrogates,
+    LinearSurrogate,
+    SingleTaskGPSurrogate,
+)
 
 
 def test_LinearSurrogate():
@@ -69,3 +73,17 @@ def test_can_define_botorch_surrogate():
             ],
         ),
     )
+
+
+def test_linear_surrogate_is_a_single_task_gp():
+    """The preset is a function, so what it returns serializes as a plain GP."""
+    inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
+    outputs = Outputs(features=[ContinuousOutput(key="c")])
+
+    surrogate_data = LinearSurrogate(inputs=inputs, outputs=outputs)
+
+    assert isinstance(surrogate_data, SingleTaskGPSurrogate)
+    assert surrogate_data.type == "SingleTaskGPSurrogate"
+    assert surrogate_data.kernel == LinearKernel()
+    # the single-task GP search would replace the linear kernel
+    assert surrogate_data.hyperconfig is None

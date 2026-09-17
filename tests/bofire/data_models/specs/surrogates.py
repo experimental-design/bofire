@@ -20,7 +20,6 @@ from bofire.data_models.features.api import (
 from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
-    InfiniteWidthBNNKernel,
     MaternKernel,
     RBFKernel,
     ScaleKernel,
@@ -213,32 +212,6 @@ specs.add_invalid(
     message="The following features are missing in inputs",
 )
 
-
-specs.add_valid(
-    models.SingleTaskIBNNSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                ContinuousInput(key="a", bounds=(0, 1)),
-                ContinuousInput(key="b", bounds=(0, 1)),
-            ],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "scaler": Normalize().model_dump(),
-        "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "hyperconfig": None,
-        "categorical_encodings": {},
-        "engineered_features": EngineeredFeatures().model_dump(),
-        "dump": None,
-        "kernel": InfiniteWidthBNNKernel(depth=3).model_dump(),
-    },
-)
 
 specs.add_valid(
     models.AdditiveMapSaasSingleTaskGPSurrogate,

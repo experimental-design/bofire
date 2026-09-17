@@ -18,6 +18,15 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - The non-log acquisition functions `qEI`, `qNEI`, `qEHVI` and `qNEHVI` now emit a `DeprecationWarning` on construction and will be removed in a future release. Use `qLogEI`, `qLogNEI`, `qLogEHVI` and `qLogNEHVI` instead: they optimize the same quantity in log space, which keeps a usable gradient where the plain formulations underflow to zero.
 
 ### Changed
+- **Breaking**: `LinearSurrogate` and `PolynomialSurrogate` are **functions**, not data models, and `SingleTaskIBNNSurrogate` is **removed**. All three only narrowed `SingleTaskGPSurrogate`'s kernel and mapped to its functional class, so they bought a serialization type each for nothing. Construction is unchanged — `LinearSurrogate(inputs=..., outputs=...)` still works and now returns a `SingleTaskGPSurrogate` — but they are gone from `AnySurrogate`, so serialized surrogates carrying `{"type": "LinearSurrogate"}`, `"PolynomialSurrogate"` or `"SingleTaskIBNNSurrogate"` no longer load. Migrate as follows:
+
+  | removed | replacement |
+  |---|---|
+  | `PolynomialSurrogate.from_power(power=p, inputs=i, outputs=o)` | `PolynomialSurrogate(inputs=i, outputs=o, power=p)` |
+  | `SingleTaskIBNNSurrogate(inputs=i, outputs=o)` | `SingleTaskGPSurrogate(inputs=i, outputs=o, kernel=InfiniteWidthBNNKernel(), hyperconfig=None)` |
+
+  Both functions take any other `SingleTaskGPSurrogate` field as a keyword argument, and default `hyperconfig` to `None` because the single-task GP search varies over RBF and Matern and would discard the kernel the preset exists to set.
+- `PairwiseGPSurrogate` inherits from the new `InputScaledBotorchSurrogate`, which carries `scaler` for the surrogates that rescale their inputs but have no output values to rescale. `TrainableBotorchSurrogate` now adds `output_scaler` on top of it, so no other surrogate changes. `PairwiseGPSurrogate` gains the validation that `scaler.features` name features that exist, which it silently skipped before.
 - **Breaking**: the outlier-detection layer is **removed**, with no compatibility shim. Gone are the packages `bofire.outlier_detection` and `bofire.data_models.outlier_detection` (`OutlierDetection`, `IterativeTrimming`, `OutlierDetections`) and the `outlier_detection_specs`, `min_experiments_before_outlier_check` and `frequency_check` fields on `BotorchStrategy` — serialized strategies carrying those fields no longer load. Use `RobustSingleTaskGPSurrogate`, which learns a data-point specific noise level and so handles outliers inside the BO loop instead of trimming them in a pre-fit pass.
 - **Breaking**: descriptor data now lives on the feature and the encoding choice on the surrogate. The classes and the enum that fused those two concerns are **removed**, with no compatibility shim — old serialized domains containing them no longer load. Migrate as follows (note that `values` was row-per-category while `columns` is column-wise, so the table is transposed):
 

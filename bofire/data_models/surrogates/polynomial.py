@@ -1,78 +1,44 @@
-from typing import Literal, Optional, Type
-
-from pydantic import Field
-
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import PolynomialKernel
-from bofire.data_models.priors.api import (
-    THREESIX_NOISE_PRIOR,
-    AnyPrior,
-    AnyPriorConstraint,
-    GreaterThan,
-)
-from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION
-from bofire.data_models.surrogates.trainable_botorch import (
-    NOISE_CONSTRAINT_DESCRIPTION,
-    NOISE_PRIOR_DESCRIPTION,
-    TrainableBotorchSurrogate,
-)
+from bofire.data_models.priors.api import THREESIX_NOISE_PRIOR, GreaterThan
+from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 
 
-class PolynomialSurrogate(TrainableBotorchSurrogate):
-    """Gaussian process restricted to polynomial responses of a fixed degree.
+def PolynomialSurrogate(
+    inputs: Inputs,
+    outputs: Outputs,
+    power: int = 2,
+    **kwargs,
+) -> SingleTaskGPSurrogate:
+    """Build a single-task GP restricted to polynomial responses of a fixed degree.
 
-    Expresses curvature and interactions between inputs, but only up to that degree, so
-    it stays interpretable where an RBF kernel would fit an arbitrary shape. Pick it
-    when a response surface of a known order is expected, as in a classical DoE.
+    The polynomial kernel expresses curvature and interactions between inputs, but only
+    up to `power`, so the fit stays interpretable where an RBF kernel would take an
+    arbitrary shape. Pick it when a response surface of a known order is expected, as in
+    a classical DoE.
+
+    Args:
+        inputs: Input features the surrogate acts on.
+        outputs: Output feature the surrogate predicts.
+        power: Degree of the polynomial response.
+        **kwargs: Any other field of `SingleTaskGPSurrogate`. `noise_prior`,
+            `noise_constraint` and `hyperconfig` default to values suited to a
+            polynomial kernel rather than to the ones the GP itself defaults to.
+
+    Returns:
+        A `SingleTaskGPSurrogate` with a `PolynomialKernel`.
 
     Examples:
-        >>> surrogate = PolynomialSurrogate(
-        ...     inputs=inputs, outputs=outputs, kernel=PolynomialKernel(power=3)
-        ... )
+        >>> surrogate = PolynomialSurrogate(inputs=inputs, outputs=outputs, power=3)
     """
-
-    type: Literal["PolynomialSurrogate"] = "PolynomialSurrogate"
-
-    kernel: PolynomialKernel = Field(
-        default_factory=lambda: PolynomialKernel(power=2),
-        description=KERNEL_DESCRIPTION
-        + " Fixed to the polynomial kernel, whose `power` sets the degree of the "
-        "response.",
+    kwargs.setdefault("noise_prior", THREESIX_NOISE_PRIOR())
+    kwargs.setdefault("noise_constraint", GreaterThan(lower_bound=1e-4))
+    # the single-task GP search varies over RBF and Matern, which would discard the
+    # polynomial kernel this preset exists to set
+    kwargs.setdefault("hyperconfig", None)
+    return SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=PolynomialKernel(power=power),
+        **kwargs,
     )
-    noise_prior: AnyPrior = Field(
-        default_factory=lambda: THREESIX_NOISE_PRIOR(),
-        description=NOISE_PRIOR_DESCRIPTION,
-    )
-    noise_constraint: Optional[AnyPriorConstraint] = Field(
-        default_factory=lambda: GreaterThan(lower_bound=1e-4),
-        description=NOISE_CONSTRAINT_DESCRIPTION,
-    )
-
-    @staticmethod
-    def from_power(power: int, inputs: Inputs, outputs: Outputs):
-        """Build a surrogate whose polynomial kernel has the given degree.
-
-        Args:
-            power: Degree of the polynomial response.
-            inputs: Input features the surrogate is fitted on.
-            outputs: Output feature the surrogate predicts.
-
-        Returns:
-            The configured surrogate.
-        """
-        return PolynomialSurrogate(
-            kernel=PolynomialKernel(power=power),
-            inputs=inputs,
-            outputs=outputs,
-        )
-
-    @classmethod
-    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
-        """Abstract method to check output type for surrogate models
-        Args:
-            my_type: continuous or categorical output
-        Returns:
-            bool: True if the output type is valid for the surrogate chosen, False otherwise
-        """
-        return isinstance(my_type, type(ContinuousOutput))
