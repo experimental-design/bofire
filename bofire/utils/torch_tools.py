@@ -46,6 +46,10 @@ tkwargs = {
 }
 
 
+def pandas2torch(df: pd.DataFrame) -> torch.Tensor:
+    return torch.from_numpy(np.ascontiguousarray(df.to_numpy())).to(**tkwargs)
+
+
 def get_torch_bounds_from_domain(
     domain: Domain,
     input_preprocessing_specs: InputTransformSpecs,
@@ -1029,15 +1033,8 @@ def create_supervised_dataset(
         filtered_experiments,
         input_preprocessing_specs,
     )
-    X = torch.from_numpy(
-        np.ascontiguousarray(transformed.to_numpy()),
-    ).to(**tkwargs)
-    # Todo: catch it for categoricals
-    Y = torch.from_numpy(
-        np.ascontiguousarray(
-            filtered_experiments[outputs.get_keys()].to_numpy(),
-        ),
-    ).to(**tkwargs)
+    X = pandas2torch(transformed)
+    Y = pandas2torch(filtered_experiments[outputs.get_keys()]) 
 
     return SupervisedDataset(
         X=X,
