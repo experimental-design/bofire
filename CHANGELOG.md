@@ -46,6 +46,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 
 ### Fixed
 - Fix crashes caused by reordered pandas columns in optimization calculations, model training, prediction, dataset utilities and benchmarks. Updated bofire/utils/multiobjective.py, bofire/strategies/predictives/mobo.py, bofire/surrogates/botorch.py, bofire/utils/torch_tools.py, bofire/benchmarks/benchmark.py, and bofire/benchmarks/single.py.
+- `InfiniteWidthBNNKernel.features` is validated like every other kernel's. It redeclared the field as a plain list of strings, which silently dropped the uniqueness check the shared type carries, so a kernel could name the same feature twice.
 - **Descriptor widths no longer depend on evaluation order.** `MolFeatures.get_descriptor_names()` returned the filtered list only once `remove_correlated_descriptors()` had run and mutated the model, so with `filter_descriptors` defaulting to `True` the width reported for an engineered feature could be the *unfiltered* count depending on call order. Widths are now derived on demand from the same block the matrix is built from.
 
 ## [0.5.0] - 2026-08-11 - BREAKING
