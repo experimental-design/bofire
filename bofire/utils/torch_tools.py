@@ -1035,7 +1035,7 @@ def create_supervised_dataset(
         input_preprocessing_specs,
     )
     X = pandas2torch(transformed)
-    Y = pandas2torch(filtered_experiments[outputs.get_keys()]) 
+    Y = pandas2torch(filtered_experiments[outputs.get_keys()])
 
     return SupervisedDataset(
         X=X,
