@@ -47,6 +47,7 @@ tkwargs = {
 
 
 def pandas2torch(df: pd.DataFrame) -> torch.Tensor:
+    """Convert a pandas DataFrame to a PyTorch tensor."""
     return torch.from_numpy(np.ascontiguousarray(df.to_numpy())).to(**tkwargs)
 
 
