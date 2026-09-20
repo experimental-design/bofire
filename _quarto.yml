@@ -243,6 +243,7 @@ website:
             - docs/tutorials/advanced_examples/random_forest_in_bofire.qmd
             - docs/tutorials/advanced_examples/transfer_learning_bo.qmd
             - docs/tutorials/advanced_examples/octane_number.qmd
+            - docs/tutorials/advanced_examples/conditional_features_bo.qmd
             - docs/tutorials/advanced_examples/llm_molecular.qmd
             - docs/tutorials/advanced_examples/pairwise_gp.qmd
         - section: "Benchmarks"
