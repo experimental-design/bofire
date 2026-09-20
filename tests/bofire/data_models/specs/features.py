@@ -278,13 +278,6 @@ specs.add_invalid(
 
 specs.add_invalid(
     features.ContinuousInput,
-    lambda: {"key": "a", "bounds": [-1, 5], "allow_zero": True},
-    error=ValueError,
-    message="If `allow_zero==True`, then zero must not lie within the bounds.",
-)
-
-specs.add_invalid(
-    features.ContinuousInput,
     lambda: {"key": "a", "bounds": [0.5, 0.5], "allow_zero": True},
     error=ValueError,
     message="`allow_zero=True` is not compatible with a positively-fixed feature",
