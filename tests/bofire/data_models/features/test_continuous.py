@@ -94,13 +94,11 @@ def test_continuous_input_feature_get_bounds_local():
 
 def test_continuous_input_is_semicontinuous():
     # allow_zero=True with strictly positive lb → semi-continuous
-    feat = ContinuousInput(key="x", bounds=(0.2, 1.0), allow_zero=True)
-    assert feat.is_semicontinuous
+    feat = ContinuousInput(key="x", bounds=(0.01, 1.0), allow_zero=True)
+    assert feat.allow_zero is True
+    assert feat.is_semicontinuous is True
 
     # allow_zero=False → not semi-continuous regardless of bounds.
-    # (allow_zero=True with lb=0 is forbidden by the pydantic validator,
-    # so the only "not semi-continuous" case for a non-degenerate
-    # feature is allow_zero=False.)
     feat = ContinuousInput(key="x", bounds=(0.0, 1.0), allow_zero=False)
     assert not feat.is_semicontinuous
     feat = ContinuousInput(key="x", bounds=(0.2, 1.0), allow_zero=False)
@@ -461,3 +459,33 @@ def test_continuous_with_structure_to_pydantic_field_with_descriptors():
     assert field_info.description == (
         "Continuous, bounds [0.0, 1.0] — descriptors: {'logP': -0.3} — structure: CCO"
     )
+
+
+@pytest.mark.parametrize("bounds", [(0.0, 1.0), (-1.0, 0.0), (-1.0, 1.0), (0.0, 0.0)])
+def test_continuous_input_allow_zero_within_bounds(bounds):
+    feature = ContinuousInput(key="x", bounds=bounds, allow_zero=True)
+    ordinary = ContinuousInput(key="x", bounds=bounds)
+    assert feature.allow_zero
+    assert not feature.is_semicontinuous
+    assert feature.get_bounds(relax_allow_zero=True) == ordinary.get_bounds()
+    values = pd.Series([bounds[0], 0.0, bounds[1]])
+    assert_series_equal(feature.validate_candidental(values), values)
+    outside = pd.Series([bounds[0] - 0.1, bounds[1] + 0.1])
+    assert not feature.is_fulfilled(outside).any()
+    for value in outside:
+        with pytest.raises(ValueError):
+            feature.validate_candidental(pd.Series([value]))
+    assert_series_equal(feature.sample(20, seed=42), ordinary.sample(20, seed=42))
+
+
+@pytest.mark.parametrize("bounds, gap", [((0.01, 1.0), 0.005), ((-1.0, -0.01), -0.005)])
+def test_continuous_input_allow_zero_outside_bounds(bounds, gap):
+    feature = ContinuousInput(key="x", bounds=bounds, allow_zero=True)
+    values = pd.Series([0.0, bounds[0], bounds[1]])
+    assert_series_equal(feature.validate_candidental(values), values)
+    assert feature.is_fulfilled(values).all()
+    assert not feature.is_fulfilled(pd.Series([gap])).any()
+    with pytest.raises(ValueError):
+        feature.validate_candidental(pd.Series([gap]))
+    with pytest.raises(ValueError):
+        ContinuousInput(key="x", bounds=bounds).validate_candidental(pd.Series([0.0]))
