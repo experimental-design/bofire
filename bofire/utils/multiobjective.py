@@ -17,11 +17,7 @@ from bofire.data_models.strategies.predictives.mobo import (
     ExplicitReferencePoint,
     FixedReferenceValue,
 )
-from bofire.utils.torch_tools import (
-    get_multiobjective_objective,
-    pandas2torch,
-    tkwargs,
-)
+from bofire.utils.torch_tools import get_multiobjective_objective, pandas2torch, tkwargs
 
 
 def get_ref_point_mask(
