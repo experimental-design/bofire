@@ -796,7 +796,7 @@ window.Quarto = {
 <p>This tutorial will show how to use the model, how to obtain the data-point specific noise levels, and how to obtain the full model trace.</p>
 <section id="imports" class="level3">
 <h3 class="anchored" data-anchor-id="imports">Imports</h3>
-<div id="1f569be8" class="cell" data-execution_count="1">
+<div id="0c912af5" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Model imports</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -821,7 +821,7 @@ window.Quarto = {
 </section>
 <section id="setting-up-a-synthetic-example" class="level3">
 <h3 class="anchored" data-anchor-id="setting-up-a-synthetic-example">Setting up a Synthetic example</h3>
-<div id="c4d867e5" class="cell" data-execution_count="2">
+<div id="15e4c73c" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>input_features <span class="op">=</span> Inputs(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    features<span class="op">=</span>[ContinuousInput(key<span class="op">=</span><span class="ss">f"x_</span><span class="sc">{</span>i<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">4</span>, <span class="dv">4</span>)) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>)],</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -839,11 +839,11 @@ window.Quarto = {
 </section>
 <section id="lets-add-two-clear-outliers" class="level3">
 <h3 class="anchored" data-anchor-id="lets-add-two-clear-outliers">Let’s add two clear outliers</h3>
-<div id="6a1fd50c" class="cell" data-execution_count="3">
+<div id="20de285a" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>experiments.loc[<span class="dv">0</span>, <span class="st">"y_1"</span>] <span class="op">=</span> <span class="dv">5</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>experiments.loc[<span class="dv">1</span>, <span class="st">"y_1"</span>] <span class="op">=</span> <span class="op">-</span><span class="dv">5</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="1e388368" class="cell" data-execution_count="4">
+<div id="bb533e7d" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>plt.plot(experiments[<span class="st">"x_1"</span>], experiments[<span class="st">"y_1"</span>], <span class="st">"o"</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># plot the last two points in red</span></span>
@@ -867,7 +867,7 @@ window.Quarto = {
 </section>
 <section id="testing-a-singletaskgp" class="level3">
 <h3 class="anchored" data-anchor-id="testing-a-singletaskgp">Testing a SingleTaskGP</h3>
-<div id="8a1be64a" class="cell" data-execution_count="5">
+<div id="50d3fd67" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>stgp_data_model <span class="op">=</span> SingleTaskGPSurrogate(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
@@ -877,11 +877,11 @@ window.Quarto = {
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>stgp_model.fit(experiments)</span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>stgp_predictions <span class="op">=</span> stgp_model.predict(x)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/bofire/surrogates/botorch.py:184: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
-  torch.from_numpy(transformed_X.values).to(**tkwargs),</code></pre>
+<pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/bofire/utils/torch_tools.py:51: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
+  return torch.from_numpy(np.ascontiguousarray(df.to_numpy())).to(**tkwargs)</code></pre>
 </div>
 </div>
-<div id="666f5289" class="cell" data-execution_count="6">
+<div id="706a8404" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot the surrogate</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">5</span>))</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>plt.plot(experiments[<span class="st">"x_1"</span>], experiments[<span class="st">"y_1"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"observations"</span>)</span>
@@ -918,7 +918,7 @@ window.Quarto = {
 </section>
 <section id="testing-the-robust-gp" class="level3">
 <h3 class="anchored" data-anchor-id="testing-the-robust-gp">Testing the Robust GP</h3>
-<div id="9d8d14d4" class="cell" data-execution_count="7">
+<div id="be554937" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> RobustSingleTaskGPSurrogate(</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
@@ -937,7 +937,7 @@ Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pyto
   noise_covar = self.noise_covar.forward(</code></pre>
 </div>
 </div>
-<div id="dd88eea6" class="cell" data-execution_count="8">
+<div id="18f1ce15" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot the surrogate</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">5</span>))</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>plt.plot(experiments[<span class="st">"x_1"</span>], experiments[<span class="st">"y_1"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"observations"</span>)</span>
@@ -974,7 +974,7 @@ Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pyto
 </section>
 <section id="returning-data-point-specific-noise-values-rho" class="level3">
 <h3 class="anchored" data-anchor-id="returning-data-point-specific-noise-values-rho">Returning data point specific noise values <span class="math inline">\(\rho\)</span></h3>
-<div id="04eacec3" class="cell" data-execution_count="9">
+<div id="4ae0563e" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>model.predict_outliers(experiments)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/botorch/fit.py:241: OptimizationWarning: `scipy_minimize` terminated with status OptimizationStatus.FAILURE, displaying original message from `scipy.optimize.minimize`: ABNORMAL: 
@@ -996,62 +996,62 @@ Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pyto
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>-0.464086</td>
-<td>0.789934</td>
-<td>5.032593</td>
+<td>-0.445300</td>
+<td>1.846004</td>
+<td>5.148144</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>0.802615</td>
-<td>0.249549</td>
-<td>5.655575</td>
+<td>-0.391165</td>
+<td>0.241540</td>
+<td>3.628866</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>0.209708</td>
-<td>0.105605</td>
+<td>0.583999</td>
+<td>0.111809</td>
 <td>0.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>0.790970</td>
-<td>0.097028</td>
+<td>-0.724135</td>
+<td>0.117580</td>
 <td>0.000000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>-0.701236</td>
-<td>0.118282</td>
+<td>0.480076</td>
+<td>0.122720</td>
 <td>0.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>-0.746736</td>
-<td>0.119889</td>
+<td>-0.679138</td>
+<td>0.114694</td>
 <td>0.000000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>0.932612</td>
-<td>0.097083</td>
+<td>0.492479</td>
+<td>0.120056</td>
 <td>0.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>0.282159</td>
-<td>0.103201</td>
+<td>-0.070578</td>
+<td>0.116344</td>
 <td>0.000000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>0.619733</td>
-<td>0.103038</td>
+<td>0.612784</td>
+<td>0.135020</td>
 <td>0.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>0.987594</td>
-<td>0.104309</td>
+<td>0.805431</td>
+<td>0.122653</td>
 <td>0.000000</td>
 </tr>
 </tbody>
@@ -1063,7 +1063,7 @@ Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pyto
 </section>
 <section id="plotting-the-data-point-specific-noise-values" class="level3">
 <h3 class="anchored" data-anchor-id="plotting-the-data-point-specific-noise-values">Plotting the data point specific noise values</h3>
-<div id="3bcdfaea" class="cell" data-execution_count="10">
+<div id="ea011117" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the outlier scores (rho) from the robust GP model</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>outlier_scores <span class="op">=</span> model.predict_outliers(experiments)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1105,14 +1105,12 @@ Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pyto
 <span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/botorch/fit.py:241: OptimizationWarning: `scipy_minimize` terminated with status OptimizationStatus.FAILURE, displaying original message from `scipy.optimize.minimize`: ABNORMAL: 
-  result = optimizer(mll, closure=closure, **optimizer_kwargs)
-/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/botorch/fit.py:241: OptimizationWarning: `scipy_minimize` terminated with status OptimizationStatus.FAILURE, displaying original message from `scipy.optimize.minimize`: ABNORMAL: 
   result = optimizer(mll, closure=closure, **optimizer_kwargs)</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Outlier_Detection_and_Robust_GP_files/figure-html/cell-11-output-2.png" width="820" height="450" class="figure-img"></p>
+<p><img src="Outlier_Detection_and_Robust_GP_files/figure-html/cell-11-output-2.png" width="824" height="450" class="figure-img"></p>
 </figure>
 </div>
 </div>
@@ -1121,14 +1119,14 @@ Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pyto
 <section id="hyperparameter-optimization" class="level3">
 <h3 class="anchored" data-anchor-id="hyperparameter-optimization">Hyperparameter optimization</h3>
 <p>The RobustSingleTaskGPSurrogate also support hyperparameter optimization over different kernels, priors, etc.</p>
-<div id="0ef50ec8" class="cell" data-execution_count="11">
+<div id="267b59a6" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># opt_surrogate_data, perf = hyperoptimize(surrogate_data=data_model, training_data=experiments, folds=4)</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># surrogate = surrogates.map(opt_surrogate_data)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="obtaining-the-full-model-trace" class="level3">
 <h3 class="anchored" data-anchor-id="obtaining-the-full-model-trace">Obtaining the full model trace</h3>
-<div id="9c11f43f" class="cell" data-execution_count="12">
+<div id="c0b9e05e" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bmc_plot(bmc_support_sizes: Tensor, bmc_probabilities: Tensor) <span class="op">-&gt;</span> <span class="va">None</span>:</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    cmap <span class="op">=</span> plt.colormaps[<span class="st">"viridis"</span>]</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    bar_width <span class="op">=</span> <span class="dv">1</span></span>
@@ -1159,7 +1157,7 @@ Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pyto
 <span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a>    plt.ylabel(<span class="st">"Posterior Marginal Likelihood (%)"</span>)</span>
 <span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>    plt.legend(loc<span class="op">=</span><span class="st">"upper right"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="0a842752" class="cell" data-execution_count="13">
+<div id="ab84dd36" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> RobustSingleTaskGPSurrogate(</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>input_features,</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>output_features,</span>
@@ -1172,11 +1170,13 @@ Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pyto
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/botorch/fit.py:241: OptimizationWarning: `scipy_minimize` terminated with status OptimizationStatus.FAILURE, displaying original message from `scipy.optimize.minimize`: ABNORMAL: 
   result = optimizer(mll, closure=closure, **optimizer_kwargs)
+/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/botorch/fit.py:241: OptimizationWarning: `scipy_minimize` terminated with status OptimizationStatus.FAILURE, displaying original message from `scipy.optimize.minimize`: ABNORMAL: 
+  result = optimizer(mll, closure=closure, **optimizer_kwargs)
 /opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/botorch/models/likelihoods/sparse_outlier_noise.py:105: InputDataWarning: SparseOutlierNoise: Robust rho not applied because the last dimension of the base noise covariance (100) is not compatible with the last dimension of rho (10). This can happen when the model posterior is evaluated on test data.
   noise_covar = self.noise_covar.forward(</code></pre>
 </div>
 </div>
-<div id="db0c1011" class="cell" data-execution_count="14">
+<div id="22898eae" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>figsize <span class="op">=</span> (<span class="dv">6</span>, <span class="dv">4</span>)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(dpi<span class="op">=</span><span class="dv">100</span>, figsize<span class="op">=</span>figsize)</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>bmc_plot(model.model.bmc_support_sizes.detach(), model.model.bmc_probabilities.detach())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
