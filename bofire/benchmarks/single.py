@@ -3,7 +3,6 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-import torch
 from botorch.test_functions import Hartmann as botorch_hartmann
 from botorch.test_functions.synthetic import Branin as torchBranin
 from pydantic.types import PositiveInt
@@ -21,7 +20,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
-from bofire.utils.torch_tools import tkwargs
+from bofire.utils.torch_tools import pandas2torch, tkwargs
 
 
 class Ackley(Benchmark):
@@ -215,9 +214,7 @@ class Hartmann(Benchmark):
         return pd.DataFrame(
             {
                 "y": self._hartmann(
-                    torch.from_numpy(
-                        candidates[[f"x_{i}" for i in range(self.dim)]].values,
-                    ),
+                    pandas2torch(candidates[[f"x_{i}" for i in range(self.dim)]]),
                 ),
                 "valid_y": [1 for _ in range(len(candidates))],
             },
@@ -271,7 +268,7 @@ class Hartmann6plus(Benchmark):
         return pd.DataFrame(
             {
                 "y": self._hartmann(
-                    torch.from_numpy(candidates[[f"x_{i}" for i in range(6)]].values)
+                    pandas2torch(candidates[[f"x_{i}" for i in range(6)]])
                 ),
                 "valid_y": [1 for _ in range(len(candidates))],
             }
@@ -313,9 +310,7 @@ class Branin(Benchmark):
         self.branin = torchBranin().to(**tkwargs)
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
-            **tkwargs,
-        )
+        c = pandas2torch(candidates[self.domain.inputs.get_keys()])
         return pd.DataFrame(
             {
                 "y": self.branin(c).detach().numpy(),
@@ -358,9 +353,7 @@ class Branin30(Benchmark):
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
         lb, ub = self.branin.bounds
-        c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
-            **tkwargs,
-        )
+        c = pandas2torch(candidates[self.domain.inputs.get_keys()])
         return pd.DataFrame(
             {
                 "y": self.branin(lb + (ub - lb) * c[..., :2]).detach().numpy(),

@@ -18,7 +18,7 @@ from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
-from bofire.utils.torch_tools import tkwargs
+from bofire.utils.torch_tools import pandas2torch, tkwargs
 
 
 class OutlierPrior(BaseModel):
@@ -342,9 +342,7 @@ class SyntheticBoTorch(Benchmark):
         )
 
     def _f(self, candidates: pd.DataFrame, **kwargs) -> pd.DataFrame:
-        Xt = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
-            **tkwargs
-        )
+        Xt = pandas2torch(candidates[self.domain.inputs.get_keys()])
         # botorch is very picky regarding the candidates being exactly within the bounds
         # and does not tolerate any numerical noise here. For this reason we clamp the
         # values here.

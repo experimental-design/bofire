@@ -17,7 +17,7 @@ from bofire.data_models.strategies.predictives.mobo import (
     ExplicitReferencePoint,
     FixedReferenceValue,
 )
-from bofire.utils.torch_tools import get_multiobjective_objective, tkwargs
+from bofire.utils.torch_tools import get_multiobjective_objective, pandas2torch, tkwargs
 
 
 def get_ref_point_mask(
@@ -101,7 +101,7 @@ def get_pareto_front(
     pareto_mask = np.array(
         is_non_dominated(
             objective(
-                torch.from_numpy(df[output_feature_keys].values).to(**tkwargs),
+                pandas2torch(df[output_feature_keys]),
                 None,
             ),
         ),
@@ -152,7 +152,7 @@ def compute_hypervolume(
 
     return hv.compute(
         objective(
-            torch.from_numpy(
+            pandas2torch(
                 optimal_experiments[
                     domain.outputs.get_keys_by_objective(
                         includes=[
@@ -161,8 +161,8 @@ def compute_hypervolume(
                             CloseToTargetObjective,
                         ],
                     )
-                ].values,
-            ).to(**tkwargs),
+                ],
+            ),
             None,
         ),
     )
@@ -205,17 +205,9 @@ def infer_ref_point(
         output_feature_keys=keys,
     )
 
-    worst_values_array = (
-        objective(torch.from_numpy(df[keys].values).to(**tkwargs), None)
-        .numpy()
-        .min(axis=0)
-    )
+    worst_values_array = objective(pandas2torch(df[keys]), None).numpy().min(axis=0)
 
-    best_values_array = (
-        objective(torch.from_numpy(df[keys].values).to(**tkwargs), None)
-        .numpy()
-        .max(axis=0)
-    )
+    best_values_array = objective(pandas2torch(df[keys]), None).numpy().max(axis=0)
     # In the ref_point_array want masked values, which means that
     # maximization is assumed for everything, this is because we use
     # botorch objective for getting the best and worst values
