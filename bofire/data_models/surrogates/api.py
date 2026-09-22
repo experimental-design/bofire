@@ -47,10 +47,7 @@ from bofire.data_models.surrogates.single_task_gp import (
 )
 from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
-from bofire.data_models.surrogates.trainable_botorch import (
-    InputScaledBotorchSurrogate,
-    TrainableBotorchSurrogate,
-)
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 from bofire.data_models.unions import tagged_union
 
 

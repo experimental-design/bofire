@@ -19,19 +19,28 @@ HYPERCONFIG_DESCRIPTION = (
     "Configuration of a hyperparameter optimization for this surrogate. Carrying it "
     "does not run anything; without it, no hyperparameter optimization is possible."
 )
+# also used by PairwiseGPSurrogate, which scales its inputs but has no observed output
+# to scale, and so does not inherit from TrainableBotorchSurrogate
+SCALER_DESCRIPTION = (
+    "How the inputs are rescaled before fitting. Set to null to leave them as they are."
+)
 
 
-class InputScaledBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
-    """BoTorch based surrogate fitted to the experiments, rescaling its inputs.
+class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
+    """BoTorch based surrogate fitted to the experiments.
 
-    Fitting is often scale-sensitive, so the inputs are rescaled by default before the
-    fit.
+    Fitting is often scale-sensitive, so the inputs and the output are rescaled by
+    default before the fit, and the output scaling is undone when predicting.
     """
 
     scaler: AnyScaler = Field(
         default_factory=Normalize,
-        description="How the inputs are rescaled before fitting. Set to null to leave "
-        "them as they are.",
+        description=SCALER_DESCRIPTION,
+    )
+    output_scaler: ScalerEnum = Field(
+        default=ScalerEnum.STANDARDIZE,
+        description="How the outputs are rescaled before fitting, and undone when "
+        "predicting.",
     )
 
     @model_validator(mode="after")
@@ -44,17 +53,3 @@ class InputScaledBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
                     f"The following features are missing in inputs: {missing_features}"
                 )
         return self
-
-
-class TrainableBotorchSurrogate(InputScaledBotorchSurrogate):
-    """BoTorch based surrogate fitted to the experiments, rescaling both sides.
-
-    Fitting is often scale-sensitive, so the output is rescaled alongside the inputs,
-    and the output scaling is undone when predicting.
-    """
-
-    output_scaler: ScalerEnum = Field(
-        default=ScalerEnum.STANDARDIZE,
-        description="How the outputs are rescaled before fitting, and undone when "
-        "predicting.",
-    )
