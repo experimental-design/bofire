@@ -1,5 +1,8 @@
 from typing import Literal
 
+from bofire.data_models.descriptor_generators.api import Fingerprints, Fragments
+from bofire.data_models.encodings.api import DescriptorEncoding
+from bofire.data_models.features.api import CategoricalInput
 from bofire.data_models.kernels.kernel import ARDKernel, FeatureSpecificKernel
 
 
@@ -13,10 +16,6 @@ class MolecularKernel(FeatureSpecificKernel):
 
     @classmethod
     def can_consume(cls, feat, encoding=None) -> bool:
-        from bofire.data_models.descriptor_generators.api import Fingerprints, Fragments
-        from bofire.data_models.encodings.api import DescriptorEncoding
-        from bofire.data_models.features.api import CategoricalInput
-
         if not isinstance(feat, CategoricalInput) or not isinstance(
             encoding, DescriptorEncoding
         ):

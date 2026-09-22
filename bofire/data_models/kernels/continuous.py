@@ -2,6 +2,8 @@ from typing import List, Literal, Optional, Union
 
 from pydantic import Field, PositiveInt, model_validator
 
+from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
+from bofire.data_models.features.api import CategoricalInput, NumericalInput, TaskInput
 from bofire.data_models.kernels.kernel import (
     ARDKernel,
     FeatureSpecificKernel,
@@ -21,13 +23,6 @@ class ContinuousKernel(FeatureSpecificKernel):
 
     @classmethod
     def can_consume(cls, feat, encoding=None) -> bool:
-        from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
-        from bofire.data_models.features.api import (
-            CategoricalInput,
-            NumericalInput,
-            TaskInput,
-        )
-
         if isinstance(feat, TaskInput):
             return False
         if isinstance(feat, NumericalInput):

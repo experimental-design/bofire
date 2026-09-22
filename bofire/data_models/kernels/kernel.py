@@ -1,17 +1,13 @@
-from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple
 
 from pydantic import Field
 
 from bofire.data_models.base import BaseModel
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs
+from bofire.data_models.encodings.api import AnyCategoricalEncoding
+from bofire.data_models.features.api import AnyInput
 from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
-from bofire.data_models.types import NonRestrictedFeatureKeys
-
-
-if TYPE_CHECKING:
-    from bofire.data_models.domain.api import EngineeredFeatures, Inputs
-    from bofire.data_models.encodings.api import AnyCategoricalEncoding
-    from bofire.data_models.features.api import AnyInput
-    from bofire.data_models.types import InputTransformSpecs
+from bofire.data_models.types import InputTransformSpecs, NonRestrictedFeatureKeys
 
 
 class Kernel(BaseModel):
@@ -45,8 +41,8 @@ class FeatureSpecificKernel(Kernel):
     @classmethod
     def can_consume(
         cls,
-        feat: "AnyInput",
-        encoding: "Optional[AnyCategoricalEncoding]" = None,
+        feat: AnyInput,
+        encoding: Optional[AnyCategoricalEncoding] = None,
     ) -> bool:
         """Whether this kernel can act on a feature, given how it is encoded.
 
@@ -67,9 +63,9 @@ class FeatureSpecificKernel(Kernel):
     @classmethod
     def accepted_encodings(
         cls,
-        feat: "AnyInput",
-        candidates: "Sequence[AnyCategoricalEncoding]",
-    ) -> "Tuple[AnyCategoricalEncoding, ...]":
+        feat: AnyInput,
+        candidates: Sequence[AnyCategoricalEncoding],
+    ) -> Tuple[AnyCategoricalEncoding, ...]:
         """Which of the offered encodings this kernel could work with.
 
         The first entry is the one the kernel would ask for, and the number of entries
@@ -89,9 +85,9 @@ class FeatureSpecificKernel(Kernel):
 
     def resolve_features(
         self,
-        inputs: "Inputs",
-        encodings: "InputTransformSpecs",
-        engineered_features: "Optional[EngineeredFeatures]" = None,
+        inputs: Inputs,
+        encodings: InputTransformSpecs,
+        engineered_features: Optional[EngineeredFeatures] = None,
     ) -> List[str]:
         """The feature keys this kernel acts on in a given domain.
 
@@ -116,9 +112,9 @@ class FeatureSpecificKernel(Kernel):
 
     def validate_inputs(
         self,
-        inputs: "Inputs",
-        encodings: "InputTransformSpecs",
-        engineered_features: "Optional[EngineeredFeatures]" = None,
+        inputs: Inputs,
+        encodings: InputTransformSpecs,
+        engineered_features: Optional[EngineeredFeatures] = None,
     ) -> None:
         """Check that the features this kernel selects are ones it can act on.
 

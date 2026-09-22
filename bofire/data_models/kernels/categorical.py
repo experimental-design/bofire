@@ -2,6 +2,8 @@ from typing import Annotated, Literal, Optional
 
 from pydantic import Field, model_validator
 
+from bofire.data_models.encodings.api import OrdinalEncoding
+from bofire.data_models.features.api import CategoricalInput
 from bofire.data_models.kernels.kernel import (
     ARDKernel,
     FeatureSpecificKernel,
@@ -21,9 +23,6 @@ class CategoricalKernel(FeatureSpecificKernel):
 
     @classmethod
     def can_consume(cls, feat, encoding=None) -> bool:
-        from bofire.data_models.encodings.api import OrdinalEncoding
-        from bofire.data_models.features.api import CategoricalInput
-
         return isinstance(feat, CategoricalInput) and isinstance(
             encoding, OrdinalEncoding
         )
