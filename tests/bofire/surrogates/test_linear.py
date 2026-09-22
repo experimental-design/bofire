@@ -5,7 +5,11 @@ import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.kernels.api import LinearKernel
-from bofire.data_models.priors.api import HVARFNER_NOISE_PRIOR, GreaterThan
+from bofire.data_models.priors.api import (
+    HVARFNER_NOISE_PRIOR,
+    THREESIX_SCALE_PRIOR,
+    GreaterThan,
+)
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     LinearSurrogate,
@@ -120,3 +124,19 @@ def test_linear_surrogate_explicit_arguments_override_the_preset():
     assert surrogate.noise_prior == HVARFNER_NOISE_PRIOR()
     # None is passable and means "no constraint", not "use the preset default"
     assert surrogate.noise_constraint is None
+
+
+def test_linear_surrogate_exposes_the_kernel_variance_prior():
+    """The kernel is fixed, so its hyperparameters have to be reachable through it."""
+    inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
+    outputs = Outputs(features=[ContinuousOutput(key="c")])
+
+    surrogate = LinearSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        variance_prior=THREESIX_SCALE_PRIOR(),
+    )
+
+    assert surrogate.kernel == LinearKernel(variance_prior=THREESIX_SCALE_PRIOR())
+    # omitting it leaves the kernel's own default
+    assert LinearSurrogate(inputs=inputs, outputs=outputs).kernel == LinearKernel()

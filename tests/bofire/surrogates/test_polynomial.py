@@ -5,7 +5,7 @@ import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.kernels.api import PolynomialKernel
-from bofire.data_models.priors.api import GreaterThan
+from bofire.data_models.priors.api import THREESIX_SCALE_PRIOR, GreaterThan
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     PolynomialSurrogate,
@@ -94,3 +94,24 @@ def test_polynomial_surrogate_is_a_single_task_gp():
     assert surrogate_data.kernel == PolynomialKernel(power=3)
     # the single-task GP search would replace the polynomial kernel
     assert surrogate_data.hyperconfig is None
+
+
+def test_polynomial_surrogate_exposes_the_kernel_offset_prior():
+    """The kernel is fixed, so its hyperparameters have to be reachable through it."""
+    inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
+    outputs = Outputs(features=[ContinuousOutput(key="c")])
+
+    surrogate = PolynomialSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        power=3,
+        offset_prior=THREESIX_SCALE_PRIOR(),
+    )
+
+    assert surrogate.kernel == PolynomialKernel(
+        power=3, offset_prior=THREESIX_SCALE_PRIOR()
+    )
+    # omitting it leaves the kernel's own default
+    assert PolynomialSurrogate(inputs=inputs, outputs=outputs).kernel == (
+        PolynomialKernel(power=2)
+    )

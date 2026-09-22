@@ -8,10 +8,14 @@ reach the same result by hand.
 The same split applies to the priors, where `THREESIX_LENGTHSCALE_PRIOR` and its
 siblings are `partial`s over `GammaPrior` rather than classes.
 
-Each preset names explicitly the fields whose default it *changes*, so the signature
-shows what the preset decides. Everything else is forwarded to the surrogate untouched,
-which is deliberate: pydantic deep-copies a field default, while a live object in a
-function signature would be shared across every call.
+Each preset names explicitly the fields whose default it *changes*, plus the
+hyperparameters of the kernel it fixes, so the signature shows what the preset decides.
+Everything else is forwarded to the surrogate untouched, which is deliberate: pydantic
+deep-copies a field default, while a live object in a function signature would be
+shared across every call.
+
+Restricting the fixed kernel to a subset of the inputs is the one thing a preset cannot
+express. Build the surrogate directly for that.
 """
 
 from typing import Optional
@@ -28,6 +32,7 @@ from bofire.data_models.surrogates.single_task_gp import (
 def LinearSurrogate(
     inputs: Inputs,
     outputs: Outputs,
+    variance_prior: Optional[AnyPrior] = None,
     noise_prior: Optional[AnyPrior] = None,
     hyperconfig: Optional[SingleTaskGPHyperconfig] = None,
     **kwargs,
@@ -42,6 +47,8 @@ def LinearSurrogate(
     Args:
         inputs: Input features the surrogate acts on.
         outputs: Output feature the surrogate predicts.
+        variance_prior: Prior over the linear kernel's variance, which sets how large a
+            slope the model expects. Defaults to none, leaving it unconstrained.
         noise_prior: Prior over the observation noise. Defaults to the three-six gamma
             prior rather than to the log-normal one a single-task GP would use.
         hyperconfig: Configuration of a hyperparameter optimization. Defaults to none,
@@ -59,7 +66,7 @@ def LinearSurrogate(
     return SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
-        kernel=LinearKernel(),
+        kernel=LinearKernel(variance_prior=variance_prior),
         noise_prior=noise_prior if noise_prior is not None else THREESIX_NOISE_PRIOR(),
         hyperconfig=hyperconfig,
         **kwargs,
@@ -70,6 +77,7 @@ def PolynomialSurrogate(
     inputs: Inputs,
     outputs: Outputs,
     power: int = 2,
+    offset_prior: Optional[AnyPrior] = None,
     noise_prior: Optional[AnyPrior] = None,
     hyperconfig: Optional[SingleTaskGPHyperconfig] = None,
     **kwargs,
@@ -85,6 +93,9 @@ def PolynomialSurrogate(
         inputs: Input features the surrogate acts on.
         outputs: Output feature the surrogate predicts.
         power: Degree of the polynomial response.
+        offset_prior: Prior over the polynomial kernel's offset, which sets how much
+            weight the lower-order terms carry. Defaults to none, leaving it
+            unconstrained.
         noise_prior: Prior over the observation noise. Defaults to the three-six gamma
             prior rather than to the log-normal one a single-task GP would use.
         hyperconfig: Configuration of a hyperparameter optimization. Defaults to none,
@@ -102,7 +113,7 @@ def PolynomialSurrogate(
     return SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
-        kernel=PolynomialKernel(power=power),
+        kernel=PolynomialKernel(power=power, offset_prior=offset_prior),
         noise_prior=noise_prior if noise_prior is not None else THREESIX_NOISE_PRIOR(),
         hyperconfig=hyperconfig,
         **kwargs,
