@@ -7,17 +7,29 @@ reach the same result by hand.
 
 The same split applies to the priors, where `THREESIX_LENGTHSCALE_PRIOR` and its
 siblings are `partial`s over `GammaPrior` rather than classes.
+
+Each preset names explicitly the fields whose default it *changes*, so the signature
+shows what the preset decides. Everything else is forwarded to the surrogate untouched,
+which is deliberate: pydantic deep-copies a field default, while a live object in a
+function signature would be shared across every call.
 """
+
+from typing import Optional
 
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.kernels.api import LinearKernel, PolynomialKernel
-from bofire.data_models.priors.api import THREESIX_NOISE_PRIOR, GreaterThan
-from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+from bofire.data_models.priors.api import THREESIX_NOISE_PRIOR, AnyPrior
+from bofire.data_models.surrogates.single_task_gp import (
+    SingleTaskGPHyperconfig,
+    SingleTaskGPSurrogate,
+)
 
 
 def LinearSurrogate(
     inputs: Inputs,
     outputs: Outputs,
+    noise_prior: Optional[AnyPrior] = None,
+    hyperconfig: Optional[SingleTaskGPHyperconfig] = None,
     **kwargs,
 ) -> SingleTaskGPSurrogate:
     """Build a single-task GP restricted to linear responses.
@@ -30,9 +42,13 @@ def LinearSurrogate(
     Args:
         inputs: Input features the surrogate acts on.
         outputs: Output feature the surrogate predicts.
-        **kwargs: Any other field of `SingleTaskGPSurrogate`. `noise_prior`,
-            `noise_constraint` and `hyperconfig` default to values suited to a linear
-            kernel rather than to the ones the GP itself defaults to.
+        noise_prior: Prior over the observation noise. Defaults to the three-six gamma
+            prior rather than to the log-normal one a single-task GP would use.
+        hyperconfig: Configuration of a hyperparameter optimization. Defaults to none,
+            because the single-task GP config varies over RBF and Matern and would
+            discard the linear kernel.
+        **kwargs: Any remaining field of `SingleTaskGPSurrogate`, forwarded unchanged,
+            so its own defaults apply.
 
     Returns:
         A `SingleTaskGPSurrogate` with a `LinearKernel`.
@@ -40,15 +56,12 @@ def LinearSurrogate(
     Examples:
         >>> surrogate = LinearSurrogate(inputs=inputs, outputs=outputs)
     """
-    kwargs.setdefault("noise_prior", THREESIX_NOISE_PRIOR())
-    kwargs.setdefault("noise_constraint", GreaterThan(lower_bound=1e-4))
-    # the single-task GP search varies over RBF and Matern, which would discard the
-    # linear kernel this preset exists to set
-    kwargs.setdefault("hyperconfig", None)
     return SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=LinearKernel(),
+        noise_prior=noise_prior if noise_prior is not None else THREESIX_NOISE_PRIOR(),
+        hyperconfig=hyperconfig,
         **kwargs,
     )
 
@@ -57,6 +70,8 @@ def PolynomialSurrogate(
     inputs: Inputs,
     outputs: Outputs,
     power: int = 2,
+    noise_prior: Optional[AnyPrior] = None,
+    hyperconfig: Optional[SingleTaskGPHyperconfig] = None,
     **kwargs,
 ) -> SingleTaskGPSurrogate:
     """Build a single-task GP restricted to polynomial responses of a fixed degree.
@@ -70,9 +85,13 @@ def PolynomialSurrogate(
         inputs: Input features the surrogate acts on.
         outputs: Output feature the surrogate predicts.
         power: Degree of the polynomial response.
-        **kwargs: Any other field of `SingleTaskGPSurrogate`. `noise_prior`,
-            `noise_constraint` and `hyperconfig` default to values suited to a
-            polynomial kernel rather than to the ones the GP itself defaults to.
+        noise_prior: Prior over the observation noise. Defaults to the three-six gamma
+            prior rather than to the log-normal one a single-task GP would use.
+        hyperconfig: Configuration of a hyperparameter optimization. Defaults to none,
+            because the single-task GP config varies over RBF and Matern and would
+            discard the polynomial kernel.
+        **kwargs: Any remaining field of `SingleTaskGPSurrogate`, forwarded unchanged,
+            so its own defaults apply.
 
     Returns:
         A `SingleTaskGPSurrogate` with a `PolynomialKernel`.
@@ -80,14 +99,11 @@ def PolynomialSurrogate(
     Examples:
         >>> surrogate = PolynomialSurrogate(inputs=inputs, outputs=outputs, power=3)
     """
-    kwargs.setdefault("noise_prior", THREESIX_NOISE_PRIOR())
-    kwargs.setdefault("noise_constraint", GreaterThan(lower_bound=1e-4))
-    # the single-task GP search varies over RBF and Matern, which would discard the
-    # polynomial kernel this preset exists to set
-    kwargs.setdefault("hyperconfig", None)
     return SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=PolynomialKernel(power=power),
+        noise_prior=noise_prior if noise_prior is not None else THREESIX_NOISE_PRIOR(),
+        hyperconfig=hyperconfig,
         **kwargs,
     )

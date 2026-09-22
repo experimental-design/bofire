@@ -5,7 +5,7 @@ import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.kernels.api import LinearKernel
-from bofire.data_models.priors.api import GreaterThan
+from bofire.data_models.priors.api import HVARFNER_NOISE_PRIOR, GreaterThan
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     LinearSurrogate,
@@ -87,3 +87,36 @@ def test_linear_surrogate_is_a_single_task_gp():
     assert surrogate_data.kernel == LinearKernel()
     # the single-task GP search would replace the linear kernel
     assert surrogate_data.hyperconfig is None
+
+
+def test_linear_surrogate_noise_constraint_matches_the_gp_default():
+    """The preset forwards `noise_constraint` rather than restating it.
+
+    It used to set `GreaterThan(lower_bound=1e-4)` explicitly, which is exactly what
+    `SingleTaskGPSurrogate` already defaults to. Forwarding means pydantic supplies a
+    freshly deep-copied default instead of one instance shared by every call.
+    """
+    inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
+    outputs = Outputs(features=[ContinuousOutput(key="c")])
+
+    first = LinearSurrogate(inputs=inputs, outputs=outputs)
+    second = LinearSurrogate(inputs=inputs, outputs=outputs)
+
+    assert first.noise_constraint == GreaterThan(lower_bound=1e-4)
+    assert first.noise_constraint is not second.noise_constraint
+
+
+def test_linear_surrogate_explicit_arguments_override_the_preset():
+    inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
+    outputs = Outputs(features=[ContinuousOutput(key="c")])
+
+    surrogate = LinearSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        noise_prior=HVARFNER_NOISE_PRIOR(),
+        noise_constraint=None,
+    )
+
+    assert surrogate.noise_prior == HVARFNER_NOISE_PRIOR()
+    # None is passable and means "no constraint", not "use the preset default"
+    assert surrogate.noise_constraint is None
