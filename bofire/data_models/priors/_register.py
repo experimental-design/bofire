@@ -33,14 +33,12 @@ def _rebuild_dependent_models() -> None:
         WassersteinKernel,
     )
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
+    from bofire.data_models.surrogates.linear import LinearSurrogate
     from bofire.data_models.surrogates.mixed_single_task_gp import (
         MixedSingleTaskGPSurrogate,
     )
     from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
-    from bofire.data_models.surrogates.presets import (
-        LinearSurrogate,
-        PolynomialSurrogate,
-    )
+    from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
     from bofire.data_models.surrogates.robust_single_task_gp import (
         RobustSingleTaskGPSurrogate,
     )

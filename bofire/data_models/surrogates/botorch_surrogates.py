@@ -14,6 +14,7 @@ from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
 from bofire.data_models.surrogates.fully_bayesian import (
     FullyBayesianSingleTaskGPSurrogate,
 )
+from bofire.data_models.surrogates.linear import LinearSurrogate
 from bofire.data_models.surrogates.map_saas import (
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
@@ -26,7 +27,7 @@ from bofire.data_models.surrogates.mlp import (
     RegressionMLPEnsemble,
 )
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
-from bofire.data_models.surrogates.presets import LinearSurrogate, PolynomialSurrogate
+from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
