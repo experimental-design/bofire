@@ -1,12 +1,19 @@
 import numpy as np
+import pytest
 from pandas.testing import assert_frame_equal
+from pydantic import TypeAdapter, ValidationError
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.data_models.kernels.api import LinearKernel
+from bofire.data_models.kernels.api import LinearKernel, RBFKernel
 from bofire.data_models.priors.api import GreaterThan
-from bofire.data_models.surrogates.api import BotorchSurrogates, LinearSurrogate
+from bofire.data_models.surrogates.api import (
+    AnySurrogate,
+    BotorchSurrogates,
+    LinearSurrogate,
+    SingleTaskGPSurrogate,
+)
 
 
 def test_LinearSurrogate():
@@ -29,11 +36,8 @@ def test_LinearSurrogate():
     )
     experiments["valid_c"] = 1
 
-    surrogate_data = LinearSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        noise_constraint=GreaterThan(lower_bound=5e-4),
-    )
+    surrogate_data = LinearSurrogate(inputs=inputs, outputs=outputs)
+    surrogate_data.noise_constraint = GreaterThan(lower_bound=5e-4)
     surrogate = surrogates.map(surrogate_data)
 
     assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
@@ -69,3 +73,30 @@ def test_can_define_botorch_surrogate():
             ],
         ),
     )
+
+
+def test_linear_surrogate_is_a_narrowed_single_task_gp():
+    """It is a SingleTaskGP whose kernel cannot be anything but linear."""
+    inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
+    outputs = Outputs(features=[ContinuousOutput(key="c")])
+
+    surrogate = LinearSurrogate(inputs=inputs, outputs=outputs)
+
+    assert isinstance(surrogate, SingleTaskGPSurrogate)
+    assert surrogate.kernel == LinearKernel()
+    # the single-task GP config would search over RBF and Matern
+    assert surrogate.hyperconfig is None
+    # ...and unlike a preset function, the narrowing survives assignment
+    with pytest.raises(ValidationError):
+        surrogate.kernel = RBFKernel()
+
+
+def test_linear_surrogate_round_trips_as_itself():
+    inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
+    outputs = Outputs(features=[ContinuousOutput(key="c")])
+
+    surrogate = LinearSurrogate(inputs=inputs, outputs=outputs)
+    restored = TypeAdapter(AnySurrogate).validate_python(surrogate.model_dump())
+
+    assert isinstance(restored, LinearSurrogate)
+    assert restored == surrogate

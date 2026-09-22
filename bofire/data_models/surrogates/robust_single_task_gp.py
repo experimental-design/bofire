@@ -13,27 +13,32 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
+from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
-from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
+from bofire.data_models.surrogates.trainable_botorch import (
+    HYPERCONFIG_DESCRIPTION,
+    NOISE_CONSTRAINT_DESCRIPTION,
+    NOISE_PRIOR_DESCRIPTION,
+    TrainableBotorchSurrogate,
+)
 
 
 class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
-    """
-    Robust Relevance Pursuit Single Task Gaussian Process Surrogate.
+    """Gaussian process that learns which experiments to distrust.
 
-    A robust single-task GP that learns a data-point specific noise level and is therefore more robust to outliers.
-    See: https://botorch.org/docs/tutorials/relevance_pursuit_robust_regression/
-    Paper: https://arxiv.org/pdf/2410.24222
-
-    Attributes:
-        prior_mean_of_support: The prior mean of the support.
-        convex_parametrization: Whether to use convex parametrization of the sparse noise model.
-        cache_model_trace: Whether to cache the model trace. This needs no be set to True if you want to view the model trace after optimization.
+    Rather than one noise level for all data, it fits a per-point one and lets a few
+    points take a large value, so a failed or mistyped experiment is discounted instead
+    of dragging the fit towards it. Pick it over `SingleTaskGPSurrogate` when the data
+    is expected to contain outliers that cannot be identified up front.
 
     Note:
-        The definition of "outliers" depends on the model capacity, so what is an outlier
-        with respect to a simple model might not be an outlier with respect to a complex model.
-        For this reason, it is necessary to bound the lengthscale of the GP kernel from below.
+        What counts as an outlier depends on how flexible the model is: a wiggly enough
+        model explains any point. The lengthscale is therefore bounded from below, and
+        loosening that bound weakens the robustness.
+
+    References:
+        Ament et al., Robust Gaussian Processes via Relevance Pursuit (2024),
+        https://arxiv.org/abs/2410.24222
     """
 
     type: Literal["RobustSingleTaskGPSurrogate"] = "RobustSingleTaskGPSurrogate"
@@ -43,22 +48,43 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             ard=True,
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
             lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
-        )
+        ),
+        description=KERNEL_DESCRIPTION
+        + " Its lengthscale is bounded from below, because what counts as an outlier "
+        "depends on how flexible the model may be.",
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(
+        default_factory=lambda: HVARFNER_NOISE_PRIOR(),
+        description=NOISE_PRIOR_DESCRIPTION,
+    )
     noise_constraint: Optional[AnyPriorConstraint] = Field(
         default_factory=lambda: GreaterThan(lower_bound=1e-4),
+        description=NOISE_CONSTRAINT_DESCRIPTION,
     )
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig(
             lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
             outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT(),
         ),
+        description=HYPERCONFIG_DESCRIPTION,
     )
 
-    prior_mean_of_support: Optional[int] = Field(default=None)
-    convex_parametrization: bool = Field(default=True)
-    cache_model_trace: bool = Field(default=False)
+    prior_mean_of_support: Optional[int] = Field(
+        default=None,
+        description="Mean of the default exponential prior over the support size, "
+        "that is over how many data points carry their own extra noise. If not "
+        "provided, BoTorch's own default is used.",
+    )
+    convex_parametrization: bool = Field(
+        default=True,
+        description="Whether to parametrize the sparse noise model convexly, which "
+        "makes the fit better behaved.",
+    )
+    cache_model_trace: bool = Field(
+        default=False,
+        description="Whether to keep the sequence of models explored during fitting, "
+        "which is needed to inspect the trace afterwards and costs memory.",
+    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

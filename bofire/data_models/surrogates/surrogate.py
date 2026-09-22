@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Any, Optional, Type
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
@@ -11,10 +11,23 @@ from bofire.data_models.types import InputTransformSpecs
 
 
 class Surrogate(BaseModel):
+    """Model of the relation between the inputs and the outputs."""
+
     type: Any
-    inputs: Inputs
-    outputs: Outputs
-    dump: Optional[str] = None
+    inputs: Inputs = Field(
+        description="Input features the surrogate acts on. When the surrogate is used "
+        "by a strategy, these may be a subset of the strategy's inputs, so that "
+        "different outputs can be modelled from different inputs.",
+    )
+    outputs: Outputs = Field(
+        description="Output features the surrogate predicts. Most surrogates take "
+        "exactly one.",
+    )
+    dump: Optional[str] = Field(
+        default=None,
+        description="The fitted model, serialized, so a trained surrogate survives a "
+        "round trip. Written when the surrogate is dumped; not set by hand.",
+    )
 
     @property
     def input_preprocessing_specs(self) -> InputTransformSpecs:

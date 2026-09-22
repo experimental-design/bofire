@@ -10,24 +10,19 @@ from bofire.data_models.priors.api import (
     PAIRWISEGP_OUTPUTSCALE_CONSTRAINT,
     PAIRWISEGP_OUTPUTSCALE_PRIOR,
 )
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
+from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION, BotorchSurrogate
 from bofire.data_models.surrogates.scaler import AnyScaler, Normalize
 from bofire.data_models.surrogates.trainable import TrainableSurrogate
+from bofire.data_models.surrogates.trainable_botorch import SCALER_DESCRIPTION
 
 
 class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate):
-    """Pairwise Gaussian Process surrogate built on top of BoTorch's PairwiseGP.
+    """Gaussian process fitted to pairwise preferences rather than measured values.
 
-    Fits a latent utility function from binary winner/loser pair labels. The
-    `preferences` DataFrame references rows of the standard BoFire `experiments`
-    DataFrame by `labcode`; the single output feature represents the latent
-    utility inferred from those comparisons.
-
-    Attributes:
-        likelihood: The pairwise likelihood linking latent-utility differences
-            to preference probabilities -- ``"probit"`` (Gaussian comparison
-            noise, BoTorch's default) or ``"logit"`` (logistic noise, i.e. the
-            Bradley-Terry model).
+    Use it when the response can only be judged by comparison — which of two samples
+    smells better, looks better, handles better. Instead of experiment values it is
+    given winner/loser pairs, and the single output feature it predicts is the latent
+    utility that explains them, on an arbitrary scale.
     """
 
     type: Literal["PairwiseGPSurrogate"] = "PairwiseGPSurrogate"
@@ -41,10 +36,20 @@ class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             ),
             outputscale_prior=PAIRWISEGP_OUTPUTSCALE_PRIOR(),
             outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
-        )
+        ),
+        description=KERNEL_DESCRIPTION
+        + " Here the inputs are the compared candidates.",
     )
-    scaler: AnyScaler = Field(default_factory=Normalize)
-    likelihood: Literal["probit", "logit"] = "probit"
+    scaler: AnyScaler = Field(
+        default_factory=Normalize,
+        description=SCALER_DESCRIPTION,
+    )
+    likelihood: Literal["probit", "logit"] = Field(
+        default="probit",
+        description="How a difference in latent utility becomes a probability that one "
+        "candidate is preferred: probit assumes Gaussian comparison noise, logit "
+        "logistic noise, giving the Bradley-Terry model.",
+    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

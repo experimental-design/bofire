@@ -4,7 +4,6 @@ import pandas as pd
 from pydantic import Field
 
 from bofire.data_models.domain.api import Inputs
-from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
@@ -29,29 +28,59 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
-from bofire.data_models.surrogates.trainable import Hyperconfig
-from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
+from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION
+from bofire.data_models.surrogates.trainable import (
+    HYPERCONFIG_INPUTS_DESCRIPTION,
+    HYPERSTRATEGY_DESCRIPTION,
+    Hyperconfig,
+)
+from bofire.data_models.surrogates.trainable_botorch import (
+    HYPERCONFIG_DESCRIPTION,
+    NOISE_CONSTRAINT_DESCRIPTION,
+    NOISE_PRIOR_DESCRIPTION,
+    TrainableBotorchSurrogate,
+)
 
 
 class SingleTaskGPHyperconfig(Hyperconfig):
+    """Hyperparameter optimization config for a single-task GP.
+
+    Optimizes over the kernel, the prior family, whether the kernel is scaled and
+    whether the lengthscale is per-input.
+    """
+
     type: Literal["SingleTaskGPHyperconfig"] = "SingleTaskGPHyperconfig"
-    inputs: Inputs = Inputs(
-        features=[
-            CategoricalInput(
-                key="kernel",
-                categories=["rbf", "matern_1.5", "matern_2.5"],
-            ),
-            CategoricalInput(key="prior", categories=["mbo", "threesix", "hvarfner"]),
-            CategoricalInput(key="scalekernel", categories=["True", "False"]),
-            CategoricalInput(key="ard", categories=["True", "False"]),
-        ],
+    inputs: Inputs = Field(
+        default=Inputs(
+            features=[
+                CategoricalInput(
+                    key="kernel",
+                    categories=["rbf", "matern_1.5", "matern_2.5"],
+                ),
+                CategoricalInput(
+                    key="prior", categories=["mbo", "threesix", "hvarfner"]
+                ),
+                CategoricalInput(key="scalekernel", categories=["True", "False"]),
+                CategoricalInput(key="ard", categories=["True", "False"]),
+            ],
+        ),
+        description=HYPERCONFIG_INPUTS_DESCRIPTION,
     )
-    lengthscale_constraint: Optional[AnyPriorConstraint] = None
-    outputscale_constraint: Optional[AnyPriorConstraint] = None
-    target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
+    lengthscale_constraint: Optional[AnyPriorConstraint] = Field(
+        default=None,
+        description="Bounds applied to the lengthscale of whichever kernel the search "
+        "picks, so that the searched kernels share one restriction.",
+    )
+    outputscale_constraint: Optional[AnyPriorConstraint] = Field(
+        default=None,
+        description="Bounds applied to the output scale when the search selects a "
+        "scaled kernel.",
+    )
     hyperstrategy: Literal[
         "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
-    ] = "FractionalFactorialStrategy"
+    ] = Field(
+        default="FractionalFactorialStrategy", description=HYPERSTRATEGY_DESCRIPTION
+    )
 
     @staticmethod
     def _update_hyperparameters(
@@ -136,20 +165,28 @@ class SingleTaskGPHyperconfig(Hyperconfig):
 
 
 class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
+    """Gaussian process over a single output."""
+
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
     kernel: AnyKernel = Field(
         default_factory=lambda: RBFKernel(
             ard=True,
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-        )
+        ),
+        description=KERNEL_DESCRIPTION,
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(
+        default_factory=lambda: HVARFNER_NOISE_PRIOR(),
+        description=NOISE_PRIOR_DESCRIPTION,
+    )
     noise_constraint: Optional[AnyPriorConstraint] = Field(
         default_factory=lambda: GreaterThan(lower_bound=1e-4),
+        description=NOISE_CONSTRAINT_DESCRIPTION,
     )
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig(),
+        description=HYPERCONFIG_DESCRIPTION,
     )
 
     @classmethod

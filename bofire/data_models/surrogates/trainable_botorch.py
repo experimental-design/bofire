@@ -5,9 +5,43 @@ from bofire.data_models.surrogates.scaler import AnyScaler, Normalize, ScalerEnu
 from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 
+# reused by the GP surrogates, which must redeclare these fields because their defaults
+# differ and pydantic cannot override a default without redeclaring
+NOISE_PRIOR_DESCRIPTION = (
+    "Prior over the observation noise, which sets how much of the spread in the data "
+    "the model attributes to measurement error rather than to the response."
+)
+NOISE_CONSTRAINT_DESCRIPTION = (
+    "Bounds the observation noise is restricted to during fitting. A positive lower "
+    "bound keeps the fit numerically stable."
+)
+HYPERCONFIG_DESCRIPTION = (
+    "Configuration of a hyperparameter optimization for this surrogate. Carrying it "
+    "does not run anything; without it, no hyperparameter optimization is possible."
+)
+# also used by PairwiseGPSurrogate, which scales its inputs but has no observed output
+# to scale, and so does not inherit from TrainableBotorchSurrogate
+SCALER_DESCRIPTION = (
+    "How the inputs are rescaled before fitting. Set to null to leave them as they are."
+)
+
+
 class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
-    scaler: AnyScaler = Field(default_factory=Normalize)
-    output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
+    """BoTorch based surrogate fitted to the experiments.
+
+    Fitting is often scale-sensitive, so the inputs and the output are rescaled by
+    default before the fit, and the output scaling is undone when predicting.
+    """
+
+    scaler: AnyScaler = Field(
+        default_factory=Normalize,
+        description=SCALER_DESCRIPTION,
+    )
+    output_scaler: ScalerEnum = Field(
+        default=ScalerEnum.STANDARDIZE,
+        description="How the outputs are rescaled before fitting, and undone when "
+        "predicting.",
+    )
 
     @model_validator(mode="after")
     def validate_scaler_features(self):
