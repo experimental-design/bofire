@@ -418,13 +418,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/basic_examples/basic_terminology.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Basic terminology</span></a>
+ <span class="menu-text">Basic Terminology</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/basic_examples/Reaction_Optimization_Example.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Getting started by Example: Optimization of Reaction Conditions</span></a>
+ <span class="menu-text">Reaction Optimization Example</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -442,13 +442,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/basic_examples/Unknown_Constraint_Classification.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classification Surrogate Tests</span></a>
+ <span class="menu-text">Unknown Constraint Classification</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/basic_examples/index_kernel.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Introduction to index kernel and positive index kernel.</span></a>
+ <span class="menu-text">Introduction to Index Kernel and Positive Index Kernel</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -477,7 +477,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/custom_sobo.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Custom Sobo Strategy</span></a>
+ <span class="menu-text">Custom SOBO Strategy</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -489,13 +489,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/genetic_algorithm.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">For optimizations in the bofire domain, a GA optimizer is available</span></a>
+ <span class="menu-text">Genetic Algorithm</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/merging_objectives.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Merging multiple objectives to a scalar target for single-target BO</span></a>
+ <span class="menu-text">Merging Objectives</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -525,13 +525,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/transfer_learning_bo.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">generate lots of low fidelity data and a few high fidelity data</span></a>
+ <span class="menu-text">Transfer Learning BO</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/octane_number.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Predict Motor Octane Number of Hydrocarbon Mixtures</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/conditional_features_bo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Conditional Features</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -752,7 +758,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>This is a port from https://github.com/pytorch/botorch/blob/main/tutorials/saasbo.ipynb ## Imports</p>
-<div id="31bd6eea" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:3.001328,&quot;end_time&quot;:&quot;2024-10-10T20:35:06.062960&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:03.061632&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="c5114515" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:3.001328,&quot;end_time&quot;:&quot;2024-10-10T20:35:06.062960&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:03.061632&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -785,7 +791,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="random-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="random-optimization">Random Optimization</h2>
-<div id="a4128c5d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.255252,&quot;end_time&quot;:&quot;2024-10-10T20:35:06.320917&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:35:06.065665&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="3229f3d3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.255252,&quot;end_time&quot;:&quot;2024-10-10T20:35:06.320917&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:35:06.065665&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sample(domain):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    datamodel <span class="op">=</span> RandomStrategy(domain<span class="op">=</span>domain)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    sampler <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>datamodel)</span>
@@ -808,13 +814,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    n_procs<span class="op">=</span><span class="dv">1</span>,</span>
 <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=0.503]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 31.22it/s, Current Best:=0.503]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=5.314]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 19.37it/s, Current Best:=5.314]</code></pre>
 </div>
 </div>
 </section>
 <section id="saasbo-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="saasbo-optimization">SAASBO Optimization</h2>
-<div id="e6f3db59" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="2a11b632" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> Branin30()</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -852,7 +858,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/bofire/utils/torch_tools.py:51: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
   return torch.from_numpy(np.ascontiguousarray(df.to_numpy())).to(**tkwargs)
-  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:12&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:12&lt;?, ?it/s, Current Best:=17.508]Run 0: 100%|██████████| 1/1 [00:12&lt;00:00, 12.30s/it, Current Best:=17.508]Run 0: 100%|██████████| 1/1 [00:12&lt;00:00, 12.30s/it, Current Best:=17.508]</code></pre>
+  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:25&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:25&lt;?, ?it/s, Current Best:=2.022]Run 0: 100%|██████████| 1/1 [00:25&lt;00:00, 25.26s/it, Current Best:=2.022]Run 0: 100%|██████████| 1/1 [00:25&lt;00:00, 25.26s/it, Current Best:=2.022]</code></pre>
 </div>
 </div>
 

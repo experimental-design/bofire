@@ -450,13 +450,13 @@ window.Quarto = {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/basic_examples/basic_terminology.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Basic terminology</span></a>
+ <span class="menu-text">Basic Terminology</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/basic_examples/Reaction_Optimization_Example.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Getting started by Example: Optimization of Reaction Conditions</span></a>
+ <span class="menu-text">Reaction Optimization Example</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -474,13 +474,13 @@ window.Quarto = {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/basic_examples/Unknown_Constraint_Classification.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classification Surrogate Tests</span></a>
+ <span class="menu-text">Unknown Constraint Classification</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/basic_examples/index_kernel.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Introduction to index kernel and positive index kernel.</span></a>
+ <span class="menu-text">Introduction to Index Kernel and Positive Index Kernel</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -509,7 +509,7 @@ window.Quarto = {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/custom_sobo.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Custom Sobo Strategy</span></a>
+ <span class="menu-text">Custom SOBO Strategy</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -521,13 +521,13 @@ window.Quarto = {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/genetic_algorithm.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">For optimizations in the bofire domain, a GA optimizer is available</span></a>
+ <span class="menu-text">Genetic Algorithm</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/merging_objectives.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Merging multiple objectives to a scalar target for single-target BO</span></a>
+ <span class="menu-text">Merging Objectives</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -557,13 +557,19 @@ window.Quarto = {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/transfer_learning_bo.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">generate lots of low fidelity data and a few high fidelity data</span></a>
+ <span class="menu-text">Transfer Learning BO</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/octane_number.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Predict Motor Octane Number of Hydrocarbon Mixtures</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/conditional_features_bo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Conditional Features</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -782,7 +788,7 @@ x_3 + x_4 \geq 0.1
 <p>Therefore one has to be very careful when imposing linear constraints upon decision variables that already show up in an NChooseK constraint.</p>
 <p>For practical reasons it necessary that two NChooseK constraints of the same problem must not share any variables.</p>
 <p>You can find an example for a problem with NChooseK constraints and additional linear constraints imposed on the same variables.</p>
-<div id="8278b33d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.941079,&quot;end_time&quot;:&quot;2024-10-10T20:36:20.399927&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:17.458848&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="d84be8cb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.941079,&quot;end_time&quot;:&quot;2024-10-10T20:36:20.399927&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:17.458848&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
@@ -863,32 +869,32 @@ x_3 + x_4 \geq 0.1
 <th data-quarto-table-cell-role="th">0</th>
 <td>0.000</td>
 <td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
 <td>0.000</td>
-<td>0.1</td>
+<td>0.9</td>
+<td>0.100</td>
 <td>0.000</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.900</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>0.700</td>
-<td>0.0</td>
 <td>0.000</td>
 <td>0.0</td>
+<td>0.0</td>
+<td>0.1</td>
 <td>0.000</td>
-<td>0.200</td>
-<td>0.100</td>
+<td>0.0</td>
+<td>0.900</td>
 <td>0.000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
 <td>0.000</td>
 <td>0.0</td>
-<td>0.700</td>
+<td>0.7</td>
+<td>0.0</td>
+<td>0.000</td>
 <td>0.2</td>
-<td>0.000</td>
-<td>0.000</td>
 <td>0.000</td>
 <td>0.100</td>
 </tr>
@@ -896,100 +902,100 @@ x_3 + x_4 \geq 0.1
 <th data-quarto-table-cell-role="th">3</th>
 <td>0.000</td>
 <td>0.0</td>
-<td>0.000</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.900</td>
 <td>0.0</td>
 <td>0.000</td>
-<td>0.497</td>
-<td>0.000</td>
-<td>0.503</td>
+<td>0.100</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
 <td>0.000</td>
 <td>0.0</td>
-<td>0.000</td>
+<td>0.0</td>
 <td>0.9</td>
 <td>0.000</td>
-<td>0.000</td>
+<td>0.0</td>
 <td>0.100</td>
 <td>0.000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
 <td>0.000</td>
+<td>0.7</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.000</td>
-<td>0.0</td>
-<td>0.495</td>
+<td>0.2</td>
 <td>0.000</td>
-<td>0.505</td>
-<td>0.000</td>
+<td>0.100</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>0.537</td>
+<td>0.700</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.2</td>
+<td>0.000</td>
 <td>0.0</td>
 <td>0.000</td>
-<td>0.0</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.463</td>
+<td>0.100</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
 <td>0.000</td>
 <td>0.0</td>
-<td>0.000</td>
 <td>0.0</td>
-<td>0.900</td>
+<td>0.0</td>
+<td>0.507</td>
+<td>0.0</td>
+<td>0.493</td>
 <td>0.000</td>
-<td>0.000</td>
-<td>0.100</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
 <td>0.000</td>
-<td>0.7</td>
-<td>0.000</td>
 <td>0.0</td>
-<td>0.200</td>
+<td>0.0</td>
+<td>0.0</td>
 <td>0.000</td>
+<td>0.1</td>
 <td>0.000</td>
-<td>0.100</td>
+<td>0.900</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
 <td>0.000</td>
 <td>0.0</td>
-<td>0.538</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.454</td>
 <td>0.0</td>
 <td>0.000</td>
-<td>0.000</td>
-<td>0.462</td>
-<td>0.000</td>
+<td>0.546</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">10</th>
-<td>0.000</td>
+<td>0.535</td>
+<td>0.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.000</td>
 <td>0.0</td>
-<td>0.000</td>
-<td>0.900</td>
-<td>0.100</td>
+<td>0.465</td>
 <td>0.000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">11</th>
 <td>0.000</td>
-<td>0.1</td>
-<td>0.000</td>
+<td>0.0</td>
+<td>0.0</td>
 <td>0.0</td>
 <td>0.000</td>
+<td>0.1</td>
 <td>0.000</td>
 <td>0.900</td>
-<td>0.000</td>
 </tr>
 </tbody>
 </table>

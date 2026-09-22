@@ -418,13 +418,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/basic_examples/basic_terminology.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Basic terminology</span></a>
+ <span class="menu-text">Basic Terminology</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/basic_examples/Reaction_Optimization_Example.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Getting started by Example: Optimization of Reaction Conditions</span></a>
+ <span class="menu-text">Reaction Optimization Example</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -442,13 +442,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/basic_examples/Unknown_Constraint_Classification.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Classification Surrogate Tests</span></a>
+ <span class="menu-text">Unknown Constraint Classification</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/basic_examples/index_kernel.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Introduction to index kernel and positive index kernel.</span></a>
+ <span class="menu-text">Introduction to Index Kernel and Positive Index Kernel</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -477,7 +477,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/custom_sobo.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Custom Sobo Strategy</span></a>
+ <span class="menu-text">Custom SOBO Strategy</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -489,13 +489,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/genetic_algorithm.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">For optimizations in the bofire domain, a GA optimizer is available</span></a>
+ <span class="menu-text">Genetic Algorithm</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/merging_objectives.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Merging multiple objectives to a scalar target for single-target BO</span></a>
+ <span class="menu-text">Merging Objectives</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -525,13 +525,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/transfer_learning_bo.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">generate lots of low fidelity data and a few high fidelity data</span></a>
+ <span class="menu-text">Transfer Learning BO</span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../../docs/tutorials/advanced_examples/octane_number.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Predict Motor Octane Number of Hydrocarbon Mixtures</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../../../docs/tutorials/advanced_examples/conditional_features_bo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Conditional Features</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -727,15 +733,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#available-tutorials" id="toc-available-tutorials" class="nav-link" data-scroll-target="#available-tutorials">Available Tutorials</a>
   <ul class="collapse">
-  <li><a href="#custom-sobo" id="toc-custom-sobo" class="nav-link" data-scroll-target="#custom-sobo">Custom SOBO</a></li>
-  <li><a href="#desirability-objectives" id="toc-desirability-objectives" class="nav-link" data-scroll-target="#desirability-objectives">Desirability Objectives</a></li>
+  <li><a href="#custom-sobo-strategy" id="toc-custom-sobo-strategy" class="nav-link" data-scroll-target="#custom-sobo-strategy">Custom SOBO Strategy</a></li>
+  <li><a href="#desirability-functions-for-multi-objective-optimization" id="toc-desirability-functions-for-multi-objective-optimization" class="nav-link" data-scroll-target="#desirability-functions-for-multi-objective-optimization">Desirability Functions for Multi-Objective Optimization</a></li>
   <li><a href="#genetic-algorithm" id="toc-genetic-algorithm" class="nav-link" data-scroll-target="#genetic-algorithm">Genetic Algorithm</a></li>
   <li><a href="#merging-objectives" id="toc-merging-objectives" class="nav-link" data-scroll-target="#merging-objectives">Merging Objectives</a></li>
-  <li><a href="#multifidelity-bayesian-optimization" id="toc-multifidelity-bayesian-optimization" class="nav-link" data-scroll-target="#multifidelity-bayesian-optimization">Multifidelity Bayesian Optimization</a></li>
-  <li><a href="#objectives-on-inputs" id="toc-objectives-on-inputs" class="nav-link" data-scroll-target="#objectives-on-inputs">Objectives on Inputs</a></li>
+  <li><a href="#multi-fidelity-bayesian-optimization" id="toc-multi-fidelity-bayesian-optimization" class="nav-link" data-scroll-target="#multi-fidelity-bayesian-optimization">Multi-fidelity Bayesian Optimization</a></li>
+  <li><a href="#multi-objective-multi-fidelity-bo" id="toc-multi-objective-multi-fidelity-bo" class="nav-link" data-scroll-target="#multi-objective-multi-fidelity-bo">Multi-Objective, Multi-Fidelity BO</a></li>
+  <li><a href="#input-features-as-output-objectives" id="toc-input-features-as-output-objectives" class="nav-link" data-scroll-target="#input-features-as-output-objectives">Input Features as Output Objectives</a></li>
   <li><a href="#random-forest-in-bofire" id="toc-random-forest-in-bofire" class="nav-link" data-scroll-target="#random-forest-in-bofire">Random Forest in BoFire</a></li>
   <li><a href="#transfer-learning-bo" id="toc-transfer-learning-bo" class="nav-link" data-scroll-target="#transfer-learning-bo">Transfer Learning BO</a></li>
-  <li><a href="#conditional-features-bo" id="toc-conditional-features-bo" class="nav-link" data-scroll-target="#conditional-features-bo">Conditional Features BO</a></li>
+  <li><a href="#predict-motor-octane-number-of-hydrocarbon-mixtures" id="toc-predict-motor-octane-number-of-hydrocarbon-mixtures" class="nav-link" data-scroll-target="#predict-motor-octane-number-of-hydrocarbon-mixtures">Predict Motor Octane Number of Hydrocarbon Mixtures</a></li>
+  <li><a href="#conditional-features" id="toc-conditional-features" class="nav-link" data-scroll-target="#conditional-features">Conditional Features</a></li>
   <li><a href="#llm-driven-molecular-optimization" id="toc-llm-driven-molecular-optimization" class="nav-link" data-scroll-target="#llm-driven-molecular-optimization">LLM-driven Molecular Optimization</a></li>
   <li><a href="#preference-learning-with-the-pairwise-gp" id="toc-preference-learning-with-the-pairwise-gp" class="nav-link" data-scroll-target="#preference-learning-with-the-pairwise-gp">Preference Learning with the Pairwise GP</a></li>
   </ul></li>
@@ -771,12 +779,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>These notebooks showcase more specialized and advanced use cases in BoFire. These examples are not necessarily better strategies, but represent more complex uses of components within the library.</p>
 <section id="available-tutorials" class="level2">
 <h2 class="anchored" data-anchor-id="available-tutorials">Available Tutorials</h2>
-<section id="custom-sobo" class="level3">
-<h3 class="anchored" data-anchor-id="custom-sobo"><a href="../../../docs/tutorials/advanced_examples/custom_sobo.html">Custom SOBO</a></h3>
+<section id="custom-sobo-strategy" class="level3">
+<h3 class="anchored" data-anchor-id="custom-sobo-strategy"><a href="../../../docs/tutorials/advanced_examples/custom_sobo.html">Custom SOBO Strategy</a></h3>
 <p>Create custom single-objective Bayesian optimization strategies.</p>
 </section>
-<section id="desirability-objectives" class="level3">
-<h3 class="anchored" data-anchor-id="desirability-objectives"><a href="../../../docs/tutorials/advanced_examples/desirability_objectives.html">Desirability Objectives</a></h3>
+<section id="desirability-functions-for-multi-objective-optimization" class="level3">
+<h3 class="anchored" data-anchor-id="desirability-functions-for-multi-objective-optimization"><a href="../../../docs/tutorials/advanced_examples/desirability_objectives.html">Desirability Functions for Multi-Objective Optimization</a></h3>
 <p>Working with desirability functions for multi-criteria optimization.</p>
 </section>
 <section id="genetic-algorithm" class="level3">
@@ -787,12 +795,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="merging-objectives"><a href="../../../docs/tutorials/advanced_examples/merging_objectives.html">Merging Objectives</a></h3>
 <p>Techniques for combining multiple objectives in optimization.</p>
 </section>
-<section id="multifidelity-bayesian-optimization" class="level3">
-<h3 class="anchored" data-anchor-id="multifidelity-bayesian-optimization"><a href="../../../docs/tutorials/advanced_examples/multifidelity_bo.html">Multifidelity Bayesian Optimization</a></h3>
+<section id="multi-fidelity-bayesian-optimization" class="level3">
+<h3 class="anchored" data-anchor-id="multi-fidelity-bayesian-optimization"><a href="../../../docs/tutorials/advanced_examples/multifidelity_bo.html">Multi-fidelity Bayesian Optimization</a></h3>
 <p>Leveraging multiple fidelity levels for efficient optimization.</p>
 </section>
-<section id="objectives-on-inputs" class="level3">
-<h3 class="anchored" data-anchor-id="objectives-on-inputs"><a href="../../../docs/tutorials/advanced_examples/objectives_on_inputs.html">Objectives on Inputs</a></h3>
+<section id="multi-objective-multi-fidelity-bo" class="level3">
+<h3 class="anchored" data-anchor-id="multi-objective-multi-fidelity-bo"><a href="../../../docs/tutorials/advanced_examples/multioutput_multifidelity_bo.html">Multi-Objective, Multi-Fidelity BO</a></h3>
+<p>Optimize multiple objectives across fidelity levels.</p>
+</section>
+<section id="input-features-as-output-objectives" class="level3">
+<h3 class="anchored" data-anchor-id="input-features-as-output-objectives"><a href="../../../docs/tutorials/advanced_examples/objectives_on_inputs.html">Input Features as Output Objectives</a></h3>
 <p>Defining optimization objectives directly on input parameters.</p>
 </section>
 <section id="random-forest-in-bofire" class="level3">
@@ -803,8 +815,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="transfer-learning-bo"><a href="../../../docs/tutorials/advanced_examples/transfer_learning_bo.html">Transfer Learning BO</a></h3>
 <p>Applying transfer learning techniques to Bayesian optimization.</p>
 </section>
-<section id="conditional-features-bo" class="level3">
-<h3 class="anchored" data-anchor-id="conditional-features-bo"><a href="../../../docs/tutorials/advanced_examples/conditional_features_bo.html">Conditional Features BO</a></h3>
+<section id="predict-motor-octane-number-of-hydrocarbon-mixtures" class="level3">
+<h3 class="anchored" data-anchor-id="predict-motor-octane-number-of-hydrocarbon-mixtures"><a href="../../../docs/tutorials/advanced_examples/octane_number.html">Predict Motor Octane Number of Hydrocarbon Mixtures</a></h3>
+<p>Predict the motor octane number of hydrocarbon mixtures with a surrogate model.</p>
+</section>
+<section id="conditional-features" class="level3">
+<h3 class="anchored" data-anchor-id="conditional-features"><a href="../../../docs/tutorials/advanced_examples/conditional_features_bo.html">Conditional Features</a></h3>
 <p>Define input features that are conditionally active.</p>
 </section>
 <section id="llm-driven-molecular-optimization" class="level3">
@@ -1298,8 +1314,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../../../docs/tutorials/advanced_examples/custom_sobo.html" class="pagination-link" aria-label="Custom Sobo Strategy">
-        <span class="nav-page-text">Custom Sobo Strategy</span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../../../docs/tutorials/advanced_examples/custom_sobo.html" class="pagination-link" aria-label="Custom SOBO Strategy">
+        <span class="nav-page-text">Custom SOBO Strategy</span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
@@ -1313,10 +1329,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">## Available Tutorials</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Custom SOBO](custom_sobo.qmd)</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Custom SOBO Strategy](custom_sobo.qmd)</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>Create custom single-objective Bayesian optimization strategies.</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Desirability Objectives](desirability_objectives.qmd)</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Desirability Functions for Multi-Objective Optimization](desirability_objectives.qmd)</span></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>Working with desirability functions for multi-criteria optimization.</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Genetic Algorithm](genetic_algorithm.qmd)</span></span>
@@ -1325,26 +1341,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Merging Objectives](merging_objectives.qmd)</span></span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>Techniques for combining multiple objectives in optimization.</span>
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Multifidelity Bayesian Optimization](multifidelity_bo.qmd)</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Multi-fidelity Bayesian Optimization](multifidelity_bo.qmd)</span></span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>Leveraging multiple fidelity levels for efficient optimization.</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Objectives on Inputs](objectives_on_inputs.qmd)</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>Defining optimization objectives directly on input parameters.</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Multi-Objective, Multi-Fidelity BO](multioutput_multifidelity_bo.qmd)</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>Optimize multiple objectives across fidelity levels.</span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Random Forest in BoFire](random_forest_in_bofire.qmd)</span></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>Using Random Forest as a surrogate model instead of Gaussian Processes.</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Input Features as Output Objectives](objectives_on_inputs.qmd)</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>Defining optimization objectives directly on input parameters.</span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Transfer Learning BO](transfer_learning_bo.qmd)</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>Applying transfer learning techniques to Bayesian optimization.</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Random Forest in BoFire](random_forest_in_bofire.qmd)</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>Using Random Forest as a surrogate model instead of Gaussian Processes.</span>
 <span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Conditional Features BO](conditional_features_bo.qmd)</span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>Define input features that are conditionally active.</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Transfer Learning BO](transfer_learning_bo.qmd)</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>Applying transfer learning techniques to Bayesian optimization.</span>
 <span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="fu">### [LLM-driven Molecular Optimization](llm_molecular.qmd)</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>Propose candidates with an <span class="in">`LLMStrategy`</span> that prompts a large language model with the optimization problem and prior experiments.</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Predict Motor Octane Number of Hydrocarbon Mixtures](octane_number.qmd)</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>Predict the motor octane number of hydrocarbon mixtures with a surrogate model.</span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Preference Learning with the Pairwise GP](pairwise_gp.qmd)</span></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>Learn a latent utility function from pairwise comparison data using Pairwise Gaussian Processes.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Conditional Features](conditional_features_bo.qmd)</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>Define input features that are conditionally active.</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="fu">### [LLM-driven Molecular Optimization](llm_molecular.qmd)</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>Propose candidates with an <span class="in">`LLMStrategy`</span> that prompts a large language model with the optimization problem and prior experiments.</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a><span class="fu">### [Preference Learning with the Pairwise GP](pairwise_gp.qmd)</span></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>Learn a latent utility function from pairwise comparison data using Pairwise Gaussian Processes.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

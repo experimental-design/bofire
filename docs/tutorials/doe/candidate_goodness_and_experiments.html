@@ -439,7 +439,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="example-checking-design-quality" class="level2">
 <h2 class="anchored" data-anchor-id="example-checking-design-quality">Example: Checking Design Quality</h2>
 <p>Let’s create a simple domain and check the quality of different experimental designs:</p>
-<div id="ea09656d" class="cell" data-execution_count="1">
+<div id="55a716e2" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Domain</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousInput, ContinuousOutput</span>
@@ -472,7 +472,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="how-many-experiments-are-recommended" class="level3">
 <h3 class="anchored" data-anchor-id="how-many-experiments-are-recommended">How many experiments are recommended?</h3>
-<div id="e005da05" class="cell" data-execution_count="2">
+<div id="7fb8d206" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>required <span class="op">=</span> strategy.get_required_number_of_experiments()</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Recommended number of experiments: </span><span class="sc">{</span>required<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Additional experiments needed (no candidates yet): </span><span class="sc">{</span>strategy<span class="sc">.</span>get_additional_experiments_needed()<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -486,7 +486,7 @@ Additional experiments needed (no candidates yet): 7</code></pre>
 <section id="looking-at-the-quality-of-candidates-towards-that-design" class="level3">
 <h3 class="anchored" data-anchor-id="looking-at-the-quality-of-candidates-towards-that-design">Looking at the quality of candidates towards that design</h3>
 <p>Let’s say you’ve run 2 experiments. If they’re good, we expect to only need 5 more for our D-Optimal linear design (recall above the recommended number of experiments was 7).</p>
-<div id="a4d687e0" class="cell" data-execution_count="3">
+<div id="97dc0aeb" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Two experiments along one axis only</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>candidates_partial <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"x1"</span>: [<span class="fl">0.0</span>, <span class="fl">1.0</span>],</span>
@@ -511,7 +511,7 @@ Additional experiments needed: 5</code></pre>
 </section>
 <section id="generating-and-evaluating-a-full-design" class="level3">
 <h3 class="anchored" data-anchor-id="generating-and-evaluating-a-full-design">Generating and evaluating a full design</h3>
-<div id="cb4bfe46" class="cell" data-execution_count="4">
+<div id="dab5e343" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate a full D-optimal design</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>full_doe <span class="op">=</span> strategy.ask(candidate_count<span class="op">=</span>required)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Generated </span><span class="sc">{</span><span class="bu">len</span>(full_doe)<span class="sc">}</span><span class="ss"> experiments:"</span>)</span>
@@ -529,12 +529,12 @@ Additional experiments needed: 5</code></pre>
 <pre><code>Generated 7 experiments:
     x1   x2   x3
 0  0.0  0.0  0.0
-1  0.0  1.0  1.0
-2  1.0  1.0  1.0
+1  0.0  0.0  1.0
+2  0.0  1.0  0.0
 3  1.0  1.0  0.0
-4  1.0  0.0  1.0
-5  0.0  1.0  0.0
-6  0.0  0.0  1.0
+4  0.0  0.0  1.0
+5  1.0  0.0  1.0
+6  1.0  1.0  1.0
 
 FIM rank: 4
 Additional experiments needed: 3</code></pre>
