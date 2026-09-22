@@ -5,7 +5,7 @@ from pydantic import Field
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
 from bofire.data_models.encodings.api import AnyCategoricalEncoding
-from bofire.data_models.features.api import AnyInput
+from bofire.data_models.features.api import AnyFeature
 from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 from bofire.data_models.types import InputTransformSpecs, NonRestrictedFeatureKeys
 
@@ -41,7 +41,7 @@ class FeatureSpecificKernel(Kernel):
     @classmethod
     def can_consume(
         cls,
-        feat: AnyInput,
+        feat: AnyFeature,
         encoding: Optional[AnyCategoricalEncoding] = None,
     ) -> bool:
         """Whether this kernel can act on a feature, given how it is encoded.
@@ -51,9 +51,10 @@ class FeatureSpecificKernel(Kernel):
         when it is one-hot encoded and meaningless when it carries integer codes.
 
         Args:
-            feat: The input feature in question.
+            feat: The feature in question. This may be an input or an engineered
+                feature; both end up as columns the kernel would have to act on.
             encoding: How that feature is encoded for the surrogate, if it is encoded
-                at all. Numerical features pass `None`.
+                at all. Numerical and engineered features pass `None`.
 
         Returns:
             Whether the feature can be part of this kernel's inputs.
@@ -63,7 +64,7 @@ class FeatureSpecificKernel(Kernel):
     @classmethod
     def accepted_encodings(
         cls,
-        feat: AnyInput,
+        feat: AnyFeature,
         candidates: Sequence[AnyCategoricalEncoding],
     ) -> Tuple[AnyCategoricalEncoding, ...]:
         """Which of the offered encodings this kernel could work with.
@@ -83,6 +84,17 @@ class FeatureSpecificKernel(Kernel):
         """
         return tuple(c for c in candidates if cls.can_consume(feat, c))
 
+    @staticmethod
+    def _candidate_features(
+        inputs: Inputs,
+        engineered_features: Optional[EngineeredFeatures] = None,
+    ) -> List[AnyFeature]:
+        """Everything a kernel could act on, inputs and engineered features alike."""
+        features: List[AnyFeature] = list(inputs.get())
+        if engineered_features is not None:
+            features += list(engineered_features.get())
+        return features
+
     def resolve_features(
         self,
         inputs: Inputs,
@@ -97,18 +109,15 @@ class FeatureSpecificKernel(Kernel):
             engineered_features: Quantities derived from the inputs, if any.
 
         Returns:
-            The selected keys, in the order the inputs declare them.
+            The selected keys, inputs first and in the order they are declared.
         """
-        engineered_keys = (
-            engineered_features.get_keys() if engineered_features is not None else []
-        )
         if self.features is not None:
             return list(self.features)
         return [
-            key
-            for key in inputs.get_keys()
-            if type(self).can_consume(inputs.get_by_key(key), encodings.get(key))
-        ] + engineered_keys
+            feat.key
+            for feat in self._candidate_features(inputs, engineered_features)
+            if type(self).can_consume(feat, encodings.get(feat.key))
+        ]
 
     def validate_inputs(
         self,
@@ -116,7 +125,10 @@ class FeatureSpecificKernel(Kernel):
         encodings: InputTransformSpecs,
         engineered_features: Optional[EngineeredFeatures] = None,
     ) -> None:
-        """Check that the features this kernel selects are ones it can act on.
+        """Check that the features this kernel names are ones it can act on.
+
+        Only an explicit `features` is checked. Left unset, the selection is filtered by
+        `can_consume` already and so cannot contain anything the kernel rejects.
 
         Args:
             inputs: The inputs of the surrogate this kernel belongs to.
@@ -124,28 +136,30 @@ class FeatureSpecificKernel(Kernel):
             engineered_features: Quantities derived from the inputs, if any.
 
         Raises:
-            ValueError: If an explicitly named feature cannot be consumed.
+            ValueError: If a named feature is unknown or cannot be consumed.
         """
-        if self.features is not None:
-            selected = self.resolve_features(inputs, encodings, engineered_features)
-            engineered_keys = (
-                engineered_features.get_keys()
-                if engineered_features is not None
-                else []
+        if self.features is None:
+            return
+
+        known = {
+            feat.key: feat
+            for feat in self._candidate_features(inputs, engineered_features)
+        }
+        if unknown := [key for key in self.features if key not in known]:
+            raise ValueError(
+                f"{type(self).__name__} names {sorted(unknown)}, which are neither "
+                f"inputs nor engineered features."
             )
-            rejected = [
-                key
-                for key in selected
-                if key not in engineered_keys
-                and not type(self).can_consume(
-                    inputs.get_by_key(key), encodings.get(key)
-                )
-            ]
-            if rejected:
-                raise ValueError(
-                    f"{type(self).__name__} cannot act on {sorted(rejected)}. Either "
-                    f"drop them from `features` or encode them differently."
-                )
+        rejected = [
+            key
+            for key in self.features
+            if not type(self).can_consume(known[key], encodings.get(key))
+        ]
+        if rejected:
+            raise ValueError(
+                f"{type(self).__name__} cannot act on {sorted(rejected)}. Either drop "
+                f"them from `features` or encode them differently."
+            )
 
 
 class ARDKernel(BaseModel):

@@ -19,6 +19,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousTaskInput,
     DiscreteInput,
+    SumFeature,
 )
 from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
@@ -35,6 +36,7 @@ DISC = DiscreteInput(key="disc", values=[1.0, 2.0])
 CAT_TASK = CategoricalTaskInput(key="task", categories=["t1", "t2"])
 CONT_TASK = ContinuousTaskInput(key="fidelity", bounds=(0, 1))
 FINGERPRINTS = DescriptorEncoding(generators=[Fingerprints()])
+ENGINEERED = SumFeature(key="sum", features=["cont", "disc"])
 
 
 @pytest.mark.parametrize(
@@ -65,6 +67,11 @@ FINGERPRINTS = DescriptorEncoding(generators=[Fingerprints()])
         ),
         (TanimotoKernel, CAT, DescriptorEncoding(), False),
         (TanimotoKernel, CONT, None, False),
+        # an engineered feature is a number: only a continuous kernel can take it
+        (RBFKernel, ENGINEERED, None, True),
+        (HammingDistanceKernel, ENGINEERED, None, False),
+        (TanimotoKernel, ENGINEERED, None, False),
+        (DownsamplingKernel, ENGINEERED, None, False),
         # a fidelity kernel encodes a continuous task
         (DownsamplingKernel, CONT_TASK, None, True),
         (DownsamplingKernel, CONT, None, False),
@@ -124,15 +131,35 @@ def test_resolve_features_can_be_empty():
     assert RBFKernel().resolve_features(inputs, {"cat": OrdinalEncoding()}) == []
 
 
-def test_resolve_features_appends_engineered_features_without_filtering():
+def test_engineered_features_are_filtered_like_any_other():
+    """They are numeric columns, so only a kernel that takes numbers gets them."""
+    inputs = Inputs(features=[CONT, DISC, CAT])
+    engineered = EngineeredFeatures(features=[ENGINEERED])
+    encodings = {"cat": OrdinalEncoding()}
+
+    assert RBFKernel().resolve_features(inputs, encodings, engineered) == [
+        "cont",
+        "disc",
+        "sum",
+    ]
+    # a categorical kernel must not pick up the sum
+    assert HammingDistanceKernel().resolve_features(inputs, encodings, engineered) == [
+        "cat"
+    ]
+
+
+def test_validate_inputs_rejects_an_unknown_key():
     inputs = Inputs(features=[CONT, CAT])
-    engineered = EngineeredFeatures()
 
-    resolved = RBFKernel().resolve_features(
-        inputs, {"cat": OrdinalEncoding()}, engineered
-    )
+    with pytest.raises(ValueError, match="neither inputs nor engineered features"):
+        RBFKernel(features=["nope"]).validate_inputs(inputs, {})
 
-    assert resolved == ["cont"] + engineered.get_keys()
+
+def test_validate_inputs_accepts_a_named_engineered_feature():
+    inputs = Inputs(features=[CONT, DISC])
+    engineered = EngineeredFeatures(features=[ENGINEERED])
+
+    RBFKernel(features=["sum"]).validate_inputs(inputs, {}, engineered)
 
 
 def test_validate_inputs_rejects_an_explicitly_named_feature_it_cannot_consume():

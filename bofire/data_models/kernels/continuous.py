@@ -3,7 +3,12 @@ from typing import List, Literal, Optional, Union
 from pydantic import Field, PositiveInt, model_validator
 
 from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
-from bofire.data_models.features.api import CategoricalInput, NumericalInput, TaskInput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    EngineeredFeature,
+    NumericalInput,
+    TaskInput,
+)
 from bofire.data_models.kernels.kernel import (
     ARDKernel,
     FeatureSpecificKernel,
@@ -17,15 +22,16 @@ class ContinuousKernel(FeatureSpecificKernel):
 
     Compares inputs by numeric distance, so it can act on a categorical only when the
     encoding turns it into coordinates that a distance is meaningful over -- one-hot or
-    descriptor columns, but not the integer codes of an ordinal encoding. A task input
-    is excluded: which task an observation belongs to is not a position in the space.
+    descriptor columns, but not the integer codes of an ordinal encoding. An engineered
+    feature is numeric and so is acted on like any other number. A task input is
+    excluded: which task an observation belongs to is not a position in the space.
     """
 
     @classmethod
     def can_consume(cls, feat, encoding=None) -> bool:
         if isinstance(feat, TaskInput):
             return False
-        if isinstance(feat, NumericalInput):
+        if isinstance(feat, (NumericalInput, EngineeredFeature)):
             return True
         if isinstance(feat, CategoricalInput):
             return isinstance(encoding, (OneHotEncoding, DescriptorEncoding))
