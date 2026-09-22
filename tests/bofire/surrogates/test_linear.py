@@ -1,20 +1,17 @@
 import numpy as np
 import pytest
 from pandas.testing import assert_frame_equal
+from pydantic import TypeAdapter, ValidationError
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.data_models.kernels.api import LinearKernel
-from bofire.data_models.priors.api import (
-    HVARFNER_NOISE_PRIOR,
-    THREESIX_SCALE_PRIOR,
-    GreaterThan,
-)
+from bofire.data_models.kernels.api import LinearKernel, RBFKernel
+from bofire.data_models.priors.api import GreaterThan
 from bofire.data_models.surrogates.api import (
+    AnySurrogate,
     BotorchSurrogates,
     LinearSurrogate,
-    ScalerEnum,
     SingleTaskGPSurrogate,
 )
 
@@ -78,74 +75,28 @@ def test_can_define_botorch_surrogate():
     )
 
 
-def test_linear_surrogate_is_a_single_task_gp():
-    """The preset is a function, so what it returns serializes as a plain GP."""
+def test_linear_surrogate_is_a_narrowed_single_task_gp():
+    """It is a SingleTaskGP whose kernel cannot be anything but linear."""
     inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
     outputs = Outputs(features=[ContinuousOutput(key="c")])
-
-    surrogate_data = LinearSurrogate(inputs=inputs, outputs=outputs)
-
-    assert isinstance(surrogate_data, SingleTaskGPSurrogate)
-    assert surrogate_data.type == "SingleTaskGPSurrogate"
-    assert surrogate_data.kernel == LinearKernel()
-    # the single-task GP search would replace the linear kernel
-    assert surrogate_data.hyperconfig is None
-
-
-def test_linear_surrogate_noise_constraint_matches_the_gp_default():
-    """The preset leaves `noise_constraint` alone rather than restating it.
-
-    It used to set `GreaterThan(lower_bound=1e-4)` explicitly, which is exactly what
-    `SingleTaskGPSurrogate` already defaults to, so the override changed nothing.
-    Leaving it out means pydantic supplies a freshly deep-copied default.
-    """
-    inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
-    outputs = Outputs(features=[ContinuousOutput(key="c")])
-
-    first = LinearSurrogate(inputs=inputs, outputs=outputs)
-    second = LinearSurrogate(inputs=inputs, outputs=outputs)
-
-    assert first.noise_constraint == GreaterThan(lower_bound=1e-4)
-    assert first.noise_constraint is not second.noise_constraint
-
-
-def test_linear_surrogate_explicit_arguments_override_the_preset():
-    inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
-    outputs = Outputs(features=[ContinuousOutput(key="c")])
-
-    surrogate = LinearSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        noise_prior=HVARFNER_NOISE_PRIOR(),
-    )
-
-    assert surrogate.noise_prior == HVARFNER_NOISE_PRIOR()
-
-
-def test_preset_takes_only_what_it_decides():
-    """A field the preset has no opinion on is set on the result, not passed in."""
-    inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
-    outputs = Outputs(features=[ContinuousOutput(key="c")])
-
-    with pytest.raises(TypeError, match="output_scaler"):
-        LinearSurrogate(inputs=inputs, outputs=outputs, output_scaler=ScalerEnum.LOG)
 
     surrogate = LinearSurrogate(inputs=inputs, outputs=outputs)
-    surrogate.output_scaler = ScalerEnum.LOG
-    assert surrogate.output_scaler == ScalerEnum.LOG
+
+    assert isinstance(surrogate, SingleTaskGPSurrogate)
+    assert surrogate.kernel == LinearKernel()
+    # the single-task GP config would search over RBF and Matern
+    assert surrogate.hyperconfig is None
+    # ...and unlike a preset function, the narrowing survives assignment
+    with pytest.raises(ValidationError):
+        surrogate.kernel = RBFKernel()
 
 
-def test_linear_surrogate_exposes_the_kernel_variance_prior():
-    """The kernel is fixed, so its hyperparameters have to be reachable through it."""
+def test_linear_surrogate_round_trips_as_itself():
     inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
     outputs = Outputs(features=[ContinuousOutput(key="c")])
 
-    surrogate = LinearSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        variance_prior=THREESIX_SCALE_PRIOR(),
-    )
+    surrogate = LinearSurrogate(inputs=inputs, outputs=outputs)
+    restored = TypeAdapter(AnySurrogate).validate_python(surrogate.model_dump())
 
-    assert surrogate.kernel == LinearKernel(variance_prior=THREESIX_SCALE_PRIOR())
-    # omitting it leaves the kernel's own default
-    assert LinearSurrogate(inputs=inputs, outputs=outputs).kernel == LinearKernel()
+    assert isinstance(restored, LinearSurrogate)
+    assert restored == surrogate

@@ -1,10 +1,12 @@
 import numpy as np
+import pytest
 from pandas.testing import assert_frame_equal
+from pydantic import ValidationError
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.data_models.kernels.api import PolynomialKernel
+from bofire.data_models.kernels.api import PolynomialKernel, RBFKernel
 from bofire.data_models.priors.api import THREESIX_SCALE_PRIOR, GreaterThan
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
@@ -33,10 +35,10 @@ def test_polynomial_surrogate():
     )
     experiments["valid_c"] = 1
 
-    surrogate_data = PolynomialSurrogate(
+    surrogate_data = PolynomialSurrogate.from_power(
+        power=2,
         inputs=inputs,
         outputs=outputs,
-        power=2,
     )
     surrogate_data.noise_constraint = GreaterThan(lower_bound=5e-4)
     surrogate = surrogates.map(surrogate_data)
@@ -82,36 +84,29 @@ def test_can_define_botorch_surrogate():
     )
 
 
-def test_polynomial_surrogate_is_a_single_task_gp():
-    """The preset is a function, so what it returns serializes as a plain GP."""
+def test_polynomial_surrogate_is_a_narrowed_single_task_gp():
+    """It is a SingleTaskGP whose kernel cannot be anything but polynomial."""
     inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
     outputs = Outputs(features=[ContinuousOutput(key="c")])
 
-    surrogate_data = PolynomialSurrogate(inputs=inputs, outputs=outputs, power=3)
+    surrogate = PolynomialSurrogate.from_power(power=3, inputs=inputs, outputs=outputs)
 
-    assert isinstance(surrogate_data, SingleTaskGPSurrogate)
-    assert surrogate_data.type == "SingleTaskGPSurrogate"
-    assert surrogate_data.kernel == PolynomialKernel(power=3)
-    # the single-task GP search would replace the polynomial kernel
-    assert surrogate_data.hyperconfig is None
+    assert isinstance(surrogate, SingleTaskGPSurrogate)
+    assert surrogate.kernel == PolynomialKernel(power=3)
+    assert surrogate.hyperconfig is None
+    with pytest.raises(ValidationError):
+        surrogate.kernel = RBFKernel()
 
 
 def test_polynomial_surrogate_exposes_the_kernel_offset_prior():
-    """The kernel is fixed, so its hyperparameters have to be reachable through it."""
+    """The kernel is a field, so its hyperparameters are reachable through it."""
     inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
     outputs = Outputs(features=[ContinuousOutput(key="c")])
 
     surrogate = PolynomialSurrogate(
         inputs=inputs,
         outputs=outputs,
-        power=3,
-        offset_prior=THREESIX_SCALE_PRIOR(),
+        kernel=PolynomialKernel(power=3, offset_prior=THREESIX_SCALE_PRIOR()),
     )
 
-    assert surrogate.kernel == PolynomialKernel(
-        power=3, offset_prior=THREESIX_SCALE_PRIOR()
-    )
-    # omitting it leaves the kernel's own default
-    assert PolynomialSurrogate(inputs=inputs, outputs=outputs).kernel == (
-        PolynomialKernel(power=2)
-    )
+    assert surrogate.kernel.offset_prior == THREESIX_SCALE_PRIOR()

@@ -26,6 +26,7 @@ from bofire.data_models.surrogates.mlp import (
     RegressionMLPEnsemble,
 )
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
+from bofire.data_models.surrogates.presets import LinearSurrogate, PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
@@ -42,6 +43,8 @@ _BOTORCH_SURROGATE_TYPES: List[Type[BotorchSurrogate]] = [
     ClassificationMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
     TanimotoGPSurrogate,
+    LinearSurrogate,
+    PolynomialSurrogate,
     LinearDeterministicSurrogate,
     CategoricalDeterministicSurrogate,
     MultiTaskGPSurrogate,

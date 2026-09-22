@@ -1,113 +1,118 @@
 """Surrogate presets.
 
-A preset is a named configuration of an existing surrogate rather than a surrogate in
-its own right. It is a function, not a data model, so what it returns serializes as the
-surrogate it configures -- there is no extra type to register, and a caller can always
-reach the same result by hand.
+A preset is a named configuration of an existing surrogate. These two fix the kernel of
+a `SingleTaskGPSurrogate` and adjust the defaults that choice implies, and they are
+classes rather than functions because narrowing `kernel` is a *type* constraint: it is
+enforced on assignment and on deserialization, it survives a round trip, and it reaches
+`model_json_schema()`, none of which a function returning a configured surrogate can do.
 
-The same split applies to the priors, where `THREESIX_LENGTHSCALE_PRIOR` and its
-siblings are `partial`s over `GammaPrior` rather than classes.
-
-A preset takes exactly two kinds of argument: the hyperparameters of the kernel it
-fixes, which is what makes it that preset, and the fields whose default it changes. It
-does not re-export the rest of the surrogate's fields, so the signature stays a
-statement of what the preset decides rather than a second copy of
-`SingleTaskGPSurrogate`'s surface that could drift from it.
-
-To set anything else, assign it on the result -- which stays fully validated, model
-validators included -- or build the surrogate directly:
-
-    >>> surrogate = LinearSurrogate(inputs=inputs, outputs=outputs)
-    >>> surrogate.output_scaler = ScalerEnum.LOG
+The priors draw the line on the other side -- `THREESIX_LENGTHSCALE_PRIOR` and its
+siblings are `partial`s over `GammaPrior`, because they only choose values and forbid
+nothing.
 """
 
-from typing import Optional
+from typing import Literal, Optional
+
+from pydantic import Field
 
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.kernels.api import LinearKernel, PolynomialKernel
 from bofire.data_models.priors.api import THREESIX_NOISE_PRIOR, AnyPrior
+from bofire.data_models.surrogates.botorch import KERNEL_DESCRIPTION
 from bofire.data_models.surrogates.single_task_gp import (
     SingleTaskGPHyperconfig,
     SingleTaskGPSurrogate,
 )
 
 
-def LinearSurrogate(
-    inputs: Inputs,
-    outputs: Outputs,
-    variance_prior: Optional[AnyPrior] = None,
-    noise_prior: Optional[AnyPrior] = None,
-    hyperconfig: Optional[SingleTaskGPHyperconfig] = None,
-) -> SingleTaskGPSurrogate:
-    """Build a single-task GP restricted to linear responses.
+HYPERCONFIG_DESCRIPTION = (
+    "Configuration of a hyperparameter optimization for this surrogate. There is no "
+    "default one, because the single-task GP config varies over RBF and Matern and "
+    "would discard the kernel this surrogate fixes."
+)
+NOISE_PRIOR_DESCRIPTION = (
+    "Prior over the observation noise, which sets how much of the spread in the data "
+    "the model attributes to measurement error rather than to the response. Defaults "
+    "to the three-six gamma prior rather than to the log-normal one a single-task GP "
+    "uses."
+)
+
+
+class LinearSurrogate(SingleTaskGPSurrogate):
+    """Gaussian process restricted to linear responses.
 
     The linear kernel still yields a predicted uncertainty, so the surrogate can be used
     in a Bayesian optimization loop, but it cannot represent curvature. Pick it when the
     response is known to be linear, or when there are too few experiments to support
     anything richer.
 
-    Args:
-        inputs: Input features the surrogate acts on.
-        outputs: Output feature the surrogate predicts.
-        variance_prior: Prior over the linear kernel's variance, which sets how large a
-            slope the model expects. Defaults to none, leaving it unconstrained.
-        noise_prior: Prior over the observation noise. Defaults to the three-six gamma
-            prior rather than to the log-normal one a single-task GP would use.
-        hyperconfig: Configuration of a hyperparameter optimization. Defaults to none,
-            because the single-task GP config varies over RBF and Matern and would
-            discard the linear kernel.
-    Returns:
-        A `SingleTaskGPSurrogate` with a `LinearKernel`.
-
     Examples:
         >>> surrogate = LinearSurrogate(inputs=inputs, outputs=outputs)
     """
-    return SingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        kernel=LinearKernel(variance_prior=variance_prior),
-        noise_prior=noise_prior if noise_prior is not None else THREESIX_NOISE_PRIOR(),
-        hyperconfig=hyperconfig,
+
+    type: Literal["LinearSurrogate"] = "LinearSurrogate"
+
+    kernel: LinearKernel = Field(
+        default_factory=lambda: LinearKernel(),
+        description=KERNEL_DESCRIPTION
+        + " Fixed to the linear kernel, which is what restricts the response to a "
+        "linear one.",
+    )
+    noise_prior: AnyPrior = Field(
+        default_factory=lambda: THREESIX_NOISE_PRIOR(),
+        description=NOISE_PRIOR_DESCRIPTION,
+    )
+    hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
+        default=None,
+        description=HYPERCONFIG_DESCRIPTION,
     )
 
 
-def PolynomialSurrogate(
-    inputs: Inputs,
-    outputs: Outputs,
-    power: int = 2,
-    offset_prior: Optional[AnyPrior] = None,
-    noise_prior: Optional[AnyPrior] = None,
-    hyperconfig: Optional[SingleTaskGPHyperconfig] = None,
-) -> SingleTaskGPSurrogate:
-    """Build a single-task GP restricted to polynomial responses of a fixed degree.
+class PolynomialSurrogate(SingleTaskGPSurrogate):
+    """Gaussian process restricted to polynomial responses of a fixed degree.
 
     The polynomial kernel expresses curvature and interactions between inputs, but only
-    up to `power`, so the fit stays interpretable where an RBF kernel would take an
-    arbitrary shape. Pick it when a response surface of a known order is expected, as in
-    a classical DoE.
-
-    Args:
-        inputs: Input features the surrogate acts on.
-        outputs: Output feature the surrogate predicts.
-        power: Degree of the polynomial response.
-        offset_prior: Prior over the polynomial kernel's offset, which sets how much
-            weight the lower-order terms carry. Defaults to none, leaving it
-            unconstrained.
-        noise_prior: Prior over the observation noise. Defaults to the three-six gamma
-            prior rather than to the log-normal one a single-task GP would use.
-        hyperconfig: Configuration of a hyperparameter optimization. Defaults to none,
-            because the single-task GP config varies over RBF and Matern and would
-            discard the polynomial kernel.
-    Returns:
-        A `SingleTaskGPSurrogate` with a `PolynomialKernel`.
+    up to the kernel's `power`, so the fit stays interpretable where an RBF kernel would
+    take an arbitrary shape. Pick it when a response surface of a known order is
+    expected, as in a classical DoE.
 
     Examples:
-        >>> surrogate = PolynomialSurrogate(inputs=inputs, outputs=outputs, power=3)
+        >>> surrogate = PolynomialSurrogate(
+        ...     inputs=inputs, outputs=outputs, kernel=PolynomialKernel(power=3)
+        ... )
     """
-    return SingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        kernel=PolynomialKernel(power=power, offset_prior=offset_prior),
-        noise_prior=noise_prior if noise_prior is not None else THREESIX_NOISE_PRIOR(),
-        hyperconfig=hyperconfig,
+
+    type: Literal["PolynomialSurrogate"] = "PolynomialSurrogate"
+
+    kernel: PolynomialKernel = Field(
+        default_factory=lambda: PolynomialKernel(power=2),
+        description=KERNEL_DESCRIPTION
+        + " Fixed to the polynomial kernel, whose `power` sets the degree of the "
+        "response.",
     )
+    noise_prior: AnyPrior = Field(
+        default_factory=lambda: THREESIX_NOISE_PRIOR(),
+        description=NOISE_PRIOR_DESCRIPTION,
+    )
+    hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
+        default=None,
+        description=HYPERCONFIG_DESCRIPTION,
+    )
+
+    @staticmethod
+    def from_power(power: int, inputs: Inputs, outputs: Outputs):
+        """Build a surrogate whose polynomial kernel has the given degree.
+
+        Args:
+            power: Degree of the polynomial response.
+            inputs: Input features the surrogate acts on.
+            outputs: Output feature the surrogate predicts.
+
+        Returns:
+            The configured surrogate.
+        """
+        return PolynomialSurrogate(
+            kernel=PolynomialKernel(power=power),
+            inputs=inputs,
+            outputs=outputs,
+        )

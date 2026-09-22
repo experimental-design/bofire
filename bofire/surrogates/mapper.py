@@ -88,6 +88,8 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.RegressionMLPEnsemble: RegressionMLPEnsemble,
     data_models.ClassificationMLPEnsemble: ClassificationMLPEnsemble,
     data_models.FullyBayesianSingleTaskGPSurrogate: FullyBayesianSingleTaskGPSurrogate,
+    data_models.LinearSurrogate: SingleTaskGPSurrogate,
+    data_models.PolynomialSurrogate: SingleTaskGPSurrogate,
     data_models.TanimotoGPSurrogate: TanimotoGPSurrogate,
     data_models.LinearDeterministicSurrogate: LinearDeterministicSurrogate,
     data_models.MultiTaskGPSurrogate: MultiTaskGPSurrogate,
