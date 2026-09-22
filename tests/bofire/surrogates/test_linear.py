@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
@@ -13,6 +14,7 @@ from bofire.data_models.priors.api import (
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     LinearSurrogate,
+    ScalerEnum,
     SingleTaskGPSurrogate,
 )
 
@@ -37,11 +39,8 @@ def test_LinearSurrogate():
     )
     experiments["valid_c"] = 1
 
-    surrogate_data = LinearSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        noise_constraint=GreaterThan(lower_bound=5e-4),
-    )
+    surrogate_data = LinearSurrogate(inputs=inputs, outputs=outputs)
+    surrogate_data.noise_constraint = GreaterThan(lower_bound=5e-4)
     surrogate = surrogates.map(surrogate_data)
 
     assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
@@ -94,11 +93,11 @@ def test_linear_surrogate_is_a_single_task_gp():
 
 
 def test_linear_surrogate_noise_constraint_matches_the_gp_default():
-    """The preset forwards `noise_constraint` rather than restating it.
+    """The preset leaves `noise_constraint` alone rather than restating it.
 
     It used to set `GreaterThan(lower_bound=1e-4)` explicitly, which is exactly what
-    `SingleTaskGPSurrogate` already defaults to. Forwarding means pydantic supplies a
-    freshly deep-copied default instead of one instance shared by every call.
+    `SingleTaskGPSurrogate` already defaults to, so the override changed nothing.
+    Leaving it out means pydantic supplies a freshly deep-copied default.
     """
     inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
     outputs = Outputs(features=[ContinuousOutput(key="c")])
@@ -118,12 +117,22 @@ def test_linear_surrogate_explicit_arguments_override_the_preset():
         inputs=inputs,
         outputs=outputs,
         noise_prior=HVARFNER_NOISE_PRIOR(),
-        noise_constraint=None,
     )
 
     assert surrogate.noise_prior == HVARFNER_NOISE_PRIOR()
-    # None is passable and means "no constraint", not "use the preset default"
-    assert surrogate.noise_constraint is None
+
+
+def test_preset_takes_only_what_it_decides():
+    """A field the preset has no opinion on is set on the result, not passed in."""
+    inputs = Inputs(features=[ContinuousInput(key="a", bounds=(0, 40))])
+    outputs = Outputs(features=[ContinuousOutput(key="c")])
+
+    with pytest.raises(TypeError, match="output_scaler"):
+        LinearSurrogate(inputs=inputs, outputs=outputs, output_scaler=ScalerEnum.LOG)
+
+    surrogate = LinearSurrogate(inputs=inputs, outputs=outputs)
+    surrogate.output_scaler = ScalerEnum.LOG
+    assert surrogate.output_scaler == ScalerEnum.LOG
 
 
 def test_linear_surrogate_exposes_the_kernel_variance_prior():

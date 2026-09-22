@@ -8,14 +8,17 @@ reach the same result by hand.
 The same split applies to the priors, where `THREESIX_LENGTHSCALE_PRIOR` and its
 siblings are `partial`s over `GammaPrior` rather than classes.
 
-Each preset names explicitly the fields whose default it *changes*, plus the
-hyperparameters of the kernel it fixes, so the signature shows what the preset decides.
-Everything else is forwarded to the surrogate untouched, which is deliberate: pydantic
-deep-copies a field default, while a live object in a function signature would be
-shared across every call.
+A preset takes exactly two kinds of argument: the hyperparameters of the kernel it
+fixes, which is what makes it that preset, and the fields whose default it changes. It
+does not re-export the rest of the surrogate's fields, so the signature stays a
+statement of what the preset decides rather than a second copy of
+`SingleTaskGPSurrogate`'s surface that could drift from it.
 
-Restricting the fixed kernel to a subset of the inputs is the one thing a preset cannot
-express. Build the surrogate directly for that.
+To set anything else, assign it on the result -- which stays fully validated, model
+validators included -- or build the surrogate directly:
+
+    >>> surrogate = LinearSurrogate(inputs=inputs, outputs=outputs)
+    >>> surrogate.output_scaler = ScalerEnum.LOG
 """
 
 from typing import Optional
@@ -35,7 +38,6 @@ def LinearSurrogate(
     variance_prior: Optional[AnyPrior] = None,
     noise_prior: Optional[AnyPrior] = None,
     hyperconfig: Optional[SingleTaskGPHyperconfig] = None,
-    **kwargs,
 ) -> SingleTaskGPSurrogate:
     """Build a single-task GP restricted to linear responses.
 
@@ -54,9 +56,6 @@ def LinearSurrogate(
         hyperconfig: Configuration of a hyperparameter optimization. Defaults to none,
             because the single-task GP config varies over RBF and Matern and would
             discard the linear kernel.
-        **kwargs: Any remaining field of `SingleTaskGPSurrogate`, forwarded unchanged,
-            so its own defaults apply.
-
     Returns:
         A `SingleTaskGPSurrogate` with a `LinearKernel`.
 
@@ -69,7 +68,6 @@ def LinearSurrogate(
         kernel=LinearKernel(variance_prior=variance_prior),
         noise_prior=noise_prior if noise_prior is not None else THREESIX_NOISE_PRIOR(),
         hyperconfig=hyperconfig,
-        **kwargs,
     )
 
 
@@ -80,7 +78,6 @@ def PolynomialSurrogate(
     offset_prior: Optional[AnyPrior] = None,
     noise_prior: Optional[AnyPrior] = None,
     hyperconfig: Optional[SingleTaskGPHyperconfig] = None,
-    **kwargs,
 ) -> SingleTaskGPSurrogate:
     """Build a single-task GP restricted to polynomial responses of a fixed degree.
 
@@ -101,9 +98,6 @@ def PolynomialSurrogate(
         hyperconfig: Configuration of a hyperparameter optimization. Defaults to none,
             because the single-task GP config varies over RBF and Matern and would
             discard the polynomial kernel.
-        **kwargs: Any remaining field of `SingleTaskGPSurrogate`, forwarded unchanged,
-            so its own defaults apply.
-
     Returns:
         A `SingleTaskGPSurrogate` with a `PolynomialKernel`.
 
@@ -116,5 +110,4 @@ def PolynomialSurrogate(
         kernel=PolynomialKernel(power=power, offset_prior=offset_prior),
         noise_prior=noise_prior if noise_prior is not None else THREESIX_NOISE_PRIOR(),
         hyperconfig=hyperconfig,
-        **kwargs,
     )
