@@ -12,9 +12,21 @@ from bofire.data_models.priors.constraint import Positive
 
 
 class CategoricalKernel(FeatureSpecificKernel):
-    """Kernel acting on categorical inputs."""
+    """Kernel acting on categorical inputs.
 
-    pass
+    Compares categories by identity rather than by distance, so it needs each category
+    to arrive as a single code. That is what an ordinal encoding produces; a one-hot or
+    descriptor encoding spreads a category over several columns and is not usable here.
+    """
+
+    @classmethod
+    def can_consume(cls, feat, encoding=None) -> bool:
+        from bofire.data_models.encodings.api import OrdinalEncoding
+        from bofire.data_models.features.api import CategoricalInput
+
+        return isinstance(feat, CategoricalInput) and isinstance(
+            encoding, OrdinalEncoding
+        )
 
 
 class HammingDistanceKernel(ARDKernel, LengthscaleKernel, CategoricalKernel):

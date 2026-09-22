@@ -19,6 +19,12 @@ class FidelityKernel(FeatureSpecificKernel):
 
     type: Any
 
+    @classmethod
+    def can_consume(cls, feat, encoding=None) -> bool:
+        from bofire.data_models.features.api import ContinuousTaskInput
+
+        return isinstance(feat, ContinuousTaskInput)
+
 
 class DownsamplingKernel(FidelityKernel):
     r"""Kernel encoding that a task approaches the target as its fidelity rises.

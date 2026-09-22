@@ -11,9 +11,30 @@ from bofire.data_models.priors.api import AnyPrior
 
 
 class ContinuousKernel(FeatureSpecificKernel):
-    """Kernel acting on continuous inputs."""
+    """Kernel acting on continuous inputs.
 
-    pass
+    Compares inputs by numeric distance, so it can act on a categorical only when the
+    encoding turns it into coordinates that a distance is meaningful over -- one-hot or
+    descriptor columns, but not the integer codes of an ordinal encoding. A task input
+    is excluded: which task an observation belongs to is not a position in the space.
+    """
+
+    @classmethod
+    def can_consume(cls, feat, encoding=None) -> bool:
+        from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
+        from bofire.data_models.features.api import (
+            CategoricalInput,
+            NumericalInput,
+            TaskInput,
+        )
+
+        if isinstance(feat, TaskInput):
+            return False
+        if isinstance(feat, NumericalInput):
+            return True
+        if isinstance(feat, CategoricalInput):
+            return isinstance(encoding, (OneHotEncoding, DescriptorEncoding))
+        return False
 
 
 class RBFKernel(ARDKernel, LengthscaleKernel, ContinuousKernel):
