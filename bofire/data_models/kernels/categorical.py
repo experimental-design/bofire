@@ -2,9 +2,12 @@ from typing import Annotated, Literal, Optional
 
 from pydantic import Field, model_validator
 
+from bofire.data_models.encodings.api import OrdinalEncoding
+from bofire.data_models.features.api import CategoricalInput, DiscreteInput
 from bofire.data_models.kernels.kernel import (
     ARDKernel,
     FeatureSpecificKernel,
+    KernelInputs,
     LengthscaleKernel,
 )
 from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
@@ -12,9 +15,47 @@ from bofire.data_models.priors.constraint import Positive
 
 
 class CategoricalKernel(FeatureSpecificKernel):
-    """Kernel acting on categorical inputs."""
+    """Kernel comparing values by identity rather than by distance.
 
-    pass
+    Works on features with a finite set of values: categoricals, under any encoding, and
+    discrete inputs. A continuous input or an engineered feature has no categories to
+    compare.
+    """
+
+    @classmethod
+    def can_consume(cls, feat, encoding=None) -> bool:
+        return isinstance(feat, (CategoricalInput, DiscreteInput))
+
+
+def _validate_index_feature(
+    kernel: "IndexKernel | PositiveIndexKernel", context: KernelInputs
+) -> None:
+    """Check that an index kernel is applied to exactly one integer-coded categorical.
+
+    Raises:
+        ValueError: If the kernel selects other than one feature, that feature is not an
+            ordinal-encoded categorical, or its category count differs from
+            `num_categories`.
+    """
+    name = type(kernel).__name__
+    selected = kernel.selected_features(context)
+    if len(selected) != 1:
+        raise ValueError(
+            f"{name} works on exactly one feature, but is applied to {selected}."
+        )
+    (key,) = selected
+    feat = context.get(key)
+    if not isinstance(feat, CategoricalInput) or not isinstance(
+        context.encoding(key), OrdinalEncoding
+    ):
+        raise ValueError(
+            f"{name} needs an ordinal-encoded categorical, but '{key}' is not one."
+        )
+    if len(feat.categories) != kernel.num_categories:
+        raise ValueError(
+            f"{name} has num_categories={kernel.num_categories}, but '{key}' has "
+            f"{len(feat.categories)} categories."
+        )
 
 
 class HammingDistanceKernel(ARDKernel, LengthscaleKernel, CategoricalKernel):
@@ -76,6 +117,10 @@ class IndexKernel(CategoricalKernel):
         if self.rank is not None and self.rank > self.num_categories:
             raise ValueError("rank must be less than or equal to num_categories")
         return self
+
+    def validate_inputs(self, context: KernelInputs) -> None:
+        _validate_index_feature(self, context)
+        super().validate_inputs(context)
 
 
 class PositiveIndexKernel(CategoricalKernel):
@@ -156,3 +201,7 @@ class PositiveIndexKernel(CategoricalKernel):
         ):
             raise ValueError("target_task_index must be less than num_categories-1")
         return self
+
+    def validate_inputs(self, context: KernelInputs) -> None:
+        _validate_index_feature(self, context)
+        super().validate_inputs(context)

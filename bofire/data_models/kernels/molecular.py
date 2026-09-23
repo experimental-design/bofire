@@ -4,7 +4,12 @@ from bofire.data_models.kernels.kernel import ARDKernel, FeatureSpecificKernel
 
 
 class MolecularKernel(FeatureSpecificKernel):
-    """Kernel acting on molecular descriptors."""
+    """Kernel comparing molecules by the structural features they share.
+
+    Meant for fingerprint or fragment columns, whether from a categorical's descriptor
+    encoding or from an engineered feature blending them. The columns must not be
+    negative.
+    """
 
     pass
 
