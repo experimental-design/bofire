@@ -1,177 +1,214 @@
-"""What each kernel declares it can act on, and how that resolves against a domain."""
+"""Whether a kernel can work on the features it is applied to."""
 
 import pytest
 
-from bofire.data_models.descriptor_generators.api import (
-    Fingerprints,
-    Fragments,
-    MordredDescriptors,
-)
+from bofire.data_models.constraints.condition import NonZeroCondition
+from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs
-from bofire.data_models.encodings.api import (
-    DescriptorEncoding,
-    OneHotEncoding,
-    OrdinalEncoding,
-)
+from bofire.data_models.encodings.api import OneHotEncoding, OrdinalEncoding
 from bofire.data_models.features.api import (
     CategoricalInput,
-    CategoricalTaskInput,
     ContinuousInput,
     ContinuousTaskInput,
     DiscreteInput,
-    SumFeature,
+    WeightedSumFeature,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import (
+    AdditiveKernel,
     HammingDistanceKernel,
+    IndexKernel,
+    PositiveIndexKernel,
     RBFKernel,
+    ScaleKernel,
     TanimotoKernel,
-    WassersteinKernel,
+    WedgeKernel,
 )
 from bofire.data_models.kernels.fidelity import DownsamplingKernel
+from bofire.data_models.kernels.kernel import KernelInputs
 
 
-CAT = CategoricalInput(key="cat", categories=["a", "b"])
+def make_context(*features, encodings=None, engineered=(), offered=None):
+    inputs = Inputs(features=list(features))
+    engineered_features = EngineeredFeatures(features=list(engineered))
+    keys = inputs.get_keys() + engineered_features.get_keys()
+    return KernelInputs(
+        inputs=inputs,
+        encodings=encodings or {},
+        engineered_features=engineered_features,
+        offered=tuple(keys if offered is None else offered),
+    )
+
+
 CONT = ContinuousInput(key="cont", bounds=(0, 1))
 DISC = DiscreteInput(key="disc", values=[1.0, 2.0])
-CAT_TASK = CategoricalTaskInput(key="task", categories=["t1", "t2"])
-CONT_TASK = ContinuousTaskInput(key="fidelity", bounds=(0, 1))
-FINGERPRINTS = DescriptorEncoding(generators=[Fingerprints()])
-ENGINEERED = SumFeature(key="sum", features=["cont", "disc"])
+CAT = CategoricalInput(key="cat", categories=["a", "b"])
+CAT3 = CategoricalInput(key="cat3", categories=["a", "b", "c"])
+FIDELITY = ContinuousTaskInput(key="fidelity", bounds=(0, 1))
 
 
 @pytest.mark.parametrize(
-    "kernel, feat, encoding, expected",
+    "kernel, context",
     [
-        # a continuous kernel measures distance, so it needs coordinates
-        (RBFKernel, CONT, None, True),
-        (RBFKernel, DISC, None, True),
-        (RBFKernel, CAT, OneHotEncoding(), True),
-        (RBFKernel, CAT, DescriptorEncoding(), True),
-        (RBFKernel, CAT, OrdinalEncoding(), False),
-        # a task index is not a position in the space
-        (RBFKernel, CAT_TASK, OrdinalEncoding(), False),
-        (RBFKernel, CONT_TASK, None, False),
-        # a categorical kernel compares by identity, so it needs one code per category
-        (HammingDistanceKernel, CAT, OrdinalEncoding(), True),
-        (HammingDistanceKernel, CAT, OneHotEncoding(), False),
-        (HammingDistanceKernel, CAT, DescriptorEncoding(), False),
-        (HammingDistanceKernel, CONT, None, False),
-        # a molecular kernel needs the encoding to generate structural features
-        (TanimotoKernel, CAT, FINGERPRINTS, True),
-        (TanimotoKernel, CAT, DescriptorEncoding(generators=[Fragments()]), True),
-        (
-            TanimotoKernel,
-            CAT,
-            DescriptorEncoding(generators=[MordredDescriptors()]),
-            False,
+        # modelling choices that are unusual but computable stay allowed
+        pytest.param(
+            RBFKernel(),
+            make_context(CONT, CAT, encodings={"cat": OrdinalEncoding()}),
+            id="continuous-kernel-on-ordinal-codes",
         ),
-        (TanimotoKernel, CAT, DescriptorEncoding(), False),
-        (TanimotoKernel, CONT, None, False),
-        # an engineered feature is a number: only a continuous kernel can take it
-        (RBFKernel, ENGINEERED, None, True),
-        (HammingDistanceKernel, ENGINEERED, None, False),
-        (TanimotoKernel, ENGINEERED, None, False),
-        (DownsamplingKernel, ENGINEERED, None, False),
-        # a fidelity kernel encodes a continuous task
-        (DownsamplingKernel, CONT_TASK, None, True),
-        (DownsamplingKernel, CONT, None, False),
-        (DownsamplingKernel, CAT, OrdinalEncoding(), False),
+        pytest.param(
+            HammingDistanceKernel(features=["cat"]),
+            make_context(CONT, CAT, encodings={"cat": OneHotEncoding()}),
+            id="hamming-on-one-hot",
+        ),
+        pytest.param(
+            HammingDistanceKernel(features=["disc"]),
+            make_context(CONT, DISC),
+            id="hamming-on-discrete",
+        ),
+        pytest.param(
+            TanimotoKernel(features=["blend"]),
+            make_context(
+                ContinuousInput(
+                    key="a", bounds=(0, 1), descriptors=Descriptors(structure=["CCO"])
+                ),
+                ContinuousInput(
+                    key="b", bounds=(0, 1), descriptors=Descriptors(structure=["CC"])
+                ),
+                engineered=[
+                    WeightedSumFeature(
+                        key="blend",
+                        features=["a", "b"],
+                        columns=[],
+                        generators=[Fingerprints()],
+                    )
+                ],
+            ),
+            id="tanimoto-on-fingerprint-blend",
+        ),
+        pytest.param(
+            IndexKernel(num_categories=2, features=["cat"]),
+            make_context(CONT, CAT, encodings={"cat": OrdinalEncoding()}),
+            id="index-on-one-ordinal-categorical",
+        ),
+        pytest.param(
+            DownsamplingKernel(features=["fidelity"]),
+            make_context(CONT, FIDELITY),
+            id="downsampling-on-fidelity",
+        ),
     ],
 )
-def test_can_consume(kernel, feat, encoding, expected):
-    assert kernel.can_consume(feat, encoding) is expected
+def test_validate_inputs_accepts(kernel, context):
+    kernel.validate_inputs(context)
 
 
-def test_kernels_without_a_declared_rule_stay_permissive():
-    """Shape kernels keep today's behaviour until their semantics are pinned down."""
-    assert WassersteinKernel.can_consume(CONT, None) is True
-    assert WassersteinKernel.can_consume(CAT, OrdinalEncoding()) is True
+@pytest.mark.parametrize(
+    "kernel, context, match",
+    [
+        pytest.param(
+            HammingDistanceKernel(features=["cont"]),
+            make_context(CONT, CAT, encodings={"cat": OrdinalEncoding()}),
+            r"HammingDistanceKernel cannot work on \['cont'\]",
+            id="categorical-kernel-on-continuous",
+        ),
+        pytest.param(
+            RBFKernel(features=["nope"]),
+            make_context(CONT),
+            r"names \['nope'\], which are neither inputs nor engineered features",
+            id="unknown-key",
+        ),
+        pytest.param(
+            HammingDistanceKernel(),
+            make_context(CONT, CAT, encodings={"cat": OrdinalEncoding()}),
+            r"HammingDistanceKernel cannot work on \['cont'\]",
+            id="unset-features-are-checked-not-filtered",
+        ),
+        pytest.param(
+            IndexKernel(num_categories=2),
+            make_context(
+                CAT,
+                CAT3,
+                encodings={"cat": OrdinalEncoding(), "cat3": OrdinalEncoding()},
+            ),
+            "works on exactly one feature",
+            id="index-on-two-features",
+        ),
+        pytest.param(
+            PositiveIndexKernel(num_categories=2, features=["cat3"]),
+            make_context(CAT3, encodings={"cat3": OrdinalEncoding()}),
+            "num_categories=2, but 'cat3' has 3 categories",
+            id="index-category-count-mismatch",
+        ),
+        pytest.param(
+            IndexKernel(num_categories=2, features=["cat"]),
+            make_context(CAT, encodings={"cat": OneHotEncoding()}),
+            "needs an ordinal-encoded categorical",
+            id="index-on-one-hot",
+        ),
+        pytest.param(
+            DownsamplingKernel(features=["cont"]),
+            make_context(CONT),
+            r"DownsamplingKernel cannot work on \['cont'\]",
+            id="downsampling-on-plain-continuous",
+        ),
+        pytest.param(
+            WedgeKernel(
+                base_kernel=RBFKernel(),
+                conditions=[("cont", "missing", NonZeroCondition())],
+            ),
+            make_context(CONT),
+            r"conditions on \['missing'\]",
+            id="wedge-condition-on-unknown-key",
+        ),
+    ],
+)
+def test_validate_inputs_rejects(kernel, context, match):
+    with pytest.raises(ValueError, match=match):
+        kernel.validate_inputs(context)
 
 
-def test_accepted_encodings_orders_and_counts():
-    """The first entry is what a kernel wants; the count is how particular it is."""
-    candidates = [OrdinalEncoding(), OneHotEncoding(), DescriptorEncoding()]
-
-    hamming = HammingDistanceKernel.accepted_encodings(CAT, candidates)
-    rbf = RBFKernel.accepted_encodings(CAT, candidates)
-
-    assert hamming == (OrdinalEncoding(),)
-    assert rbf == (OneHotEncoding(), DescriptorEncoding())
-    # the categorical kernel has the stronger claim on a categorical feature
-    assert len(hamming) < len(rbf)
-
-
-def test_accepted_encodings_is_empty_when_nothing_fits():
-    assert HammingDistanceKernel.accepted_encodings(CONT, [OneHotEncoding()]) == ()
-
-
-def test_resolve_features_filters_by_kind_when_unset():
-    inputs = Inputs(features=[CONT, CAT])
-    encodings = {"cat": OrdinalEncoding()}
-
-    assert RBFKernel().resolve_features(inputs, encodings) == ["cont"]
-    assert HammingDistanceKernel().resolve_features(inputs, encodings) == ["cat"]
-
-
-def test_resolve_features_returns_an_explicit_list_unchanged():
-    inputs = Inputs(features=[CONT, CAT])
-    encodings = {"cat": OneHotEncoding()}
-
-    assert RBFKernel(features=["cat"]).resolve_features(inputs, encodings) == ["cat"]
+@pytest.mark.parametrize(
+    "kernel",
+    [
+        pytest.param(
+            ScaleKernel(base_kernel=HammingDistanceKernel(features=["cont"])),
+            id="inside-scale",
+        ),
+        pytest.param(
+            AdditiveKernel(
+                kernels=[
+                    RBFKernel(features=["cont"]),
+                    ScaleKernel(base_kernel=HammingDistanceKernel(features=["cont"])),
+                ]
+            ),
+            id="nested-in-additive",
+        ),
+        pytest.param(
+            WedgeKernel(
+                base_kernel=HammingDistanceKernel(features=["cont"]),
+                conditions=[("cont", "cont", NonZeroCondition())],
+            ),
+            id="as-wedge-base-kernel",
+        ),
+    ],
+)
+def test_validate_inputs_reaches_into_composites(kernel):
+    with pytest.raises(ValueError, match=r"HammingDistanceKernel cannot work"):
+        kernel.validate_inputs(make_context(CONT))
 
 
-def test_resolve_features_can_be_empty():
-    """A continuous kernel over a purely categorical domain selects nothing.
+def test_unset_features_select_what_is_offered():
+    context = make_context(CONT, DISC, CAT, offered=["cont", "disc"])
 
-    The mixed GP relies on this to degenerate to a purely categorical model, so it is
-    not an error at the kernel level.
-    """
-    inputs = Inputs(features=[CAT])
-
-    assert RBFKernel().resolve_features(inputs, {"cat": OrdinalEncoding()}) == []
+    assert RBFKernel().selected_features(context) == ["cont", "disc"]
+    assert RBFKernel(features=["cat"]).selected_features(context) == ["cat"]
 
 
-def test_engineered_features_are_filtered_like_any_other():
-    """They are numeric columns, so only a kernel that takes numbers gets them."""
-    inputs = Inputs(features=[CONT, DISC, CAT])
-    engineered = EngineeredFeatures(features=[ENGINEERED])
-    encodings = {"cat": OrdinalEncoding()}
+def test_validate_inputs_does_not_modify_the_kernel():
+    kernel = ScaleKernel(base_kernel=RBFKernel())
+    before = kernel.model_dump()
 
-    assert RBFKernel().resolve_features(inputs, encodings, engineered) == [
-        "cont",
-        "disc",
-        "sum",
-    ]
-    # a categorical kernel must not pick up the sum
-    assert HammingDistanceKernel().resolve_features(inputs, encodings, engineered) == [
-        "cat"
-    ]
+    kernel.validate_inputs(make_context(CONT, CAT, encodings={"cat": OneHotEncoding()}))
 
-
-def test_validate_inputs_rejects_an_unknown_key():
-    inputs = Inputs(features=[CONT, CAT])
-
-    with pytest.raises(ValueError, match="neither inputs nor engineered features"):
-        RBFKernel(features=["nope"]).validate_inputs(inputs, {})
-
-
-def test_validate_inputs_accepts_a_named_engineered_feature():
-    inputs = Inputs(features=[CONT, DISC])
-    engineered = EngineeredFeatures(features=[ENGINEERED])
-
-    RBFKernel(features=["sum"]).validate_inputs(inputs, {}, engineered)
-
-
-def test_validate_inputs_rejects_an_explicitly_named_feature_it_cannot_consume():
-    inputs = Inputs(features=[CONT, CAT])
-    encodings = {"cat": OrdinalEncoding()}
-
-    with pytest.raises(ValueError, match=r"RBFKernel cannot act on \['cat'\]"):
-        RBFKernel(features=["cat"]).validate_inputs(inputs, encodings)
-
-
-def test_validate_inputs_is_silent_when_features_are_unset():
-    """An unset selection is filtered, not rejected."""
-    inputs = Inputs(features=[CONT, CAT])
-
-    RBFKernel().validate_inputs(inputs, {"cat": OrdinalEncoding()})
+    assert kernel.model_dump() == before
+    assert kernel.base_kernel.features is None
