@@ -46,6 +46,8 @@ from bofire.data_models.kernels.api import (
     SphericalLinearKernel,
     TanimotoKernel,
 )
+from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
@@ -58,6 +60,7 @@ from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     GammaPrior,
     LogNormalPrior,
+    NormalPrior,
 )
 from bofire.data_models.priors.api import GreaterThan as BoFireGreaterThan
 from bofire.data_models.surrogates.api import (
@@ -443,17 +446,17 @@ def test_SingleTaskGPHyperconfig():
     else:
         assert isinstance(base_kernel, RBFKernel)
     if candidate.prior == "mbo":
-        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
+        assert surrogate_data.likelihood.noise_prior == MBO_NOISE_PRIOR()
         if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
         assert base_kernel.lengthscale_prior == MBO_LENGTHSCALE_PRIOR()
     elif candidate.prior == "threesix":
-        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
+        assert surrogate_data.likelihood.noise_prior == THREESIX_NOISE_PRIOR()
         if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
         assert base_kernel.lengthscale_prior == THREESIX_LENGTHSCALE_PRIOR()
     else:
-        assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
+        assert surrogate_data.likelihood.noise_prior == HVARFNER_NOISE_PRIOR()
         if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
         assert base_kernel.lengthscale_prior == HVARFNER_LENGTHSCALE_PRIOR()
@@ -1234,7 +1237,9 @@ def test_noise_prior_affects_single_task_gp():
         SingleTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=LogNormalPrior(loc=0.0, scale=0.25),
+            likelihood=GaussianLikelihood(
+                noise_prior=LogNormalPrior(loc=0.0, scale=0.25)
+            ),
         )
     )
     surrogate_large.fit(experiments)
@@ -1290,7 +1295,9 @@ def test_noise_constraint_enforced_for_single_task_gp():
         SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            noise_constraint=BoFireGreaterThan(lower_bound=0.5),
+            likelihood=GaussianLikelihood(
+                noise_constraint=BoFireGreaterThan(lower_bound=0.5)
+            ),
         )
     )
     surrogate.fit(experiments)
@@ -1324,3 +1331,45 @@ def test_noise_prior_registered_for_robust_single_task_gp():
         "User-supplied GammaPrior must be in the likelihood's _priors registry "
         f"(got {type(prior).__name__})"
     )
+
+
+def _fit_single_task_gp(**kwargs):
+    torch.manual_seed(0)
+    np.random.seed(0)
+    X = np.random.uniform(0, 1, size=(20, 2))
+    y = np.sin(2 * np.pi * X[:, 0]) + 0.3 * X[:, 1]
+    experiments = pd.DataFrame({"x1": X[:, 0], "x2": X[:, 1], "y": y, "valid_y": 1})
+    surrogate = surrogates.map(
+        SingleTaskGPSurrogate(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="x1", bounds=(0, 1)),
+                    ContinuousInput(key="x2", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="y")]),
+            **kwargs,
+        )
+    )
+    surrogate.fit(experiments)
+    return surrogate.model
+
+
+def test_single_task_gp_uses_its_mean_and_likelihood():
+    """The fitted model is built from the configured components."""
+    model = _fit_single_task_gp()
+
+    assert isinstance(model.mean_module, gpytorch.means.ConstantMean)
+    assert list(model.mean_module.named_priors()) == []
+    noise_prior = _get_registered_noise_prior(model)
+    assert isinstance(noise_prior, gpytorch.priors.LogNormalPrior)
+    assert float(noise_prior.loc) == -4.0
+
+
+def test_single_task_gp_mean_prior_reaches_the_model():
+    model = _fit_single_task_gp(
+        mean=ConstantMean(prior=NormalPrior(loc=0.0, scale=1.0))
+    )
+
+    ((_, _, prior, *_),) = model.mean_module.named_priors()
+    assert isinstance(prior, gpytorch.priors.NormalPrior)
