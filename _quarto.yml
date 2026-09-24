@@ -97,6 +97,7 @@ quartodoc:
             - MaternKernel
             - RBFKernel
             - AdditiveMapSaasKernel
+            - ICMKernel
             - LinearKernel
             - PolynomialKernel
             - HammingDistanceKernel
@@ -109,10 +110,12 @@ quartodoc:
           members:
             - Mean
             - ConstantMean
+            - TaskConstantMean
         - name: data_models.likelihoods.api
           members:
             - Likelihood
             - GaussianLikelihood
+            - TaskGaussianLikelihood
     - title: Data Models - Surrogates
       desc: Surrogate model configuration data models
       contents:

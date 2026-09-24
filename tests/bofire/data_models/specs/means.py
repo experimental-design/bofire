@@ -23,3 +23,8 @@ specs.add_invalid(
     error=ValueError,
     message="The lower bound must be less than the upper bound",
 )
+
+specs.add_valid(
+    means.TaskConstantMean,
+    lambda: {"prior": None, "bounds": None, "task_feature": "task"},
+)

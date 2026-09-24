@@ -53,3 +53,28 @@ class ConstantMean(Mean):
                 f"The lower bound must be less than the upper bound, got {bounds}."
             )
         return bounds
+
+
+class TaskConstantMean(ConstantMean):
+    """Mean that is one constant per task, each fitted to that task's data.
+
+    Tasks often differ by an offset -- a simulation that runs systematically high, an
+    older campaign at a different baseline. A separate constant per task absorbs that
+    offset, so the shared kernel only has to explain how the tasks co-vary. `prior`
+    and `bounds` apply to each task's constant.
+    """
+
+    type: Literal["TaskConstantMean"] = "TaskConstantMean"
+    task_feature: Optional[str] = Field(
+        default=None,
+        description="Key of the task input. If not provided, the single task input "
+        "of the domain.",
+    )
+
+    def validate_inputs(self, context: FeatureContext) -> None:
+        """Check that there is a usable task input.
+
+        Raises:
+            ValueError: If there is no task input encoded as ordinal codes.
+        """
+        context.task_feature(self.task_feature)

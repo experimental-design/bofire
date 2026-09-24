@@ -22,6 +22,7 @@ from bofire.data_models.kernels.api import (
     ExactWassersteinKernel,
     FeatureSpecificKernel,
     HammingDistanceKernel,
+    ICMKernel,
     IndexKernel,
     InfiniteWidthBNNKernel,
     LinearKernel,
@@ -75,6 +76,10 @@ def test_map(kernel_spec: Spec):
         isinstance(kernel, (HammingDistanceKernel, DownsamplingKernel))
         and kernel.features is not None
     ):
+        return
+    # needs the feature context to find its task column; its mapping is tested in
+    # tests/bofire/surrogates/test_multitask_gps.py
+    if isinstance(kernel, ICMKernel):
         return
     gkernel = kernels.map(
         kernel,

@@ -11,6 +11,7 @@ import bofire.kernels.api as kernels
 import bofire.likelihoods.api as likelihoods
 import bofire.means.api as means
 from bofire.data_models.enum import OutputFilteringEnum
+from bofire.data_models.feature_context import FeatureContext
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 
@@ -24,6 +25,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         self.kernel = data_model.kernel
         self.mean = data_model.mean
         self.likelihood = data_model.likelihood
+        self.offered_features = data_model.offered_features()
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[botorch.models.SingleTaskGP] = None
@@ -43,6 +45,13 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         else:
             n_dim = tX.shape[-1]
 
+        # the same view of the features the data model was validated against
+        context = FeatureContext(
+            inputs=self.inputs,
+            encodings=self.categorical_encodings,
+            engineered_features=self.engineered_features,
+            offered=self.offered_features,
+        )
         self.model = botorch.models.SingleTaskGP(
             train_X=tX,
             train_Y=tY,
@@ -51,9 +60,20 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
                 batch_shape=torch.Size(),
                 active_dims=list(range(n_dim)),
                 features_to_idx_mapper=self.get_feature_indices,
+                context=context,
             ),
-            mean_module=means.map(self.mean, d=n_dim),
-            likelihood=likelihoods.map(self.likelihood, d=n_dim),
+            mean_module=means.map(
+                self.mean,
+                d=n_dim,
+                context=context,
+                features_to_idx_mapper=self.get_feature_indices,
+            ),
+            likelihood=likelihoods.map(
+                self.likelihood,
+                d=n_dim,
+                context=context,
+                features_to_idx_mapper=self.get_feature_indices,
+            ),
             outcome_transform=outcome_transform,
             input_transform=input_transform,
         )

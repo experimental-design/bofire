@@ -9,6 +9,7 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
     from bofire.data_models._register_utils import append_to_union_field, patch_field
     from bofire.data_models.kernels.aggregation import (
         AdditiveKernel,
+        ICMKernel,
         MultiplicativeKernel,
         PolynomialFeatureInteractionKernel,
         ScaleKernel,
@@ -34,6 +35,7 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
         (MultiplicativeKernel, "kernels"),
         (PolynomialFeatureInteractionKernel, "kernels"),
         (ScaleKernel, "base_kernel"),
+        (ICMKernel, "base_kernel"),
         (ConditionalEmbeddingKernel, "base_kernel"),
         (WedgeKernel, "base_kernel"),
     ]:
@@ -45,6 +47,7 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
         MultiplicativeKernel,
         ScaleKernel,
         PolynomialFeatureInteractionKernel,
+        ICMKernel,
         ConditionalEmbeddingKernel,
         WedgeKernel,
     ]:

@@ -32,8 +32,11 @@ def _rebuild_dependent_models() -> None:
         ExactWassersteinKernel,
         WassersteinKernel,
     )
-    from bofire.data_models.likelihoods.likelihood import GaussianLikelihood
-    from bofire.data_models.means.mean import ConstantMean
+    from bofire.data_models.likelihoods.likelihood import (
+        GaussianLikelihood,
+        TaskGaussianLikelihood,
+    )
+    from bofire.data_models.means.mean import ConstantMean, TaskConstantMean
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
     from bofire.data_models.surrogates.linear import LinearSurrogate
     from bofire.data_models.surrogates.mixed_single_task_gp import (
@@ -73,7 +76,9 @@ def _rebuild_dependent_models() -> None:
         (WassersteinKernel, "lengthscale_prior"),
         (ExactWassersteinKernel, "lengthscale_prior"),
         (ConstantMean, "prior"),
+        (TaskConstantMean, "prior"),
         (GaussianLikelihood, "noise_prior"),
+        (TaskGaussianLikelihood, "noise_prior"),
         (MultiTaskGPSurrogate, "noise_prior"),
         (MixedSingleTaskGPSurrogate, "noise_prior"),
         (TanimotoGPSurrogate, "noise_prior"),
@@ -94,6 +99,7 @@ def _rebuild_dependent_models() -> None:
         (WedgeKernel, "lengthscale_constraint"),
         (ScaleKernel, "outputscale_constraint"),
         (GaussianLikelihood, "noise_constraint"),
+        (TaskGaussianLikelihood, "noise_constraint"),
         (MultiTaskGPSurrogate, "noise_constraint"),
         (MixedSingleTaskGPSurrogate, "noise_constraint"),
         (TanimotoGPSurrogate, "noise_constraint"),
@@ -134,7 +140,12 @@ def _rebuild_dependent_models() -> None:
         cls.model_rebuild(force=True)
 
     # 4. Means and likelihoods, which surrogates hold
-    for cls in [ConstantMean, GaussianLikelihood]:
+    for cls in [
+        ConstantMean,
+        TaskConstantMean,
+        GaussianLikelihood,
+        TaskGaussianLikelihood,
+    ]:
         cls.model_rebuild(force=True)
 
     # 5. Surrogate models

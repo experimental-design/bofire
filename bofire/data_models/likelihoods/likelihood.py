@@ -51,3 +51,28 @@ class GaussianLikelihood(Likelihood):
         description="Bounds the noise variance is restricted to during fitting. A "
         "positive lower bound keeps the fit numerically stable.",
     )
+
+
+class TaskGaussianLikelihood(GaussianLikelihood):
+    """Gaussian noise with a separate variance for each task.
+
+    Tasks are often measured with different precision -- a simulation next to a real
+    experiment, a quick screen next to a careful measurement. With one variance per task
+    the model trusts each task's observations according to its own noise level.
+    `noise_prior` and `noise_constraint` apply to each task's variance.
+    """
+
+    type: Literal["TaskGaussianLikelihood"] = "TaskGaussianLikelihood"
+    task_feature: Optional[str] = Field(
+        default=None,
+        description="Key of the task input. If not provided, the single task input "
+        "of the domain.",
+    )
+
+    def validate_inputs(self, context: FeatureContext) -> None:
+        """Check that there is a usable task input.
+
+        Raises:
+            ValueError: If there is no task input encoded as ordinal codes.
+        """
+        context.task_feature(self.task_feature)

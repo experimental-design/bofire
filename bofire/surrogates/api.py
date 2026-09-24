@@ -8,7 +8,6 @@ from bofire.surrogates.mlp import (
     MLPEnsemble,
     RegressionMLPEnsemble,
 )
-from bofire.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.surrogates.pairwise_gp import PairwiseGPSurrogate
 from bofire.surrogates.pairwise_trainable import PairwiseTrainableSurrogate
 from bofire.surrogates.random_forest import RandomForestSurrogate

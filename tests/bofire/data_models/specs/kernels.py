@@ -397,3 +397,12 @@ specs.add_valid(
     kernels.AdditiveMapSaasKernel,
     lambda: {"features": None, "n_taus": 4},
 )
+
+specs.add_valid(
+    kernels.ICMKernel,
+    lambda: {
+        "base_kernel": kernels.RBFKernel(ard=True).model_dump(),
+        "rank": None,
+        "task_feature": None,
+    },
+)

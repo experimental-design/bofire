@@ -126,7 +126,7 @@ from bofire.data_models.strategies.api import MultiFidelityVarianceBasedStrategy
 
 
 # It isn't necessary to define the surrogate specs here, as the MFStrategy
-# will use a MultiTaskGP by default.
+# will use a multi-task GP by default.
 
 mf_data_model = MultiFidelityVarianceBasedStrategy(
     domain=mf_benchmark.domain,

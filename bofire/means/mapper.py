@@ -1,9 +1,11 @@
-from typing import Callable, Dict, Type
+from typing import Callable, Dict, List, Type
 
 import gpytorch
 
 import bofire.data_models.means.api as data_models
 import bofire.priors.api as priors
+from bofire.data_models.feature_context import FeatureContext
+from bofire.means.task_mean import TaskConstantMean
 
 
 def map_ConstantMean(
@@ -21,8 +23,24 @@ def map_ConstantMean(
     )
 
 
+def map_TaskConstantMean(
+    data_model: data_models.TaskConstantMean,
+    d: int,
+    context: FeatureContext,
+    features_to_idx_mapper: Callable[[List[str]], List[int]],
+    **kwargs,
+) -> TaskConstantMean:
+    task = context.task_feature(data_model.task_feature)
+    return TaskConstantMean(
+        base_mean=map_ConstantMean(data_model, d=d),
+        num_tasks=len(task.categories),
+        task_index=features_to_idx_mapper([task.key])[0],
+    )
+
+
 MEAN_MAP: Dict[Type[data_models.Mean], Callable] = {
     data_models.ConstantMean: map_ConstantMean,
+    data_models.TaskConstantMean: map_TaskConstantMean,
 }
 
 

@@ -1,6 +1,7 @@
 from bofire.data_models.kernels._register import register_kernel  # noqa: F401
 from bofire.data_models.kernels.aggregation import (
     AdditiveKernel,
+    ICMKernel,
     MultiplicativeKernel,
     PolynomialFeatureInteractionKernel,
     ScaleKernel,
@@ -57,6 +58,7 @@ AnyMolecularKernel = TanimotoKernel
 
 _KERNEL_TYPES: list[type[Kernel]] = [
     AdditiveKernel,
+    ICMKernel,
     MultiplicativeKernel,
     PolynomialFeatureInteractionKernel,
     ScaleKernel,

@@ -1,8 +1,9 @@
 from collections.abc import Sequence
 from typing import List, Literal, Optional, Union
 
-from pydantic import Field
+from pydantic import Field, PositiveInt
 
+from bofire.data_models.feature_context import FeatureContext
 from bofire.data_models.kernels.categorical import (
     HammingDistanceKernel,
     IndexKernel,
@@ -201,6 +202,71 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
 
     def children(self) -> List[Kernel]:
         return list(self.kernels)
+
+
+class ICMKernel(Kernel):
+    r"""Kernel sharing information between tasks, the intrinsic coregionalization model.
+
+    $$
+    k((\mathbf x, t), (\mathbf x', t')) = k_{\text{base}}(\mathbf x, \mathbf x')\,
+    B_{t t'}
+    $$
+
+    where $t$ is the task an observation belongs to and $B$ is a learned positive
+    matrix of how strongly the tasks are correlated. Observations of one task then
+    inform predictions for the others, in proportion to that correlation. The base
+    kernel acts on every feature except the task input, and a task without
+    observations is predicted from the prior.
+    """
+
+    type: Literal["ICMKernel"] = "ICMKernel"
+    base_kernel: Union[
+        RBFKernel,
+        SphericalLinearKernel,
+        MaternKernel,
+        LinearKernel,
+        HammingDistanceKernel,
+        TanimotoKernel,
+        AdditiveMapSaasKernel,
+        WassersteinKernel,
+        ExactWassersteinKernel,
+        WedgeKernel,
+        AdditiveKernel,
+        MultiplicativeKernel,
+        ScaleKernel,
+    ] = Field(
+        description="Kernel over the features other than the task input. It is "
+        "offered every feature except the task input.",
+    )
+    rank: Optional[PositiveInt] = Field(
+        default=None,
+        description="Rank of the learned task correlation matrix, at most the number "
+        "of tasks. A lower rank forces the tasks to share fewer patterns. If not "
+        "provided, it is the number of tasks.",
+    )
+    task_feature: Optional[str] = Field(
+        default=None,
+        description="Key of the task input. If not provided, the single task input "
+        "of the domain.",
+    )
+
+    def children(self) -> List[Kernel]:
+        return [self.base_kernel]
+
+    def validate_inputs(self, context: FeatureContext) -> None:
+        """Check the task input and the rank, then the base kernel without the task.
+
+        Raises:
+            ValueError: If there is no usable task input, if `rank` exceeds the
+                number of tasks, or if the base kernel cannot work on its features.
+        """
+        task = context.task_feature(self.task_feature)
+        if self.rank is not None and self.rank > len(task.categories):
+            raise ValueError(
+                f"ICMKernel has rank={self.rank}, but '{task.key}' has only "
+                f"{len(task.categories)} tasks."
+            )
+        self.base_kernel.validate_inputs(context.without(task.key))
 
 
 AdditiveKernel.model_rebuild()

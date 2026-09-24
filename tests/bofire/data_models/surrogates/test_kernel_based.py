@@ -8,17 +8,21 @@ from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.encodings.api import OneHotEncoding, OrdinalEncoding
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
 )
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
     HammingDistanceKernel,
+    ICMKernel,
     IndexKernel,
     LinearKernel,
     RBFKernel,
     ScaleKernel,
 )
+from bofire.data_models.likelihoods.api import TaskGaussianLikelihood
+from bofire.data_models.means.api import TaskConstantMean
 from bofire.data_models.surrogates.kernel_based import KernelBasedSurrogate
 
 
@@ -139,8 +143,8 @@ def test_validation_does_not_modify_components():
         (surrogates.PairwiseGPSurrogate, True),
         (surrogates.LinearSurrogate, True),
         (surrogates.PolynomialSurrogate, True),
-        # rebuilt in later steps of #825, which bring their own routing
-        (surrogates.MultiTaskGPSurrogate, False),
+        (surrogates.MultiTaskGPSurrogate, True),
+        # rebuilt in a later step of #825, which brings its own routing
         (surrogates.MixedSingleTaskGPSurrogate, False),
     ],
 )
@@ -155,3 +159,71 @@ def test_linear_surrogate_rejects_an_unknown_key():
             outputs=OUTPUTS,
             kernel=LinearKernel(features=["nope"]),
         )
+
+
+TASK_ORDINAL = {"t": OrdinalEncoding()}
+TASK_INPUTS = Inputs(
+    features=[
+        ContinuousInput(key="x", bounds=(0, 1)),
+        CategoricalTaskInput(key="t", categories=["a", "b", "c"]),
+    ]
+)
+
+
+@pytest.mark.parametrize(
+    "inputs, kwargs, match",
+    [
+        pytest.param(
+            Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))]),
+            {"kernel": ICMKernel(base_kernel=RBFKernel())},
+            "Exactly one task input is required",
+            id="icm-without-task-input",
+        ),
+        pytest.param(
+            TASK_INPUTS,
+            {
+                "kernel": ICMKernel(base_kernel=RBFKernel()),
+                "categorical_encodings": {"t": OneHotEncoding()},
+            },
+            "has to be encoded as ordinal codes",
+            id="icm-on-one-hot-task",
+        ),
+        pytest.param(
+            TASK_INPUTS,
+            {
+                "kernel": ICMKernel(base_kernel=RBFKernel(), rank=4),
+                "categorical_encodings": TASK_ORDINAL,
+            },
+            "rank=4, but 't' has only 3 tasks",
+            id="icm-rank-above-task-count",
+        ),
+        pytest.param(
+            Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))]),
+            {"mean": TaskConstantMean()},
+            "Exactly one task input is required",
+            id="task-mean-without-task-input",
+        ),
+        pytest.param(
+            Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))]),
+            {"likelihood": TaskGaussianLikelihood()},
+            "Exactly one task input is required",
+            id="task-likelihood-without-task-input",
+        ),
+    ],
+)
+def test_task_components_reject_unusable_task_inputs(inputs, kwargs, match):
+    with pytest.raises(ValidationError, match=match):
+        surrogates.SingleTaskGPSurrogate(inputs=inputs, outputs=OUTPUTS, **kwargs)
+
+
+def test_task_components_accept_a_task_input():
+    surrogates.SingleTaskGPSurrogate(
+        inputs=TASK_INPUTS,
+        outputs=OUTPUTS,
+        kernel=ICMKernel(base_kernel=RBFKernel(), rank=2),
+        mean=TaskConstantMean(),
+        likelihood=TaskGaussianLikelihood(),
+        # a single-task GP one-hot encodes task inputs by default; the task components
+        # need the ordinal codes
+        categorical_encodings=TASK_ORDINAL,
+    )

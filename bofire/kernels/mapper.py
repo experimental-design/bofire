@@ -12,6 +12,7 @@ from gpytorch.kernels import Kernel as GpytorchKernel
 
 import bofire.data_models.kernels.api as data_models
 import bofire.priors.api as priors
+from bofire.data_models.feature_context import FeatureContext
 from bofire.kernels.aggregation import PolynomialFeatureInteractionKernel
 from bofire.kernels.conditional import (
     WedgeKernel,
@@ -146,6 +147,40 @@ def map_AdditiveMapSaasKernel(
         # its priors hold tensors, which are not moved by a later `.to()`
         **tkwargs,
     )
+
+
+def map_ICMKernel(
+    data_model: data_models.ICMKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    context: Optional[FeatureContext] = None,
+    **kwargs,
+) -> gpytorch.kernels.ProductKernel:
+    if context is None or features_to_idx_mapper is None:
+        raise RuntimeError(
+            "ICMKernel needs the feature context and a feature-to-index mapper to "
+            "find its task column."
+        )
+    task = context.task_feature(data_model.task_feature)
+    (task_index,) = features_to_idx_mapper([task.key])
+    num_tasks = len(task.categories)
+    base_kernel = map(
+        data_model.base_kernel,
+        batch_shape=batch_shape,
+        active_dims=[i for i in active_dims if i != task_index],
+        features_to_idx_mapper=features_to_idx_mapper,
+        context=context.without(task.key),
+        **kwargs,
+    )
+    task_kernel = PositiveIndexKernel(
+        num_tasks=num_tasks,
+        rank=data_model.rank if data_model.rank is not None else num_tasks,
+        task_prior=None,
+        active_dims=[task_index],
+        batch_shape=batch_shape,
+    )
+    return base_kernel * task_kernel
 
 
 def map_InfiniteWidthBNNKernel(
@@ -550,6 +585,7 @@ def map_DownsamplingKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
 ) -> DownsamplingKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return DownsamplingKernel(
@@ -582,6 +618,7 @@ KERNEL_MAP = {
     data_models.RBFKernel: map_RBFKernel,
     data_models.MaternKernel: map_MaternKernel,
     data_models.AdditiveMapSaasKernel: map_AdditiveMapSaasKernel,
+    data_models.ICMKernel: map_ICMKernel,
     data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
     data_models.LinearKernel: map_LinearKernel,
     data_models.PolynomialKernel: map_PolynomialKernel,
