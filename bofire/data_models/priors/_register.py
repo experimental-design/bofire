@@ -32,6 +32,8 @@ def _rebuild_dependent_models() -> None:
         ExactWassersteinKernel,
         WassersteinKernel,
     )
+    from bofire.data_models.likelihoods.likelihood import GaussianLikelihood
+    from bofire.data_models.means.mean import ConstantMean
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
     from bofire.data_models.surrogates.linear import LinearSurrogate
     from bofire.data_models.surrogates.mixed_single_task_gp import (
@@ -70,7 +72,8 @@ def _rebuild_dependent_models() -> None:
         (PolynomialFeatureInteractionKernel, "outputscale_prior"),
         (WassersteinKernel, "lengthscale_prior"),
         (ExactWassersteinKernel, "lengthscale_prior"),
-        (SingleTaskGPSurrogate, "noise_prior"),
+        (ConstantMean, "prior"),
+        (GaussianLikelihood, "noise_prior"),
         (MultiTaskGPSurrogate, "noise_prior"),
         (MixedSingleTaskGPSurrogate, "noise_prior"),
         (TanimotoGPSurrogate, "noise_prior"),
@@ -90,7 +93,8 @@ def _rebuild_dependent_models() -> None:
         (PositiveIndexKernel, "var_constraint"),
         (WedgeKernel, "lengthscale_constraint"),
         (ScaleKernel, "outputscale_constraint"),
-        (SingleTaskGPSurrogate, "noise_constraint"),
+        (ConstantMean, "constraint"),
+        (GaussianLikelihood, "noise_constraint"),
         (MultiTaskGPSurrogate, "noise_constraint"),
         (MixedSingleTaskGPSurrogate, "noise_constraint"),
         (TanimotoGPSurrogate, "noise_constraint"),
@@ -130,7 +134,11 @@ def _rebuild_dependent_models() -> None:
     ]:
         cls.model_rebuild(force=True)
 
-    # 4. Surrogate models
+    # 4. Means and likelihoods, which surrogates hold
+    for cls in [ConstantMean, GaussianLikelihood]:
+        cls.model_rebuild(force=True)
+
+    # 5. Surrogate models
     SingleTaskGPHyperconfig.model_rebuild(force=True)
     for cls in [
         SingleTaskGPSurrogate,
@@ -143,7 +151,7 @@ def _rebuild_dependent_models() -> None:
     ]:
         cls.model_rebuild(force=True)
 
-    # 5. BotorchSurrogates
+    # 6. BotorchSurrogates
     BotorchSurrogates.model_rebuild(force=True)
 
 

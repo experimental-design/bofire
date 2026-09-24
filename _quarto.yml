@@ -101,6 +101,17 @@ quartodoc:
             - HammingDistanceKernel
             - TanimotoKernel
             - WassersteinKernel
+    - title: Data Models - Means and Likelihoods
+      desc: Mean function and noise model data models of a Gaussian process
+      contents:
+        - name: data_models.means.api
+          members:
+            - Mean
+            - ConstantMean
+        - name: data_models.likelihoods.api
+          members:
+            - Likelihood
+            - GaussianLikelihood
     - title: Data Models - Surrogates
       desc: Surrogate model configuration data models
       contents:

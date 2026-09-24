@@ -175,6 +175,16 @@ def kernel_spec(request) -> specs.Spec:
     return request.param
 
 
+@fixture(params=specs.means.valids)
+def mean_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.likelihoods.valids)
+def likelihood_spec(request) -> specs.Spec:
+    return request.param
+
+
 @fixture(params=specs.conditions.valids)
 def condition_spec(request) -> specs.Spec:
     return request.param

@@ -5,6 +5,7 @@ from bofire.data_models.kernels.api import (
     MultiplicativeKernel,
     ScaleKernel,
 )
+from bofire.data_models.likelihoods.api import GaussianLikelihood
 from bofire.data_models.surrogates import api as data_models
 from bofire.surrogates.deterministic import (
     CategoricalDeterministicSurrogate,
@@ -65,18 +66,43 @@ def map_MixedSingleTaskGPSurrogate(
         dump=data_model.dump,
         scaler=data_model.scaler,
         output_scaler=data_model.output_scaler,
-        noise_prior=data_model.noise_prior,
-        noise_constraint=data_model.noise_constraint,
+        likelihood=GaussianLikelihood(
+            noise_prior=data_model.noise_prior,
+            noise_constraint=data_model.noise_constraint,
+        ),
         hyperconfig=None,
         kernel=kernel,
     )
 
 
+def map_to_SingleTaskGPSurrogate(
+    data_model: "data_models.LinearSurrogate | data_models.PolynomialSurrogate",
+) -> data_models.SingleTaskGPSurrogate:
+    """Express a GP with a fixed kernel and flat noise fields as a single-task GP."""
+    return data_models.SingleTaskGPSurrogate(
+        inputs=data_model.inputs,
+        outputs=data_model.outputs,
+        categorical_encodings=data_model.categorical_encodings,
+        engineered_features=data_model.engineered_features,
+        dump=data_model.dump,
+        scaler=data_model.scaler,
+        output_scaler=data_model.output_scaler,
+        likelihood=GaussianLikelihood(
+            noise_prior=data_model.noise_prior,
+            noise_constraint=data_model.noise_constraint,
+        ),
+        hyperconfig=None,
+        kernel=data_model.kernel,
+    )
+
+
 DATA_MODEL_MAP: Dict[
-    Type[data_models.MixedSingleTaskGPSurrogate],
-    Callable[[data_models.MixedSingleTaskGPSurrogate], data_models.AnySurrogate],
+    Type[data_models.Surrogate],
+    Callable[..., data_models.AnySurrogate],
 ] = {
     data_models.MixedSingleTaskGPSurrogate: map_MixedSingleTaskGPSurrogate,
+    data_models.LinearSurrogate: map_to_SingleTaskGPSurrogate,
+    data_models.PolynomialSurrogate: map_to_SingleTaskGPSurrogate,
 }
 
 
@@ -88,12 +114,9 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.RegressionMLPEnsemble: RegressionMLPEnsemble,
     data_models.ClassificationMLPEnsemble: ClassificationMLPEnsemble,
     data_models.FullyBayesianSingleTaskGPSurrogate: FullyBayesianSingleTaskGPSurrogate,
-    data_models.LinearSurrogate: SingleTaskGPSurrogate,
-    data_models.PolynomialSurrogate: SingleTaskGPSurrogate,
     data_models.TanimotoGPSurrogate: TanimotoGPSurrogate,
     data_models.LinearDeterministicSurrogate: LinearDeterministicSurrogate,
     data_models.MultiTaskGPSurrogate: MultiTaskGPSurrogate,
-    data_models.SingleTaskIBNNSurrogate: SingleTaskGPSurrogate,
     data_models.CategoricalDeterministicSurrogate: CategoricalDeterministicSurrogate,
     data_models.AdditiveMapSaasSingleTaskGPSurrogate: AdditiveMapSaasSingleTaskGPSurrogate,
     data_models.EnsembleMapSaasSingleTaskGPSurrogate: EnsembleMapSaasSingleTaskGPSurrogate,
