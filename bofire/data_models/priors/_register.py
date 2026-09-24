@@ -93,7 +93,6 @@ def _rebuild_dependent_models() -> None:
         (PositiveIndexKernel, "var_constraint"),
         (WedgeKernel, "lengthscale_constraint"),
         (ScaleKernel, "outputscale_constraint"),
-        (ConstantMean, "constraint"),
         (GaussianLikelihood, "noise_constraint"),
         (MultiTaskGPSurrogate, "noise_constraint"),
         (MixedSingleTaskGPSurrogate, "noise_constraint"),

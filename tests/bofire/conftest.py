@@ -180,6 +180,11 @@ def mean_spec(request) -> specs.Spec:
     return request.param
 
 
+@fixture(params=specs.means.invalids)
+def invalid_mean_spec(request) -> specs.InvalidSpec:
+    return request.param
+
+
 @fixture(params=specs.likelihoods.valids)
 def likelihood_spec(request) -> specs.Spec:
     return request.param

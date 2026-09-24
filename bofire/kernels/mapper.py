@@ -6,6 +6,7 @@ from botorch.models.kernels.categorical import CategoricalKernel
 from botorch.models.kernels.downsampling import DownsamplingKernel
 from botorch.models.kernels.infinite_width_bnn import InfiniteWidthBNNKernel
 from botorch.models.kernels.positive_index import PositiveIndexKernel
+from botorch.models.map_saas import get_additive_map_saas_covar_module
 from gpytorch.kernels import IndexKernel
 from gpytorch.kernels import Kernel as GpytorchKernel
 
@@ -20,6 +21,7 @@ from bofire.kernels.conditional import (
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from bofire.kernels.shape import ExactWassersteinKernel, WassersteinKernel
 from bofire.kernels.spherical_kernels import SphericalLinearKernel
+from bofire.utils.torch_tools import tkwargs
 
 
 def register(
@@ -125,6 +127,24 @@ def map_MaternKernel(
             if data_model.lengthscale_constraint is not None
             else None
         ),
+    )
+
+
+def map_AdditiveMapSaasKernel(
+    data_model: data_models.AdditiveMapSaasKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
+) -> gpytorch.kernels.AdditiveKernel:
+    active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    return get_additive_map_saas_covar_module(
+        ard_num_dims=len(active_dims),
+        num_taus=data_model.n_taus,
+        active_dims=tuple(active_dims),
+        batch_shape=batch_shape,
+        # its priors hold tensors, which are not moved by a later `.to()`
+        **tkwargs,
     )
 
 
@@ -561,6 +581,7 @@ def map_DownsamplingKernel(
 KERNEL_MAP = {
     data_models.RBFKernel: map_RBFKernel,
     data_models.MaternKernel: map_MaternKernel,
+    data_models.AdditiveMapSaasKernel: map_AdditiveMapSaasKernel,
     data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
     data_models.LinearKernel: map_LinearKernel,
     data_models.PolynomialKernel: map_PolynomialKernel,

@@ -13,8 +13,10 @@ def map_ConstantMean(
         constant_prior=priors.map(data_model.prior, d=d)
         if data_model.prior is not None
         else None,
-        constant_constraint=priors.map(data_model.constraint)
-        if data_model.constraint is not None
+        constant_constraint=gpytorch.constraints.Interval(
+            *data_model.bounds, transform=None, initial_value=0.0
+        )
+        if data_model.bounds is not None
         else None,
     )
 

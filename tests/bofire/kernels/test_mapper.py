@@ -17,6 +17,7 @@ import bofire.kernels.shape as shapeKernels
 from bofire.data_models.constraints.condition import ThresholdCondition
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
+    AdditiveMapSaasKernel,
     DownsamplingKernel,
     ExactWassersteinKernel,
     FeatureSpecificKernel,
@@ -61,6 +62,7 @@ EQUIVALENTS = {
     WassersteinKernel: shapeKernels.WassersteinKernel,
     ExactWassersteinKernel: shapeKernels.ExactWassersteinKernel,
     InfiniteWidthBNNKernel: BNNKernel,
+    AdditiveMapSaasKernel: gpytorch.kernels.AdditiveKernel,
     PolynomialFeatureInteractionKernel: aggregationKernels.PolynomialFeatureInteractionKernel,
     WedgeKernel: conditionalKernels.WedgeKernel,
     SphericalLinearKernel: bofire.kernels.spherical_kernels.SphericalLinearKernel,

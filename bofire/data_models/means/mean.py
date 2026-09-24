@@ -1,10 +1,10 @@
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Tuple
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.feature_context import FeatureContext
-from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
+from bofire.data_models.priors.api import AnyPrior
 
 
 class Mean(BaseModel):
@@ -30,7 +30,7 @@ class Mean(BaseModel):
 class ConstantMean(Mean):
     """Mean that is one constant everywhere, fitted to the data.
 
-    With no prior and no constraint, the constant is fitted freely.
+    With no prior and no bounds, the constant is fitted freely.
     """
 
     type: Literal["ConstantMean"] = "ConstantMean"
@@ -39,8 +39,17 @@ class ConstantMean(Mean):
         description="Prior over the constant. If not provided, the constant is fitted "
         "without one.",
     )
-    constraint: Optional[AnyPriorConstraint] = Field(
+    bounds: Optional[Tuple[float, float]] = Field(
         default=None,
-        description="Bounds the constant is restricted to during fitting. If not "
-        "provided, it is unbounded.",
+        description="Lower and upper bound the constant is restricted to during "
+        "fitting. If not provided, it is unbounded.",
     )
+
+    @field_validator("bounds")
+    @classmethod
+    def validate_bounds(cls, bounds):
+        if bounds is not None and bounds[0] >= bounds[1]:
+            raise ValueError(
+                f"The lower bound must be less than the upper bound, got {bounds}."
+            )
+        return bounds

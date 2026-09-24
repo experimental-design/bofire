@@ -391,3 +391,9 @@ specs.add_invalid(
     error=ValueError,
     message="DownsamplingKernel requires a single task feature to be provided",
 )
+
+
+specs.add_valid(
+    kernels.AdditiveMapSaasKernel,
+    lambda: {"features": None, "n_taus": 4},
+)

@@ -96,6 +96,7 @@ quartodoc:
             - ScaleKernel
             - MaternKernel
             - RBFKernel
+            - AdditiveMapSaasKernel
             - LinearKernel
             - PolynomialKernel
             - HammingDistanceKernel
