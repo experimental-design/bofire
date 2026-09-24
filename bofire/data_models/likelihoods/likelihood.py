@@ -4,6 +4,7 @@ from typing import Any, Literal, Optional
 from pydantic import Field
 
 from bofire.data_models.base import BaseModel
+from bofire.data_models.feature_context import FeatureContext
 from bofire.data_models.priors.api import (
     HVARFNER_NOISE_PRIOR,
     AnyPrior,
@@ -20,6 +21,15 @@ class Likelihood(BaseModel):
     """
 
     type: Any
+
+    def validate_inputs(self, context: FeatureContext) -> None:
+        """Check that this component can work on what it is applied to.
+
+        Selects no features, so there is nothing to check.
+
+        Args:
+            context: The features on offer and how they are encoded.
+        """
 
 
 class GaussianLikelihood(Likelihood):

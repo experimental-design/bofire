@@ -1373,3 +1373,43 @@ def test_single_task_gp_mean_prior_reaches_the_model():
 
     ((_, _, prior, *_),) = model.mean_module.named_priors()
     assert isinstance(prior, gpytorch.priors.NormalPrior)
+
+
+def test_offered_features_cover_every_column_the_kernel_sees():
+    """What validation checks is what the kernel is applied to.
+
+    A surrogate offers every input and engineered feature to a kernel that selects
+    none; the functional layer hands such a kernel every column. The two must agree.
+    """
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="a", bounds=(0, 1)),
+            ContinuousInput(key="b", bounds=(0, 1)),
+            CategoricalInput(key="c", categories=["x", "y", "z"]),
+        ]
+    )
+    data_model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=Outputs(features=[ContinuousOutput(key="y")]),
+        engineered_features=EngineeredFeatures(
+            features=[SumFeature(key="s", features=["a", "b"])]
+        ),
+    )
+    np.random.seed(0)
+    experiments = pd.DataFrame(
+        {
+            "a": np.random.rand(12),
+            "b": np.random.rand(12),
+            "c": np.random.choice(["x", "y", "z"], 12),
+        }
+    )
+    experiments["y"] = experiments.a + experiments.b
+    experiments["valid_y"] = 1
+    surrogate = surrogates.map(data_model)
+    surrogate.fit(experiments)
+
+    n_columns = surrogate.model.input_transform(surrogate.model.train_inputs[0]).shape[
+        -1
+    ]
+    offered = list(data_model.offered_features())
+    assert sorted(surrogate.get_feature_indices(offered)) == list(range(n_columns))

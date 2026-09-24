@@ -11,11 +11,12 @@ from bofire.data_models.priors.api import (
     PAIRWISEGP_OUTPUTSCALE_PRIOR,
 )
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
+from bofire.data_models.surrogates.kernel_based import KernelBasedSurrogate
 from bofire.data_models.surrogates.scaler import AnyScaler, Normalize
 from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 
-class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate, KernelBasedSurrogate):
     """Pairwise Gaussian Process surrogate built on top of BoTorch's PairwiseGP.
 
     Fits a latent utility function from binary winner/loser pair labels. The

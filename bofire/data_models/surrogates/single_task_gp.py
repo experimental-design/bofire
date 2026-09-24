@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Type, Union
+from typing import Literal, Optional, Tuple, Type, Union
 
 import pandas as pd
 from pydantic import Field
@@ -30,6 +30,7 @@ from bofire.data_models.priors.api import (
     AnyPrior,
     AnyPriorConstraint,
 )
+from bofire.data_models.surrogates.kernel_based import KernelBasedSurrogate
 from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -142,7 +143,7 @@ class SingleTaskGPHyperconfig(Hyperconfig):
             surrogate_data.kernel = base_kernel
 
 
-class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
+class SingleTaskGPSurrogate(TrainableBotorchSurrogate, KernelBasedSurrogate):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
     kernel: AnyKernel = Field(
@@ -164,6 +165,10 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig(),
     )
+
+    @classmethod
+    def component_field_names(cls) -> Tuple[str, ...]:
+        return ("kernel", "mean", "likelihood")
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
