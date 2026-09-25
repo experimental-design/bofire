@@ -117,7 +117,23 @@ specs.add_invalid(
         "features": None,
     },
     error=ValidationError,
-    message="target_task_index must be less than num_categories-1",
+    message="target_task_index must be less than num_categories",
+)
+
+specs.add_valid(
+    kernels.PositiveIndexKernel,
+    lambda: {
+        "num_categories": 3,
+        "rank": 1,
+        "prior": None,
+        "var_constraint": None,
+        "task_prior": None,
+        "diag_prior": None,
+        "normalize_covar_matrix": True,
+        "target_task_index": 2,
+        "unit_scale_for_target": True,
+        "features": None,
+    },
 )
 
 specs.add_valid(
