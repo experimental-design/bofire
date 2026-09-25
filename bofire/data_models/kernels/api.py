@@ -1,6 +1,8 @@
 from bofire.data_models.kernels._register import register_kernel  # noqa: F401
 from bofire.data_models.kernels.aggregation import (
     AdditiveKernel,
+    ICMKernel,
+    MixedKernel,
     MultiplicativeKernel,
     PolynomialFeatureInteractionKernel,
     ScaleKernel,
@@ -13,6 +15,7 @@ from bofire.data_models.kernels.categorical import (
 )
 from bofire.data_models.kernels.conditional import WedgeKernel
 from bofire.data_models.kernels.continuous import (
+    AdditiveMapSaasKernel,
     ContinuousKernel,
     InfiniteWidthBNNKernel,
     LinearKernel,
@@ -38,6 +41,7 @@ _CONTINUOUS_KERNEL_TYPES: list[type[ContinuousKernel]] = [
     PolynomialKernel,
     RBFKernel,
     SphericalLinearKernel,
+    AdditiveMapSaasKernel,
     InfiniteWidthBNNKernel,
 ]
 
@@ -55,6 +59,8 @@ AnyMolecularKernel = TanimotoKernel
 
 _KERNEL_TYPES: list[type[Kernel]] = [
     AdditiveKernel,
+    ICMKernel,
+    MixedKernel,
     MultiplicativeKernel,
     PolynomialFeatureInteractionKernel,
     ScaleKernel,
@@ -67,6 +73,7 @@ _KERNEL_TYPES: list[type[Kernel]] = [
     RBFKernel,
     SphericalLinearKernel,
     TanimotoKernel,
+    AdditiveMapSaasKernel,
     InfiniteWidthBNNKernel,
     WassersteinKernel,
     ExactWassersteinKernel,

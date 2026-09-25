@@ -39,7 +39,7 @@ def test_polynomial_surrogate():
 
     assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
     assert isinstance(surrogate.kernel, PolynomialKernel)
-    assert surrogate.noise_constraint is not None
+    assert surrogate.likelihood.noise_constraint is not None
 
     # check dump
     surrogate.fit(experiments=experiments)

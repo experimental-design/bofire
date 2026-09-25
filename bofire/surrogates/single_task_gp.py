@@ -5,12 +5,13 @@ import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
-from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
-import bofire.priors.api as priors
+import bofire.likelihoods.api as likelihoods
+import bofire.means.api as means
 from bofire.data_models.enum import OutputFilteringEnum
+from bofire.data_models.feature_context import FeatureContext
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 
@@ -22,8 +23,9 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         **kwargs,
     ):
         self.kernel = data_model.kernel
-        self.noise_prior = data_model.noise_prior
-        self.noise_constraint = data_model.noise_constraint
+        self.mean = data_model.mean
+        self.likelihood = data_model.likelihood
+        self.offered_features = data_model.offered_features()
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[botorch.models.SingleTaskGP] = None
@@ -43,13 +45,13 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         else:
             n_dim = tX.shape[-1]
 
-        likelihood = GaussianLikelihood(
-            noise_prior=priors.map(self.noise_prior, d=n_dim),
-            noise_constraint=priors.map(self.noise_constraint)
-            if self.noise_constraint is not None
-            else None,
+        # the same view of the features the data model was validated against
+        context = FeatureContext(
+            inputs=self.inputs,
+            encodings=self.categorical_encodings,
+            engineered_features=self.engineered_features,
+            offered=self.offered_features,
         )
-
         self.model = botorch.models.SingleTaskGP(
             train_X=tX,
             train_Y=tY,
@@ -58,8 +60,20 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
                 batch_shape=torch.Size(),
                 active_dims=list(range(n_dim)),
                 features_to_idx_mapper=self.get_feature_indices,
+                context=context,
             ),
-            likelihood=likelihood,
+            mean_module=means.map(
+                self.mean,
+                d=n_dim,
+                context=context,
+                features_to_idx_mapper=self.get_feature_indices,
+            ),
+            likelihood=likelihoods.map(
+                self.likelihood,
+                d=n_dim,
+                context=context,
+                features_to_idx_mapper=self.get_feature_indices,
+            ),
             outcome_transform=outcome_transform,
             input_transform=input_transform,
         )

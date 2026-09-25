@@ -41,11 +41,15 @@ from bofire.data_models.kernels.api import (
     AdditiveKernel,
     HammingDistanceKernel,
     MaternKernel,
+    MixedKernel,
+    MultiplicativeKernel,
     RBFKernel,
     ScaleKernel,
     SphericalLinearKernel,
     TanimotoKernel,
 )
+from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
@@ -58,6 +62,7 @@ from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     GammaPrior,
     LogNormalPrior,
+    NormalPrior,
 )
 from bofire.data_models.priors.api import GreaterThan as BoFireGreaterThan
 from bofire.data_models.surrogates.api import (
@@ -443,17 +448,17 @@ def test_SingleTaskGPHyperconfig():
     else:
         assert isinstance(base_kernel, RBFKernel)
     if candidate.prior == "mbo":
-        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
+        assert surrogate_data.likelihood.noise_prior == MBO_NOISE_PRIOR()
         if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
         assert base_kernel.lengthscale_prior == MBO_LENGTHSCALE_PRIOR()
     elif candidate.prior == "threesix":
-        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
+        assert surrogate_data.likelihood.noise_prior == THREESIX_NOISE_PRIOR()
         if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
         assert base_kernel.lengthscale_prior == THREESIX_LENGTHSCALE_PRIOR()
     else:
-        assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
+        assert surrogate_data.likelihood.noise_prior == HVARFNER_NOISE_PRIOR()
         if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
         assert base_kernel.lengthscale_prior == HVARFNER_LENGTHSCALE_PRIOR()
@@ -610,12 +615,12 @@ def test_MixedSingleTaskGP_only_categorical():
     experiments = pd.DataFrame(experiments, columns=["x_cat_1", "x_cat_2", "y"])
     experiments["valid_y"] = 1
 
-    assert surrogate_data.categorical_kernel.features == ["x_cat_1", "x_cat_2"]
-    assert surrogate_data.continuous_kernel.features == []
+    # the split is not written into the kernels passed in (#820)
+    assert surrogate_data.categorical_kernel.features is None
+    assert surrogate_data.continuous_kernel.features is None
     surrogate = surrogates.map(surrogate_data)
     assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
-    assert isinstance(surrogate.kernel, ScaleKernel)
-    assert isinstance(surrogate.kernel.base_kernel, HammingDistanceKernel)
+    assert isinstance(surrogate.kernel, MixedKernel)
 
     surrogate.fit(experiments)
     assert surrogate.model.covar_module.base_kernel.active_dims.tolist() == [0, 1]
@@ -1234,7 +1239,9 @@ def test_noise_prior_affects_single_task_gp():
         SingleTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=LogNormalPrior(loc=0.0, scale=0.25),
+            likelihood=GaussianLikelihood(
+                noise_prior=LogNormalPrior(loc=0.0, scale=0.25)
+            ),
         )
     )
     surrogate_large.fit(experiments)
@@ -1290,7 +1297,9 @@ def test_noise_constraint_enforced_for_single_task_gp():
         SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            noise_constraint=BoFireGreaterThan(lower_bound=0.5),
+            likelihood=GaussianLikelihood(
+                noise_constraint=BoFireGreaterThan(lower_bound=0.5)
+            ),
         )
     )
     surrogate.fit(experiments)
@@ -1324,3 +1333,207 @@ def test_noise_prior_registered_for_robust_single_task_gp():
         "User-supplied GammaPrior must be in the likelihood's _priors registry "
         f"(got {type(prior).__name__})"
     )
+
+
+def _fit_single_task_gp(**kwargs):
+    torch.manual_seed(0)
+    np.random.seed(0)
+    X = np.random.uniform(0, 1, size=(20, 2))
+    y = np.sin(2 * np.pi * X[:, 0]) + 0.3 * X[:, 1]
+    experiments = pd.DataFrame({"x1": X[:, 0], "x2": X[:, 1], "y": y, "valid_y": 1})
+    surrogate = surrogates.map(
+        SingleTaskGPSurrogate(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="x1", bounds=(0, 1)),
+                    ContinuousInput(key="x2", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="y")]),
+            **kwargs,
+        )
+    )
+    surrogate.fit(experiments)
+    return surrogate.model
+
+
+def test_single_task_gp_uses_its_mean_and_likelihood():
+    """The fitted model is built from the configured components."""
+    model = _fit_single_task_gp()
+
+    assert isinstance(model.mean_module, gpytorch.means.ConstantMean)
+    assert list(model.mean_module.named_priors()) == []
+    noise_prior = _get_registered_noise_prior(model)
+    assert isinstance(noise_prior, gpytorch.priors.LogNormalPrior)
+    assert float(noise_prior.loc) == -4.0
+
+
+def test_single_task_gp_mean_prior_reaches_the_model():
+    model = _fit_single_task_gp(
+        mean=ConstantMean(prior=NormalPrior(loc=0.0, scale=1.0))
+    )
+
+    ((_, _, prior, *_),) = model.mean_module.named_priors()
+    assert isinstance(prior, gpytorch.priors.NormalPrior)
+
+
+def test_offered_features_cover_every_column_the_kernel_sees():
+    """What validation checks is what the kernel is applied to.
+
+    A surrogate offers every input and engineered feature to a kernel that selects
+    none; the functional layer hands such a kernel every column. The two must agree.
+    """
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="a", bounds=(0, 1)),
+            ContinuousInput(key="b", bounds=(0, 1)),
+            CategoricalInput(key="c", categories=["x", "y", "z"]),
+        ]
+    )
+    data_model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=Outputs(features=[ContinuousOutput(key="y")]),
+        engineered_features=EngineeredFeatures(
+            features=[SumFeature(key="s", features=["a", "b"])]
+        ),
+    )
+    np.random.seed(0)
+    experiments = pd.DataFrame(
+        {
+            "a": np.random.rand(12),
+            "b": np.random.rand(12),
+            "c": np.random.choice(["x", "y", "z"], 12),
+        }
+    )
+    experiments["y"] = experiments.a + experiments.b
+    experiments["valid_y"] = 1
+    surrogate = surrogates.map(data_model)
+    surrogate.fit(experiments)
+
+    n_columns = surrogate.model.input_transform(surrogate.model.train_inputs[0]).shape[
+        -1
+    ]
+    offered = list(data_model.offered_features())
+    assert sorted(surrogate.get_feature_indices(offered)) == list(range(n_columns))
+
+
+def _mixed_problem(with_continuous: bool = True, engineered: bool = False):
+    rng = np.random.default_rng(0)
+    n = 16
+    features = [
+        CategoricalInput(key="c1", categories=["a", "b", "c"]),
+        CategoricalInput(key="c2", categories=["p", "q"]),
+    ]
+    experiments = pd.DataFrame(
+        {"c1": rng.choice(["a", "b", "c"], n), "c2": rng.choice(["p", "q"], n)}
+    )
+    y = (experiments.c1 == "a") * 1.0 + (experiments.c2 == "q") * 0.5
+    if with_continuous:
+        features = [
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+        ] + features
+        experiments["x1"], experiments["x2"] = rng.random(n), rng.random(n)
+        y = y + np.sin(4 * experiments.x1) + experiments.x2
+    experiments["y"] = y + 0.01 * rng.standard_normal(n)
+    experiments["valid_y"] = 1
+    engineered_features = EngineeredFeatures(
+        features=[SumFeature(key="s", features=["x1", "x2"])] if engineered else []
+    )
+    return Inputs(features=features), engineered_features, experiments
+
+
+def _hand_built_mixed_kernel(continuous: list, categorical: list):
+    """The composite the mixed GP was translated to before MixedKernel existed."""
+    cat = HammingDistanceKernel(
+        ard=True,
+        lengthscale_constraint=BoFireGreaterThan(lower_bound=1e-6),
+        features=categorical,
+    )
+    if not continuous:
+        return ScaleKernel(base_kernel=cat)
+    cont = RBFKernel(
+        ard=True,
+        lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+        lengthscale_constraint=BoFireGreaterThan(lower_bound=2.5e-2),
+        features=continuous,
+    )
+    return AdditiveKernel(
+        kernels=[
+            ScaleKernel(
+                base_kernel=AdditiveKernel(kernels=[cont, ScaleKernel(base_kernel=cat)])
+            ),
+            ScaleKernel(base_kernel=MultiplicativeKernel(kernels=[cont, cat])),
+        ]
+    )
+
+
+@pytest.mark.parametrize("with_continuous", [True, False], ids=["mixed", "categorical"])
+def test_mixed_gp_is_the_model_it_was(with_continuous):
+    """Built through MixedKernel, the mixed GP fits the same model as before."""
+    inputs, _, experiments = _mixed_problem(with_continuous)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    ordinal = {"c1": OrdinalEncoding(), "c2": OrdinalEncoding()}
+    reference = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        categorical_encodings=ordinal,
+        kernel=_hand_built_mixed_kernel(
+            ["x1", "x2"] if with_continuous else [], ["c1", "c2"]
+        ),
+        likelihood=GaussianLikelihood(
+            noise_constraint=BoFireGreaterThan(lower_bound=1e-4)
+        ),
+        hyperconfig=None,
+    )
+
+    torch.manual_seed(1)
+    ours = surrogates.map(MixedSingleTaskGPSurrogate(inputs=inputs, outputs=outputs))
+    ours.fit(experiments)
+    torch.manual_seed(1)
+    theirs = surrogates.map(reference)
+    theirs.fit(experiments)
+
+    assert_frame_equal(
+        ours.predict(experiments), theirs.predict(experiments), check_exact=True
+    )
+
+
+def test_mixed_gp_does_not_modify_the_kernels_passed_in():
+    """One kernel instance serves two mixed GPs with different inputs (#820)."""
+    continuous_kernel = RBFKernel(ard=True)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    first_inputs, _, _ = _mixed_problem()
+    second_inputs = Inputs(
+        features=[
+            ContinuousInput(key="t1", bounds=(0, 1)),
+            CategoricalInput(key="k", categories=["u", "v"]),
+        ]
+    )
+
+    MixedSingleTaskGPSurrogate(
+        inputs=first_inputs, outputs=outputs, continuous_kernel=continuous_kernel
+    )
+    MixedSingleTaskGPSurrogate(
+        inputs=second_inputs, outputs=outputs, continuous_kernel=continuous_kernel
+    )
+
+    assert continuous_kernel.features is None
+
+
+def test_mixed_gp_uses_engineered_features():
+    """They go to the continuous kernel; before, the mixed GP dropped them."""
+    inputs, engineered, experiments = _mixed_problem(engineered=True)
+    surrogate = surrogates.map(
+        MixedSingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=Outputs(features=[ContinuousOutput(key="y")]),
+            engineered_features=engineered,
+        )
+    )
+    surrogate.fit(experiments)
+
+    # columns: x1, x2, c1, c2, then the engineered sum
+    sum_kernel, _ = surrogate.model.covar_module.kernels
+    continuous = sum_kernel.base_kernel.kernels[0]
+    assert continuous.active_dims.tolist() == [0, 1, 4]

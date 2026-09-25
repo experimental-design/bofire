@@ -17,14 +17,17 @@ import bofire.kernels.shape as shapeKernels
 from bofire.data_models.constraints.condition import ThresholdCondition
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
+    AdditiveMapSaasKernel,
     DownsamplingKernel,
     ExactWassersteinKernel,
     FeatureSpecificKernel,
     HammingDistanceKernel,
+    ICMKernel,
     IndexKernel,
     InfiniteWidthBNNKernel,
     LinearKernel,
     MaternKernel,
+    MixedKernel,
     MultiplicativeKernel,
     PolynomialFeatureInteractionKernel,
     PolynomialKernel,
@@ -61,6 +64,7 @@ EQUIVALENTS = {
     WassersteinKernel: shapeKernels.WassersteinKernel,
     ExactWassersteinKernel: shapeKernels.ExactWassersteinKernel,
     InfiniteWidthBNNKernel: BNNKernel,
+    AdditiveMapSaasKernel: gpytorch.kernels.AdditiveKernel,
     PolynomialFeatureInteractionKernel: aggregationKernels.PolynomialFeatureInteractionKernel,
     WedgeKernel: conditionalKernels.WedgeKernel,
     SphericalLinearKernel: bofire.kernels.spherical_kernels.SphericalLinearKernel,
@@ -73,6 +77,10 @@ def test_map(kernel_spec: Spec):
         isinstance(kernel, (HammingDistanceKernel, DownsamplingKernel))
         and kernel.features is not None
     ):
+        return
+    # need the feature context to find their columns; their mapping is tested in
+    # tests/bofire/surrogates/test_multitask_gps.py and test_gps.py
+    if isinstance(kernel, (ICMKernel, MixedKernel)):
         return
     gkernel = kernels.map(
         kernel,

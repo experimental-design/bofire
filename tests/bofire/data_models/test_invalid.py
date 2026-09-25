@@ -28,6 +28,10 @@ def test_kernel_should_be_invalid(invalid_kernel_spec: InvalidSpec):
     _invalidate(invalid_kernel_spec)
 
 
+def test_mean_should_be_invalid(invalid_mean_spec: InvalidSpec):
+    _invalidate(invalid_mean_spec)
+
+
 def test_constraint_should_be_invalid(invalid_constraint_spec: InvalidSpec):
     _invalidate(invalid_constraint_spec)
 

@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Type, Union
+from typing import Any, List, Literal, Optional, Type, Union
 
 import pandas as pd
 from pydantic import Field
@@ -16,6 +16,8 @@ from bofire.data_models.kernels.api import (
     RBFKernel,
     ScaleKernel,
 )
+from bofire.data_models.likelihoods.api import AnyLikelihood, GaussianLikelihood
+from bofire.data_models.means.api import AnyMean, ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
@@ -27,8 +29,8 @@ from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     AnyPrior,
     AnyPriorConstraint,
-    GreaterThan,
 )
+from bofire.data_models.surrogates.kernel_based import KernelBasedSurrogate
 from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -102,7 +104,13 @@ class SingleTaskGPHyperconfig(Hyperconfig):
                 HVARFNER_LENGTHSCALE_PRIOR(),
                 THREESIX_SCALE_PRIOR(),
             )
-        surrogate_data.noise_prior = noise_prior
+        if isinstance(surrogate_data, SingleTaskGPSurrogate):
+            surrogate_data.likelihood = surrogate_data.likelihood.model_copy(
+                update={"noise_prior": noise_prior}
+            )
+        else:
+            # RobustSingleTaskGPSurrogate reuses this config and keeps flat noise fields
+            surrogate_data.noise_prior = noise_prior
 
         if hyperparameters.kernel == "rbf":
             base_kernel = RBFKernel(
@@ -135,7 +143,7 @@ class SingleTaskGPHyperconfig(Hyperconfig):
             surrogate_data.kernel = base_kernel
 
 
-class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
+class SingleTaskGPSurrogate(TrainableBotorchSurrogate, KernelBasedSurrogate):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
     kernel: AnyKernel = Field(
@@ -144,13 +152,22 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
         )
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
-    noise_constraint: Optional[AnyPriorConstraint] = Field(
-        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    mean: AnyMean = Field(
+        default=ConstantMean(),
+        description="Prior mean function, what the model predicts far from any "
+        "observation.",
+    )
+    likelihood: AnyLikelihood = Field(
+        default=GaussianLikelihood(),
+        description="How observations scatter around the response, i.e. the model of "
+        "the measurement noise.",
     )
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig(),
     )
+
+    def components(self) -> List[Any]:
+        return [self.kernel, self.mean, self.likelihood]
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

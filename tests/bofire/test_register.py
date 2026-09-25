@@ -708,15 +708,33 @@ class TestPriorPydanticIntegration:
 
         register_prior(_IntegrationPriorDataModel)
 
+        from bofire.data_models.likelihoods.api import GaussianLikelihood
         from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 
         s = SingleTaskGPSurrogate(
             inputs=_INPUTS,
             outputs=_OUTPUTS,
-            noise_prior=_IntegrationPriorDataModel(value=2.0),
+            likelihood=GaussianLikelihood(
+                noise_prior=_IntegrationPriorDataModel(value=2.0)
+            ),
         )
-        assert isinstance(s.noise_prior, _IntegrationPriorDataModel)
-        assert s.noise_prior.value == 2.0
+        assert isinstance(s.likelihood.noise_prior, _IntegrationPriorDataModel)
+        assert s.likelihood.noise_prior.value == 2.0
+
+    def test_custom_prior_as_mean_prior(self):
+        from bofire.data_models.means.api import ConstantMean
+        from bofire.data_models.priors.api import register_prior
+
+        register_prior(_IntegrationPriorDataModel)
+
+        from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+
+        s = SingleTaskGPSurrogate(
+            inputs=_INPUTS,
+            outputs=_OUTPUTS,
+            mean=ConstantMean(prior=_IntegrationPriorDataModel(value=3.0)),
+        )
+        assert isinstance(s.mean.prior, _IntegrationPriorDataModel)
 
     def test_custom_prior_as_lengthscale_prior(self):
         from bofire.data_models.kernels.continuous import RBFKernel

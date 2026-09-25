@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 import botorch
 import torch
@@ -10,20 +10,28 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
+from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import TanimotoGPSurrogate as DataModel
-from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
+from bofire.surrogates.botorch import TrainableBotorchSurrogate
 
 
-class TanimotoGPSurrogate(SingleTaskGPSurrogate):
+class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     def __init__(
         self,
         data_model: DataModel,
         tanimoto_similarity_matrix: Optional[torch.Tensor] = None,
         **kwargs,
     ):
+        self.kernel = data_model.kernel
+        self.noise_prior = data_model.noise_prior
+        self.noise_constraint = data_model.noise_constraint
         self.tanimoto_calculation_mode = data_model.tanimoto_calculation_mode
         self.tanimoto_similarity_matrix = tanimoto_similarity_matrix
         super().__init__(data_model=data_model, **kwargs)
+
+    model: Optional[botorch.models.SingleTaskGP] = None
+    _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
+    training_specs: Dict = {}
 
     @property
     def re_init_kwargs(self) -> dict:

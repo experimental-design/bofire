@@ -11,10 +11,11 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
+from bofire.data_models.surrogates.kernel_based import KernelBasedSurrogate
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class PolynomialSurrogate(TrainableBotorchSurrogate):
+class PolynomialSurrogate(TrainableBotorchSurrogate, KernelBasedSurrogate):
     type: Literal["PolynomialSurrogate"] = "PolynomialSurrogate"
 
     kernel: PolynomialKernel = Field(default_factory=lambda: PolynomialKernel(power=2))

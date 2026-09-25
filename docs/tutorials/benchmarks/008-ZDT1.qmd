@@ -19,6 +19,7 @@ import bofire.strategies.api as strategies
 from bofire.benchmarks.api import ZDT1
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.kernels.api import RBFKernel
+from bofire.data_models.likelihoods.api import GaussianLikelihood
 from bofire.data_models.priors.api import (
     HVARFNER_NOISE_PRIOR,
     DimensionalityScaledLogNormalPrior,
@@ -91,7 +92,7 @@ def strategy_factory(domain: Domain):
                         ard=True,
                         lengthscale_prior=DimensionalityScaledLogNormalPrior(),
                     ),
-                    noise_prior=HVARFNER_NOISE_PRIOR(),
+                    likelihood=GaussianLikelihood(noise_prior=HVARFNER_NOISE_PRIOR()),
                 ),
                 SingleTaskGPSurrogate(
                     inputs=benchmark.domain.inputs,
@@ -101,7 +102,7 @@ def strategy_factory(domain: Domain):
                         ard=True,
                         lengthscale_prior=DimensionalityScaledLogNormalPrior(),
                     ),
-                    noise_prior=HVARFNER_NOISE_PRIOR(),
+                    likelihood=GaussianLikelihood(noise_prior=HVARFNER_NOISE_PRIOR()),
                 ),
             ],
         ),

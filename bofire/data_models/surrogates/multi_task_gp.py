@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Type
+from typing import Literal, Optional, Tuple, Type
 
 import pandas as pd
 from pydantic import Field, model_validator
@@ -25,6 +25,7 @@ from bofire.data_models.priors.api import (
     GreaterThan,
 )
 from bofire.data_models.priors.lkj import LKJPrior
+from bofire.data_models.surrogates.kernel_based import KernelBasedSurrogate
 from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -93,7 +94,7 @@ class MultiTaskGPHyperconfig(Hyperconfig):
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
 
-class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
+class MultiTaskGPSurrogate(TrainableBotorchSurrogate, KernelBasedSurrogate):
     type: Literal["MultiTaskGPSurrogate"] = "MultiTaskGPSurrogate"
     kernel: AnyKernel = Field(
         default_factory=lambda: RBFKernel(
@@ -126,6 +127,11 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
         return isinstance(my_type, type(ContinuousOutput))
+
+    def offered_features(self) -> Tuple[str, ...]:
+        """Every feature except the task input, which the task correlation handles."""
+        task_keys = self.inputs.get_keys(CategoricalTaskInput)
+        return tuple(k for k in super().offered_features() if k not in task_keys)
 
     @model_validator(mode="after")
     def validate_task_inputs(self):

@@ -111,12 +111,13 @@ Some surrogates are conceptually a special case of another. For example, `Tanimo
 ```python
 def my_transform(data_model):
     """Convert MySurrogateDataModel to SingleTaskGPSurrogate."""
+    from bofire.data_models.likelihoods.api import GaussianLikelihood
     from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
     return SingleTaskGPSurrogate(
         inputs=data_model.inputs,
         outputs=data_model.outputs,
         kernel=data_model.kernel,
-        noise_prior=data_model.noise_prior,
+        likelihood=GaussianLikelihood(noise_prior=data_model.noise_prior),
     )
 
 surrogates.register(

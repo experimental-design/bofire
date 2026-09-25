@@ -391,3 +391,26 @@ specs.add_invalid(
     error=ValueError,
     message="DownsamplingKernel requires a single task feature to be provided",
 )
+
+
+specs.add_valid(
+    kernels.AdditiveMapSaasKernel,
+    lambda: {"features": None, "n_taus": 4},
+)
+
+specs.add_valid(
+    kernels.ICMKernel,
+    lambda: {
+        "base_kernel": kernels.RBFKernel(ard=True).model_dump(),
+        "rank": None,
+        "task_feature": None,
+    },
+)
+
+specs.add_valid(
+    kernels.MixedKernel,
+    lambda: {
+        "continuous_kernel": kernels.MaternKernel(ard=True, nu=2.5).model_dump(),
+        "categorical_kernel": kernels.HammingDistanceKernel(ard=False).model_dump(),
+    },
+)

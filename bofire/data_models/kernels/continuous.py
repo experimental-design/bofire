@@ -11,7 +11,12 @@ from bofire.data_models.priors.api import AnyPrior
 
 
 class ContinuousKernel(FeatureSpecificKernel):
-    """Kernel acting on continuous inputs."""
+    """Kernel comparing inputs by numeric distance.
+
+    Every feature is numeric once encoded, so it can work on any of them. On a
+    categorical, the encoding decides what the distance means: one-hot makes all
+    categories equally far apart, ordinal codes make neighbouring categories closer.
+    """
 
     pass
 
@@ -104,6 +109,25 @@ class InfiniteWidthBNNKernel(ContinuousKernel):
         default=3,
         description="Number of layers in the equivalent network. More layers allow a "
         "less stationary response.",
+    )
+
+
+class AdditiveMapSaasKernel(ContinuousKernel):
+    """Sum of sparse Matern-5/2 kernels, each assuming a different number of inputs matter.
+
+    Every term puts a sparse axis-aligned subspace (SAAS) prior on its lengthscales,
+    which pulls most of them towards infinity so that only a few inputs keep any
+    influence, and each term does so at its own sparsity level. Summing them avoids
+    committing to how many inputs matter. Pick it for many inputs and few experiments,
+    where only a handful of inputs are expected to drive the response; it is the kernel
+    of a maximum-a-posteriori approximation to the fully Bayesian SAAS model.
+    """
+
+    type: Literal["AdditiveMapSaasKernel"] = "AdditiveMapSaasKernel"
+    n_taus: PositiveInt = Field(
+        default=4,
+        description="Number of sparse Matern kernels summed up, each at its own "
+        "sparsity level.",
     )
 
 
