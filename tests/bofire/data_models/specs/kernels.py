@@ -406,3 +406,11 @@ specs.add_valid(
         "task_feature": None,
     },
 )
+
+specs.add_valid(
+    kernels.MixedKernel,
+    lambda: {
+        "continuous_kernel": kernels.MaternKernel(ard=True, nu=2.5).model_dump(),
+        "categorical_kernel": kernels.HammingDistanceKernel(ard=False).model_dump(),
+    },
+)

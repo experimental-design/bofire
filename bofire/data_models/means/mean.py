@@ -1,9 +1,11 @@
-from typing import Any, Literal, Optional, Tuple
+from typing import Any, Dict, Literal, Optional, Tuple
 
 from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.feature_context import FeatureContext
+from bofire.data_models.domain.api import Inputs
+from bofire.data_models.encodings.api import AnyCategoricalEncoding, OrdinalEncoding
+from bofire.data_models.feature_context import FeatureContext, task_input_key
 from bofire.data_models.priors.api import AnyPrior
 
 
@@ -16,6 +18,17 @@ class Mean(BaseModel):
     """
 
     type: Any
+
+    def encoding_requests(self, inputs: Inputs) -> Dict[str, AnyCategoricalEncoding]:
+        """The encodings this component needs for features left without one.
+
+        Args:
+            inputs: The inputs of the surrogate the component belongs to.
+
+        Returns:
+            Encodings by feature key; empty if the component has no need.
+        """
+        return {}
 
     def validate_inputs(self, context: FeatureContext) -> None:
         """Check that this component can work on what it is applied to.
@@ -70,6 +83,10 @@ class TaskConstantMean(ConstantMean):
         description="Key of the task input. If not provided, the single task input "
         "of the domain.",
     )
+
+    def encoding_requests(self, inputs: Inputs) -> Dict[str, AnyCategoricalEncoding]:
+        key = task_input_key(inputs, self.task_feature)
+        return {} if key is None else {key: OrdinalEncoding()}
 
     def validate_inputs(self, context: FeatureContext) -> None:
         """Check that there is a usable task input.

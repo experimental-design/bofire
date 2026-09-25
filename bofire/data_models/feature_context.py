@@ -7,6 +7,25 @@ from bofire.data_models.features.api import AnyFeature, CategoricalTaskInput
 from bofire.data_models.types import InputTransformSpecs
 
 
+def task_input_key(inputs: Inputs, key: Optional[str] = None) -> Optional[str]:
+    """Key of the task input a multi-task component works on, if it can be found.
+
+    Args:
+        inputs: The inputs to look in.
+        key: Key of the task input. If not given, the single task input.
+
+    Returns:
+        The key, or `None` if there is no such task input; validation reports why.
+    """
+    if key is not None:
+        is_task = key in inputs.get_keys() and isinstance(
+            inputs.get_by_key(key), CategoricalTaskInput
+        )
+        return key if is_task else None
+    keys = inputs.get_keys(CategoricalTaskInput)
+    return keys[0] if len(keys) == 1 else None
+
+
 @dataclass(frozen=True)
 class FeatureContext:
     """What a model component is applied to: the features on offer and their encoding.
@@ -48,6 +67,10 @@ class FeatureContext:
     def without(self, key: str) -> "FeatureContext":
         """The same context with one feature no longer offered."""
         return replace(self, offered=tuple(k for k in self.offered if k != key))
+
+    def only(self, keys: List[str]) -> "FeatureContext":
+        """The same context offering only the given features, in offered order."""
+        return replace(self, offered=tuple(k for k in self.offered if k in keys))
 
     def task_feature(self, key: Optional[str] = None) -> CategoricalTaskInput:
         """The task input a multi-task component works on.

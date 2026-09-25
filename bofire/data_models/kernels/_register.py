@@ -10,6 +10,7 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
     from bofire.data_models.kernels.aggregation import (
         AdditiveKernel,
         ICMKernel,
+        MixedKernel,
         MultiplicativeKernel,
         PolynomialFeatureInteractionKernel,
         ScaleKernel,
@@ -48,6 +49,7 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
         ScaleKernel,
         PolynomialFeatureInteractionKernel,
         ICMKernel,
+        MixedKernel,
         ConditionalEmbeddingKernel,
         WedgeKernel,
     ]:
@@ -63,12 +65,18 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
 
     # Patch sub-category kernel fields if the new type is a subclass
     if issubclass(new_kernel_cls, ContinuousKernel):
+        for model_cls, field_name in [(MixedKernel, "continuous_kernel")]:
+            append_to_union_field(model_cls, field_name, new_kernel_cls)
+        MixedKernel.model_rebuild(force=True)
         patch_field(
             MixedSingleTaskGPSurrogate,
             "continuous_kernel",
             kernels_api.AnyContinuousKernel,
         )
     if issubclass(new_kernel_cls, CategoricalKernel):
+        for model_cls, field_name in [(MixedKernel, "categorical_kernel")]:
+            append_to_union_field(model_cls, field_name, new_kernel_cls)
+        MixedKernel.model_rebuild(force=True)
         patch_field(
             MixedSingleTaskGPSurrogate,
             "categorical_kernel",

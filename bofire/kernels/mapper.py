@@ -183,6 +183,60 @@ def map_ICMKernel(
     return base_kernel * task_kernel
 
 
+def map_MixedKernel(
+    data_model: data_models.MixedKernel,
+    batch_shape: torch.Size,
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    context: Optional[FeatureContext] = None,
+    **kwargs,
+) -> GpytorchKernel:
+    if context is None or features_to_idx_mapper is None:
+        raise RuntimeError(
+            "MixedKernel needs the feature context and a feature-to-index mapper to "
+            "split its features."
+        )
+    categorical = data_models.MixedKernel.categorical_share(context)
+    continuous = [k for k in context.offered if k not in categorical]
+    # copies with the split written in; the kernels passed in stay as they are
+    cat = data_model.categorical_kernel.model_copy(
+        update={
+            "features": data_model.categorical_kernel.selected_features(
+                context.only(categorical)
+            )
+        }
+    )
+    cont_features = data_model.continuous_kernel.selected_features(
+        context.only(continuous)
+    )
+    if not cont_features:
+        composite = data_models.ScaleKernel(base_kernel=cat)
+    else:
+        cont = data_model.continuous_kernel.model_copy(
+            update={"features": cont_features}
+        )
+        composite = data_models.AdditiveKernel(
+            kernels=[
+                data_models.ScaleKernel(
+                    base_kernel=data_models.AdditiveKernel(
+                        kernels=[cont, data_models.ScaleKernel(base_kernel=cat)]
+                    )
+                ),
+                data_models.ScaleKernel(
+                    base_kernel=data_models.MultiplicativeKernel(kernels=[cont, cat])
+                ),
+            ]
+        )
+    return map(
+        composite,
+        batch_shape=batch_shape,
+        active_dims=active_dims,
+        features_to_idx_mapper=features_to_idx_mapper,
+        context=context,
+        **kwargs,
+    )
+
+
 def map_InfiniteWidthBNNKernel(
     data_model: data_models.InfiniteWidthBNNKernel,
     batch_shape: torch.Size,
@@ -619,6 +673,7 @@ KERNEL_MAP = {
     data_models.MaternKernel: map_MaternKernel,
     data_models.AdditiveMapSaasKernel: map_AdditiveMapSaasKernel,
     data_models.ICMKernel: map_ICMKernel,
+    data_models.MixedKernel: map_MixedKernel,
     data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
     data_models.LinearKernel: map_LinearKernel,
     data_models.PolynomialKernel: map_PolynomialKernel,

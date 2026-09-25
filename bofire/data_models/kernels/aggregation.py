@@ -1,9 +1,12 @@
 from collections.abc import Sequence
-from typing import List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 
 from pydantic import Field, PositiveInt
 
-from bofire.data_models.feature_context import FeatureContext
+from bofire.data_models.domain.api import Inputs
+from bofire.data_models.encodings.api import AnyCategoricalEncoding, OrdinalEncoding
+from bofire.data_models.feature_context import FeatureContext, task_input_key
+from bofire.data_models.features.api import CategoricalInput
 from bofire.data_models.kernels.categorical import (
     HammingDistanceKernel,
     IndexKernel,
@@ -23,7 +26,12 @@ from bofire.data_models.kernels.fidelity import DownsamplingKernel
 from bofire.data_models.kernels.kernel import AggregationKernel, Kernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.kernels.shape import ExactWassersteinKernel, WassersteinKernel
-from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
+from bofire.data_models.priors.api import (
+    HVARFNER_LENGTHSCALE_PRIOR,
+    AnyPrior,
+    AnyPriorConstraint,
+    GreaterThan,
+)
 
 
 class AdditiveKernel(AggregationKernel):
@@ -253,6 +261,13 @@ class ICMKernel(Kernel):
     def children(self) -> List[Kernel]:
         return [self.base_kernel]
 
+    def encoding_requests(self, inputs: Inputs) -> Dict[str, AnyCategoricalEncoding]:
+        requests = super().encoding_requests(inputs)
+        key = task_input_key(inputs, self.task_feature)
+        if key is not None:
+            requests[key] = OrdinalEncoding()
+        return requests
+
     def validate_inputs(self, context: FeatureContext) -> None:
         """Check the task input and the rank, then the base kernel without the task.
 
@@ -267,6 +282,89 @@ class ICMKernel(Kernel):
                 f"{len(task.categories)} tasks."
             )
         self.base_kernel.validate_inputs(context.without(task.key))
+
+
+class MixedKernel(Kernel):
+    r"""Kernel over a mix of continuous and categorical inputs.
+
+    $$
+    k = s_1\,(k_{\text{cont}} + s_2\,k_{\text{cat}}) + s_3\,(k_{\text{cont}} \cdot
+    k_{\text{cat}})
+    $$
+
+    with $s_1$ to $s_3$ fitted output scales, so the model can express both an effect
+    common to every category and one that differs between them. The categorical kernel
+    acts on the categoricals encoded as ordinal codes, the continuous kernel on every
+    other feature, engineered ones included. With no continuous features it reduces to
+    $s_1\,k_{\text{cat}}$. Categoricals without descriptor data default to ordinal
+    codes. A sub-kernel with explicit `features` uses those instead of its share.
+    """
+
+    type: Literal["MixedKernel"] = "MixedKernel"
+    continuous_kernel: Union[
+        RBFKernel,
+        MaternKernel,
+        LinearKernel,
+        PolynomialKernel,
+        SphericalLinearKernel,
+        AdditiveMapSaasKernel,
+        InfiniteWidthBNNKernel,
+    ] = Field(
+        default=RBFKernel(
+            ard=True,
+            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+            lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),
+        ),
+        description="Kernel over the continuous features, and the categoricals not "
+        "encoded as ordinal codes.",
+    )
+    categorical_kernel: Union[
+        HammingDistanceKernel,
+        IndexKernel,
+        PositiveIndexKernel,
+    ] = Field(
+        default=HammingDistanceKernel(
+            ard=True, lengthscale_constraint=GreaterThan(lower_bound=1e-6)
+        ),
+        description="Kernel over the categoricals encoded as ordinal codes.",
+    )
+
+    def children(self) -> List[Kernel]:
+        return [self.continuous_kernel, self.categorical_kernel]
+
+    @staticmethod
+    def categorical_share(context: FeatureContext) -> List[str]:
+        """The offered features the categorical kernel acts on: ordinal-coded categoricals."""
+        return [
+            key
+            for key in context.offered
+            if isinstance(context.get(key), CategoricalInput)
+            and isinstance(context.encoding(key), OrdinalEncoding)
+        ]
+
+    def encoding_requests(self, inputs: Inputs) -> Dict[str, AnyCategoricalEncoding]:
+        requests = super().encoding_requests(inputs)
+        for feat in inputs.get(CategoricalInput, exact=False):
+            if feat.descriptors is None:
+                requests[feat.key] = OrdinalEncoding()
+        return requests
+
+    def validate_inputs(self, context: FeatureContext) -> None:
+        """Check that there is a categorical side, then each kernel against its share.
+
+        Raises:
+            ValueError: If no categorical is encoded as ordinal codes, or a kernel
+                cannot work on its features.
+        """
+        categorical = self.categorical_share(context)
+        if not categorical:
+            raise ValueError(
+                "MixedKernel needs at least one categorical input encoded as ordinal "
+                "codes."
+            )
+        continuous = [k for k in context.offered if k not in categorical]
+        self.continuous_kernel.validate_inputs(context.only(continuous))
+        self.categorical_kernel.validate_inputs(context.only(categorical))
 
 
 AdditiveKernel.model_rebuild()

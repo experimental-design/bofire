@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Tuple, Type, Union
+from typing import Any, List, Literal, Optional, Type, Union
 
 import pandas as pd
 from pydantic import Field
@@ -166,9 +166,8 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, KernelBasedSurrogate):
         default_factory=lambda: SingleTaskGPHyperconfig(),
     )
 
-    @classmethod
-    def component_field_names(cls) -> Tuple[str, ...]:
-        return ("kernel", "mean", "likelihood")
+    def components(self) -> List[Any]:
+        return [self.kernel, self.mean, self.likelihood]
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

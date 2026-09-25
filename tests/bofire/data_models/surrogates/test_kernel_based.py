@@ -18,6 +18,7 @@ from bofire.data_models.kernels.api import (
     ICMKernel,
     IndexKernel,
     LinearKernel,
+    MixedKernel,
     RBFKernel,
     ScaleKernel,
 )
@@ -144,8 +145,7 @@ def test_validation_does_not_modify_components():
         (surrogates.LinearSurrogate, True),
         (surrogates.PolynomialSurrogate, True),
         (surrogates.MultiTaskGPSurrogate, True),
-        # rebuilt in a later step of #825, which brings its own routing
-        (surrogates.MixedSingleTaskGPSurrogate, False),
+        (surrogates.MixedSingleTaskGPSurrogate, True),
     ],
 )
 def test_which_surrogates_validate_their_components(cls, validated):
@@ -227,3 +227,99 @@ def test_task_components_accept_a_task_input():
         # need the ordinal codes
         categorical_encodings=TASK_ORDINAL,
     )
+
+
+def test_mixed_gp_honours_explicit_features_on_its_kernels():
+    """A continuous kernel may act on ordinal codes if asked to; the split is a default."""
+    surrogate = surrogates.MixedSingleTaskGPSurrogate(
+        inputs=INPUTS,
+        outputs=OUTPUTS,
+        continuous_kernel=RBFKernel(features=["x", "c"]),
+    )
+
+    assert surrogate.continuous_kernel.features == ["x", "c"]
+
+
+MIXED_INPUTS = Inputs(
+    features=[
+        ContinuousInput(key="x", bounds=(0, 1)),
+        CategoricalInput(key="c", categories=["a", "b"]),
+        CategoricalTaskInput(key="t", categories=["u", "v"]),
+    ]
+)
+
+
+def _encodings(surrogate):
+    return {k: type(v).__name__ for k, v in surrogate.categorical_encodings.items()}
+
+
+def test_components_request_the_encoding_they_need():
+    mixed = surrogates.SingleTaskGPSurrogate(
+        inputs=MIXED_INPUTS, outputs=OUTPUTS, kernel=MixedKernel()
+    )
+    task = surrogates.SingleTaskGPSurrogate(
+        inputs=MIXED_INPUTS,
+        outputs=OUTPUTS,
+        kernel=ICMKernel(base_kernel=RBFKernel()),
+        mean=TaskConstantMean(),
+    )
+
+    # MixedKernel asks for ordinal codes on every plain categorical
+    assert _encodings(mixed) == {"c": "OrdinalEncoding", "t": "OrdinalEncoding"}
+    # the task components only on the task input; `c` keeps the one-hot default
+    assert _encodings(task) == {"c": "OneHotEncoding", "t": "OrdinalEncoding"}
+
+
+def test_an_explicit_encoding_wins_over_a_request():
+    with pytest.raises(ValidationError, match="has to be encoded as ordinal codes"):
+        surrogates.SingleTaskGPSurrogate(
+            inputs=MIXED_INPUTS,
+            outputs=OUTPUTS,
+            kernel=ICMKernel(base_kernel=RBFKernel()),
+            categorical_encodings={"t": OneHotEncoding()},
+        )
+
+
+class _Requesting:
+    """A component asking for one encoding of one feature."""
+
+    def __init__(self, encoding):
+        self.encoding = encoding
+
+    def encoding_requests(self, inputs):
+        return {"c": self.encoding}
+
+    def validate_inputs(self, context):
+        pass
+
+
+def test_conflicting_requests_raise():
+    surrogate = surrogates.SingleTaskGPSurrogate(inputs=MIXED_INPUTS, outputs=OUTPUTS)
+    surrogate.__dict__["components"] = lambda: [
+        _Requesting(OrdinalEncoding()),
+        _Requesting(OneHotEncoding()),
+    ]
+
+    with pytest.raises(ValueError, match="ask for different encodings of 'c'"):
+        surrogate.encoding_requests()
+
+
+def test_default_encodings_do_not_depend_on_the_components_mixin():
+    """Without requests, a surrogate with components fills in what one without does."""
+    with_mixin = surrogates.SingleTaskGPSurrogate(inputs=MIXED_INPUTS, outputs=OUTPUTS)
+    without = surrogates.RandomForestSurrogate(inputs=MIXED_INPUTS, outputs=OUTPUTS)
+
+    assert _encodings(with_mixin) == _encodings(without)
+
+
+def test_requested_encodings_survive_a_round_trip():
+    surrogate = surrogates.SingleTaskGPSurrogate(
+        inputs=MIXED_INPUTS, outputs=OUTPUTS, kernel=MixedKernel()
+    )
+
+    restored = surrogates.SingleTaskGPSurrogate.model_validate_json(
+        surrogate.model_dump_json()
+    )
+
+    assert restored.categorical_encodings == surrogate.categorical_encodings
+    assert restored.kernel == surrogate.kernel

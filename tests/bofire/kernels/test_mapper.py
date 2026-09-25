@@ -27,6 +27,7 @@ from bofire.data_models.kernels.api import (
     InfiniteWidthBNNKernel,
     LinearKernel,
     MaternKernel,
+    MixedKernel,
     MultiplicativeKernel,
     PolynomialFeatureInteractionKernel,
     PolynomialKernel,
@@ -77,9 +78,9 @@ def test_map(kernel_spec: Spec):
         and kernel.features is not None
     ):
         return
-    # needs the feature context to find its task column; its mapping is tested in
-    # tests/bofire/surrogates/test_multitask_gps.py
-    if isinstance(kernel, ICMKernel):
+    # need the feature context to find their columns; their mapping is tested in
+    # tests/bofire/surrogates/test_multitask_gps.py and test_gps.py
+    if isinstance(kernel, (ICMKernel, MixedKernel)):
         return
     gkernel = kernels.map(
         kernel,

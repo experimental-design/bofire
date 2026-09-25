@@ -1,8 +1,9 @@
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import Field
 
 from bofire.data_models.base import BaseModel
+from bofire.data_models.domain.api import Inputs
 from bofire.data_models.encodings.api import AnyCategoricalEncoding
 from bofire.data_models.feature_context import FeatureContext
 from bofire.data_models.features.api import AnyFeature
@@ -24,6 +25,20 @@ class Kernel(BaseModel):
     def children(self) -> List["Kernel"]:
         """The kernels this kernel is composed of; empty for a kernel on inputs."""
         return []
+
+    def encoding_requests(self, inputs: Inputs) -> Dict[str, AnyCategoricalEncoding]:
+        """The encodings this kernel, or one it contains, needs for unencoded features.
+
+        Args:
+            inputs: The inputs of the surrogate the kernel belongs to.
+
+        Returns:
+            Encodings by feature key; empty if no kernel has a need.
+        """
+        requests: Dict[str, AnyCategoricalEncoding] = {}
+        for child in self.children():
+            requests.update(child.encoding_requests(inputs))
+        return requests
 
     def validate_inputs(self, context: FeatureContext) -> None:
         """Check that this kernel can work on what it is applied to.

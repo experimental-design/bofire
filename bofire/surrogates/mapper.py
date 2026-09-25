@@ -1,13 +1,7 @@
 import warnings
 from typing import Callable, Dict, Optional, Type
 
-from bofire.data_models.kernels.api import (
-    AdditiveKernel,
-    AdditiveMapSaasKernel,
-    ICMKernel,
-    MultiplicativeKernel,
-    ScaleKernel,
-)
+from bofire.data_models.kernels.api import AdditiveMapSaasKernel, ICMKernel
 from bofire.data_models.likelihoods.api import (
     GaussianLikelihood,
     TaskGaussianLikelihood,
@@ -34,39 +28,12 @@ from bofire.surrogates.tanimoto_gp_surrogate import TanimotoGPSurrogate
 def map_MixedSingleTaskGPSurrogate(
     data_model: data_models.MixedSingleTaskGPSurrogate,
 ) -> data_models.SingleTaskGPSurrogate:
-    if (
-        data_model.continuous_kernel.features is None
-        or len(data_model.continuous_kernel.features) == 0
-    ):
-        # model is purely categorical
-        kernel = ScaleKernel(base_kernel=data_model.categorical_kernel)
-    else:
-        sum_kernel = ScaleKernel(
-            base_kernel=AdditiveKernel(
-                kernels=[
-                    data_model.continuous_kernel,
-                    ScaleKernel(base_kernel=data_model.categorical_kernel),
-                ]
-            )
-        )
-        product_kernel = ScaleKernel(
-            base_kernel=MultiplicativeKernel(
-                kernels=[
-                    data_model.continuous_kernel,
-                    data_model.categorical_kernel,
-                ]
-            )
-        )
-        kernel = AdditiveKernel(
-            kernels=[
-                sum_kernel,
-                product_kernel,
-            ]
-        )
+    """Express the mixed GP as a single-task GP whose kernel is a MixedKernel."""
     return data_models.SingleTaskGPSurrogate(
         inputs=data_model.inputs,
         outputs=data_model.outputs,
         categorical_encodings=data_model.categorical_encodings,
+        engineered_features=data_model.engineered_features,
         dump=data_model.dump,
         scaler=data_model.scaler,
         output_scaler=data_model.output_scaler,
@@ -75,7 +42,7 @@ def map_MixedSingleTaskGPSurrogate(
             noise_constraint=data_model.noise_constraint,
         ),
         hyperconfig=None,
-        kernel=kernel,
+        kernel=data_model.as_kernel(),
     )
 
 

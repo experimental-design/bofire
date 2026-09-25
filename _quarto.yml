@@ -98,6 +98,7 @@ quartodoc:
             - RBFKernel
             - AdditiveMapSaasKernel
             - ICMKernel
+            - MixedKernel
             - LinearKernel
             - PolynomialKernel
             - HammingDistanceKernel

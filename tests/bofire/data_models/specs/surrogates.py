@@ -463,7 +463,7 @@ specs.add_invalid(
         ).model_dump(),
     },
     error=ValueError,
-    message="MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is present.",
+    message="MixedKernel needs at least one categorical input encoded as ordinal codes.",
 )
 
 specs.add_invalid(
@@ -482,27 +482,7 @@ specs.add_invalid(
         "categorical_encodings": {"x_cat": OneHotEncoding().model_dump()},
     },
     error=ValueError,
-    message="MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is ordinal encoded.",
-)
-
-specs.add_invalid(
-    models.MixedSingleTaskGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                ContinuousInput(key="x_cont", bounds=[0, 1]),
-                CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
-            ],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "continuous_kernel": MaternKernel(nu=2.5, features=["x_cat"]).model_dump(),
-    },
-    error=ValueError,
-    message="The features defined in",
+    message="MixedKernel needs at least one categorical input encoded as ordinal codes.",
 )
 
 specs.add_invalid(
@@ -524,7 +504,7 @@ specs.add_invalid(
         ).model_dump(),
     },
     error=ValueError,
-    message="The features defined in the categorical",
+    message=r"HammingDistanceKernel cannot work on \['x_cont'\]",
 )
 
 
