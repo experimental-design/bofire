@@ -21,6 +21,8 @@ from bofire.data_models.api import (
     Inputs,
     Outputs,
 )
+from bofire.data_models.likelihoods.api import AnyLikelihood
+from bofire.data_models.means.api import AnyMean
 from tests.bofire.data_models.specs.api import Spec
 
 
@@ -45,6 +47,18 @@ def test_prior_constraint_should_be_deserializable(prior_constraint_spec: Spec):
 def test_kernel_should_be_deserializable(kernel_spec: Spec):
     obj = kernel_spec.obj()
     deserialized = TypeAdapter(AnyKernel).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
+def test_mean_should_be_deserializable(mean_spec: Spec):
+    obj = mean_spec.obj()
+    deserialized = TypeAdapter(AnyMean).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
+def test_likelihood_should_be_deserializable(likelihood_spec: Spec):
+    obj = likelihood_spec.obj()
+    deserialized = TypeAdapter(AnyLikelihood).validate_python(obj.model_dump())
     assert obj == deserialized
 
 

@@ -5,6 +5,7 @@ from bofire.data_models.domain.api import EngineeredFeatures
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
 from bofire.data_models.features.api import CategoricalInput, CategoricalTaskInput
+from bofire.data_models.surrogates.kernel_based import KernelBasedSurrogate
 from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.types import InputTransformSpecs
 
@@ -69,25 +70,6 @@ class BotorchSurrogate(Surrogate):
         )
         return fallbacks.get(kind, OneHotEncoding())
 
-    @classmethod
-    def _generate_default_categorical_encodings(
-        cls, inputs: Inputs, categorical_encodings: InputTransformSpecs
-    ) -> InputTransformSpecs:
-        categorical_keys = inputs.get_keys(CategoricalInput, exact=False)
-        for key in categorical_keys:
-            if key not in categorical_encodings:
-                default = cls._resolve_default_categorical_encoding(
-                    inputs.get_by_key(key)
-                )
-                # deep-copy so per-feature encoders (and their stateful generators)
-                # are not shared between features.
-                categorical_encodings[key] = (
-                    default.model_copy(deep=True)
-                    if hasattr(default, "model_copy")
-                    else default
-                )
-        return categorical_encodings
-
     @field_validator("categorical_encodings")
     @classmethod
     def validate_categorical_encodings(cls, v, info):
@@ -97,9 +79,35 @@ class BotorchSurrogate(Surrogate):
             return None
 
         inputs: Inputs = info.data["inputs"]
-        v = cls._generate_default_categorical_encodings(inputs, v)
+        # only what the caller gave; the rest is filled in once the components exist
         inputs._validate_transform_specs(v)
         return v
+
+    def _fill_categorical_encodings(self) -> None:
+        """Give every categorical without an encoding the one it should default to.
+
+        What a model component requests comes first, then the default derived from the
+        feature's descriptor data. Encodings the caller set are kept. Idempotent.
+        """
+        requests = (
+            self.encoding_requests() if isinstance(self, KernelBasedSurrogate) else {}
+        )
+        for key in self.inputs.get_keys(CategoricalInput, exact=False):
+            if key in self.categorical_encodings:
+                continue
+            default = requests.get(key) or self._resolve_default_categorical_encoding(
+                self.inputs.get_by_key(key)
+            )
+            # deep-copy so per-feature encoders (and their stateful generators)
+            # are not shared between features. In place, so that validate_assignment
+            # does not run the validators again.
+            self.categorical_encodings[key] = default.model_copy(deep=True)
+        self.inputs._validate_transform_specs(self.categorical_encodings)
+
+    @model_validator(mode="after")
+    def validate_categorical_encodings_complete(self):
+        self._fill_categorical_encodings()
+        return self
 
     @model_validator(mode="after")
     def validate_engineered_features(self):

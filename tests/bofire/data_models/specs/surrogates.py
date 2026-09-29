@@ -20,12 +20,13 @@ from bofire.data_models.features.api import (
 from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
-    InfiniteWidthBNNKernel,
     MaternKernel,
     RBFKernel,
     ScaleKernel,
     TanimotoKernel,
 )
+from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
     PAIRWISEGP_LENGTHSCALE_PRIOR,
@@ -72,8 +73,11 @@ specs.add_valid(
         ).model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
+        "mean": ConstantMean().model_dump(),
+        "likelihood": GaussianLikelihood(
+            noise_prior=THREESIX_NOISE_PRIOR(),
+            noise_constraint=GreaterThan(lower_bound=1e-4),
+        ).model_dump(),
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
@@ -107,8 +111,11 @@ specs.add_valid(
         ).model_dump(),
         "scaler": Normalize(features=["__clone_continuous__"]).model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": None,
+        "mean": ConstantMean().model_dump(),
+        "likelihood": GaussianLikelihood(
+            noise_prior=THREESIX_NOISE_PRIOR(),
+            noise_constraint=None,
+        ).model_dump(),
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
@@ -213,32 +220,6 @@ specs.add_invalid(
     message="The following features are missing in inputs",
 )
 
-
-specs.add_valid(
-    models.SingleTaskIBNNSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                ContinuousInput(key="a", bounds=(0, 1)),
-                ContinuousInput(key="b", bounds=(0, 1)),
-            ],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "scaler": Normalize().model_dump(),
-        "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "hyperconfig": None,
-        "categorical_encodings": {},
-        "engineered_features": EngineeredFeatures().model_dump(),
-        "dump": None,
-        "kernel": InfiniteWidthBNNKernel(depth=3).model_dump(),
-    },
-)
 
 specs.add_valid(
     models.AdditiveMapSaasSingleTaskGPSurrogate,
@@ -457,8 +438,11 @@ specs.add_valid(
         "engineered_features": EngineeredFeatures().model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
+        "mean": ConstantMean().model_dump(),
+        "likelihood": GaussianLikelihood(
+            noise_prior=THREESIX_NOISE_PRIOR(),
+            noise_constraint=GreaterThan(lower_bound=1e-4),
+        ).model_dump(),
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
@@ -479,7 +463,7 @@ specs.add_invalid(
         ).model_dump(),
     },
     error=ValueError,
-    message="MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is present.",
+    message="MixedKernel needs at least one categorical input encoded as ordinal codes.",
 )
 
 specs.add_invalid(
@@ -498,27 +482,7 @@ specs.add_invalid(
         "categorical_encodings": {"x_cat": OneHotEncoding().model_dump()},
     },
     error=ValueError,
-    message="MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is ordinal encoded.",
-)
-
-specs.add_invalid(
-    models.MixedSingleTaskGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                ContinuousInput(key="x_cont", bounds=[0, 1]),
-                CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
-            ],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "continuous_kernel": MaternKernel(nu=2.5, features=["x_cat"]).model_dump(),
-    },
-    error=ValueError,
-    message="The features defined in",
+    message="MixedKernel needs at least one categorical input encoded as ordinal codes.",
 )
 
 specs.add_invalid(
@@ -540,7 +504,7 @@ specs.add_invalid(
         ).model_dump(),
     },
     error=ValueError,
-    message="The features defined in the categorical",
+    message=r"HammingDistanceKernel cannot work on \['x_cont'\]",
 )
 
 

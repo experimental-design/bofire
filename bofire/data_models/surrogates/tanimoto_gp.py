@@ -14,10 +14,11 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
+from bofire.data_models.surrogates.kernel_based import KernelBasedSurrogate
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class TanimotoGPSurrogate(TrainableBotorchSurrogate):
+class TanimotoGPSurrogate(TrainableBotorchSurrogate, KernelBasedSurrogate):
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
 
     kernel: AnyKernel = Field(

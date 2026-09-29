@@ -27,7 +27,7 @@ class CategoricalTaskInput(TaskInput, CategoricalInput):
     """A categorical index over tasks. Carries no descriptor data.
 
     A task input says *which* task an observation came from; the relationship between
-    tasks is what the surrogate learns (the inter-task covariance of a ``MultiTaskGP``),
+    tasks is what the surrogate learns (the task correlation of an ``ICMKernel``),
     not something read off descriptor columns. ``descriptors`` is therefore narrowed to
     ``None`` — the constraint is in the type, and visible in the schema.
 

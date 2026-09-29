@@ -18,10 +18,12 @@ from tests.bofire.data_models.specs.engineered_features import (
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.inputs import specs as inputs
 from tests.bofire.data_models.specs.kernels import specs as kernels
+from tests.bofire.data_models.specs.likelihoods import specs as likelihoods
 from tests.bofire.data_models.specs.llm import specs as llm
 from tests.bofire.data_models.specs.local_search_config import (
     specs as local_search_configs,
 )
+from tests.bofire.data_models.specs.means import specs as means
 from tests.bofire.data_models.specs.objectives import specs as objectives
 from tests.bofire.data_models.specs.outputs import specs as outputs
 from tests.bofire.data_models.specs.prior_constraints import specs as prior_constraints

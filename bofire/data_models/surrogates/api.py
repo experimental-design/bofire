@@ -1,4 +1,3 @@
-from bofire.data_models.surrogates.bnn import SingleTaskIBNNSurrogate
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.botorch_surrogates import (
     AnyBotorchSurrogate,
@@ -68,7 +67,6 @@ AnySurrogate = tagged_union(
     LinearDeterministicSurrogate,
     CategoricalDeterministicSurrogate,
     MultiTaskGPSurrogate,
-    SingleTaskIBNNSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
     PairwiseGPSurrogate,
@@ -84,7 +82,6 @@ AnyTrainableSurrogate = tagged_union(
     FullyBayesianSingleTaskGPSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
-    SingleTaskIBNNSurrogate,
     TanimotoGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
@@ -103,7 +100,6 @@ AnyRegressionSurrogate = tagged_union(
     TanimotoGPSurrogate,
     LinearDeterministicSurrogate,
     MultiTaskGPSurrogate,
-    SingleTaskIBNNSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
 )

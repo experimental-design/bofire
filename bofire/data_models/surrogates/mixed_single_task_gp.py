@@ -1,7 +1,7 @@
-from typing import Literal, Optional, Type
+from typing import Any, List, Literal, Optional, Type
 
 import pandas as pd
-from pydantic import Field, model_validator
+from pydantic import Field
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.encodings.api import OrdinalEncoding
@@ -17,6 +17,7 @@ from bofire.data_models.kernels.api import (
     AnyContinuousKernel,
     HammingDistanceKernel,
     MaternKernel,
+    MixedKernel,
     RBFKernel,
 )
 from bofire.data_models.priors.api import (
@@ -32,6 +33,7 @@ from bofire.data_models.priors.api import (
     AnyPriorConstraint,
     GreaterThan,
 )
+from bofire.data_models.surrogates.kernel_based import KernelBasedSurrogate
 from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -101,7 +103,7 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
 
-class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
+class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate, KernelBasedSurrogate):
     type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
     continuous_kernel: AnyContinuousKernel = Field(
         default_factory=lambda: RBFKernel(
@@ -130,52 +132,15 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             CategoricalTaskInput: OrdinalEncoding(),
         }
 
-    @model_validator(mode="after")
-    def validate_categoricals(self):
-        # check that at least one categorical is present
-        if (
-            len(categoricals := self.inputs.get_keys(CategoricalInput, exact=False))
-            == 0
-        ):
-            raise ValueError(
-                "MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is present.",
-            )
-        # check that a least one of the categorical features is ordinal or not encoded
-        if not any(
-            isinstance(self.categorical_encodings.get(cat), OrdinalEncoding)
-            for cat in categoricals
-        ):
-            raise ValueError(
-                "MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is ordinal encoded.",
-            )
-        # now we validate the kernels and the features being present there
-        categorical_feature_keys = [
-            cat
-            for cat in categoricals
-            if isinstance(self.categorical_encodings.get(cat), OrdinalEncoding)
-        ]
-        ordinal_feature_keys = list(
-            set(self.inputs.get_keys()) - set(categorical_feature_keys)
+    def as_kernel(self) -> MixedKernel:
+        """The continuous and categorical kernel combined, as the model uses them."""
+        return MixedKernel(
+            continuous_kernel=self.continuous_kernel,
+            categorical_kernel=self.categorical_kernel,
         )
-        if len(ordinal_feature_keys) > 0:
-            # check that feature keys are set correctly in kernels
-            if self.continuous_kernel.features is None:
-                self.continuous_kernel.features = ordinal_feature_keys
-            else:
-                if set(self.continuous_kernel.features) != set(ordinal_feature_keys):
-                    raise ValueError(
-                        "The features defined in the continuous kernel do not match the ordinal (encoded) features in the inputs.",
-                    )
-        else:
-            self.continuous_kernel.features = []
-        if self.categorical_kernel.features is None:
-            self.categorical_kernel.features = categorical_feature_keys
-        else:
-            if set(self.categorical_kernel.features) != set(categorical_feature_keys):
-                raise ValueError(
-                    "The features defined in the categorical kernel do not match the categorical features in the inputs.",
-                )
-        return self
+
+    def components(self) -> List[Any]:
+        return [self.as_kernel()]
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
