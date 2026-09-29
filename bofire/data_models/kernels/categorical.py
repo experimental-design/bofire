@@ -152,7 +152,7 @@ class PositiveIndexKernel(CategoricalKernel):
     def validate_target_task_index(self):
         if (
             self.target_task_index is not None
-            and self.target_task_index >= self.num_categories - 1
+            and self.target_task_index >= self.num_categories
         ):
-            raise ValueError("target_task_index must be less than num_categories-1")
+            raise ValueError("target_task_index must be less than num_categories")
         return self
