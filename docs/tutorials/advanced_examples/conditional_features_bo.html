@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-2e8ec9f882556a9115144b9e4a0fb948.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-47c64cbc1635c9e92b74ef8dbe39d519.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-2e8ec9f882556a9115144b9e4a0fb948.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-7561831fb1fffae48fe87faf229caa8d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-59f2f614c175794b874a379a1f748911.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-7561831fb1fffae48fe87faf229caa8d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -763,7 +763,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>For a some examples of literature on these problems, see [Swersky2014Arc] and [Horn2019Wedge].</p>
 <p>[Swersky2014Arc] Swersky et al.&nbsp;2014, “Raiders of the Lost Architecture: Kernels for Bayesian Optimization in Conditional Parameter Spaces” arXiv [Horn2019Wedge] Horn et al.&nbsp;“Surrogates for hierarchical search spaces: the wedge-kernel and an automated analysis”, GECCO</p>
 <p>We consider a test problem as described above, where we wish to optimize the yield of a reaction by controlling the temperature and catalyst concentration.</p>
-<div id="6496180c" class="cell" data-execution_count="1">
+<div id="10508f90" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.constraints.api <span class="im">import</span> NonZeroCondition</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Domain</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousInput, ContinuousOutput</span>
@@ -786,7 +786,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>After defining the domain, we can then build the wedge kernel for our GP surrogate.</p>
-<div id="06f8eafa" class="cell" data-execution_count="2">
+<div id="64bdb3b9" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> RBFKernel, WedgeKernel</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># here, we manually build the list of conditions</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># in future we will automatically build them from any inputs with allow_zero==True</span></span>
@@ -803,7 +803,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    conditions<span class="op">=</span>conditions,</span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="19e2b839" class="cell" data-execution_count="3">
+<div id="9f13ea22" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.kernels.api <span class="im">as</span> kernels</span>
@@ -824,7 +824,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   warnings.warn(</code></pre>
 </div>
 </div>
-<div id="7642cceb" class="cell" data-execution_count="4">
+<div id="4556df61" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cast the return type from `kernels.map` to the wedge kernel</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co"># this fixes syntax highlighting in this notebook</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> cast</span>
@@ -845,7 +845,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We check below that the kernel behaves as expected. Specifically, we want to check that the indicator function correctly masks the conditional feature to be inactive when the condition is not met.</p>
-<div id="1f29f3a6" class="cell" data-execution_count="5">
+<div id="c9540339" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># check the order of dimensions in X</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> features_to_idx_mapper([<span class="st">"catalyst_concentration"</span>, <span class="st">"temperature"</span>]) <span class="op">==</span> [<span class="dv">0</span>, <span class="dv">1</span>]</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -872,7 +872,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Using the domain defined at the start of the notebook, we now create a benchmark that we can use to evaluate how well this kernel works for Bayesian optimization.</p>
 <p>We set up our objective function such that adding a catalyst enables a side reaction, and so any small prescence of the catalyst hurts yield. However, at higher concentration of catalyst, we see improved performance.</p>
 <p>Increasing temperature increases the yield, however it also causes decomposition of the catalyst at high temperatures.</p>
-<div id="ddbe1e06" class="cell" data-execution_count="6">
+<div id="7c08082e" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -901,7 +901,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> ReactionOptimizationBenchmark()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>First, we plot the objective function:</p>
-<div id="f94a3bfe" class="cell" data-execution_count="7">
+<div id="6bb15da1" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -940,7 +940,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="226b2452" class="cell" data-execution_count="8">
+<div id="2eebf024" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> RandomStrategy, SoboStrategy</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1000,7 +1000,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="01d006e4" class="cell" data-execution_count="9">
+<div id="47789a2c" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> BotorchSurrogates, SingleTaskGPSurrogate</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1019,7 +1019,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(sobo_strategy_data_model)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="5cb9dc1e" class="cell" data-execution_count="10">
+<div id="dccdf24a" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments, replace<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/bofire/utils/torch_tools.py:51: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
@@ -1027,7 +1027,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We would expect the proposed batch to include some experiments with no catalyst, and some with a catalyst. Note that the volume of the search space with catalyst is larger, so we may also expect more experiments with the feature active.</p>
-<div id="b36b42fd" class="cell" data-execution_count="11">
+<div id="cbe33035" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>strategy.ask(<span class="dv">5</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal

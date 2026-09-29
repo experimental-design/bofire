@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-2e8ec9f882556a9115144b9e4a0fb948.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-47c64cbc1635c9e92b74ef8dbe39d519.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-2e8ec9f882556a9115144b9e4a0fb948.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-7561831fb1fffae48fe87faf229caa8d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-59f2f614c175794b874a379a1f748911.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-7561831fb1fffae48fe87faf229caa8d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -796,18 +796,18 @@ window.Quarto = {
 
 
 <p>Usage is possible in multiple ways: 1. As an alternative to the botorch optimizer in predictive strategies 2. To optimize custom function in the bofire domain. The utiliy function take care of the definition of the objective domain (variable types, constraints, etc.) and the handling of multiple experiment (<span class="math inline">\(q\)</span> points).</p>
-<div id="25134730" class="cell" data-execution_count="1">
+<div id="14cb5f82" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> copy <span class="im">import</span> deepcopy</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> time <span class="im">import</span> time</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> List</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="b8e5ae46" class="cell" data-execution_count="2">
+<div id="3534c278" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="0f042fd1" class="cell" data-execution_count="3">
+<div id="72c46d8a" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks <span class="im">import</span> api <span class="im">as</span> benchmarks</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.constraints <span class="im">import</span> api <span class="im">as</span> constraints_data_models</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain <span class="im">import</span> api <span class="im">as</span> domains_data_models</span>
@@ -822,7 +822,7 @@ window.Quarto = {
   warnings.warn(</code></pre>
 </div>
 </div>
-<div id="81270468" class="cell" data-execution_count="4">
+<div id="49a8246a" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -839,12 +839,12 @@ window.Quarto = {
 <section id="example-1-usage-for-acquisition-function-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="example-1-usage-for-acquisition-function-optimization">Example 1) Usage for Acquisition Function Optimization</h2>
 <p>Just pass the <code>GeneticAlgorithmOptimizer</code> to the <code>acquisition_optimizer</code> argument of a strategy. The optimizer will then be used to optimize the acquisition function.</p>
-<div id="a17edf4c" class="cell" data-execution_count="5">
+<div id="9cbd8591" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> benchmarks.Himmelblau()</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># generate experiments</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(benchmark.domain.inputs.sample(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="a28d4419" class="cell" data-execution_count="6">
+<div id="7ecbcd49" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> strategies_data_models.GeneticAlgorithmOptimizer(</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    population_size<span class="op">=</span><span class="dv">100</span>,</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    n_max_gen<span class="op">=</span><span class="dv">100</span>,</span>
@@ -853,7 +853,7 @@ window.Quarto = {
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    ga_progress_csv_path<span class="op">=</span><span class="st">"_custom_ga_progress.csv"</span>,</span>
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="8b91001c" class="cell" data-execution_count="7">
+<div id="20f56805" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>benchmark_grid <span class="op">=</span> np.hstack(</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    [</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>        x.reshape((<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>))</span>
@@ -865,7 +865,7 @@ window.Quarto = {
 <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>benchmark_grid[<span class="st">"y"</span>] <span class="op">=</span> benchmark.f(benchmark_grid)[<span class="st">"y"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="b5fed888" class="cell" data-execution_count="8">
+<div id="2bae5f7a" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_proposals(domain, n: <span class="bu">int</span> <span class="op">=</span> <span class="dv">10</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    strategy <span class="op">=</span> strategies_data_models.SoboStrategy(</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        domain<span class="op">=</span>domain, acquisition_optimizer<span class="op">=</span>optimizer</span>
@@ -880,7 +880,7 @@ window.Quarto = {
 </div>
 <section id="linear-equality-and-inequality-constraints-are-handled-by-a-repair-function-using-qp" class="level4">
 <h4 class="anchored" data-anchor-id="linear-equality-and-inequality-constraints-are-handled-by-a-repair-function-using-qp">Linear Equality and Inequality Constraints are handled by a repair function, using QP</h4>
-<div id="f2c68100" class="cell" data-execution_count="9">
+<div id="2e576f25" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># generate different cases</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>domain.constraints.constraints <span class="op">+=</span> [</span>
@@ -900,17 +900,17 @@ window.Quarto = {
 <span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    strategies.RandomStrategy.make(domain<span class="op">=</span>domain).ask(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span></span>
 <span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="0aa25b92" class="cell" data-execution_count="10">
+<div id="cefb9c3a" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/bofire/utils/torch_tools.py:51: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
   return torch.from_numpy(np.ascontiguousarray(df.to_numpy())).to(**tkwargs)</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Generated 10 experiments, Time taken: 19.90s</code></pre>
+<pre><code>Generated 10 experiments, Time taken: 19.98s</code></pre>
 </div>
 </div>
-<div id="764d80af" class="cell" data-execution_count="11">
+<div id="32801f13" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
@@ -942,7 +942,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 </section>
 <section id="nchoosek-constraints-are-also-handled-by-a-repair-function-using-qp" class="level4">
 <h4 class="anchored" data-anchor-id="nchoosek-constraints-are-also-handled-by-a-repair-function-using-qp">NChooseK Constraints are also handled by a repair function, using QP</h4>
-<div id="112dc671" class="cell" data-execution_count="12">
+<div id="f15d7d0f" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>domain.inputs.get_by_key(<span class="st">"x_1"</span>).bounds <span class="op">=</span> (<span class="fl">0.0</span>, <span class="fl">6.0</span>)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>domain.inputs.get_by_key(<span class="st">"x_2"</span>).bounds <span class="op">=</span> (<span class="fl">0.0</span>, <span class="fl">6.0</span>)</span>
@@ -959,7 +959,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    strategies.RandomStrategy.make(domain<span class="op">=</span>domain).ask(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span></span>
 <span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="8b00c17c" class="cell" data-execution_count="13">
+<div id="2c8f70bc" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain, n<span class="op">=</span><span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Polishing not needed - no active set detected at optimal point
@@ -971,15 +971,10 @@ Polishing not needed - no active set detected at optimal point
 Polishing not needed - no active set detected at optimal point
 Polishing not needed - no active set detected at optimal point
 Polishing not needed - no active set detected at optimal point
-Polishing not needed - no active set detected at optimal point
-Polishing not needed - no active set detected at optimal point
-Polishing not needed - no active set detected at optimal point
-Polishing not needed - no active set detected at optimal point
-Polishing not needed - no active set detected at optimal point
-Generated 10 experiments, Time taken: 11.14s</code></pre>
+Generated 10 experiments, Time taken: 10.40s</code></pre>
 </div>
 </div>
-<div id="40cb3beb" class="cell" data-execution_count="14">
+<div id="7035f9ea" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
@@ -1009,7 +1004,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 </section>
 <section id="inequality-constraints-are-handled-by-the-ga-objctive-function" class="level4">
 <h4 class="anchored" data-anchor-id="inequality-constraints-are-handled-by-the-ga-objctive-function">Inequality Constraints are handled by the GA objctive function</h4>
-<div id="efa9919d" class="cell" data-execution_count="15">
+<div id="b74b85b1" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>domain.constraints.constraints <span class="op">+=</span> [</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    constraints_data_models.NonlinearInequalityConstraint(</span>
@@ -1019,10 +1014,10 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>]</span>
 <span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain, n<span class="op">=</span><span class="dv">20</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Generated 20 experiments, Time taken: 10.84s</code></pre>
+<pre><code>Generated 20 experiments, Time taken: 10.69s</code></pre>
 </div>
 </div>
-<div id="b1a80b6a" class="cell" data-execution_count="16">
+<div id="9f6ab558" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
@@ -1055,7 +1050,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 </div>
 </div>
 <p>Inspect the current progress rows written by the optimizer. Note, that these results can also be obtained during execution.</p>
-<div id="8a537cb8" class="cell" data-execution_count="17">
+<div id="28006ee4" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>pd.read_csv(<span class="st">"_custom_ga_progress.csv"</span>).head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="17">
 <div>
@@ -1075,31 +1070,31 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <th data-quarto-table-cell-role="th">0</th>
 <td>1</td>
 <td>100</td>
-<td>-3.793192</td>
+<td>-2.861251</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
 <td>2</td>
 <td>200</td>
-<td>-3.793192</td>
+<td>-2.861251</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
 <td>3</td>
 <td>300</td>
-<td>-3.793192</td>
+<td>-2.861251</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
 <td>4</td>
 <td>400</td>
-<td>-3.774705</td>
+<td>-2.685213</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
 <td>5</td>
 <td>500</td>
-<td>-3.825557</td>
+<td>-2.685213</td>
 </tr>
 </tbody>
 </table>
@@ -1112,7 +1107,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <section id="example-2-usage-for-custom-function-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="example-2-usage-for-custom-function-optimization">Example 2) Usage for Custom Function Optimization</h2>
 <p>We can define a domain with input features, and constraints. Output features are not required</p>
-<div id="6c16fab2" class="cell" data-execution_count="18">
+<div id="6e744f53" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> domains_data_models.Domain(</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>domains_data_models.Inputs(</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
@@ -1134,7 +1129,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>    ],</span>
 <span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="2446b679" class="cell" data-execution_count="19">
+<div id="196a8ac4" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> strategies_data_models.GeneticAlgorithmOptimizer(</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    population_size<span class="op">=</span><span class="dv">100</span>,</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    n_max_gen<span class="op">=</span><span class="dv">100</span>,</span>
@@ -1145,14 +1140,14 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <section id="define-the-optimization-problem-a-using-evaluations-on-pd.dataframe" class="level3">
 <h3 class="anchored" data-anchor-id="define-the-optimization-problem-a-using-evaluations-on-pd.dataframe">Define the optimization problem: a) Using evaluations on <code>pd.DataFrame</code></h3>
 <p>We want to maximize the mean variance of the experiments dataframe. The objective function will be called with a list of dataframes, each representing a set of experiments. Each list entry is one individual in the population of the GA. The direction of the optimizer is a minimization of the objective function. So we minimize the negative mean variance of each 3 experiments in a batch in this case.</p>
-<div id="43e25d92" class="cell" data-execution_count="20">
+<div id="9be98f7d" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""assume we want to maximize the mean variance of the experiments dataframe"""</span></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.var(numeric_only<span class="op">=</span><span class="va">True</span>).mean() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
 <span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Run the optimization with the utility function <code>run_ga</code></p>
-<div id="7043eaf7" class="cell" data-execution_count="21">
+<div id="b056943f" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
@@ -1162,7 +1157,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
 <span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="618ede04" class="cell" data-execution_count="22">
+<div id="d54d5536" class="cell" data-execution_count="22">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> x_opt[<span class="dv">0</span>]</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>proposals</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="22">
@@ -1180,18 +1175,18 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>3.729692</td>
-<td>-1.445327</td>
+<td>-2.736637</td>
+<td>2.915907</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>-3.474908</td>
-<td>-1.977391</td>
+<td>-1.159296</td>
+<td>-3.826106</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>-0.615733</td>
-<td>3.951572</td>
+<td>3.503180</td>
+<td>1.928038</td>
 </tr>
 </tbody>
 </table>
@@ -1199,7 +1194,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 </div>
 </div>
 </div>
-<div id="17992fc7" class="cell" data-execution_count="23">
+<div id="a28c6119" class="cell" data-execution_count="23">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">100</span>)</span>
@@ -1225,13 +1220,13 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <p>For efficiency, we can also compute the objective function as a callable of type <code>Tensor</code>. In this case, the computation is in the <em>numerical domain</em>.</p>
 <p>This means, that categorical columns etc. are encoded. A specification with <code>input_preprocessing_specs</code> can be passed to the objective function (otherwise, defaults are used)</p>
 <p>The objective accepts a Tensor in shape (n, q, d) and should return a Tensor of shape (n,)</p>
-<div id="f3911bfb" class="cell" data-execution_count="24">
+<div id="47162aa0" class="cell" data-execution_count="24">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function(x: torch.Tensor) <span class="op">-&gt;</span> torch.Tensor:</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    var <span class="op">=</span> torch.var(x, dim<span class="op">=</span><span class="dv">2</span>)</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    var_mean <span class="op">=</span> torch.mean(var, dim<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> var_mean</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="355b67aa" class="cell" data-execution_count="25">
+<div id="cb75b0ae" class="cell" data-execution_count="25">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
@@ -1241,12 +1236,12 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
 <span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="06d0e369" class="cell" data-execution_count="26">
+<div id="5134b7da" class="cell" data-execution_count="26">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>x_opt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="26">
-<pre><code>tensor([[ 2.8557, -2.7996],
-        [ 2.7386, -2.9153],
-        [ 3.0661, -2.5613]], dtype=torch.float64)</code></pre>
+<pre><code>tensor([[-2.9546,  2.6963],
+        [-2.9574,  2.6930],
+        [-2.6673,  2.9799]], dtype=torch.float64)</code></pre>
 </div>
 </div>
 </section>
@@ -1254,19 +1249,19 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <section id="example-3-multiobjective-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="example-3-multiobjective-optimization">Example 3: Multiobjective Optimization</h2>
 <p>by giving multiple objective functions, or returning a 2D array from the objective, we will trigger multiobjective optimization</p>
-<div id="e796bc71" class="cell" data-execution_count="27">
+<div id="2615c582" class="cell" data-execution_count="27">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function_1(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""assume we want to maximize the mean variance of the experiments dataframe"""</span></span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.var(numeric_only<span class="op">=</span><span class="va">True</span>).mean() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
 <span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="783cb8e6" class="cell" data-execution_count="28">
+<div id="dc574636" class="cell" data-execution_count="28">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function_2(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Maximize the sum of all inputs"""</span></span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.<span class="bu">sum</span>().<span class="bu">sum</span>() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
 <span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="4b03a0be" class="cell" data-execution_count="29">
+<div id="9bba48a3" class="cell" data-execution_count="29">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
@@ -1280,7 +1275,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>In the multiobjective-case, the result is a list of <code>pd.DataFrame</code> with different pareto-optimal solutions</p>
-<div id="41b400c1" class="cell" data-execution_count="30">
+<div id="301a843f" class="cell" data-execution_count="30">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>plt.scatter(f_opt[:, <span class="dv">0</span>], f_opt[:, <span class="dv">1</span>])</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"objective function 1"</span>)</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"objective function 2"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -1295,7 +1290,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 </div>
 </div>
 </div>
-<div id="e1095449" class="cell" data-execution_count="31">
+<div id="838ab2b6" class="cell" data-execution_count="31">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>x_opt[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="31">
 <div>
@@ -1312,18 +1307,18 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>2.798271</td>
-<td>2.836306</td>
+<td>2.334956</td>
+<td>3.207194</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>2.983919</td>
-<td>2.651547</td>
+<td>3.643552</td>
+<td>1.404427</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>1.541089</td>
-<td>3.609697</td>
+<td>3.140789</td>
+<td>2.397466</td>
 </tr>
 </tbody>
 </table>
@@ -1331,7 +1326,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 </div>
 </div>
 </div>
-<div id="9306a0b5" class="cell" data-execution_count="32">
+<div id="e9896f4a" class="cell" data-execution_count="32">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>x_opt[<span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="32">
 <div>
@@ -1348,18 +1343,18 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>-0.404243</td>
-<td>-3.924222</td>
+<td>-3.997564</td>
+<td>-0.051179</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>2.969216</td>
-<td>2.651431</td>
+<td>3.513577</td>
+<td>-1.890792</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>-0.917961</td>
-<td>3.870184</td>
+<td>2.081536</td>
+<td>3.371070</td>
 </tr>
 </tbody>
 </table>
