@@ -23,11 +23,13 @@ class Likelihood(BaseModel):
 
 
 class GaussianLikelihood(Likelihood):
-    """Observations scatter around the response with Gaussian noise of one variance.
+    """Observations are the response plus Gaussian noise with mean zero and one
+    variance shared by all points.
 
-    The defaults put a log-normal prior on the noise that favours small noise levels
-    and start the fit at that prior's mode, which suits outputs standardized to unit
-    variance.
+    The noise variance is fitted along with the kernel hyperparameters;
+    `noise_prior` regularises it and `noise_constraint` bounds it. The defaults put a
+    log-normal prior on it that favours small noise levels and start the fit at that
+    prior's mode, which suits outputs standardized to unit variance.
     """
 
     type: Literal["GaussianLikelihood"] = "GaussianLikelihood"

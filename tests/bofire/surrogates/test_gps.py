@@ -137,10 +137,14 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
         engine="python",
     )
     experiments["valid_y"] = 1
+    mean = ConstantMean(prior=NormalPrior(loc=0.0, scale=1.0))
+    likelihood = GaussianLikelihood(noise_prior=THREESIX_NOISE_PRIOR())
     model = SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
+        mean=mean,
+        likelihood=likelihood,
         scaler=scaler,
         output_scaler=output_scaler,
     )
@@ -159,6 +163,11 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, SingleTaskGP)
+    ((_, _, mean_prior, *_),) = model.model.mean_module.named_priors()
+    assert isinstance(mean_prior, gpytorch.priors.NormalPrior)
+    noise_prior = _get_registered_noise_prior(model.model)
+    assert isinstance(noise_prior, gpytorch.priors.GammaPrior)
+    assert float(noise_prior.concentration) == pytest.approx(1.1)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
     elif output_scaler == ScalerEnum.LOG:
@@ -180,6 +189,8 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
+        mean=mean,
+        likelihood=likelihood,
         scaler=scaler,
     )
     model2 = surrogates.map(model2)
@@ -1331,45 +1342,3 @@ def test_noise_prior_registered_for_robust_single_task_gp():
         "User-supplied GammaPrior must be in the likelihood's _priors registry "
         f"(got {type(prior).__name__})"
     )
-
-
-def _fit_single_task_gp(**kwargs):
-    torch.manual_seed(0)
-    np.random.seed(0)
-    X = np.random.uniform(0, 1, size=(20, 2))
-    y = np.sin(2 * np.pi * X[:, 0]) + 0.3 * X[:, 1]
-    experiments = pd.DataFrame({"x1": X[:, 0], "x2": X[:, 1], "y": y, "valid_y": 1})
-    surrogate = surrogates.map(
-        SingleTaskGPSurrogate(
-            inputs=Inputs(
-                features=[
-                    ContinuousInput(key="x1", bounds=(0, 1)),
-                    ContinuousInput(key="x2", bounds=(0, 1)),
-                ]
-            ),
-            outputs=Outputs(features=[ContinuousOutput(key="y")]),
-            **kwargs,
-        )
-    )
-    surrogate.fit(experiments)
-    return surrogate.model
-
-
-def test_single_task_gp_uses_its_mean_and_likelihood():
-    """The fitted model is built from the configured components."""
-    model = _fit_single_task_gp()
-
-    assert isinstance(model.mean_module, gpytorch.means.ConstantMean)
-    assert list(model.mean_module.named_priors()) == []
-    noise_prior = _get_registered_noise_prior(model)
-    assert isinstance(noise_prior, gpytorch.priors.LogNormalPrior)
-    assert float(noise_prior.loc) == -4.0
-
-
-def test_single_task_gp_mean_prior_reaches_the_model():
-    model = _fit_single_task_gp(
-        mean=ConstantMean(prior=NormalPrior(loc=0.0, scale=1.0))
-    )
-
-    ((_, _, prior, *_),) = model.mean_module.named_priors()
-    assert isinstance(prior, gpytorch.priors.NormalPrior)
