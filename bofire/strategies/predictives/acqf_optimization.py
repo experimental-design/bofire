@@ -487,9 +487,11 @@ class BotorchOptimizer(AcquisitionOptimizer):
     ) -> int:
         """Upper bound on the iterations the inner optimizers report in one `_optimize`.
 
-        Restarts that are optimized in one batch advance together and report one
-        step per iteration. The bound assumes every batch runs for `maxiter`
-        iterations, which an optimizer that converges earlier does not.
+        Restarts are optimized in groups. Depending on the installed scipy
+        version, botorch reports either one step per iteration of a group or one
+        per iteration of each restart in it. The bound covers both: it assumes
+        every restart runs for `maxiter` iterations, which an optimizer that
+        converges earlier does not.
 
         Returns:
             The bound, or 0 if the optimizer used does not report progress.
@@ -497,7 +499,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
         optimizer = self._determine_optimizer(domain=domain, n_acqfs=n_acqfs)
         if optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING:
             return 0
-        batch_limit = self._get_optimizer_options(domain)["batch_limit"]
         n_combos = domain.inputs.get_number_of_categorical_combinations(
             include_semicontinuous=not is_pruning_applicable(domain),
         )
@@ -515,7 +516,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             and candidate_count == 1
             else 1
         )
-        return passes * runs * math.ceil(self.n_restarts / batch_limit) * self.maxiter
+        return passes * runs * self.n_restarts * self.maxiter
 
     def _optimize(
         self,
