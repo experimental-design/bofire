@@ -962,3 +962,29 @@ def test_partially_fixed_experiments():
         assert e == ValueError(
             "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column.",
         )
+
+
+def test_find_local_max_ipopt_reports_progress():
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    events = []
+    find_local_max_ipopt(
+        domain,
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=8,
+        ),
+        ipopt_options={"max_iter": 20},
+        use_cyipopt=False,
+        seed=1,
+        callback=events.append,
+    )
+    assert len(events) > 0
+    assert [e.step for e in events] == list(range(1, len(events) + 1))
+    assert {e.max_steps for e in events} == {20}
+    assert len(events) <= 20
+    assert all(e.optimizer == "scipy" for e in events)
+    assert all(e.value is None or np.isfinite(e.value) for e in events)

@@ -3,7 +3,7 @@ import re
 import sys
 import warnings
 from copy import copy
-from itertools import combinations
+from itertools import combinations, count
 from typing import List, Optional, Tuple, Union, cast
 
 import numpy as np
@@ -37,6 +37,11 @@ from bofire.strategies.doe.doe_problem import (
 from bofire.strategies.doe.objective_base import Objective
 from bofire.strategies.doe.utils_categorical_discrete import (
     map_categorical_to_continuous,
+)
+from bofire.strategies.progress import (
+    AskOptimizationProgress,
+    AskProgressCallback,
+    scipy_progress_callback,
 )
 from bofire.strategies.random import RandomStrategy
 
@@ -773,6 +778,7 @@ def _minimize(
     ipopt_options: dict,
     use_hessian: bool,
     use_cyipopt: Optional[bool] = CYIPOPT_AVAILABLE,
+    callback: Optional[AskProgressCallback] = None,
 ) -> np.ndarray:
     """Minimize the objective function using the given constraints and bounds.
     Uses Ipopt if available, otherwise uses SLSQP.
@@ -785,6 +791,8 @@ def _minimize(
         ipopt_options (dict): Options for Ipopt solver. If Ipopt is not available, only the fields "max_iter" and "print_level" of this argument are used.
         use_hessian (bool): Use hessian if set to True.
         use_cyipopt (bool): Use cyipopt if set to True. Defaults to true if cyipopt is available.
+        callback: Called with an `AskOptimizationProgress` once per solver iteration.
+            Requires the field "max_iter" in `ipopt_options`, which is reported as `max_steps`.
 
     Returns:
         np.ndarray: The optimized design as flattened numpy array.
@@ -808,6 +816,18 @@ def _minimize(
         for key in ipopt_options.keys():
             problem.add_option(key, ipopt_options[key])
 
+        steps = count(1)
+        if callback is not None:
+            problem.on_iteration = lambda obj_value: callback(
+                AskOptimizationProgress(
+                    optimizer="ipopt",
+                    step=next(steps),
+                    max_steps=ipopt_options["max_iter"],
+                    # ipopt minimizes the objective
+                    value=-float(obj_value),
+                )
+            )
+
         x, info = problem.solve(x0)
         return x
     else:
@@ -816,6 +836,13 @@ def _minimize(
             options["maxiter"] = ipopt_options["max_iter"]
         if "print_level" in ipopt_options.keys():
             options["disp"] = ipopt_options["print_level"]
+
+        scipy_callback = None
+        if callback is not None:
+            scipy_callback = scipy_progress_callback(
+                callback, "scipy", max_steps=ipopt_options["max_iter"]
+            )
+
         result = opt.minimize(
             fun=objective_function.evaluate,
             x0=x0,
@@ -824,5 +851,6 @@ def _minimize(
             constraints=standardize_constraints(constraints, x0, "SLSQP"),
             jac=objective_function.evaluate_jacobian,
             hess=objective_function.evaluate_hessian if use_hessian else None,
+            callback=scipy_callback,
         )
         return result.x

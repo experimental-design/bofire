@@ -1,8 +1,12 @@
 import copy
+import math
+import warnings
 from abc import ABC, abstractmethod
 from enum import Enum
+from itertools import count
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type
 
+import numpy as np
 import pandas as pd
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -57,6 +61,11 @@ from bofire.strategies.predictives._nchoosek_pruning import (
     prune_nchoosek,
     semicontinuous_specs_from_domain,
 )
+from bofire.strategies.progress import (
+    AskOptimizationProgress,
+    AskProgressCallback,
+    scipy_progress_callback,
+)
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.utils.torch_tools import (
@@ -80,6 +89,43 @@ class OptimizerEnum(str, Enum):
 # and optimize_acqf_mixed_alternating. Threshold copied from Ax.
 ALTERNATING_OPTIMIZER_THRESHOLD = 10
 
+# Number of choices `optimize_acqf_discrete` scores per acquisition function call.
+_DISCRETE_MAX_BATCH_SIZE = 2048
+
+
+def _discrete_progress_hook(
+    callback: AskProgressCallback, n_choices: int, max_steps: int
+) -> Callable:
+    """Forward hook reporting one step per batch of choices that is scored.
+
+    `optimize_acqf_discrete` scores all remaining choices once per requested
+    candidate and removes the chosen one afterwards, so each pass is one choice
+    shorter than the previous one.
+    """
+    steps = count(1)
+    pass_size = n_choices
+    seen = 0
+    best = -math.inf
+
+    def on_batch(module, args, output) -> None:
+        nonlocal pass_size, seen, best
+        seen += len(output)
+        best = max(best, output.max().item())
+        callback(
+            AskOptimizationProgress(
+                optimizer="botorch",
+                step=next(steps),
+                max_steps=max_steps,
+                value=best,
+            )
+        )
+        if seen >= pass_size:
+            pass_size -= 1
+            seen = 0
+            best = -math.inf
+
+    return on_batch
+
 
 class AcquisitionOptimizer(ABC):
     def __init__(self, data_model: AcquisitionOptimizerDataModel):
@@ -93,6 +139,7 @@ class AcquisitionOptimizer(ABC):
         acqfs: List[AcquisitionFunction],  # this is a botorch object
         domain: Domain,
         experiments: Optional[pd.DataFrame] = None,
+        callback: Optional[AskProgressCallback] = None,
     ) -> pd.DataFrame:
         """Optimizes the acquisition function(s) for the given domain and input preprocessing specs.
 
@@ -101,6 +148,9 @@ class AcquisitionOptimizer(ABC):
             acqfs: List of acquisition functions that should be optimized.
             domain: The domain of the optimization problem.
             experiments: The experiments that have been conducted so far.
+            callback: Called with an `AskOptimizationProgress` while the
+                acquisition function is optimized. Optimizers or code paths that
+                cannot report progress emit a `UserWarning` and never call it.
 
         Returns:
         A two-element tuple containing
@@ -124,6 +174,7 @@ class AcquisitionOptimizer(ABC):
                     acqf=acqfs[0],
                     domain=domain,
                     experiments=experiments,
+                    callback=callback,
                 )
 
         return self._optimize(
@@ -131,6 +182,7 @@ class AcquisitionOptimizer(ABC):
             acqfs=acqfs,
             domain=domain,
             experiments=experiments,
+            callback=callback,
         )
 
     @abstractmethod
@@ -140,6 +192,7 @@ class AcquisitionOptimizer(ABC):
         acqfs: List[AcquisitionFunction],  # this is a botorch object
         domain: Domain,
         experiments: Optional[pd.DataFrame] = None,
+        callback: Optional[AskProgressCallback] = None,
     ) -> pd.DataFrame:
         """Optimizes the acquisition function(s) for the given domain and input preprocessing specs.
 
@@ -147,6 +200,9 @@ class AcquisitionOptimizer(ABC):
             candidate_count (int): Number of candidates that should be returned.
             acqfs (List[AcquisitionFunction]): List of acquisition functions that should be optimized.
             domain (Domain): The domain of the optimization problem.
+            experiments: The experiments that have been conducted so far.
+            callback: Called with an `AskOptimizationProgress` while the
+                acquisition function is optimized.
 
         Returns:
         A two-element tuple containing
@@ -235,12 +291,17 @@ class AcquisitionOptimizer(ABC):
         acqf: AcquisitionFunction,
         domain: Domain,
         experiments: pd.DataFrame,
+        callback: Optional[AskProgressCallback] = None,
     ) -> pd.DataFrame:
         """Optimizes the acquisition function for a discrete search space.
 
         Args:
             candidate_count: Number of candidates that should be returned.
             acqf: Acquisition function that should be optimized.
+            domain: The domain of the optimization problem.
+            experiments: The experiments that have been conducted so far.
+            callback: Called with an `AskOptimizationProgress` once per batch of
+                choices that is scored.
 
         Returns:
         A two-element tuple containing
@@ -282,12 +343,31 @@ class AcquisitionOptimizer(ABC):
                 specs=AcquisitionOptimizer._input_preprocessing_specs(domain),
             ).values,
         ).to(**tkwargs)
-        candidates, _ = optimize_acqf_discrete(
-            acq_function=acqf,
-            q=candidate_count,
-            unique=True,
-            choices=t_choices,
-        )
+        max_batch_size = _DISCRETE_MAX_BATCH_SIZE
+        hook_handle = None
+        if callback is not None:
+            # `optimize_acqf_discrete` has no iterations, but scores the choices in
+            # batches of `max_batch_size`, once per requested candidate
+            n_choices = len(t_choices)
+            hook_handle = acqf.register_forward_hook(
+                _discrete_progress_hook(
+                    callback,
+                    n_choices=n_choices,
+                    max_steps=min(candidate_count, n_choices)
+                    * math.ceil(n_choices / max_batch_size),
+                )
+            )
+        try:
+            candidates, _ = optimize_acqf_discrete(
+                acq_function=acqf,
+                q=candidate_count,
+                unique=True,
+                choices=t_choices,
+                max_batch_size=max_batch_size,
+            )
+        finally:
+            if hook_handle is not None:
+                hook_handle.remove()
         return AcquisitionOptimizer._candidates_tensor_to_dataframe(
             candidates=candidates,
             domain=domain,
@@ -306,7 +386,7 @@ class _OptimizeAcqfInput(_OptimizeAcqfInputBase):
     q: int
     num_restarts: int
     raw_samples: int
-    options: dict[str, bool | float | int | str] | None
+    options: dict[str, Any] | None
     inequality_constraints: list[tuple[Tensor, Tensor, float]] | None
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None
     nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None
@@ -323,7 +403,7 @@ class _OptimizeAcqfMixedInput(_OptimizeAcqfInputBase):
     num_restarts: int
     fixed_features_list: List[Dict[int, float]]  # it has to have more than two items
     raw_samples: int
-    options: dict[str, bool | float | int | str] | None
+    options: dict[str, Any] | None
     inequality_constraints: list[tuple[Tensor, Tensor, float]] | None
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None
     nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None
@@ -336,7 +416,7 @@ class _OptimizeAcqfListInput(_OptimizeAcqfInputBase):
     bounds: Tensor
     num_restarts: int
     raw_samples: int
-    options: dict[str, bool | float | int | str] | None
+    options: dict[str, Any] | None
     inequality_constraints: list[tuple[Tensor, Tensor, float]] | None
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None
     nonlinear_inequality_constraints: list[tuple[Callable, bool]] | None
@@ -368,6 +448,22 @@ class _OptimizeAcqfMixedAlternatingInput(_OptimizeAcqfInputBase):
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None
 
 
+def _pymoo_progress_callback(callback: AskProgressCallback, max_steps: int) -> Callable:
+    def on_generation(algorithm) -> None:
+        opt = algorithm.opt
+        callback(
+            AskOptimizationProgress(
+                optimizer="genetic_algorithm",
+                step=algorithm.n_gen,
+                max_steps=max_steps,
+                # run_ga(optimization_direction="max") stores F = -acqf
+                value=None if opt is None else -float(np.min(opt.get("F"))),
+            )
+        )
+
+    return on_generation
+
+
 class BotorchOptimizer(AcquisitionOptimizer):
     def __init__(self, data_model: BotorchOptimizerDataModel):
         self.n_restarts = data_model.n_restarts
@@ -386,13 +482,61 @@ class BotorchOptimizer(AcquisitionOptimizer):
     def _setup(self):
         pass
 
+    def _max_callback_steps(
+        self, domain: Domain, candidate_count: int, n_acqfs: int
+    ) -> int:
+        """Upper bound on the iterations the inner optimizers report in one `_optimize`.
+
+        Restarts are optimized in groups. Depending on the installed scipy
+        version, botorch reports either one step per iteration of a group or one
+        per iteration of each restart in it. The bound covers both: it assumes
+        every restart runs for `maxiter` iterations, which an optimizer that
+        converges earlier does not.
+
+        Returns:
+            The bound, or 0 if the optimizer used does not report progress.
+        """
+        optimizer = self._determine_optimizer(domain=domain, n_acqfs=n_acqfs)
+        if optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING:
+            return 0
+        n_combos = domain.inputs.get_number_of_categorical_combinations(
+            include_semicontinuous=not is_pruning_applicable(domain),
+        )
+        if optimizer == OptimizerEnum.OPTIMIZE_ACQF_LIST:
+            runs = n_acqfs * n_combos
+        elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED:
+            runs = n_combos * candidate_count
+        else:
+            runs = candidate_count if self.sequential else 1
+        # the second optimization of LSR-BO
+        passes = (
+            2
+            if self.local_search_config is not None
+            and has_local_search_region(domain)
+            and candidate_count == 1
+            else 1
+        )
+        return passes * runs * self.n_restarts * self.maxiter
+
     def _optimize(
         self,
         candidate_count: int,
         acqfs: List[AcquisitionFunction],
         domain: Domain,
         experiments: Optional[pd.DataFrame] = None,
+        callback: Optional[AskProgressCallback] = None,
     ) -> pd.DataFrame:
+        scipy_callback = (
+            None
+            if callback is None
+            else scipy_progress_callback(
+                callback,
+                "botorch",
+                max_steps=self._max_callback_steps(
+                    domain, candidate_count, n_acqfs=len(acqfs)
+                ),
+            )
+        )
         pruning_applicable = is_pruning_applicable(domain)
 
         input_preprocessing_specs = self._input_preprocessing_specs(domain)
@@ -416,6 +560,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
             candidate_count=candidate_count,
             acqfs=acqfs,
             bounds=bounds,
+            callback=scipy_callback,
         )
         # print(candidates)
 
@@ -441,6 +586,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 candidate_count=candidate_count,
                 acqfs=acqfs,
                 bounds=local_bounds,
+                callback=scipy_callback,
             )
             if self.local_search_config.is_local_step(
                 local_acqf_val.item(),
@@ -569,14 +715,24 @@ class BotorchOptimizer(AcquisitionOptimizer):
         bounds: Tensor,
         candidate_count: int,
         acqfs: List[AcquisitionFunction],
+        callback: Optional[Callable] = None,
     ) -> Tuple[Tensor, Tensor]:
         optimizer = self._determine_optimizer(domain=domain, n_acqfs=len(acqfs))
+        if callback is not None and (
+            optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING
+        ):
+            warnings.warn(
+                "optimize_acqf_mixed_alternating does not report acquisition optimization progress; `progress_callback` is not called.",
+                UserWarning,
+                stacklevel=2,
+            )
         optimizer_input = self._get_arguments_for_optimizer(
             bounds=bounds,
             optimizer=optimizer,
             acqfs=acqfs,
             domain=domain,
             candidate_count=candidate_count,
+            callback=callback,
         )
         optimizer_mapping = {
             OptimizerEnum.OPTIMIZE_ACQF_LIST: optimize_acqf_list,
@@ -591,12 +747,18 @@ class BotorchOptimizer(AcquisitionOptimizer):
         )
         return candidates, acqf_vals
 
-    def _get_optimizer_options(self, domain: Domain) -> Dict[str, int]:
+    def _get_optimizer_options(
+        self, domain: Domain, callback: Optional[Callable] = None
+    ) -> Dict[str, Any]:
         """Returns a dictionary of settings passed to `optimize_acqf` controlling
         the behavior of the optimizer.
 
+        Args:
+            domain: The domain of the optimization problem.
+            callback: Forwarded to the inner scipy optimizer as `options["callback"]`.
+
         Returns:
-            Dict[str, int]: The dictionary with the settings.
+            Dict[str, Any]: The dictionary with the settings.
 
         """
         assert self.batch_limit is not None
@@ -604,7 +766,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         constraint_types = [ProductConstraint]
         if not pruning_applicable:
             constraint_types.append(NChooseKConstraint)
-        return {
+        options: Dict[str, Any] = {
             "batch_limit": (
                 self.batch_limit
                 if len(domain.constraints.get(constraint_types)) == 0
@@ -612,6 +774,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
             ),
             "maxiter": self.maxiter,
         }
+        if callback is not None:
+            options["callback"] = callback
+        return options
 
     def _determine_optimizer(self, domain: Domain, n_acqfs) -> OptimizerEnum:
         if n_acqfs > 1:
@@ -648,6 +813,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         bounds: Tensor,
         candidate_count: int,
         domain: Domain,
+        callback: Optional[Callable] = None,
     ) -> (
         _OptimizeAcqfInput
         | _OptimizeAcqfMixedInput
@@ -702,7 +868,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 q=candidate_count,
                 num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
-                options=self._get_optimizer_options(domain),
+                options=self._get_optimizer_options(domain, callback=callback),
                 sequential=self.sequential,
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints + interpoints,
@@ -720,7 +886,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 q=candidate_count,
                 num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
-                options=self._get_optimizer_options(domain),
+                options=self._get_optimizer_options(domain, callback=callback),
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
                 nonlinear_inequality_constraints=nonlinear_constraints,
@@ -737,7 +903,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 bounds=bounds,
                 num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
-                options=self._get_optimizer_options(domain),
+                options=self._get_optimizer_options(domain, callback=callback),
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints,
                 nonlinear_inequality_constraints=nonlinear_constraints,
@@ -888,6 +1054,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
         acqfs: List[AcquisitionFunction],  # this is a botorch object
         domain: Domain,
         experiments: Optional[pd.DataFrame] = None,
+        callback: Optional[AskProgressCallback] = None,
     ) -> pd.DataFrame:
         """
         Main function for optimizing the acquisition function using the genetic algorithm.
@@ -898,6 +1065,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             domain (Domain): The domain of the optimization problem.
             input_preprocessing_specs (InputTransformSpecs): Preprocessing specifications for the inputs.
             experiments (Optional[pd.DataFrame]): Existing experiments, if any.
+            callback: Called with an `AskOptimizationProgress` once per generation.
 
         Returns:
             Tuple[torch.Tensor, torch.Tensor]: Optimized candidates and their corresponding objective values.
@@ -908,7 +1076,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             domain
         )
         candidates, _ = self._single_shot_optimization(
-            domain, input_preprocessing_specs, acqfs, candidate_count
+            domain, input_preprocessing_specs, acqfs, candidate_count, callback
         )
 
         return self._candidates_tensor_to_dataframe(
@@ -922,6 +1090,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
         input_preprocessing_specs: InputTransformSpecs,
         acqfs: List[AcquisitionFunction],
         q: int,
+        callback: Optional[AskProgressCallback] = None,
     ) -> Tuple[Tensor, Tensor]:
         """
         Single optimizer call. Either for sequential, or simultaneous optimization of q-experiment proposals
@@ -935,15 +1104,27 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             Tensor: x_opt as (d,) Tensor
             Tensor: f_opt as (n_y,) Tensor
         """
+        data_model = self.data_model
         x_opt, f_opt = utils.run_ga(
-            self.data_model,
+            data_model,
             domain,
             acqfs,
             q,
             callable_format="torch",
             input_preprocessing_specs=input_preprocessing_specs,
-            verbose=self.data_model.verbose,
+            verbose=data_model.verbose,
             optimization_direction="max",
+            callback=None
+            if callback is None
+            else _pymoo_progress_callback(
+                callback,
+                # pymoo evaluates one population per generation and stops at whichever
+                # of the two budgets is exhausted first
+                max_steps=min(
+                    data_model.n_max_gen,
+                    math.ceil(data_model.n_max_evals / data_model.population_size),
+                ),
+            ),
         )
 
         return x_opt, f_opt  # ty: ignore[invalid-return-type]
