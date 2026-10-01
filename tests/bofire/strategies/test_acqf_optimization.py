@@ -453,10 +453,11 @@ def test_botorch_optimizer_reports_progress():
     )
     events = []
     strategy.ask(1, progress_callback=events.append)
-    _assert_botorch_progress(events, max_steps=5)
+    # 2 restarts, 3 iterations each
+    _assert_botorch_progress(events, max_steps=10)
 
 
-def test_botorch_optimizer_max_steps_counts_batches_and_categorical_combinations():
+def test_botorch_optimizer_max_steps_scales_with_restarts_and_categorical_combinations():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x", bounds=(0, 1)),
@@ -470,8 +471,9 @@ def test_botorch_optimizer_max_steps_counts_batches_and_categorical_combinations
     )
     events = []
     strategy.ask(1, progress_callback=events.append)
-    # 3 categorical combinations, 2 batches of restarts each, 3 iterations per batch
-    _assert_botorch_progress(events, max_steps=18)
+    # 3 categorical combinations, 4 restarts each, 3 iterations per restart; the
+    # bound does not depend on how botorch groups the restarts (`batch_limit`)
+    _assert_botorch_progress(events, max_steps=36)
 
 
 def test_botorch_optimizer_reports_progress_with_linear_constraint():
@@ -493,7 +495,7 @@ def test_botorch_optimizer_reports_progress_with_linear_constraint():
     events = []
     strategy.ask(1, progress_callback=events.append)
     # whether SLSQP (used under constraints) reports a value depends on the scipy version
-    _assert_botorch_progress(events, max_steps=5, allow_missing_values=True)
+    _assert_botorch_progress(events, max_steps=10, allow_missing_values=True)
 
 
 def test_ga_optimizer_reports_progress():

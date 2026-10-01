@@ -13,8 +13,10 @@ class AskOptimizationProgress:
             are the two solvers of the design of experiments strategy.
         step: 1-based counter. For "genetic_algorithm" it is the generation
             number. For "botorch" it is the running count of iterations of the
-            inner optimizer across all optimizer runs within one `ask`;
-            restarts that are optimized in one batch share an iteration. An
+            inner optimizer across all optimizer runs within one `ask`.
+            Depending on the installed scipy version, restarts that are
+            optimized together report once per iteration of the group or once
+            each, so the count may differ between environments. An
             exhaustive search over a purely categorical domain has no
             iterations: it counts the batches of up to 2048 choices that were
             scored, over all requested candidates. For "ipopt" and "scipy" it
