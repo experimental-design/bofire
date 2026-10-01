@@ -244,8 +244,6 @@ UNDOCUMENTED_FIELDS = {
     "bofire.data_models.surrogates.single_task_gp.SingleTaskGPHyperconfig.target_metric",
     "bofire.data_models.surrogates.single_task_gp.SingleTaskGPSurrogate.hyperconfig",
     "bofire.data_models.surrogates.single_task_gp.SingleTaskGPSurrogate.kernel",
-    "bofire.data_models.surrogates.single_task_gp.SingleTaskGPSurrogate.noise_constraint",
-    "bofire.data_models.surrogates.single_task_gp.SingleTaskGPSurrogate.noise_prior",
     "bofire.data_models.surrogates.surrogate.Surrogate.dump",
     "bofire.data_models.surrogates.surrogate.Surrogate.inputs",
     "bofire.data_models.surrogates.surrogate.Surrogate.outputs",

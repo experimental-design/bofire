@@ -27,6 +27,18 @@ def test_kernel_should_be_serializable(kernel_spec: Spec):
     assert obj.model_dump() == spec
 
 
+def test_mean_should_be_serializable(mean_spec: Spec):
+    spec = mean_spec.typed_spec()
+    obj = mean_spec.cls(**spec)
+    assert obj.model_dump() == spec
+
+
+def test_likelihood_should_be_serializable(likelihood_spec: Spec):
+    spec = likelihood_spec.typed_spec()
+    obj = likelihood_spec.cls(**spec)
+    assert obj.model_dump() == spec
+
+
 def test_constraint_should_be_serializable(constraint_spec: Spec):
     spec = constraint_spec.typed_spec()
     obj = constraint_spec.cls(**spec)

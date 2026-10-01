@@ -46,6 +46,8 @@ from bofire.data_models.kernels.api import (
     SphericalLinearKernel,
     TanimotoKernel,
 )
+from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
@@ -58,6 +60,7 @@ from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     GammaPrior,
     LogNormalPrior,
+    NormalPrior,
 )
 from bofire.data_models.priors.api import GreaterThan as BoFireGreaterThan
 from bofire.data_models.surrogates.api import (
@@ -134,10 +137,14 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
         engine="python",
     )
     experiments["valid_y"] = 1
+    mean = ConstantMean(prior=NormalPrior(loc=0.0, scale=1.0))
+    likelihood = GaussianLikelihood(noise_prior=THREESIX_NOISE_PRIOR())
     model = SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
+        mean=mean,
+        likelihood=likelihood,
         scaler=scaler,
         output_scaler=output_scaler,
     )
@@ -156,6 +163,11 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, SingleTaskGP)
+    ((_, _, mean_prior, *_),) = model.model.mean_module.named_priors()
+    assert isinstance(mean_prior, gpytorch.priors.NormalPrior)
+    noise_prior = _get_registered_noise_prior(model.model)
+    assert isinstance(noise_prior, gpytorch.priors.GammaPrior)
+    assert float(noise_prior.concentration) == pytest.approx(1.1)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
     elif output_scaler == ScalerEnum.LOG:
@@ -177,6 +189,8 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
+        mean=mean,
+        likelihood=likelihood,
         scaler=scaler,
     )
     model2 = surrogates.map(model2)
@@ -443,17 +457,17 @@ def test_SingleTaskGPHyperconfig():
     else:
         assert isinstance(base_kernel, RBFKernel)
     if candidate.prior == "mbo":
-        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
+        assert surrogate_data.likelihood.noise_prior == MBO_NOISE_PRIOR()
         if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
         assert base_kernel.lengthscale_prior == MBO_LENGTHSCALE_PRIOR()
     elif candidate.prior == "threesix":
-        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
+        assert surrogate_data.likelihood.noise_prior == THREESIX_NOISE_PRIOR()
         if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
         assert base_kernel.lengthscale_prior == THREESIX_LENGTHSCALE_PRIOR()
     else:
-        assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
+        assert surrogate_data.likelihood.noise_prior == HVARFNER_NOISE_PRIOR()
         if candidate.scalekernel == "True":
             assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
         assert base_kernel.lengthscale_prior == HVARFNER_LENGTHSCALE_PRIOR()
@@ -1234,7 +1248,9 @@ def test_noise_prior_affects_single_task_gp():
         SingleTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=LogNormalPrior(loc=0.0, scale=0.25),
+            likelihood=GaussianLikelihood(
+                noise_prior=LogNormalPrior(loc=0.0, scale=0.25)
+            ),
         )
     )
     surrogate_large.fit(experiments)
@@ -1290,7 +1306,9 @@ def test_noise_constraint_enforced_for_single_task_gp():
         SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            noise_constraint=BoFireGreaterThan(lower_bound=0.5),
+            likelihood=GaussianLikelihood(
+                noise_constraint=BoFireGreaterThan(lower_bound=0.5)
+            ),
         )
     )
     surrogate.fit(experiments)
