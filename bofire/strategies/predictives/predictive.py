@@ -12,6 +12,7 @@ from bofire.data_models.strategies.api import PredictiveStrategy as DataModel
 from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue, OutputValue
+from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.strategy import Strategy
 from bofire.surrogates.feature_importance import shap_importance
 from bofire.utils.naming_conventions import (
@@ -85,6 +86,7 @@ class PredictiveStrategy(Strategy):
         candidate_count: Optional[PositiveInt] = None,
         add_pending: bool = False,
         raise_validation_error: bool = True,
+        progress_callback: Optional[AskProgressCallback] = None,
     ) -> pd.DataFrame:
         """Function to generate new candidates.
 
@@ -97,6 +99,9 @@ class PredictiveStrategy(Strategy):
             raise_validation_error (bool, optional): If true an error will be
                 raised if candidates violate constraints, otherwise only a
                 warning will be displayed. Defaults to True.
+            progress_callback: Called with an `AskOptimizationProgress` while the
+                acquisition function is optimized. Ignored by strategies that do
+                not optimize an acquisition function.
 
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
@@ -106,6 +111,7 @@ class PredictiveStrategy(Strategy):
             candidate_count=candidate_count,
             add_pending=add_pending,
             raise_validation_error=raise_validation_error,
+            progress_callback=progress_callback,
         )
         self.domain.validate_candidates(
             candidates=candidates,

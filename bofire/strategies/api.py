@@ -25,6 +25,7 @@ from bofire.strategies.predictives.sobo import (
     MultiplicativeSoboStrategy,
     SoboStrategy,
 )
+from bofire.strategies.progress import AskOptimizationProgress, AskProgressCallback
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.strategies.stepwise.stepwise import StepwiseStrategy

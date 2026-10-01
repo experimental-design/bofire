@@ -19,6 +19,7 @@ from bofire.strategies.predictives.acqf_optimization import (
     get_optimizer,
 )
 from bofire.strategies.predictives.predictive import PredictiveStrategy
+from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.random import RandomStrategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.utils.torch_tools import tkwargs
@@ -132,11 +133,17 @@ class BotorchStrategy(PredictiveStrategy):
 
         return vals
 
-    def _ask(self, candidate_count: int) -> pd.DataFrame:
+    def _ask(
+        self,
+        candidate_count: int,
+        progress_callback: Optional[AskProgressCallback] = None,
+    ) -> pd.DataFrame:
         """[summary]
 
         Args:
             candidate_count (int, optional): [description]. Defaults to 1.
+            progress_callback: Called with an `AskOptimizationProgress` while the
+                acquisition function is optimized.
 
         Returns:
             pd.DataFrame: [description]
@@ -153,6 +160,7 @@ class BotorchStrategy(PredictiveStrategy):
             acqfs,
             self.domain,
             self.experiments,
+            callback=progress_callback,
         )
 
         return candidates
