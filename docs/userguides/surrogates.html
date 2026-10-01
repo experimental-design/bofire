@@ -634,7 +634,7 @@ qparego_data_model = QparegoStrategy(
         inputs=domain.inputs,
         outputs=Outputs(features=[domain.outputs[0]]),
         kernel=PolynomialKernel(power=2),
-        noise_prior=NormalPrior(loc=0, scale=1)
+        likelihood=GaussianLikelihood(noise_prior=NormalPrior(loc=0, scale=1))
 )</code></pre>
 </section>
 <section id="categorical-encoding-customization" class="level3">
@@ -1256,7 +1256,7 @@ qparego_data_model = QparegoStrategy(
 <span id="cb6-88"><a href="#cb6-88" aria-hidden="true" tabindex="-1"></a><span class="in">            inputs=domain.inputs,</span></span>
 <span id="cb6-89"><a href="#cb6-89" aria-hidden="true" tabindex="-1"></a><span class="in">            outputs=Outputs(features=[domain.outputs[0]]),</span></span>
 <span id="cb6-90"><a href="#cb6-90" aria-hidden="true" tabindex="-1"></a><span class="in">            kernel=PolynomialKernel(power=2),</span></span>
-<span id="cb6-91"><a href="#cb6-91" aria-hidden="true" tabindex="-1"></a><span class="in">            noise_prior=NormalPrior(loc=0, scale=1)</span></span>
+<span id="cb6-91"><a href="#cb6-91" aria-hidden="true" tabindex="-1"></a><span class="in">            likelihood=GaussianLikelihood(noise_prior=NormalPrior(loc=0, scale=1))</span></span>
 <span id="cb6-92"><a href="#cb6-92" aria-hidden="true" tabindex="-1"></a><span class="in">    )</span></span>
 <span id="cb6-93"><a href="#cb6-93" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-94"><a href="#cb6-94" aria-hidden="true" tabindex="-1"></a><span class="fu">### Categorical encoding customization</span></span>

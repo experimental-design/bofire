@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>index – BoFire</title>
+<title>data_models.likelihoods.api – BoFire</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -360,7 +360,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     </ul>
   </li>
   <li class="nav-item">
-    <a class="nav-link active" href="../../docs/reference/index.html" aria-current="page"> 
+    <a class="nav-link" href="../../docs/reference/index.html"> 
 <span class="menu-text">API Reference</span></a>
   </li>  
 </ul>
@@ -387,21 +387,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#api-reference" id="toc-api-reference" class="nav-link active" data-scroll-target="#api-reference">API Reference</a>
+  <li><a href="#bofire.data_models.likelihoods.api" id="toc-bofire.data_models.likelihoods.api" class="nav-link active" data-scroll-target="#bofire.data_models.likelihoods.api">data_models.likelihoods.api</a>
   <ul class="collapse">
-  <li><a href="#data-models---domain" id="toc-data-models---domain" class="nav-link" data-scroll-target="#data-models---domain">Data Models - Domain</a></li>
-  <li><a href="#data-models---features" id="toc-data-models---features" class="nav-link" data-scroll-target="#data-models---features">Data Models - Features</a></li>
-  <li><a href="#data-models---encodings" id="toc-data-models---encodings" class="nav-link" data-scroll-target="#data-models---encodings">Data Models - Encodings</a></li>
-  <li><a href="#data-models---descriptor-generators" id="toc-data-models---descriptor-generators" class="nav-link" data-scroll-target="#data-models---descriptor-generators">Data Models - Descriptor Generators</a></li>
-  <li><a href="#data-models---strategies" id="toc-data-models---strategies" class="nav-link" data-scroll-target="#data-models---strategies">Data Models - Strategies</a></li>
-  <li><a href="#data-models---kernels" id="toc-data-models---kernels" class="nav-link" data-scroll-target="#data-models---kernels">Data Models - Kernels</a></li>
-  <li><a href="#data-models---means-and-likelihoods" id="toc-data-models---means-and-likelihoods" class="nav-link" data-scroll-target="#data-models---means-and-likelihoods">Data Models - Means and Likelihoods</a></li>
-  <li><a href="#data-models---surrogates" id="toc-data-models---surrogates" class="nav-link" data-scroll-target="#data-models---surrogates">Data Models - Surrogates</a></li>
-  <li><a href="#strategies" id="toc-strategies" class="nav-link" data-scroll-target="#strategies">Strategies</a></li>
-  <li><a href="#surrogates" id="toc-surrogates" class="nav-link" data-scroll-target="#surrogates">Surrogates</a></li>
+  <li><a href="#classes" id="toc-classes" class="nav-link" data-scroll-target="#classes">Classes</a>
+  <ul class="collapse">
+  <li><a href="#bofire.data_models.likelihoods.api.Likelihood" id="toc-bofire.data_models.likelihoods.api.Likelihood" class="nav-link" data-scroll-target="#bofire.data_models.likelihoods.api.Likelihood">Likelihood</a></li>
+  <li><a href="#bofire.data_models.likelihoods.api.GaussianLikelihood" id="toc-bofire.data_models.likelihoods.api.GaussianLikelihood" class="nav-link" data-scroll-target="#bofire.data_models.likelihoods.api.GaussianLikelihood">GaussianLikelihood</a></li>
+  </ul></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/reference/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/reference/data_models.likelihoods.api.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><h1 class="title display-7"></h1></header><div class="quarto-title-block"><div class="quarto-title-tools-only"><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
@@ -410,147 +405,45 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<section id="api-reference" class="level1 doc doc-index">
-<h1 class="doc doc-index">API Reference</h1>
-<section id="data-models---domain" class="level2">
-<h2 class="anchored" data-anchor-id="data-models---domain">Data Models - Domain</h2>
-<p>Domain configuration data models</p>
+<section id="bofire.data_models.likelihoods.api" class="level1">
+<h1>data_models.likelihoods.api</h1>
+<p><code>data_models.likelihoods.api</code></p>
+<section id="classes" class="level2">
+<h2 class="anchored" data-anchor-id="classes">Classes</h2>
 <table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
 <tbody>
 <tr class="odd">
-<td><a href="../../docs/reference/data_models.domain.domain.Domain.html#bofire.data_models.domain.domain.Domain">data_models.domain.domain.Domain</a></td>
-<td>Representation of the optimization problem/domain</td>
+<td><a href="#bofire.data_models.likelihoods.api.Likelihood">Likelihood</a></td>
+<td>Model of how observations scatter around the underlying response.</td>
 </tr>
 <tr class="even">
-<td><a href="../../docs/reference/data_models.domain.features.Inputs.html#bofire.data_models.domain.features.Inputs">data_models.domain.features.Inputs</a></td>
-<td>Container of input features, only input features are allowed.</td>
-</tr>
-<tr class="odd">
-<td><a href="../../docs/reference/data_models.domain.features.Outputs.html#bofire.data_models.domain.features.Outputs">data_models.domain.features.Outputs</a></td>
-<td>Container of output features, only output features are allowed.</td>
-</tr>
-<tr class="even">
-<td><a href="../../docs/reference/data_models.domain.constraints.Constraints.html#bofire.data_models.domain.constraints.Constraints">data_models.domain.constraints.Constraints</a></td>
-<td></td>
+<td><a href="#bofire.data_models.likelihoods.api.GaussianLikelihood">GaussianLikelihood</a></td>
+<td>Observations are the response plus Gaussian noise with mean zero and one</td>
 </tr>
 </tbody>
 </table>
+<section id="bofire.data_models.likelihoods.api.Likelihood" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.likelihoods.api.Likelihood">Likelihood</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>data_models.likelihoods.api.Likelihood()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Model of how observations scatter around the underlying response.</p>
+<p>It decides how much of the spread in the data is attributed to measurement noise rather than to the response itself.</p>
 </section>
-<section id="data-models---features" class="level2">
-<h2 class="anchored" data-anchor-id="data-models---features">Data Models - Features</h2>
-<p>Feature data models</p>
-<table class="caption-top table">
-<tbody>
-<tr class="odd">
-<td><a href="../../docs/reference/data_models.features.api.html#bofire.data_models.features.api">data_models.features.api</a></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="data-models---encodings" class="level2">
-<h2 class="anchored" data-anchor-id="data-models---encodings">Data Models - Encodings</h2>
-<p>How a categorical feature’s value becomes model-input columns</p>
-<table class="caption-top table">
-<tbody>
-<tr class="odd">
-<td><a href="../../docs/reference/data_models.encodings.api.html#bofire.data_models.encodings.api">data_models.encodings.api</a></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="data-models---descriptor-generators" class="level2">
-<h2 class="anchored" data-anchor-id="data-models---descriptor-generators">Data Models - Descriptor Generators</h2>
-<p>Descriptor columns generated from molecular structures</p>
-<table class="caption-top table">
-<tbody>
-<tr class="odd">
-<td><a href="../../docs/reference/data_models.descriptor_generators.api.html#bofire.data_models.descriptor_generators.api">data_models.descriptor_generators.api</a></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="data-models---strategies" class="level2">
-<h2 class="anchored" data-anchor-id="data-models---strategies">Data Models - Strategies</h2>
-<p>Strategy configuration data models</p>
-<table class="caption-top table">
-<tbody>
-<tr class="odd">
-<td><a href="../../docs/reference/data_models.strategies.api.html#bofire.data_models.strategies.api">data_models.strategies.api</a></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="data-models---kernels" class="level2">
-<h2 class="anchored" data-anchor-id="data-models---kernels">Data Models - Kernels</h2>
-<p>Kernel configuration data models</p>
-<table class="caption-top table">
-<tbody>
-<tr class="odd">
-<td><a href="../../docs/reference/data_models.kernels.api.html#bofire.data_models.kernels.api">data_models.kernels.api</a></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="data-models---means-and-likelihoods" class="level2">
-<h2 class="anchored" data-anchor-id="data-models---means-and-likelihoods">Data Models - Means and Likelihoods</h2>
-<p>Mean function and noise model data models of a Gaussian process</p>
-<table class="caption-top table">
-<tbody>
-<tr class="odd">
-<td><a href="../../docs/reference/data_models.means.api.html#bofire.data_models.means.api">data_models.means.api</a></td>
-<td></td>
-</tr>
-<tr class="even">
-<td><a href="../../docs/reference/data_models.likelihoods.api.html#bofire.data_models.likelihoods.api">data_models.likelihoods.api</a></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="data-models---surrogates" class="level2">
-<h2 class="anchored" data-anchor-id="data-models---surrogates">Data Models - Surrogates</h2>
-<p>Surrogate model configuration data models</p>
-<table class="caption-top table">
-<tbody>
-<tr class="odd">
-<td><a href="../../docs/reference/data_models.surrogates.api.html#bofire.data_models.surrogates.api">data_models.surrogates.api</a></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="strategies" class="level2">
-<h2 class="anchored" data-anchor-id="strategies">Strategies</h2>
-<p>Strategy implementations</p>
-<table class="caption-top table">
-<tbody>
-<tr class="odd">
-<td><a href="../../docs/reference/strategies.api.html#bofire.strategies.api">strategies.api</a></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="surrogates" class="level2">
-<h2 class="anchored" data-anchor-id="surrogates">Surrogates</h2>
-<p>Surrogate model implementations</p>
-<table class="caption-top table">
-<tbody>
-<tr class="odd">
-<td><a href="../../docs/reference/surrogates.api.html#bofire.surrogates.api">surrogates.api</a></td>
-<td></td>
-</tr>
-</tbody>
-</table>
+<section id="bofire.data_models.likelihoods.api.GaussianLikelihood" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.likelihoods.api.GaussianLikelihood">GaussianLikelihood</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_models.likelihoods.api.GaussianLikelihood()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Observations are the response plus Gaussian noise with mean zero and one variance shared by all points.</p>
+<p>The noise variance is fitted along with the kernel hyperparameters; <code>noise_prior</code> regularises it and <code>noise_constraint</code> bounds it. The defaults put a log-normal prior on it that favours small noise levels and start the fit at that prior’s mode, which suits outputs standardized to unit variance.</p>
 
 
 <!-- -->
 
+</section>
 </section>
 </section>
 
@@ -1023,95 +916,47 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># API Reference {.doc .doc-index}</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Models - Domain</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>Domain configuration data models</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">data_models.domain.domain.Domain</span><span class="co">](data_models.domain.domain.Domain.qmd#bofire.data_models.domain.domain.Domain)</span> <span class="pp">|</span> Representation of the optimization problem/domain <span class="pp">|</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">data_models.domain.features.Inputs</span><span class="co">](data_models.domain.features.Inputs.qmd#bofire.data_models.domain.features.Inputs)</span> <span class="pp">|</span> Container of input features, only input features are allowed. <span class="pp">|</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">data_models.domain.features.Outputs</span><span class="co">](data_models.domain.features.Outputs.qmd#bofire.data_models.domain.features.Outputs)</span> <span class="pp">|</span> Container of output features, only output features are allowed. <span class="pp">|</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">data_models.domain.constraints.Constraints</span><span class="co">](data_models.domain.constraints.Constraints.qmd#bofire.data_models.domain.constraints.Constraints)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Models - Features</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>Feature data models</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">data_models.features.api</span><span class="co">](data_models.features.api.qmd#bofire.data_models.features.api)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Models - Encodings</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>How a categorical feature's value becomes model-input columns</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">data_models.encodings.api</span><span class="co">](data_models.encodings.api.qmd#bofire.data_models.encodings.api)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Models - Descriptor Generators</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>Descriptor columns generated from molecular structures</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">data_models.descriptor_generators.api</span><span class="co">](data_models.descriptor_generators.api.qmd#bofire.data_models.descriptor_generators.api)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Models - Strategies</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>Strategy configuration data models</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">data_models.strategies.api</span><span class="co">](data_models.strategies.api.qmd#bofire.data_models.strategies.api)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Models - Kernels</span></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>Kernel configuration data models</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">data_models.kernels.api</span><span class="co">](data_models.kernels.api.qmd#bofire.data_models.kernels.api)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Models - Means and Likelihoods</span></span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>Mean function and noise model data models of a Gaussian process</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">data_models.means.api</span><span class="co">](data_models.means.api.qmd#bofire.data_models.means.api)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">data_models.likelihoods.api</span><span class="co">](data_models.likelihoods.api.qmd#bofire.data_models.likelihoods.api)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data Models - Surrogates</span></span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>Surrogate model configuration data models</span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">data_models.surrogates.api</span><span class="co">](data_models.surrogates.api.qmd#bofire.data_models.surrogates.api)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a><span class="fu">## Strategies</span></span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a>Strategy implementations</span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">strategies.api</span><span class="co">](strategies.api.qmd#bofire.strategies.api)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="fu">## Surrogates</span></span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a>Surrogate model implementations</span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="pp">|</span> <span class="pp">|</span></span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">surrogates.api</span><span class="co">](surrogates.api.qmd#bofire.surrogates.api)</span> <span class="pp">|</span>  <span class="pp">|</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># data_models.likelihoods.api { #bofire.data_models.likelihoods.api }</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="in">`data_models.likelihoods.api`</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">## Classes</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Likelihood</span><span class="co">](#bofire.data_models.likelihoods.api.Likelihood)</span> <span class="pp">|</span> Model of how observations scatter around the underlying response. <span class="pp">|</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">GaussianLikelihood</span><span class="co">](#bofire.data_models.likelihoods.api.GaussianLikelihood)</span> <span class="pp">|</span> Observations are the response plus Gaussian noise with mean zero and one <span class="pp">|</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="fu">### Likelihood { #bofire.data_models.likelihoods.api.Likelihood }</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>data_models.likelihoods.api.Likelihood()</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>Model of how observations scatter around the underlying response.</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>It decides how much of the spread in the data is attributed to measurement noise</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>rather than to the response itself.</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="fu">### GaussianLikelihood { #bofire.data_models.likelihoods.api.GaussianLikelihood }</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>data_models.likelihoods.api.GaussianLikelihood()</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>Observations are the response plus Gaussian noise with mean zero and one</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>variance shared by all points.</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>The noise variance is fitted along with the kernel hyperparameters;</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="in">`noise_prior`</span> regularises it and <span class="in">`noise_constraint`</span> bounds it. The defaults put a</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>log-normal prior on it that favours small noise levels and start the fit at that</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>prior's mode, which suits outputs standardized to unit variance.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/reference/index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/experimental-design/bofire/edit/main/docs/reference/data_models.likelihoods.api.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/experimental-design/bofire/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

@@ -751,7 +751,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p><a href="https://arxiv.org/pdf/2512.00170">Spherical Linear Kernel</a> is useful for optimizing high-dimensional problems.</p>
-<div id="12af7bc1" class="cell" data-execution_count="1">
+<div id="e3557465" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.svm <span class="im">import</span> SVM</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> SphericalLinearKernel</span>
@@ -763,7 +763,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We use the <a href="https://github.com/LeoIV/BenchSuite/blob/master/benchsuite/svm.py">SVM</a> benchmark.</p>
-<div id="1832267a" class="cell" data-execution_count="2">
+<div id="b90887b6" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># problem setup for spherical linear kernels</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SVM()</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> benchmark._domain.inputs.sample(benchmark.dim<span class="op">+</span><span class="dv">1</span>, seed<span class="op">=</span>benchmark.seed)</span>
@@ -791,7 +791,7 @@ Download complete.</code></pre>
 </div>
 </div>
 <p>Running the optimization loop</p>
-<div id="70abd759" class="cell" data-execution_count="3">
+<div id="06026189" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments, replace<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>num_steps <span class="op">=</span> <span class="dv">3</span> <span class="co"># set the number of steps here (the original paper uses 1000 steps)</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step_number <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>
@@ -813,6 +813,24 @@ Download complete.</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
+  warnings.warn(</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>New experiment:
+        x_1      x_10     x_100     x_101     x_102     x_103    x_104  \
+0  0.522446  0.524803  0.317933  0.116095  0.160888  0.199463  0.97305   
+
+     x_105     x_106     x_107  ...      x_95      x_96      x_97      x_98  \
+0  0.84544  0.714217  0.068977  ...  0.909508  0.933229  0.911664  0.031016   
+
+       x_99    y_pred     y_sd     y_des         y  valid_y  
+0  0.307294  0.236782  0.00201 -0.236782  0.231838        1  
+
+[1 rows x 393 columns]
+Step 2/3</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
   warnings.warn(
 /opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
 [NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal')]
@@ -821,32 +839,14 @@ Trying again with a new set of initial conditions.
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>New experiment:
-        x_1      x_10     x_100    x_101     x_102     x_103     x_104  \
-0  0.685903  0.425335  0.386223  0.64829  0.786647  0.032225  0.457765   
+        x_1      x_10     x_100     x_101     x_102     x_103     x_104  \
+0  0.185648  0.279444  0.733382  0.899774  0.419927  0.285609  0.159954   
 
-      x_105     x_106     x_107  ...      x_95      x_96      x_97      x_98  \
-0  0.734912  0.097881  0.469358  ...  0.244262  0.186416  0.277618  0.667862   
+      x_105    x_106     x_107  ...      x_95      x_96      x_97      x_98  \
+0  0.726991  0.04226  0.245952  ...  0.643117  0.478726  0.216508  0.039968   
 
-       x_99  y_pred      y_sd   y_des         y  valid_y  
-0  0.333728  0.2368  0.002011 -0.2368  0.227952        1  
-
-[1 rows x 393 columns]
-Step 2/3</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
-  warnings.warn(</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>New experiment:
-        x_1      x_10     x_100  x_101  x_102     x_103     x_104     x_105  \
-0  0.928755  0.642235  0.010448    1.0    0.0  0.327697  0.328654  0.707101   
-
-      x_106    x_107  ...      x_95  x_96      x_97      x_98      x_99  \
-0  0.568674  0.38102  ...  0.443454   1.0  0.143345  0.712022  0.881074   
-
-     y_pred      y_sd     y_des         y  valid_y  
-0  0.202296  0.001887 -0.202296  0.234656        1  
+       x_99    y_pred      y_sd     y_des         y  valid_y  
+0  0.693343  0.236664  0.002022 -0.236664  0.233895        1  
 
 [1 rows x 393 columns]
 Step 3/3</code></pre>
@@ -857,14 +857,14 @@ Step 3/3</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>New experiment:
-   x_1  x_10  x_100  x_101     x_102  x_103  x_104  x_105     x_106  x_107  \
-0  1.0   1.0    0.0    1.0  0.022996    0.0    0.0    1.0  0.773504    1.0   
+        x_1      x_10     x_100     x_101     x_102     x_103     x_104  \
+0  0.930648  0.820992  0.230556  0.895862  0.565248  0.457259  0.484121   
 
-   ...  x_95      x_96  x_97      x_98     x_99    y_pred      y_sd     y_des  \
-0  ...   1.0  0.680786   0.0  0.463292  0.53443  0.223636  0.001904 -0.223636   
+      x_105    x_106     x_107  ...     x_95      x_96      x_97      x_98  \
+0  0.484007  0.48987  0.818264  ...  0.52289  0.091771  0.295479  0.642068   
 
-          y  valid_y  
-0  0.236459        1  
+       x_99    y_pred      y_sd     y_des         y  valid_y  
+0  0.614281  0.236586  0.002024 -0.236586  0.231279        1  
 
 [1 rows x 393 columns]</code></pre>
 </div>
