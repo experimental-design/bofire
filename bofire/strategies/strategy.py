@@ -12,6 +12,7 @@ from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue
+from bofire.strategies.progress import AskProgressCallback
 
 
 ST = TypeVar("ST", bound="Strategy")
@@ -129,6 +130,7 @@ class Strategy(ABC):
         candidate_count: Optional[PositiveInt] = None,
         add_pending: bool = False,
         raise_validation_error: bool = True,
+        progress_callback: Optional[AskProgressCallback] = None,
     ) -> pd.DataFrame:
         """Function to generate new candidates.
 
@@ -138,6 +140,9 @@ class Strategy(ABC):
             add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
             raise_validation_error (bool, optional): If true an error will be raised if candidates violate constraints,
                 otherwise only a warning will be displayed. Defaults to True.
+            progress_callback: Called with an `AskOptimizationProgress` while the
+                acquisition function (or the design criterion of a DoE) is
+                optimized. Ignored by strategies that optimize neither.
 
 
         Raises:
@@ -158,7 +163,9 @@ class Strategy(ABC):
                 "Not enough experiments available to execute the strategy.",
             )
 
-        candidates = self._ask(candidate_count=candidate_count)
+        candidates = self._ask(
+            candidate_count=candidate_count, progress_callback=progress_callback
+        )
 
         candidates = self.postprocess_candidates(candidates=candidates)
 
@@ -229,11 +236,15 @@ class Strategy(ABC):
     def _ask(
         self,
         candidate_count: Optional[PositiveInt] = None,
+        progress_callback: Optional[AskProgressCallback] = None,
     ) -> pd.DataFrame:
         """Abstract method to implement how a strategy generates candidates.
 
         Args:
             candidate_count (PositiveInt, optional): Number of candidates to be generated. Defaults to None.
+            progress_callback: Called with an `AskOptimizationProgress` while the
+                acquisition function (or the design criterion of a DoE) is
+                optimized. Ignored by strategies that optimize neither.
 
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments).

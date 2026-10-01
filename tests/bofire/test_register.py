@@ -43,7 +43,7 @@ class _CustomStrategyDataModel(StrategyDataModel):
 
 
 class _CustomStrategy(Strategy):
-    def _ask(self, candidate_count):
+    def _ask(self, candidate_count, progress_callback=None):
         return pd.DataFrame()
 
     def has_sufficient_experiments(self) -> bool:

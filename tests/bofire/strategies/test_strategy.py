@@ -377,7 +377,7 @@ def test_strategy_ask_invalid_candidate_count(
     )
     strategy.tell(experiments)
 
-    def test_ask(self: Strategy, candidate_count: int):
+    def test_ask(self: Strategy, candidate_count: int, progress_callback=None):
         candidates = generate_candidates(self.domain, candidate_count)[:-1]
         return candidates
 
@@ -396,7 +396,7 @@ def test_strategy_ask_valid(
     )
     strategy.tell(experiments)
 
-    def test_ask(self: Strategy, candidate_count: int):
+    def test_ask(self: Strategy, candidate_count: int, progress_callback=None):
         candidates = generate_candidates(self.domain, candidate_count)
         return candidates
 
@@ -437,7 +437,7 @@ def test_predictive_strategy_ask_valid(
     )
     strategy.tell(experiments)
 
-    def test_ask(self: Strategy, candidate_count: int):
+    def test_ask(self: Strategy, candidate_count: int, progress_callback=None):
         candidates = generate_candidates(self.domain, candidate_count)
         return candidates[domain.inputs.get_keys()]
 
