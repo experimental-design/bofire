@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Literal, Optional, Union
+from typing import List, Literal, Optional, Union
 
 from pydantic import Field
 
@@ -18,7 +18,7 @@ from bofire.data_models.kernels.continuous import (
     SphericalLinearKernel,
 )
 from bofire.data_models.kernels.fidelity import DownsamplingKernel
-from bofire.data_models.kernels.kernel import AggregationKernel
+from bofire.data_models.kernels.kernel import AggregationKernel, Kernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.kernels.shape import ExactWassersteinKernel, WassersteinKernel
 from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
@@ -48,6 +48,9 @@ class AdditiveKernel(AggregationKernel):
         ]
     ] = Field(description="The kernels to sum.")
 
+    def children(self) -> List[Kernel]:
+        return list(self.kernels)
+
 
 class MultiplicativeKernel(AggregationKernel):
     r"""Product of several kernels, $k(\mathbf x, \mathbf x') = \prod_i k_i(\mathbf x, \mathbf x')$."""
@@ -72,6 +75,9 @@ class MultiplicativeKernel(AggregationKernel):
             "ScaleKernel",
         ]
     ] = Field(description="The kernels to multiply.")
+
+    def children(self) -> List[Kernel]:
+        return list(self.kernels)
 
 
 class ScaleKernel(AggregationKernel):
@@ -112,6 +118,9 @@ class ScaleKernel(AggregationKernel):
         description="Bounds the output scale $\\theta$ is restricted to during "
         "fitting.",
     )
+
+    def children(self) -> List[Kernel]:
+        return [self.base_kernel]
 
 
 class PolynomialFeatureInteractionKernel(AggregationKernel):
@@ -184,6 +193,9 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
         description="Prior over the output scale applied to each interaction term "
         "before the terms are summed.",
     )
+
+    def children(self) -> List[Kernel]:
+        return list(self.kernels)
 
 
 AdditiveKernel.model_rebuild()
