@@ -41,11 +41,12 @@ import bofire.strategies.api as strategies
 from bofire.data_models.acquisition_functions.api import qEUBO, qLogNEI
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.likelihoods.api import PairwiseProbitLikelihood
 from bofire.data_models.strategies.api import (
     BotorchOptimizer,
     PreferenceStrategy as PreferenceStrategyDataModel,
 )
-from bofire.data_models.surrogates.api import PairwiseGPSurrogate
+from bofire.data_models.surrogates.api import BotorchSurrogates, PairwiseGPSurrogate
 
 warnings.filterwarnings("ignore")
 rng = np.random.default_rng(42)
@@ -118,9 +119,18 @@ inputs = Inputs(
 )
 outputs = Outputs(features=[ContinuousOutput(key="utility")])
 
-surrogate_data = PairwiseGPSurrogate(inputs=inputs, outputs=outputs)
+surrogate_data = PairwiseGPSurrogate(
+    inputs=inputs,
+    outputs=outputs,
+    likelihood=PairwiseProbitLikelihood(),
+)
 surrogate = surrogates.map(surrogate_data)
 ```
+
+The probit likelihood is the default. To use the logistic alternative, import
+`PairwiseLogitLikelihood` from `bofire.data_models.likelihoods.api` and pass
+`likelihood=PairwiseLogitLikelihood()`. These likelihood data models serialize
+with the surrogate configuration.
 
 Unlike a standard surrogate, `fit` takes *two* DataFrames — the designs and the
 comparisons between them:
@@ -208,15 +218,22 @@ and yields the same fit.
 ## Proposing the next comparison with qEUBO
 
 `PreferenceStrategy` turns the surrogate into a complete preferential Bayesian
-optimization loop. Its acquisition function is Monte Carlo *q-Expected Utility
+optimization loop. Its default acquisition function is Monte Carlo *q-Expected Utility
 of the Best Option* (qEUBO): it chooses a batch jointly to maximize the expected
 latent utility of the best option in that batch.
+
+Like other BoTorch strategies, it accepts a `BotorchSurrogates` collection through
+`surrogate_specs`. This collection must contain exactly one `PairwiseGPSurrogate`;
+omitting it creates a default pairwise GP for the domain. Cross-validation
+hyperparameter tuning is not supported, so `frequency_hyperopt` must remain zero
+and the surrogate must not specify a `hyperconfig`. The GP's parameters are still
+fitted to the comparison data normally.
 
 ```{python}
 domain = Domain(inputs=inputs, outputs=outputs)
 strategy_data = PreferenceStrategyDataModel(
     domain=domain,
-    surrogate_spec=surrogate_data,
+    surrogate_specs=BotorchSurrogates(surrogates=[surrogate_data]),
     acquisition_function=qEUBO(n_mc_samples=64),
     acquisition_optimizer=BotorchOptimizer(
         n_restarts=4,
@@ -226,6 +243,32 @@ strategy_data = PreferenceStrategyDataModel(
     seed=42,
 )
 ```
+
+The strategy also supports `qLogNEI`, `qSR`, and `qUCB`, imported from
+`bofire.data_models.acquisition_functions.api`. All operate on the inferred
+latent utility without requiring observed utility values.
+
+| Acquisition | Selection criterion | Default candidates from `ask()` |
+|---|---|---|
+| `qEUBO` | Expected utility of the best option in the batch | 2 |
+| `qLogNEI` | Expected improvement over uncertain baseline utilities, in log space | 1 |
+| `qSR` | Expected utility of the best batch member, equivalently minimizing expected simple regret | 1 |
+| `qUCB` | Upper confidence bound, with exploration controlled by `beta` | 1 |
+
+The `q` denotes a jointly optimized batch. Passing `candidate_count=2` asks any
+of these acquisitions for a pair; qEUBO requires at least two candidates in
+this strategy so its result can form a preference query. For the same utility
+model, batch size, and posterior samples, qSR and qEUBO have the same acquisition
+value. With one candidate, their criterion reduces to posterior mean utility;
+with a batch, uncertainty and correlations influence the expected maximum.
+Their different defaults reflect the conventions of requesting a recommendation
+with qSR and a comparison batch with qEUBO.
+
+qLogNEI samples the baseline utilities jointly with candidate utilities, so it
+does not need a known incumbent utility. A single candidate from qLogNEI, qSR,
+or qUCB still needs a comparison partner before it can supply preference
+feedback. Selecting that partner is a separate decision, illustrated later in
+this tutorial.
 
 For a deliberately data-sparse illustration, use only half of the designs and
 the comparisons between them. After filtering the comparisons, we retain
@@ -435,7 +478,7 @@ def fit_preference_strategy(
     preference_strategy = strategies.map(
         PreferenceStrategyDataModel(
             domain=domain,
-            surrogate_spec=surrogate_data,
+            surrogate_specs=BotorchSurrogates(surrogates=[surrogate_data]),
             acquisition_function=acquisition_function,
             acquisition_optimizer=BotorchOptimizer(
                 n_restarts=5,

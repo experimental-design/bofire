@@ -28,6 +28,8 @@ from bofire.data_models.kernels.api import (
 from bofire.data_models.likelihoods.api import (
     THREESIX_LIKELIHOOD,
     GaussianLikelihood,
+    PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
     SparseOutlierGaussianLikelihood,
     TaskwiseLikelihood,
 )
@@ -912,7 +914,7 @@ specs.add_valid(
             outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
         ).model_dump(),
         "scaler": Normalize().model_dump(),
-        "likelihood": "probit",
+        "likelihood": PairwiseProbitLikelihood().model_dump(),
         "engineered_features": EngineeredFeatures().model_dump(),
         "categorical_encodings": {},
         "optimizer": LBFGSB().model_dump(),
@@ -942,7 +944,7 @@ specs.add_valid(
             outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
         ).model_dump(),
         "scaler": Normalize().model_dump(),
-        "likelihood": "logit",
+        "likelihood": PairwiseLogitLikelihood().model_dump(),
         "engineered_features": EngineeredFeatures().model_dump(),
         "categorical_encodings": {},
         "optimizer": LBFGSB().model_dump(),

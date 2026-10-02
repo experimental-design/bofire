@@ -1,6 +1,12 @@
 import gpytorch
 import pytest
 import torch
+from botorch.models.likelihoods.pairwise import (
+    PairwiseLogitLikelihood as BotorchPairwiseLogitLikelihood,
+)
+from botorch.models.likelihoods.pairwise import (
+    PairwiseProbitLikelihood as BotorchPairwiseProbitLikelihood,
+)
 from botorch.models.utils.gpytorch_modules import (
     get_gaussian_likelihood_with_lognormal_prior,
 )
@@ -11,6 +17,8 @@ import bofire.likelihoods.api as likelihoods
 from bofire.data_models.likelihoods.api import (
     HVARFNER_LIKELIHOOD,
     GaussianLikelihood,
+    PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
     TaskwiseLikelihood,
 )
 from bofire.data_models.priors.api import THREESIX_NOISE_PRIOR, GreaterThan
@@ -86,3 +94,14 @@ def test_taskwise_likelihood_selects_noise_for_each_observation(task_feature_ind
     torch.testing.assert_close(
         observed.variance - latent.variance, torch.tensor([0.7, 0.1, 0.7, 0.1])
     )
+
+
+@pytest.mark.parametrize(
+    "data_model, expected_cls",
+    [
+        (PairwiseProbitLikelihood(), BotorchPairwiseProbitLikelihood),
+        (PairwiseLogitLikelihood(), BotorchPairwiseLogitLikelihood),
+    ],
+)
+def test_pairwise_likelihood(data_model, expected_cls):
+    assert isinstance(likelihoods.map(data_model, d=3), expected_cls)

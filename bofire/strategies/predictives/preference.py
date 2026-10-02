@@ -1,62 +1,53 @@
-from typing import Optional
+from typing import Literal, Optional
 
-import numpy as np
 import pandas as pd
 import torch
+from botorch.acquisition import get_acquisition_function
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.logei import qLogNoisyExpectedImprovement
+from botorch.acquisition.objective import IdentityMCObjective
 from botorch.acquisition.preference import qExpectedUtilityOfBestOption
 from botorch.sampling.normal import SobolQMCNormalSampler
 from pydantic import PositiveInt
 from typing_extensions import Self
 
-from bofire.data_models.acquisition_functions.api import qEUBO, qLogNEI
+from bofire.data_models.acquisition_functions.api import (
+    AnyPreferenceAcquisitionFunction,
+    qEUBO,
+)
 from bofire.data_models.api import Domain
+from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import PreferenceStrategy as DataModel
 from bofire.data_models.strategies.convergence_criteria.api import (
     AnyConvergenceCriterion,
 )
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
-from bofire.data_models.surrogates.api import PairwiseGPSurrogate as SurrogateDataModel
-from bofire.data_models.types import InputTransformSpecs
-from bofire.strategies.predictives.acqf_optimization import (
-    AcquisitionOptimizer,
-    get_optimizer,
-)
-from bofire.strategies.predictives.predictive import PredictiveStrategy
+from bofire.data_models.surrogates.api import BotorchSurrogates as SurrogateDataModel
+from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.strategies.strategy import make_strategy
-from bofire.surrogates.mapper import map as map_surrogate
+from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.surrogates.pairwise_gp import PairwiseGPSurrogate
-from bofire.utils.torch_tools import tkwargs
 
 
-class PreferenceStrategy(PredictiveStrategy):
+class PreferenceStrategy(BotorchStrategy):
     """Preferential Bayesian optimization using a pairwise GP."""
 
     def __init__(self, data_model: DataModel, **kwargs):
         super().__init__(data_model=data_model, **kwargs)
         self.acquisition_function = data_model.acquisition_function
-        self.acqf_optimizer: AcquisitionOptimizer = get_optimizer(
-            data_model.acquisition_optimizer
-        )
-        assert data_model.surrogate_spec is not None
-        surrogate = map_surrogate(data_model.surrogate_spec)
+        self._preferences: Optional[pd.DataFrame] = None
+
+        self.surrogates = BotorchSurrogates(data_model=self.surrogate_specs)
+        surrogate = self.surrogates.surrogates[0]
         if not isinstance(surrogate, PairwiseGPSurrogate):
             raise TypeError("PreferenceStrategy requires a PairwiseGPSurrogate.")
         self.surrogate = surrogate
         self.model = self.surrogate.model
-        self._preferences: Optional[pd.DataFrame] = None
-        torch.manual_seed(self.seed)
 
     @property
     def preferences(self) -> Optional[pd.DataFrame]:
         """Pairwise feedback accumulated by the strategy."""
 
         return self._preferences
-
-    @property
-    def input_preprocessing_specs(self) -> InputTransformSpecs:
-        return self.surrogate.input_preprocessing_specs
 
     def _validate_new_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
         if len(experiments) == 0:
@@ -90,25 +81,11 @@ class PreferenceStrategy(PredictiveStrategy):
             raise ValueError(
                 "PreferenceStrategy.tell requires a `preferences` DataFrame."
             )
-        self.tell_preferences(
-            experiments=experiments,
-            preferences=preferences,
-            replace=replace,
-            retrain=retrain,
-        )
-
-    def tell_preferences(
-        self,
-        experiments: pd.DataFrame,
-        preferences: pd.DataFrame,
-        replace: bool = False,
-        retrain: bool = True,
-    ) -> None:
-        """Add pairwise observations through an explicit preference API."""
-
         new_experiments = self._validate_new_experiments(experiments)
         if replace or self.experiments is None:
             combined_experiments = new_experiments.reset_index(drop=True)
+        elif new_experiments.empty:
+            combined_experiments = self.experiments
         else:
             combined_experiments = pd.concat(
                 [self.experiments, new_experiments], ignore_index=True
@@ -122,8 +99,10 @@ class PreferenceStrategy(PredictiveStrategy):
         new_preferences = self.surrogate.validate_preferences(
             preferences, combined_experiments
         )
-        if replace or self.preferences is None:
+        if replace or self.preferences is None or self.preferences.empty:
             combined_preferences = new_preferences.reset_index(drop=True)
+        elif new_preferences.empty:
+            combined_preferences = self.preferences
         else:
             combined_preferences = pd.concat(
                 [self.preferences, new_preferences], ignore_index=True
@@ -134,6 +113,8 @@ class PreferenceStrategy(PredictiveStrategy):
 
         self._experiments = combined_experiments
         self._preferences = combined_preferences
+        if replace:
+            self._is_fitted = False
         if retrain and self.has_sufficient_experiments():
             self.fit()
             self._tell()
@@ -146,85 +127,67 @@ class PreferenceStrategy(PredictiveStrategy):
             and (self.preferences["preference"] != 0).any()
         )
 
-    def fit(self) -> None:
+    def _validate_fit_experiments(self) -> None:
         if not self.has_sufficient_experiments():
             raise ValueError(
                 "At least two designs and one non-tied comparison are required."
             )
         assert self.experiments is not None
         assert self.preferences is not None
-        self._fit(self.experiments)
-        self._is_fitted = True
+        self.surrogate.validate_pairwise_experiments(self.experiments)
+        self.surrogate.validate_preferences(self.preferences, self.experiments)
 
     def _fit(self, experiments: pd.DataFrame) -> None:
         assert self.preferences is not None
         self.surrogate.fit(experiments, self.preferences)
         self.model = self.surrogate.model
 
-    def _predict(self, experiments: pd.DataFrame):
-        return self.surrogate._predict(experiments)
-
-    def predict(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        """Predict latent utility without requiring an observed utility column."""
-
-        if not self.is_fitted:
-            raise ValueError("Model not yet fitted.")
-        predictions = self.surrogate.predict(experiments)
-        predictions.index = experiments.index
-        utility_key = self.domain.outputs[0].key
-        # The generic PredictiveStrategy adapts objectives using observed output
-        # values. Preferential BO has no observed latent utilities, so use the
-        # posterior location itself as the adaptation frame. This is immaterial
-        # for the required MaximizeObjective but preserves the standard `_des`
-        # candidate column contract.
-        adaptation = pd.DataFrame(
-            {utility_key: predictions[f"{utility_key}_pred"]},
-            index=predictions.index,
+    def _predict_objectives(self, predictions: pd.DataFrame) -> pd.DataFrame:
+        # Maximization uses fixed bounds and needs no observed utility values.
+        output = self.domain.outputs[0]
+        assert isinstance(output.objective, MaximizeObjective)
+        return pd.DataFrame(
+            {f"{output.key}_des": output.objective(predictions[f"{output.key}_pred"])}
         )
-        objectives = self.domain.outputs(
-            predictions, experiments_adapt=adaptation, predictions=True
-        )
-        return pd.concat([predictions, objectives], axis=1)
 
-    def _get_acqf(self) -> AcquisitionFunction:
+    def _get_acqf_experiments(self) -> pd.DataFrame:
+        assert self.experiments is not None
+        return self.experiments
+
+    def _get_acqfs(self, n: int) -> list[AcquisitionFunction]:
         if not self.is_fitted or self.model is None:
             raise ValueError("Preference model is not fitted.")
-
-        X_pending = None
-        if self.candidates is not None and len(self.candidates) > 0:
-            transformed = self.domain.inputs.transform(
-                self.candidates, self.input_preprocessing_specs
-            )
-            X_pending = torch.from_numpy(transformed.to_numpy(dtype=float)).to(
-                **tkwargs
-            )
-
-        sampler = SobolQMCNormalSampler(
-            sample_shape=torch.Size([self.acquisition_function.n_mc_samples]),
-            seed=self._get_seed(),
-        )
+        X_train, X_pending = self.get_acqf_input_tensors()
+        seed = self._get_seed()
         if isinstance(self.acquisition_function, qEUBO):
-            return qExpectedUtilityOfBestOption(
-                pref_model=self.model,
-                sampler=sampler,
+            return [
+                qExpectedUtilityOfBestOption(
+                    pref_model=self.model,
+                    objective=IdentityMCObjective(),
+                    sampler=SobolQMCNormalSampler(
+                        sample_shape=torch.Size(
+                            [self.acquisition_function.n_mc_samples]
+                        ),
+                        seed=seed,
+                    ),
+                    X_pending=X_pending,
+                )
+            ]
+        params = self.acquisition_function.model_dump()
+        return [
+            get_acquisition_function(
+                self.acquisition_function.__class__.__name__,
+                self.model,
+                IdentityMCObjective(),
+                X_observed=X_train,
                 X_pending=X_pending,
+                mc_samples=self.acquisition_function.n_mc_samples,
+                beta=params.get("beta", 0.2),
+                cache_root=None,
+                prune_baseline=params.get("prune_baseline", True),
+                seed=seed,
             )
-
-        if self.experiments is None:
-            raise ValueError("No preference experiments have been provided.")
-        transformed_baseline = self.domain.inputs.transform(
-            self.experiments, self.input_preprocessing_specs
-        )
-        X_baseline = torch.from_numpy(transformed_baseline.to_numpy(dtype=float)).to(
-            **tkwargs
-        )
-        return qLogNoisyExpectedImprovement(
-            model=self.model,
-            X_baseline=X_baseline,
-            sampler=sampler,
-            X_pending=X_pending,
-            prune_baseline=self.acquisition_function.prune_baseline,
-        )
+        ]
 
     def _ask(self, candidate_count: Optional[PositiveInt] = None) -> pd.DataFrame:
         default_candidate_count = (
@@ -238,34 +201,20 @@ class PreferenceStrategy(PredictiveStrategy):
                 "PreferenceStrategy requires at least two candidates to form a "
                 "comparison batch."
             )
-        return self.acqf_optimizer.optimize(
-            candidate_count=candidate_count,
-            acqfs=[self._get_acqf()],
-            domain=self.domain,
-            experiments=self.experiments,
-        )
-
-    def calc_acquisition(
-        self, candidates: pd.DataFrame, combined: bool = False
-    ) -> np.ndarray:
-        transformed = self.domain.inputs.transform(
-            candidates, self.input_preprocessing_specs
-        )
-        X = torch.from_numpy(transformed.to_numpy(dtype=float)).to(**tkwargs)
-        if not combined:
-            X = X.unsqueeze(-2)
-        with torch.no_grad():
-            return self._get_acqf()(X).cpu().detach().numpy()
+        return super()._ask(candidate_count)
 
     @classmethod
     def make(
         cls,
         domain: Domain,
-        acquisition_function: qEUBO | qLogNEI | None = None,
+        acquisition_function: AnyPreferenceAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
-        surrogate_spec: SurrogateDataModel | None = None,
+        surrogate_specs: SurrogateDataModel | None = None,
         seed: int | None = None,
         convergence_criterion: AnyConvergenceCriterion | None = None,
+        include_infeasible_exps_in_acqf_calc: bool = False,
+        frequency_hyperopt: Literal[0] = 0,
+        folds: int = 5,
     ) -> Self:
         """Create a preferential Bayesian optimization strategy."""
 

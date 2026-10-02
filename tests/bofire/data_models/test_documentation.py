@@ -186,7 +186,6 @@ UNDOCUMENTED_FIELDS = {
     "bofire.data_models.surrogates.mlp.RegressionMLPEnsemble.output_scaler",
     "bofire.data_models.surrogates.mlp.RegressionMLPEnsemble.scaler",
     "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.kernel",
-    "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.likelihood",
     "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.scaler",
     "bofire.data_models.surrogates.random_forest.RandomForestSurrogate.bootstrap",
     "bofire.data_models.surrogates.random_forest.RandomForestSurrogate.ccp_alpha",
