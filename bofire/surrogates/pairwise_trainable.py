@@ -109,7 +109,7 @@ class PairwiseTrainableSurrogate(ABC):
                 ``labcode_B``, ``preference``. ``preference`` must be ``1``
                 when A wins, ``-1`` when B wins, or ``0`` for a tie. Tie rows
                 are dropped.
-            options: Additional keyword arguments forwarded to ``_fit_pairwise``.
+            options: Additional keyword arguments forwarded to ``_fit``.
         """
         # Skip outputs validation: the latent utility has no observed Y values.
         experiments = self.validate_pairwise_experiments(experiments)
@@ -162,7 +162,7 @@ class PairwiseTrainableSurrogate(ABC):
         )
 
         options = options or {}
-        self._fit_pairwise(
+        self._fit(
             datapoints=datapoints,
             comparisons=comparisons,
             input_transform=input_transform,
@@ -170,7 +170,7 @@ class PairwiseTrainableSurrogate(ABC):
         )
 
     @abstractmethod
-    def _fit_pairwise(
+    def _fit(
         self,
         datapoints: torch.Tensor,
         comparisons: torch.Tensor,

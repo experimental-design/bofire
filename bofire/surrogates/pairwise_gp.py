@@ -28,7 +28,7 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
 
     model: Optional[botorch.models.PairwiseGP] = None
 
-    def _fit_pairwise(
+    def _fit(
         self,
         datapoints: torch.Tensor,
         comparisons: torch.Tensor,

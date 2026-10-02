@@ -27,7 +27,6 @@ from bofire.data_models.strategies.api import PreferenceStrategy as DataModel
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     PairwiseGPSurrogate,
-    SingleTaskGPHyperconfig,
     SingleTaskGPSurrogate,
 )
 from bofire.strategies.api import PreferenceStrategy, map
@@ -166,20 +165,8 @@ def test_preference_strategy_rejects_mismatched_surrogate(mismatch):
 
 
 def test_preference_strategy_rejects_hyperparameter_tuning():
-    domain = _domain()
     with pytest.raises(ValueError, match="frequency_hyperopt"):
-        DataModel(domain=domain, frequency_hyperopt=1)
-    specs = BotorchSurrogates(
-        surrogates=[
-            PairwiseGPSurrogate(
-                inputs=domain.inputs,
-                outputs=domain.outputs,
-                hyperconfig=SingleTaskGPHyperconfig(),
-            )
-        ]
-    )
-    with pytest.raises(ValueError, match="Hyperparameter tuning is not supported"):
-        DataModel(domain=domain, surrogate_specs=specs)
+        DataModel(domain=_domain(), frequency_hyperopt=1)
 
 
 @pytest.mark.parametrize("acquisition_class", [qEUBO, qLogNEI, qSR, qUCB])
@@ -210,7 +197,7 @@ def test_preference_strategy_requires_one_output():
         ContinuousOutput(key="other", objective=MaximizeObjective())
     )
 
-    with pytest.raises(ValueError, match="exactly one continuous latent utility"):
+    with pytest.raises(ValueError, match="exactly one PairwiseGPSurrogate"):
         DataModel(domain=domain)
 
 

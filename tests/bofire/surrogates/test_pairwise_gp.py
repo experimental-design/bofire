@@ -29,6 +29,7 @@ from bofire.data_models.likelihoods.api import (
     PairwiseProbitLikelihood as PairwiseProbitLikelihoodSpec,
 )
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate
+from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 
 
 DIM = 3
@@ -72,6 +73,16 @@ def _make_data(n_points: int = 30, n_comparisons: int = 80, seed: int = 0):
             rows.append((labcodes[loser], labcodes[winner], -1.0))  # B preferred
     preferences = pd.DataFrame(rows, columns=["labcode_A", "labcode_B", "preference"])
     return experiments, preferences, utility
+
+
+def test_pairwise_gp_rejects_hyperconfig():
+    inputs, outputs = _make_domain()
+    with pytest.raises(ValueError):
+        PairwiseGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            hyperconfig=SingleTaskGPHyperconfig(),
+        )
 
 
 def test_pairwise_gp_fit_and_predict():

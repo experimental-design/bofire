@@ -45,24 +45,14 @@ class PreferenceStrategy(BotorchStrategy):
         )
 
     @model_validator(mode="after")
-    def validate_pairwise_surrogate_specs(self):
-        if len(self.domain.outputs) != 1 or not isinstance(
-            self.domain.outputs[0], ContinuousOutput
-        ):
-            raise ValueError(
-                "PreferenceStrategy requires exactly one continuous latent utility "
-                "output."
-            )
+    def validate_surrogate_specs(self):
+        """Ensure that the inherited surrogate specs contain one pairwise GP."""
+        super().validate_surrogate_specs()
         if len(self.surrogate_specs.surrogates) != 1 or not isinstance(
             self.surrogate_specs.surrogates[0], PairwiseGPSurrogate
         ):
             raise ValueError(
                 "PreferenceStrategy requires exactly one PairwiseGPSurrogate."
-            )
-        surrogate = self.surrogate_specs.surrogates[0]
-        if surrogate.hyperconfig is not None:
-            raise ValueError(
-                "Hyperparameter tuning is not supported for preference surrogates."
             )
         return self
 
