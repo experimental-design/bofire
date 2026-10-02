@@ -1,15 +1,22 @@
 import pytest
 
-from bofire.data_models.domain.api import Domain
+from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
 )
 from bofire.data_models.features.descriptors import Descriptors
-from bofire.data_models.strategies.api import BotorchOptimizer, SoboStrategy
+from bofire.data_models.strategies.api import (
+    ActiveLearningStrategy,
+    BotorchOptimizer,
+    QparegoStrategy,
+    SoboStrategy,
+)
 from bofire.data_models.surrogates.api import (
+    BotorchSurrogates,
     MixedSingleTaskGPSurrogate,
+    PairwiseGPSurrogate,
     SingleTaskGPSurrogate,
 )
 
@@ -24,6 +31,27 @@ def test_botorch_strategy():
         acquisition_optimizer=BotorchOptimizer(),
     )
     assert isinstance(sobo.acquisition_optimizer, BotorchOptimizer)
+
+
+@pytest.mark.parametrize(
+    "strategy_cls", [SoboStrategy, QparegoStrategy, ActiveLearningStrategy]
+)
+def test_regression_strategies_reject_pairwise_surrogates(strategy_cls):
+    domain = Domain(
+        inputs=[ContinuousInput(key="x", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    if strategy_cls is QparegoStrategy:
+        domain.outputs.features.append(ContinuousOutput(key="z"))
+    specs = BotorchSurrogates(
+        surrogates=[
+            PairwiseGPSurrogate(
+                inputs=domain.inputs, outputs=Outputs(features=[domain.outputs[0]])
+            )
+        ]
+    )
+    with pytest.raises(ValueError, match="requires a PreferenceStrategy"):
+        strategy_cls(domain=domain, surrogate_specs=specs)
 
 
 @pytest.mark.parametrize(

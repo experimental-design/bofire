@@ -43,3 +43,23 @@ class GaussianLikelihood(Likelihood):
         description="Bounds the noise variance is restricted to during fitting. A "
         "positive lower bound keeps the fit numerically stable.",
     )
+
+
+class PairwiseProbitLikelihood(Likelihood):
+    """Binary preferences with Gaussian noise on the latent utilities.
+
+    Converts the difference in utility between two alternatives into a preference
+    probability using the cumulative normal distribution.
+    """
+
+    type: Literal["PairwiseProbitLikelihood"] = "PairwiseProbitLikelihood"
+
+
+class PairwiseLogitLikelihood(Likelihood):
+    """Binary preferences described by the Bradley-Terry model.
+
+    Converts the difference in utility between two alternatives into a preference
+    probability using the logistic sigmoid function.
+    """
+
+    type: Literal["PairwiseLogitLikelihood"] = "PairwiseLogitLikelihood"

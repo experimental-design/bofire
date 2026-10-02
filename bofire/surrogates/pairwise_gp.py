@@ -3,24 +3,14 @@ from typing import Dict, Optional
 import botorch
 import torch
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.likelihoods.pairwise import (
-    PairwiseLogitLikelihood,
-    PairwiseProbitLikelihood,
-)
 from botorch.models.pairwise_gp import PairwiseLaplaceMarginalLogLikelihood
 from botorch.models.transforms.input import InputTransform
 
 import bofire.kernels.api as kernels
+import bofire.likelihoods.api as likelihoods
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate as DataModel
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.pairwise_trainable import PairwiseTrainableSurrogate
-
-
-# maps the serializable likelihood name to the BoTorch PairwiseLikelihood class
-PAIRWISE_LIKELIHOODS = {
-    "probit": PairwiseProbitLikelihood,
-    "logit": PairwiseLogitLikelihood,
-}
 
 
 class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
@@ -37,7 +27,7 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
     model: Optional[botorch.models.PairwiseGP] = None
     training_specs: Dict = {}
 
-    def _fit_pairwise(
+    def _fit(
         self,
         datapoints: torch.Tensor,
         comparisons: torch.Tensor,
@@ -52,7 +42,7 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
         self.model = botorch.models.PairwiseGP(
             datapoints=datapoints,
             comparisons=comparisons,
-            likelihood=PAIRWISE_LIKELIHOODS[self.likelihood](),
+            likelihood=likelihoods.map(self.likelihood, d=n_dim),
             covar_module=kernels.map(
                 self.kernel,
                 batch_shape=torch.Size(),
@@ -67,7 +57,3 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
             model=self.model,
         )
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)
-
-    # `_predict` is inherited from BotorchSurrogate: it calls
-    # `posterior(X, observation_noise=True)`, and PairwiseGP ignores
-    # `observation_noise` (verified in scripts/pairwise_gp_checks.py).

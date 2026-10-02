@@ -1,12 +1,13 @@
 import warnings
 from abc import abstractmethod
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Tuple, cast
 
 import numpy as np
 import pandas as pd
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.utils import get_infeasible_cost
+from botorch.models import ModelList, PairwiseGP
 from botorch.models.gpytorch import GPyTorchModel
 from torch import Tensor
 
@@ -48,7 +49,7 @@ class BotorchStrategy(PredictiveStrategy):
 
         torch.manual_seed(self.seed)
 
-    model: Optional[GPyTorchModel] = None
+    model: GPyTorchModel | PairwiseGP | ModelList | None = None
 
     @property
     def input_preprocessing_specs(self) -> InputTransformSpecs:
@@ -106,6 +107,7 @@ class BotorchStrategy(PredictiveStrategy):
     def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         # we are using self.model here for this purpose we have to take the transformed
         # input and further transform it to a torch tensor
+        assert self.model is not None
         X = torch.from_numpy(transformed.values).to(**tkwargs)
         with torch.no_grad():
             try:
@@ -115,6 +117,8 @@ class BotorchStrategy(PredictiveStrategy):
             ):  # NotImplementedEerror is thrown for MultiTaskGPSurrogate
                 posterior = self.model.posterior(X=X, observation_noise=False)
 
+            # BoTorch's base Posterior annotation omits mean and variance.
+            posterior = cast(Any, posterior)
             if len(posterior.mean.shape) == 2:
                 preds = posterior.mean.cpu().detach().numpy()
                 stds = np.sqrt(posterior.variance.cpu().detach().numpy())
@@ -204,6 +208,13 @@ class BotorchStrategy(PredictiveStrategy):
             return True
         return False
 
+    def _get_acqf_experiments(self) -> pd.DataFrame:
+        """Select observations used as the acquisition baseline."""
+        assert self.experiments is not None
+        return self.domain.outputs.preprocess_experiments_all_valid_outputs(
+            self.experiments,
+        )
+
     def get_acqf_input_tensors(self):
         """
 
@@ -212,10 +223,7 @@ class BotorchStrategy(PredictiveStrategy):
             X_pending (Tensor | None): Tensor of shape (m, d) with m pending points
 
         """
-        assert self.experiments is not None
-        experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-            self.experiments,
-        )
+        experiments = self._get_acqf_experiments()
 
         clean_experiments = experiments.drop_duplicates(
             subset=[var.key for var in self.domain.inputs.get(Input)],
