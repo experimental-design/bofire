@@ -244,14 +244,6 @@ def test_preference_predictions_apply_fixed_objective_bounds():
     )
 
 
-def test_tell_requires_preferences():
-    strategy = _strategy()
-    experiments, _ = _data()
-
-    with pytest.raises(ValueError, match="requires a `preferences` DataFrame"):
-        strategy.tell(experiments)
-
-
 def test_tell_appends_designs_and_comparisons():
     strategy = _strategy()
     experiments, preferences = _data()
@@ -262,6 +254,23 @@ def test_tell_appends_designs_and_comparisons():
     assert strategy.preferences is not None
     assert len(strategy.experiments) == 5
     assert len(strategy.preferences) == 4
+
+
+def test_tell_accepts_designs_before_preferences():
+    strategy = _strategy()
+    experiments, preferences = _data()
+
+    strategy.tell(experiments)
+
+    pd.testing.assert_frame_equal(strategy.experiments, experiments)
+    assert strategy.preferences is not None
+    assert strategy.preferences.empty
+    assert not strategy.is_fitted
+
+    strategy.tell(pd.DataFrame(), preferences=preferences)
+
+    pd.testing.assert_frame_equal(strategy.preferences, preferences)
+    assert strategy.is_fitted
 
 
 def test_tell_appends_comparisons_without_new_designs():

@@ -41,7 +41,6 @@ class PreferenceStrategy(BotorchStrategy):
         if not isinstance(surrogate, PairwiseGPSurrogate):
             raise TypeError("PreferenceStrategy requires a PairwiseGPSurrogate.")
         self.surrogate = surrogate
-        self.model = self.surrogate.model
 
     @property
     def preferences(self) -> Optional[pd.DataFrame]:
@@ -68,19 +67,16 @@ class PreferenceStrategy(BotorchStrategy):
             experiments: New designs with input columns and a unique ``labcode``.
                 Pass an empty DataFrame when only adding comparisons between
                 designs already known to the strategy.
-            preferences: Pairwise feedback with columns ``labcode_A``,
+            preferences: Optional pairwise feedback with columns ``labcode_A``,
                 ``labcode_B``, and ``preference``. A positive sign means A won;
                 a negative sign means B won. Zero-valued ties are retained in
                 strategy state and ignored by the pairwise surrogate during fit.
+                Omit this argument when adding designs before they are labeled.
             replace: Replace all stored designs and preferences instead of
                 appending them.
             retrain: Refit the preference model when sufficient feedback exists.
         """
 
-        if preferences is None:
-            raise ValueError(
-                "PreferenceStrategy.tell requires a `preferences` DataFrame."
-            )
         new_experiments = self._validate_new_experiments(experiments)
         if replace or self.experiments is None:
             combined_experiments = new_experiments.reset_index(drop=True)
@@ -96,6 +92,11 @@ class PreferenceStrategy(BotorchStrategy):
             combined_experiments
         )
 
+        preferences = (
+            pd.DataFrame(columns=self.surrogate.PREFERENCE_COLUMNS)
+            if preferences is None
+            else preferences
+        )
         new_preferences = self.surrogate.validate_preferences(
             preferences, combined_experiments
         )
@@ -107,9 +108,6 @@ class PreferenceStrategy(BotorchStrategy):
             combined_preferences = pd.concat(
                 [self.preferences, new_preferences], ignore_index=True
             )
-        combined_preferences = self.surrogate.validate_preferences(
-            combined_preferences, combined_experiments
-        )
 
         self._experiments = combined_experiments
         self._preferences = combined_preferences
@@ -159,6 +157,7 @@ class PreferenceStrategy(BotorchStrategy):
             raise ValueError("Preference model is not fitted.")
         X_train, X_pending = self.get_acqf_input_tensors()
         seed = self._get_seed()
+        # BoTorch's acquisition factory does not support qEUBO, so build it directly.
         if isinstance(self.acquisition_function, qEUBO):
             return [
                 qExpectedUtilityOfBestOption(
