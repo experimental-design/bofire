@@ -51,7 +51,7 @@ AnyMultiObjectiveAcquisitionFunction = tagged_union(
 
 AnyActiveLearningAcquisitionFunction = qNegIntPosVar
 
-AnyPreferenceAcquisitionFunction = qEUBO
+AnyPreferenceAcquisitionFunction = tagged_union(qEUBO, qLogNEI, qSR, qUCB)
 
 # Acquisition function that cannot handle constraints intrinsically but fall back to constructing
 # a constrainted MC acquisition objective.

@@ -22,6 +22,12 @@ from bofire.data_models.kernels.api import (
     RBFKernel,
     ScaleKernel,
 )
+from bofire.data_models.likelihoods.api import (
+    PairwiseLogitLikelihood as PairwiseLogitLikelihoodSpec,
+)
+from bofire.data_models.likelihoods.api import (
+    PairwiseProbitLikelihood as PairwiseProbitLikelihoodSpec,
+)
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate
 
 
@@ -228,8 +234,8 @@ def test_pairwise_gp_data_model_validation():
 @pytest.mark.parametrize(
     "likelihood, expected_cls",
     [
-        ("probit", PairwiseProbitLikelihood),
-        ("logit", PairwiseLogitLikelihood),
+        (PairwiseProbitLikelihoodSpec(), PairwiseProbitLikelihood),
+        (PairwiseLogitLikelihoodSpec(), PairwiseLogitLikelihood),
     ],
 )
 def test_pairwise_gp_likelihood(likelihood, expected_cls):
@@ -251,7 +257,10 @@ def test_pairwise_gp_likelihood(likelihood, expected_cls):
 
 def test_pairwise_gp_likelihood_default_is_probit():
     inputs, outputs = _make_domain()
-    assert PairwiseGPSurrogate(inputs=inputs, outputs=outputs).likelihood == "probit"
+    assert isinstance(
+        PairwiseGPSurrogate(inputs=inputs, outputs=outputs).likelihood,
+        PairwiseProbitLikelihoodSpec,
+    )
 
 
 def test_pairwise_gp_feature_specific_kernels():

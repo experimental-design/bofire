@@ -27,3 +27,6 @@ specs.add_valid(
         "noise_constraint": None,
     },
 )
+
+specs.add_valid(likelihoods.PairwiseProbitLikelihood, lambda: {})
+specs.add_valid(likelihoods.PairwiseLogitLikelihood, lambda: {})

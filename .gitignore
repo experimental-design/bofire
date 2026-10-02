@@ -169,6 +169,3 @@ notebook_test_stats.csv
 
 # ignore scripts
 scripts/*
-
-# images
-*.png

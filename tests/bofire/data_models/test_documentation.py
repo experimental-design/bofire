@@ -210,7 +210,6 @@ UNDOCUMENTED_FIELDS = {
     "bofire.data_models.surrogates.multi_task_gp.MultiTaskGPSurrogate.noise_prior",
     "bofire.data_models.surrogates.multi_task_gp.MultiTaskGPSurrogate.task_prior",
     "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.kernel",
-    "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.likelihood",
     "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.scaler",
     "bofire.data_models.surrogates.polynomial.PolynomialSurrogate.kernel",
     "bofire.data_models.surrogates.polynomial.PolynomialSurrogate.noise_constraint",

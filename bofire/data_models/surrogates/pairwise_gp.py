@@ -4,6 +4,10 @@ from pydantic import Field, model_validator
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, RBFKernel, ScaleKernel
+from bofire.data_models.likelihoods.api import (
+    AnyPairwiseLikelihood,
+    PairwiseProbitLikelihood,
+)
 from bofire.data_models.priors.api import (
     PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
     PAIRWISEGP_LENGTHSCALE_PRIOR,
@@ -24,10 +28,9 @@ class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     utility inferred from those comparisons.
 
     Attributes:
-        likelihood: The pairwise likelihood linking latent-utility differences
-            to preference probabilities -- ``"probit"`` (Gaussian comparison
-            noise, BoTorch's default) or ``"logit"`` (logistic noise, i.e. the
-            Bradley-Terry model).
+        likelihood: How differences in latent utility determine preference
+            probabilities: PairwiseProbitLikelihood (BoTorch's default, assuming
+            Gaussian noise) or PairwiseLogitLikelihood (the Bradley-Terry model).
     """
 
     type: Literal["PairwiseGPSurrogate"] = "PairwiseGPSurrogate"
@@ -44,7 +47,11 @@ class PairwiseGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         )
     )
     scaler: AnyScaler = Field(default_factory=Normalize)
-    likelihood: Literal["probit", "logit"] = "probit"
+    likelihood: AnyPairwiseLikelihood = Field(
+        default_factory=PairwiseProbitLikelihood,
+        description="How latent-utility differences determine the probability of "
+        "preferring one alternative over another.",
+    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

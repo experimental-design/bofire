@@ -95,9 +95,13 @@ def preference_strategy_spec():
             maxiter=2000,
             batch_limit=6,
         ).model_dump(),
-        "surrogate_spec": PairwiseGPSurrogate(
-            inputs=preference_domain.inputs,
-            outputs=preference_domain.outputs,
+        "surrogate_specs": BotorchSurrogates(
+            surrogates=[
+                PairwiseGPSurrogate(
+                    inputs=preference_domain.inputs,
+                    outputs=preference_domain.outputs,
+                )
+            ]
         ).model_dump(),
     }
 
