@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.features.feature import Input, TTransform
@@ -17,8 +17,18 @@ class NumericalInput(Input):
     value. Only the amount varies during optimization, not what the substance is.
     """
 
-    unit: Optional[str] = None
-    descriptors: Optional[Descriptors] = None
+    unit: Optional[str] = Field(
+        default=None,
+        description="Unit the feature is measured in, for example 'mol/l'. Recorded "
+        "for documentation; it is not used in any computation.",
+    )
+    descriptors: Optional[Descriptors] = Field(
+        default=None,
+        description="Descriptor data for this single component: numeric columns "
+        "holding one value each, and/or a one-element SMILES structure. Consumed by "
+        "engineered features that blend several components, such as "
+        "`WeightedSumFeature`; it has no effect on this feature's own encoding.",
+    )
 
     @model_validator(mode="after")
     def validate_descriptors(self):

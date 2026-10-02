@@ -1,6 +1,8 @@
 from collections.abc import Sequence
 from typing import Literal, Optional, Union
 
+from pydantic import Field
+
 from bofire.data_models.kernels.categorical import (
     HammingDistanceKernel,
     IndexKernel,
@@ -23,6 +25,8 @@ from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 
 
 class AdditiveKernel(AggregationKernel):
+    r"""Sum of several kernels, $k(\mathbf x, \mathbf x') = \sum_i k_i(\mathbf x, \mathbf x')$."""
+
     type: Literal["AdditiveKernel"] = "AdditiveKernel"
     kernels: Sequence[
         Union[
@@ -42,11 +46,12 @@ class AdditiveKernel(AggregationKernel):
             "MultiplicativeKernel",
             "ScaleKernel",
         ]
-    ]
-    type: Literal["AdditiveKernel"] = "AdditiveKernel"
+    ] = Field(description="The kernels to sum.")
 
 
 class MultiplicativeKernel(AggregationKernel):
+    r"""Product of several kernels, $k(\mathbf x, \mathbf x') = \prod_i k_i(\mathbf x, \mathbf x')$."""
+
     type: Literal["MultiplicativeKernel"] = "MultiplicativeKernel"
     kernels: Sequence[
         Union[
@@ -66,10 +71,17 @@ class MultiplicativeKernel(AggregationKernel):
             "MultiplicativeKernel",
             "ScaleKernel",
         ]
-    ]
+    ] = Field(description="The kernels to multiply.")
 
 
 class ScaleKernel(AggregationKernel):
+    r"""Wraps another kernel with a fitted output scale,
+    $k(\mathbf x, \mathbf x') = \theta\, k_{\text{base}}(\mathbf x, \mathbf x')$.
+
+    The base kernel sets the shape of the covariance and this sets its magnitude, which
+    is the variance of the noiseless signal.
+    """
+
     type: Literal["ScaleKernel"] = "ScaleKernel"
     base_kernel: Union[
         RBFKernel,
@@ -87,11 +99,19 @@ class ScaleKernel(AggregationKernel):
         "ScaleKernel",
         WassersteinKernel,
         ExactWassersteinKernel,
-    ]
+    ] = Field(description="The kernel whose output is scaled.")
     # the ScaleKernel mapper forwards the dimensionality d to the outputscale prior, so
     # dimensionality-scaled priors are supported here.
-    outputscale_prior: Optional[AnyPrior] = None
-    outputscale_constraint: Optional[AnyPriorConstraint] = None
+    outputscale_prior: Optional[AnyPrior] = Field(
+        default=None,
+        description="Prior over the output scale $\\theta$, which sets the variance of "
+        "the noiseless signal.",
+    )
+    outputscale_constraint: Optional[AnyPriorConstraint] = Field(
+        default=None,
+        description="Bounds the output scale $\\theta$ is restricted to during "
+        "fitting.",
+    )
 
 
 class PolynomialFeatureInteractionKernel(AggregationKernel):
@@ -127,11 +147,6 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
     ])
     ```
 
-    Attributes:
-        kernels: The base kernels that should interact.
-        max_degree: Maximum degree of interactions computed.
-        include_self_interactions: Whether a kernel is allowed to interact with itself.
-        outputscale_prior: The prior used to scale each interaction term before summing.
     """
 
     type: Literal["PolynomialFeatureInteractionKernel"] = (
@@ -153,10 +168,22 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
             WassersteinKernel,
             ExactWassersteinKernel,
         ]
-    ]
-    max_degree: int
-    include_self_interactions: bool
-    outputscale_prior: Optional[AnyPrior] = None
+    ] = Field(
+        description="The kernels whose interactions are computed.",
+    )
+    max_degree: int = Field(
+        description="Highest interaction order computed. 1 keeps the kernels "
+        "independent; 2 adds every pairwise interaction, and so on.",
+    )
+    include_self_interactions: bool = Field(
+        description="Whether a kernel may interact with itself, adding the quadratic "
+        "and higher powers of each kernel alongside the cross terms.",
+    )
+    outputscale_prior: Optional[AnyPrior] = Field(
+        default=None,
+        description="Prior over the output scale applied to each interaction term "
+        "before the terms are summed.",
+    )
 
 
 AdditiveKernel.model_rebuild()

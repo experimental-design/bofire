@@ -28,7 +28,7 @@ from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.surrogates.utils import get_input_transform
-from bofire.utils.torch_tools import tkwargs
+from bofire.utils.torch_tools import pandas2torch
 
 
 class BotorchSurrogate(Surrogate):
@@ -45,7 +45,7 @@ class BotorchSurrogate(Surrogate):
 
     def _predict(self, transformed_X: pd.DataFrame):
         # transform to tensor
-        X = torch.from_numpy(transformed_X.values).to(**tkwargs)
+        X = pandas2torch(transformed_X)
         with torch.no_grad():
             preds = (
                 self.model.posterior(X=X, observation_noise=True)
@@ -180,10 +180,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
             Y = pd.DataFrame.from_dict(
                 {col: Y[col].map(label_mapping) for col in Y.columns},
             )
-        tX, tY = (
-            torch.from_numpy(transformed_X.values).to(**tkwargs),
-            torch.from_numpy(Y.values).to(**tkwargs),
-        )
+        tX, tY = pandas2torch(transformed_X), pandas2torch(Y)
         if self.output_scaler == ScalerEnum.STANDARDIZE:
             outcome_transform = Standardize(m=tY.shape[-1])
         elif self.output_scaler == ScalerEnum.LOG:

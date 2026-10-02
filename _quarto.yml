@@ -102,6 +102,17 @@ quartodoc:
             - HammingDistanceKernel
             - TanimotoKernel
             - WassersteinKernel
+    - title: Data Models - Means and Likelihoods
+      desc: Mean function and noise model data models of a Gaussian process
+      contents:
+        - name: data_models.means.api
+          members:
+            - Mean
+            - ConstantMean
+        - name: data_models.likelihoods.api
+          members:
+            - Likelihood
+            - GaussianLikelihood
     - title: Data Models - Surrogates
       desc: Surrogate model configuration data models
       contents:
@@ -177,6 +188,8 @@ website:
             href: docs/userguides/domain.qmd
           - text: "Strategies"
             href: docs/userguides/strategies.qmd
+          - text: "Convergence Criteria"
+            href: docs/userguides/convergence_criteria.qmd
           - text: "Surrogate Models"
             href: docs/userguides/surrogates.qmd
           - text: "Data Models vs Functionals"
@@ -213,6 +226,7 @@ website:
       contents:
         - docs/userguides/domain.qmd
         - docs/userguides/strategies.qmd
+        - docs/userguides/convergence_criteria.qmd
         - docs/userguides/surrogates.qmd
         - docs/userguides/data_models_functionals.qmd
         - docs/userguides/custom_types.qmd
@@ -242,6 +256,7 @@ website:
             - docs/tutorials/advanced_examples/random_forest_in_bofire.qmd
             - docs/tutorials/advanced_examples/transfer_learning_bo.qmd
             - docs/tutorials/advanced_examples/octane_number.qmd
+            - docs/tutorials/advanced_examples/conditional_features_bo.qmd
             - docs/tutorials/advanced_examples/llm_molecular.qmd
             - docs/tutorials/advanced_examples/pairwise_gp.qmd
         - section: "Benchmarks"

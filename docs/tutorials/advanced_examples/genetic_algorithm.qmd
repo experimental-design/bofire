@@ -1,5 +1,5 @@
 ---
-title: For optimizations in the bofire domain, a GA optimizer is available
+title: Genetic Algorithm
 jupyter: python3
 ---
 

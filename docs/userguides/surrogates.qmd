@@ -88,7 +88,7 @@ For experimental data subject to noise, one can specify the distribution of this
             inputs=domain.inputs,
             outputs=Outputs(features=[domain.outputs[0]]),
             kernel=PolynomialKernel(power=2),
-            noise_prior=NormalPrior(loc=0, scale=1)
+            likelihood=GaussianLikelihood(noise_prior=NormalPrior(loc=0, scale=1))
     )
 
 ### Categorical encoding customization

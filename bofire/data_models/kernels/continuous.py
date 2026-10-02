@@ -1,72 +1,127 @@
 from typing import List, Literal, Optional, Union
 
-from pydantic import PositiveInt, field_validator, model_validator
+from pydantic import Field, PositiveInt, model_validator
 
-from bofire.data_models.kernels.kernel import FeatureSpecificKernel
-from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
+from bofire.data_models.kernels.kernel import (
+    ARDKernel,
+    FeatureSpecificKernel,
+    LengthscaleKernel,
+)
+from bofire.data_models.priors.api import AnyPrior
 
 
 class ContinuousKernel(FeatureSpecificKernel):
+    """Kernel acting on continuous inputs."""
+
     pass
 
 
-class RBFKernel(ContinuousKernel):
+class RBFKernel(ARDKernel, LengthscaleKernel, ContinuousKernel):
+    r"""Radial basis function kernel, the usual default for continuous inputs.
+
+    $$
+    k(\mathbf x, \mathbf x') = \exp\left(-\frac{\lVert \mathbf x - \mathbf x' \rVert^2}
+                                              {2\ell^2}\right)
+    $$
+
+    Samples from this kernel are infinitely differentiable, so it assumes a very smooth
+    response. Use `MaternKernel` where the response is expected to be rougher.
+    """
+
     type: Literal["RBFKernel"] = "RBFKernel"
-    ard: bool = True
-    lengthscale_prior: Optional[AnyPrior] = None
-    lengthscale_constraint: Optional[AnyPriorConstraint] = None
 
 
-class MaternKernel(ContinuousKernel):
+class MaternKernel(ARDKernel, LengthscaleKernel, ContinuousKernel):
+    r"""Matern kernel, a less smooth alternative to the RBF kernel.
+
+    $$
+    k(\mathbf x, \mathbf x') = \frac{2^{1-\nu}}{\Gamma(\nu)}
+        \left(\sqrt{2\nu}\,\frac{d}{\ell}\right)^{\nu}
+        K_{\nu}\!\left(\sqrt{2\nu}\,\frac{d}{\ell}\right),
+    \qquad d = \lVert \mathbf x - \mathbf x' \rVert
+    $$
+
+    Samples are $\lceil \nu \rceil - 1$ times differentiable, so $\nu$ sets how rough
+    the response may be. Reach for this when an RBF fit looks implausibly smooth
+    between observations.
+    """
+
     type: Literal["MaternKernel"] = "MaternKernel"
-    ard: bool = True
-    nu: float = 2.5
-    lengthscale_prior: Optional[AnyPrior] = None
-    lengthscale_constraint: Optional[AnyPriorConstraint] = None
-
-    @field_validator("nu")
-    def validate_nu(cls, nu):
-        if nu not in {0.5, 1.5, 2.5}:
-            raise ValueError("nu expected to be 0.5, 1.5, or 2.5")
-        return nu
+    nu: Literal[0.5, 1.5, 2.5] = Field(
+        default=2.5,
+        description="Smoothness parameter. 0.5 gives a nowhere-differentiable "
+        "response, 1.5 a once-differentiable one and 2.5 a twice-differentiable one.",
+    )
 
 
 class LinearKernel(ContinuousKernel):
+    r"""Linear kernel, equivalent to Bayesian linear regression on the inputs.
+
+    $$
+    k(\mathbf x, \mathbf x') = v\,\mathbf x^{\top} \mathbf x'
+    $$
+    """
+
     type: Literal["LinearKernel"] = "LinearKernel"
-    variance_prior: Optional[AnyPrior] = None
+    variance_prior: Optional[AnyPrior] = Field(
+        default=None,
+        description="Prior over the variance $v$, which scales the whole kernel and so "
+        "sets the magnitude of the linear response.",
+    )
 
 
 class PolynomialKernel(ContinuousKernel):
+    r"""Polynomial kernel, of a fixed degree in the inputs.
+
+    $$
+    k(\mathbf x, \mathbf x') = (\mathbf x^{\top} \mathbf x' + c)^{p}
+    $$
+    """
+
     type: Literal["PolynomialKernel"] = "PolynomialKernel"
-    offset_prior: Optional[AnyPrior] = None
-    power: int = 2
+    offset_prior: Optional[AnyPrior] = Field(
+        default=None,
+        description="Prior over the offset $c$, which weights the lower-order terms "
+        "against the highest one: a large offset makes the kernel more nearly linear.",
+    )
+    power: int = Field(
+        default=2,
+        description="Degree $p$ of the polynomial. $p=2$ captures pairwise "
+        "interactions and quadratic curvature; higher degrees fit more complex "
+        "functions, but lead to worse extrapolation and overfitting.",
+    )
 
 
 class InfiniteWidthBNNKernel(ContinuousKernel):
-    features: Optional[List[str]] = None
+    """Kernel equivalent to a Bayesian neural network of infinite width.
+
+    Captures the kind of hierarchical, non-stationary structure a deep network would,
+    rather than assuming one lengthscale applies across the whole space.
+    """
+
     type: Literal["InfiniteWidthBNNKernel"] = "InfiniteWidthBNNKernel"
-    depth: PositiveInt = 3
+    depth: PositiveInt = Field(
+        default=3,
+        description="Number of layers in the equivalent network. More layers allow a "
+        "less stationary response.",
+    )
 
 
-class SphericalLinearKernel(ContinuousKernel):
+class SphericalLinearKernel(ARDKernel, LengthscaleKernel, ContinuousKernel):
     """Spherical linear kernel for continuous inputs.
-    This kernel projects the inputs onto a unit sphere and computes the linear kernel in this space.
-    Attributes:
-        ard: Whether to use Automatic Relevance Determination. If True, separate lengthscales
-            are learned for each input dimension. Defaults to True.
-        lengthscale_prior: Optional prior distribution for the lengthscale parameter(s).
-        lengthscale_constraint: Optional constraint on the lengthscale parameter(s).
-        bounds: Bounds for the input features. Can be a single tuple for all dimensions
-            or a list of tuples for per-dimension bounds. Defaults to (0.0, 1.0).
-    Raises:
-        ValueError: If ard is False and bounds is not a list with length equal to input dimension.
+
+    This kernel projects the inputs onto a unit sphere and computes the linear kernel in
+    this space, so it responds to the direction of an input vector rather than its
+    magnitude.
     """
 
     type: Literal["SphericalLinearKernel"] = "SphericalLinearKernel"
-    ard: bool = True
-    lengthscale_prior: Optional[AnyPrior] = None
-    lengthscale_constraint: Optional[AnyPriorConstraint] = None
-    bounds: Union[tuple[float, float], List[tuple[float, float]]] = (0.0, 1.0)
+    bounds: Union[tuple[float, float], List[tuple[float, float]]] = Field(
+        default=(0.0, 1.0),
+        description="Range the inputs are rescaled from before projection onto the "
+        "sphere. A single pair applies to every input; a list gives one pair per input, "
+        "and is required when `ard` is disabled.",
+    )
 
     @model_validator(mode="after")
     def validate_ard_bounds(self):

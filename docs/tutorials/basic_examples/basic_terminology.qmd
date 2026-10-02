@@ -1,5 +1,5 @@
 ---
-title: Basic terminology
+title: Basic Terminology
 jupyter: python3
 ---
 

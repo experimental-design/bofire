@@ -38,7 +38,7 @@ def test_LinearSurrogate():
 
     assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
     assert isinstance(surrogate.kernel, LinearKernel)
-    assert surrogate.noise_constraint is not None
+    assert surrogate.likelihood.noise_constraint is not None
 
     # check dump
     surrogate.fit(experiments=experiments)

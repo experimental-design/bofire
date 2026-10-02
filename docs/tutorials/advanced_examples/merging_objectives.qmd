@@ -1,5 +1,5 @@
 ---
-title: Merging multiple objectives to a scalar target for single-target BO
+title: Merging Objectives
 jupyter: python3
 ---
 

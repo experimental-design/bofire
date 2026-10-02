@@ -128,6 +128,12 @@ Bounds = Annotated[
     AfterValidator(validate_monotonically_increasing),
 ]
 
+StrictBounds = Annotated[
+    Union[List[float], Tuple[float, float]],
+    Field(min_length=2, max_length=2),
+    AfterValidator(validate_strictly_increasing),
+]
+
 DiscreteVals = Annotated[List[float], Field(min_length=1)]
 
 InputTransformSpecs = Dict[str, AnyCategoricalEncoding]

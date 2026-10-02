@@ -26,6 +26,8 @@ from bofire.data_models.kernels.api import (
     ScaleKernel,
     TanimotoKernel,
 )
+from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
     PAIRWISEGP_LENGTHSCALE_PRIOR,
@@ -72,8 +74,11 @@ specs.add_valid(
         ).model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
+        "mean": ConstantMean().model_dump(),
+        "likelihood": GaussianLikelihood(
+            noise_prior=THREESIX_NOISE_PRIOR(),
+            noise_constraint=GreaterThan(lower_bound=1e-4),
+        ).model_dump(),
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
@@ -107,8 +112,11 @@ specs.add_valid(
         ).model_dump(),
         "scaler": Normalize(features=["__clone_continuous__"]).model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": None,
+        "mean": ConstantMean().model_dump(),
+        "likelihood": GaussianLikelihood(
+            noise_prior=THREESIX_NOISE_PRIOR(),
+            noise_constraint=None,
+        ).model_dump(),
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
@@ -230,8 +238,8 @@ specs.add_valid(
         ).model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
+        "mean": ConstantMean().model_dump(),
+        "likelihood": GaussianLikelihood().model_dump(),
         "hyperconfig": None,
         "categorical_encodings": {},
         "engineered_features": EngineeredFeatures().model_dump(),
@@ -457,8 +465,11 @@ specs.add_valid(
         "engineered_features": EngineeredFeatures().model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
+        "mean": ConstantMean().model_dump(),
+        "likelihood": GaussianLikelihood(
+            noise_prior=THREESIX_NOISE_PRIOR(),
+            noise_constraint=GreaterThan(lower_bound=1e-4),
+        ).model_dump(),
         "categorical_encodings": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),

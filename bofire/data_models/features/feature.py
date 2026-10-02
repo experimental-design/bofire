@@ -2,6 +2,7 @@ from abc import abstractmethod
 from typing import Any, ClassVar, List, Optional, Tuple, Union
 
 import pandas as pd
+from pydantic import Field
 from pydantic.fields import FieldInfo
 
 from bofire.data_models.base import BaseModel
@@ -16,9 +17,18 @@ class Feature(BaseModel):
     """The base class for all features."""
 
     type: Any
-    key: str
+    key: str = Field(
+        description="Name identifying the feature. It is unique within a domain and is "
+        "used as the column name for this feature in experiment and candidate "
+        "dataframes.",
+    )
     order_id: ClassVar[int] = -1
-    context: Optional[str] = None
+    context: Optional[str] = Field(
+        default=None,
+        description="Free-text context providing additional information about the "
+        "feature, such as what it physically represents or how it is measured. Useful "
+        "for agentic optimization where an LLM agent can leverage this description.",
+    )
 
     def __lt__(self, other) -> bool:
         """Method to compare two models to get them in the desired order.
@@ -161,9 +171,8 @@ class Input(Feature):
 class Output(Feature):
     """Base class for all output features.
 
-    Attributes:
-        key(str): Key of the Feature.
-
+    An output is a quantity measured for a candidate rather than set by the
+    experimenter, and it is what the objectives are defined on.
     """
 
     @abstractmethod

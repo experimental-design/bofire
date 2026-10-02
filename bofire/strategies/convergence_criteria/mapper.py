@@ -15,14 +15,24 @@ from typing import Callable, Optional, Type
 
 import bofire.data_models.strategies.convergence_criteria.api as data_models
 from bofire.data_models.strategies.convergence_criteria.api import ConvergenceCriterion
+from bofire.strategies.convergence_criteria.exp_min_regret_gap import (
+    evaluate_exp_min_regret_gap_criterion,
+)
 from bofire.strategies.convergence_criteria.hypervolume_improvement import (
     evaluate_hypervolume_improvement_criterion,
 )
+from bofire.strategies.convergence_criteria.log_eipc import evaluate_log_eipc_criterion
 from bofire.strategies.convergence_criteria.objective_improvement import (
     evaluate_objective_improvement_criterion,
 )
+from bofire.strategies.convergence_criteria.probabilistic_regret_bound import (
+    evaluate_probabilistic_regret_bound_criterion,
+)
 from bofire.strategies.convergence_criteria.proposal_deviation import (
     evaluate_proposal_deviation_criterion,
+)
+from bofire.strategies.convergence_criteria.ucb_lcb import (
+    evaluate_ucb_lcb_regret_bound_criterion,
 )
 
 
@@ -34,6 +44,12 @@ CONVERGENCE_MAP: dict[type[ConvergenceCriterion], Callable[..., bool]] = {
         evaluate_hypervolume_improvement_criterion
     ),
     data_models.ProposalDeviationCriterion: (evaluate_proposal_deviation_criterion),
+    data_models.UcbLcbRegretBoundCriterion: (evaluate_ucb_lcb_regret_bound_criterion),
+    data_models.ExpMinRegretGapCriterion: (evaluate_exp_min_regret_gap_criterion),
+    data_models.LogEipcCriterion: (evaluate_log_eipc_criterion),
+    data_models.ProbabilisticRegretBoundCriterion: (
+        evaluate_probabilistic_regret_bound_criterion
+    ),
 }
 
 

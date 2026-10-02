@@ -1,5 +1,5 @@
 ---
-title: 'Getting started by Example: Optimization of Reaction Conditions'
+title: Reaction Optimization Example
 jupyter: python3
 ---
 

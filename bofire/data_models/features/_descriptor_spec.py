@@ -60,23 +60,32 @@ def filter_correlated(df: pd.DataFrame, cutoff: float) -> pd.DataFrame:
 
 
 class DescriptorSpec(BaseModel):
-    """Mixin declaring how to build a descriptor table for a feature.
+    """Mixin declaring how to build a descriptor table for a feature."""
 
-    Attributes:
-        columns: static numeric descriptor columns to use. ``None`` means all of the
-            feature's numeric descriptor columns; ``[]`` means none (generators only).
-        generators: descriptor generators run on the feature's ``structure`` column;
-            their outputs are concatenated. Empty means no generated columns.
-        filter_descriptors: if True, drop correlated columns across the whole block.
-        correlation_cutoff: absolute-correlation threshold for filtering, in [0, 1].
-            Correlations are compared after ``abs()``, so a cutoff outside that range
-            would silently either disable filtering or reduce every block to one column.
-    """
-
-    columns: Optional[List[str]] = None
-    generators: List[AnyDescriptorGenerator] = Field(default_factory=list)
-    filter_descriptors: bool = False
-    correlation_cutoff: Annotated[float, Field(ge=0.0, le=1.0)] = 0.95
+    columns: Optional[List[str]] = Field(
+        default=None,
+        description="Which of the feature's stored numeric descriptor columns to use. "
+        "None means all of them; an empty list means none, leaving only the generated "
+        "columns.",
+    )
+    generators: List[AnyDescriptorGenerator] = Field(
+        default=[],
+        description="Descriptor generators run on the feature's SMILES structures, "
+        "such as fingerprints or Mordred descriptors. Their outputs are concatenated "
+        "onto the static columns. Empty means nothing is generated.",
+    )
+    filter_descriptors: bool = Field(
+        default=False,
+        description="Whether to drop correlated columns across the assembled block, "
+        "static and generated together. Useful when generators produce hundreds of "
+        "near-duplicate columns.",
+    )
+    correlation_cutoff: Annotated[float, Field(ge=0.0, le=1.0)] = Field(
+        default=0.95,
+        description="Absolute correlation above which a column is dropped when "
+        "`filter_descriptors` is enabled. Of each correlated group the first column is "
+        "kept, so static columns listed before generated ones survive.",
+    )
 
     @model_validator(mode="after")
     def validate_declared_names_unique(self):

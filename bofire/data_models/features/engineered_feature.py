@@ -19,14 +19,22 @@ if TYPE_CHECKING:
 class EngineeredFeature(Feature):
     """Base class for an engineered feature.
 
-    Args:
-        features: The features to be used to compute the engineered feature.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
+    An engineered feature is not proposed or measured. It is computed from other input
+    features, and the columns it produces are appended to what the *surrogate* sees --
+    engineered features are configured on the surrogate, via ``engineered_features``,
+    not on the domain. The optimization problem is unchanged: adding one lets a model
+    see a derived quantity without it becoming a degree of freedom.
     """
 
-    features: FeatureKeys
-    keep_features: bool = True
+    features: FeatureKeys = Field(
+        description="Keys of the input features this feature is computed from.",
+    )
+    keep_features: bool = Field(
+        default=True,
+        description="Whether the source features are also passed to the surrogate. "
+        "Set to false to replace them with the engineered feature rather than "
+        "supplying both.",
+    )
 
     def validate_features(self, inputs: "Inputs"):
         missing_features = [
@@ -55,10 +63,11 @@ class EngineeredFeature(Feature):
 class SumFeature(EngineeredFeature):
     """Sum feature, which computes the sum over the specified features.
 
-    Args:
-        features: The features to be used to compute the sum.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
+    Appends one column holding the total, for example the overall amount of a set of
+    ingredients.
+
+    Examples:
+        >>> SumFeature(key="total_solvent", features=["water", "ethanol"])
     """
 
     type: Literal["SumFeature"] = "SumFeature"
@@ -71,10 +80,10 @@ class SumFeature(EngineeredFeature):
 class MeanFeature(EngineeredFeature):
     """Mean feature, which computes the mean over the specified features.
 
-    Args:
-        features: The features to be used to compute the mean.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
+    Appends one column holding the average of the source features.
+
+    Examples:
+        >>> MeanFeature(key="mean_temperature", features=["T_start", "T_end"])
     """
 
     type: Literal["MeanFeature"] = "MeanFeature"
@@ -92,16 +101,42 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
     The descriptor columns are declared by the :class:`DescriptorSpec` mixin
     (``columns`` for static columns and/or ``generators`` for molecular generators).
 
-    Args:
-        features: The component features to blend.
-        columns / generators / filter_descriptors: see :class:`DescriptorSpec`.
-        normalize: If True, divide by the sum of amounts (weighted mean).
-        keep_features: Whether to keep the original features in surrogate creation.
+    This is how a mixture gets described by the properties of what is in it rather than
+    by the amounts alone: each component contributes its descriptor row in proportion to
+    how much of it is present.
+
+    The component features named here must each carry a one-row ``Descriptors`` block,
+    as ``ContinuousInput`` does in its second example.
+
+    Examples:
+        Blend two stored descriptor columns of the components:
+
+        >>> WeightedSumFeature(
+        ...     key="solvent_properties",
+        ...     features=["water", "ethanol"],
+        ...     columns=["logP", "MW"],
+        ... )
+
+        Blend generated columns instead, running a generator over the components'
+        SMILES structures — ``columns=[]`` selects none of the stored ones:
+
+        >>> WeightedSumFeature(
+        ...     key="solvent_fingerprint",
+        ...     features=["water", "ethanol"],
+        ...     columns=[],
+        ...     generators=[Fingerprints(n_bits=32)],
+        ...     normalize=True,
+        ... )
     """
 
     type: Literal["WeightedSumFeature"] = "WeightedSumFeature"
     order_id: ClassVar[int] = 2
-    normalize: bool = False
+    normalize: bool = Field(
+        default=False,
+        description="Whether to divide by the total amount, giving a weighted mean "
+        "instead of a weighted sum. Use this when the composition matters but the "
+        "overall scale does not.",
+    )
 
     def component_table(self, features: List["ContinuousInput"]) -> pd.DataFrame:
         """Descriptor table with one row per component feature (weighted-sum scope).
@@ -150,19 +185,25 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
 
 
 class ProductFeature(EngineeredFeature):
-    """Product feature, which compute the sum over the specified features.
+    """Product feature, which computes the product over the specified features.
 
-    Args:
-        features: The features to be used to compute the product.
-            It is allowed to state a feature more than once to for example
-            an quadratic term.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
+    Appends one column holding the product, which is how an interaction between inputs
+    is made available to a model that would otherwise only see them separately.
+
+    Examples:
+        >>> ProductFeature(key="temp_x_time", features=["temperature", "time"])
+
+        Repeat a key for a power term:
+
+        >>> ProductFeature(key="temp_squared", features=["temperature", "temperature"])
     """
 
     type: Literal["ProductFeature"] = "ProductFeature"
     order_id: ClassVar[int] = 4
-    features: Annotated[List[str], Field(min_length=2)]
+    features: Annotated[List[str], Field(min_length=2)] = Field(
+        description="Keys of the input features to multiply. A key may be repeated to "
+        "raise that feature to a power, so ['x', 'x'] gives a quadratic term.",
+    )
 
     def get_names(self, inputs: "Inputs") -> List[str]:
         return [self.key]
@@ -172,33 +213,80 @@ class InterpolateFeature(EngineeredFeature):
     """Interpolation feature, which performs piecewise linear interpolation
     over specified x and y coordinate features.
 
-    Args:
-        x_keys: Feature keys used as x-coordinates for interpolation.
-        y_keys: Feature keys used as y-coordinates for interpolation.
-        interpolation_range: (lower, upper) bounds for the interpolation x-grid.
-        n_interpolation_points: Number of evenly spaced points in the interpolation grid.
-        prepend_x: Extra x-values to prepend before the feature x-values.
-        append_x: Extra x-values to append after the feature x-values.
-        prepend_y: Extra y-values to prepend before the feature y-values.
-        append_y: Extra y-values to append after the feature y-values.
-        normalize_y: Divisor for y-values before interpolation.
-        normalize_x: Whether to normalize x-values to [0, 1] before interpolation.
+    Use it when several continuous inputs are really the coordinates of a curve rather
+    than independent settings. ``x_keys`` and ``y_keys`` both name *input* features; this
+    feature interpolates the curve they describe on a fixed grid and gives the surrogate
+    ``n_interpolation_points`` columns sampled from it. Two candidates whose control
+    points differ but whose curves are alike then look alike to the model, which they
+    would not if it saw the raw coordinates. The number of grid points sets how many
+    columns the surrogate receives; it does not change the dimensionality of the
+    optimization problem, which stays the control points.
+
+    Examples:
+        A temperature ramp defined by two control points, where ``t1``/``t2`` are
+        continuous inputs holding the times and ``T1``/``T2`` the temperatures at those
+        times. The curve is sampled at five points between 0 and 1:
+
+        >>> InterpolateFeature(
+        ...     key="ramp",
+        ...     features=["t1", "t2", "T1", "T2"],
+        ...     x_keys=["t1", "t2"],
+        ...     y_keys=["T1", "T2"],
+        ...     interpolation_range=[0.0, 1.0],
+        ...     n_interpolation_points=5,
+        ... )
     """
 
     type: Literal["InterpolateFeature"] = "InterpolateFeature"
     order_id: ClassVar[int] = 5
 
-    x_keys: List[str]
-    y_keys: List[str]
-    interpolation_range: Bounds
-    n_interpolation_points: PositiveInt
+    x_keys: List[str] = Field(
+        description="Keys of the input features holding the x-coordinates of the "
+        "curve. Must not overlap `y_keys`, and together with them must cover exactly "
+        "`features`.",
+    )
+    y_keys: List[str] = Field(
+        description="Keys of the input features holding the y-coordinates of the "
+        "curve, paired positionally with the x-coordinates.",
+    )
+    interpolation_range: Bounds = Field(
+        description="Lower and upper end of the grid the curve is evaluated on. Must "
+        "be [0, 1] when `normalize_x` is enabled.",
+    )
+    n_interpolation_points: PositiveInt = Field(
+        description="Number of evenly spaced grid points, and therefore the number of "
+        "columns this feature appends.",
+    )
 
-    prepend_x: List[float] = Field(default_factory=list)
-    append_x: List[float] = Field(default_factory=list)
-    prepend_y: List[float] = Field(default_factory=list)
-    append_y: List[float] = Field(default_factory=list)
-    normalize_y: PositiveFloat = 1.0
-    normalize_x: bool = False
+    prepend_x: List[float] = Field(
+        default=[],
+        description="Fixed x-coordinates placed before those taken from `x_keys`, for "
+        "anchoring the curve at a known starting point that is not optimized.",
+    )
+    append_x: List[float] = Field(
+        default=[],
+        description="Fixed x-coordinates placed after those taken from `x_keys`.",
+    )
+    prepend_y: List[float] = Field(
+        default=[],
+        description="Fixed y-coordinates placed before those taken from `y_keys`. The "
+        "total number of x- and y-coordinates must match.",
+    )
+    append_y: List[float] = Field(
+        default=[],
+        description="Fixed y-coordinates placed after those taken from `y_keys`.",
+    )
+    normalize_y: PositiveFloat = Field(
+        default=1.0,
+        description="Divisor applied to the y-coordinates before interpolation, for "
+        "bringing the curve onto a comparable scale.",
+    )
+    normalize_x: bool = Field(
+        default=False,
+        description="Whether to rescale the x-coordinates onto [0, 1] before "
+        "interpolating, which makes the curve's shape independent of its extent. "
+        "Requires `interpolation_range` to be [0, 1].",
+    )
 
     @model_validator(mode="after")
     def validate_keys(self) -> "InterpolateFeature":
@@ -230,17 +318,27 @@ class CloneFeature(EngineeredFeature):
     This is useful if you want to have features undergoing different scalers
     before entering different kernels.
 
-    Args:
-        features: The features to be used to compute the product.
-            It is allowed to state a feature more than once to for example
-            an quadratic term.
-        keep_features: Whether to keep the original features after
-            creating the engineered feature in surrogate creation.
+    All the features cloned here live under this one key, and a feature-specific kernel
+    addresses them through it — so they can only be selected as a group. Clone features
+    separately, one ``CloneFeature`` each, when a kernel needs to reach them
+    individually.
+
+    Examples:
+        A single clone, which a kernel can select on its own:
+
+        >>> CloneFeature(key="temperature_copy", features=["temperature"])
+
+        Two features cloned as one group, which a kernel can only select together:
+
+        >>> CloneFeature(key="rates_copy", features=["flow_a", "flow_b"])
     """
 
     type: Literal["CloneFeature"] = "CloneFeature"
     order_id: ClassVar[int] = 5
-    features: OneFeatureKeys
+    features: OneFeatureKeys = Field(
+        description="Keys of the input features to copy, at least one. They are all "
+        "addressed together under this feature's key.",
+    )
 
     def get_names(self, inputs: "Inputs") -> List[str]:
         return [get_encoded_name(self.key, key) for key in self.features]
