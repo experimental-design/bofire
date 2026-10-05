@@ -64,8 +64,8 @@ class PreferenceStrategy(BotorchStrategy):
                 Pass an empty DataFrame when only adding comparisons between
                 designs already known to the strategy.
             preferences: Optional pairwise feedback with columns ``labcode_A``,
-                ``labcode_B``, and ``preference``. A positive sign means A won;
-                a negative sign means B won. Zero-valued ties are retained in
+                ``labcode_B``, and ``preference``. The value must be ``1`` when A
+                wins, ``-1`` when B wins, or ``0`` for a tie. Ties are retained in
                 strategy state and ignored by the pairwise surrogate during fit.
                 Omit this argument when adding designs before they are labeled.
             replace: Replace all stored designs and preferences instead of
