@@ -273,6 +273,15 @@ def test_tell_accepts_designs_before_preferences():
     assert strategy.is_fitted
 
 
+@pytest.mark.parametrize("method_name", ["set_experiments", "add_experiments"])
+def test_preference_strategy_requires_tell_to_store_experiments(method_name):
+    strategy = _strategy()
+    experiments, _ = _data()
+
+    with pytest.raises(NotImplementedError, match="Use `tell"):
+        getattr(strategy, method_name)(experiments)
+
+
 def test_tell_appends_comparisons_without_new_designs():
     strategy = _strategy()
     experiments, preferences = _data()
