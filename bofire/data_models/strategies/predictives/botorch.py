@@ -78,21 +78,20 @@ class BotorchStrategy(PredictiveStrategy):
             self.domain,
             self.surrogate_specs,
         )
-        if not self._supports_pairwise_surrogates() and any(
+        self._validate_surrogate_specs()
+        self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
+
+        return self
+
+    def _validate_surrogate_specs(self) -> None:
+        """Validate strategy-specific requirements for the surrogate specs."""
+        if any(
             isinstance(surrogate, PairwiseGPSurrogate)
             for surrogate in self.surrogate_specs.surrogates
         ):
             raise ValueError(
                 "PairwiseGPSurrogate requires a PreferenceStrategy with comparison data."
             )
-
-        self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
-
-        return self
-
-    @classmethod
-    def _supports_pairwise_surrogates(cls) -> bool:
-        return False
 
     @classmethod
     def _generate_surrogate_specs(

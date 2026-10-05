@@ -55,22 +55,12 @@ class MultiFidelityVarianceBasedStrategy(SoboStrategy, _ForbidPFMixin):
         """Overwrites BotorchSurrogate.validate_multitask_allowed, as multiple tasks are allowed."""
         return self
 
-    @model_validator(mode="after")
-    def validate_surrogate_specs(self):
+    def _validate_surrogate_specs(self) -> None:
         """Ensures that a multi-task model is specified for each output feature"""
-        MultiFidelityVarianceBasedStrategy._generate_surrogate_specs(
-            self.domain,
-            self.surrogate_specs,
-        )
-
         if not all(
             isinstance(m, MultiTaskGPSurrogate) for m in self.surrogate_specs.surrogates
         ):
             raise ValueError(f"Must use a MultiTaskGPSurrogate with {self.type}.")
-
-        self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
-
-        return self
 
     @classmethod
     def _generate_single_surrogate_spec_for_output(

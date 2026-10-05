@@ -1,6 +1,6 @@
 from typing import Literal, Type
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
 from bofire.data_models.acquisition_functions.api import (
     AnyPreferenceAcquisitionFunction,
@@ -32,10 +32,6 @@ class PreferenceStrategy(BotorchStrategy):
     )
 
     @classmethod
-    def _supports_pairwise_surrogates(cls) -> bool:
-        return True
-
-    @classmethod
     def _generate_single_surrogate_spec_for_output(
         cls, domain: Domain, output_feature: str
     ) -> PairwiseGPSurrogate:
@@ -44,17 +40,14 @@ class PreferenceStrategy(BotorchStrategy):
             outputs=Outputs(features=[domain.outputs.get_by_key(output_feature)]),
         )
 
-    @model_validator(mode="after")
-    def validate_surrogate_specs(self):
-        """Ensure that the inherited surrogate specs contain one pairwise GP."""
-        super().validate_surrogate_specs()
+    def _validate_surrogate_specs(self) -> None:
+        """Ensure that the surrogate specs contain exactly one pairwise GP."""
         if len(self.surrogate_specs.surrogates) != 1 or not isinstance(
             self.surrogate_specs.surrogates[0], PairwiseGPSurrogate
         ):
             raise ValueError(
                 "PreferenceStrategy requires exactly one PairwiseGPSurrogate."
             )
-        return self
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:

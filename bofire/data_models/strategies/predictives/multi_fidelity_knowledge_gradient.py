@@ -101,13 +101,8 @@ class MultiFidelityHVKGStrategy(MoboStrategy):
             intercept=1.0,
         )
 
-    @model_validator(mode="after")
-    def validate_surrogate_specs(self):
+    def _validate_surrogate_specs(self) -> None:
         """Ensures that a single-task multi-fidelity model is specified for each output feature"""
-        MultiFidelityHVKGStrategy._generate_surrogate_specs(
-            self.domain,
-            self.surrogate_specs,
-        )
 
         def _validate_surrogate(m: AnyBotorchSurrogate):
             if not isinstance(m, SingleTaskGPSurrogate):
@@ -131,10 +126,6 @@ class MultiFidelityHVKGStrategy(MoboStrategy):
 
         for m in self.surrogate_specs.surrogates:
             _validate_surrogate(m)
-
-        self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
-
-        return self
 
     @classmethod
     def _generate_single_surrogate_spec_for_output(
