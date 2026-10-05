@@ -25,7 +25,6 @@ from bofire.data_models.surrogates.api import BotorchSurrogates as SurrogateData
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.strategies.strategy import make_strategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
-from bofire.surrogates.pairwise_gp import PairwiseGPSurrogate
 
 
 class PreferenceStrategy(BotorchStrategy):
@@ -37,10 +36,7 @@ class PreferenceStrategy(BotorchStrategy):
         self._preferences: Optional[pd.DataFrame] = None
 
         self.surrogates = BotorchSurrogates(data_model=self.surrogate_specs)
-        surrogate = self.surrogates.surrogates[0]
-        if not isinstance(surrogate, PairwiseGPSurrogate):
-            raise TypeError("PreferenceStrategy requires a PairwiseGPSurrogate.")
-        self.surrogate = surrogate
+        self.surrogate = self.surrogates.surrogates[0]
 
     @property
     def preferences(self) -> Optional[pd.DataFrame]:

@@ -21,7 +21,11 @@ from bofire.data_models.api import (
     Inputs,
     Outputs,
 )
-from bofire.data_models.likelihoods.api import AnyLikelihood
+from bofire.data_models.likelihoods.api import (
+    AnyGaussianLikelihood,
+    AnyPairwiseLikelihood,
+    GaussianLikelihood,
+)
 from bofire.data_models.means.api import AnyMean
 from tests.bofire.data_models.specs.api import Spec
 
@@ -58,7 +62,12 @@ def test_mean_should_be_deserializable(mean_spec: Spec):
 
 def test_likelihood_should_be_deserializable(likelihood_spec: Spec):
     obj = likelihood_spec.obj()
-    deserialized = TypeAdapter(AnyLikelihood).validate_python(obj.model_dump())
+    likelihood_type = (
+        AnyGaussianLikelihood
+        if isinstance(obj, GaussianLikelihood)
+        else AnyPairwiseLikelihood
+    )
+    deserialized = TypeAdapter(likelihood_type).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
