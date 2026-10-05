@@ -62,15 +62,15 @@ class PairwiseTrainableSurrogate(ABC):
     ) -> pd.DataFrame:
         """Validate pairwise labels against their referenced experiments."""
         preferences = preferences.copy()
-        if len(preferences) == 0:
-            return pd.DataFrame(columns=self.PREFERENCE_COLUMNS)
-
         missing = set(self.PREFERENCE_COLUMNS) - set(preferences.columns)
         if missing:
             raise ValueError(
                 f"`preferences` is missing required columns: {sorted(missing)}. "
                 f"Expected at least {sorted(self.PREFERENCE_COLUMNS)}."
             )
+        if len(preferences) == 0:
+            return pd.DataFrame(columns=self.PREFERENCE_COLUMNS)
+
         preferences = preferences[list(self.PREFERENCE_COLUMNS)]
         preferences["preference"] = pd.to_numeric(
             preferences["preference"], errors="raise"

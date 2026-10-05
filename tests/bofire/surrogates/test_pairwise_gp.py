@@ -179,6 +179,14 @@ def test_pairwise_gp_rejects_missing_preference_columns():
         surrogate.fit(experiments, preferences.drop(columns=["preference"]))
 
 
+def test_pairwise_gp_rejects_malformed_empty_preferences():
+    inputs, outputs = _make_domain()
+    experiments, _, _ = _make_data()
+    surrogate = surrogates.map(PairwiseGPSurrogate(inputs=inputs, outputs=outputs))
+    with pytest.raises(ValueError, match="missing required columns"):
+        surrogate.fit(experiments, pd.DataFrame({"junk": []}))
+
+
 def test_pairwise_gp_rejects_unknown_labcode():
     inputs, outputs = _make_domain()
     experiments, preferences, _ = _make_data()
