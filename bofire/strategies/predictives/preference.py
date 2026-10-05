@@ -44,6 +44,17 @@ class PreferenceStrategy(BotorchStrategy):
 
         return self._preferences
 
+    def set_experiments(self, experiments: pd.DataFrame) -> None:
+        raise NotImplementedError(
+            "Use `tell(experiments, preferences=..., replace=True)` for "
+            "PreferenceStrategy."
+        )
+
+    def add_experiments(self, experiments: pd.DataFrame) -> None:
+        raise NotImplementedError(
+            "Use `tell(experiments, preferences=...)` for PreferenceStrategy."
+        )
+
     def _validate_new_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
         if len(experiments) == 0:
             return pd.DataFrame(columns=[*self.domain.inputs.get_keys(), "labcode"])
