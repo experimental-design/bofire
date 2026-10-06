@@ -249,6 +249,11 @@ class PredictiveStrategy(Strategy):
     def fit(self):
         """Fit the model(s) to the experimental data."""
         self._validate_fit_experiments()
+        self._fit_validated()
+
+    def _fit_validated(self) -> None:
+        """Fit using strategy state that has already been validated."""
+        assert self.experiments is not None
         self._fit(self.experiments)
         self._is_fitted = True
 
