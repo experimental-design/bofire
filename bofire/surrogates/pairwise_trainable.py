@@ -114,6 +114,15 @@ class PairwiseTrainableSurrogate(ABC):
         # Skip outputs validation: the latent utility has no observed Y values.
         experiments = self.validate_pairwise_experiments(experiments)
         preferences = self.validate_preferences(preferences, experiments)
+        self._fit_validated(experiments, preferences, options)
+
+    def _fit_validated(
+        self,
+        experiments: pd.DataFrame,
+        preferences: pd.DataFrame,
+        options: Optional[Dict] = None,
+    ) -> None:
+        """Fit using experiments and preferences that have already been validated."""
 
         # sign conversion: drop ties (preference == 0)
         pref_values = preferences["preference"].astype(float)

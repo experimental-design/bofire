@@ -55,11 +55,6 @@ class PreferenceStrategy(BotorchStrategy):
             "Use `tell(experiments, preferences=...)` for PreferenceStrategy."
         )
 
-    def _validate_new_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        if len(experiments) == 0:
-            return pd.DataFrame(columns=[*self.domain.inputs.get_keys(), "labcode"])
-        return self.surrogate.validate_pairwise_experiments(experiments)
-
     def tell(
         self,
         experiments: pd.DataFrame,
@@ -84,14 +79,13 @@ class PreferenceStrategy(BotorchStrategy):
             retrain: Refit the preference model when sufficient feedback exists.
         """
 
-        new_experiments = self._validate_new_experiments(experiments)
         if replace or self.experiments is None:
-            combined_experiments = new_experiments.reset_index(drop=True)
-        elif new_experiments.empty:
+            combined_experiments = experiments.reset_index(drop=True)
+        elif experiments.empty:
             combined_experiments = self.experiments
         else:
             combined_experiments = pd.concat(
-                [self.experiments, new_experiments], ignore_index=True
+                [self.experiments, experiments], ignore_index=True
             )
         if len(combined_experiments) == 0:
             raise ValueError("No preference experiments have been provided.")
@@ -121,7 +115,7 @@ class PreferenceStrategy(BotorchStrategy):
         if replace:
             self._is_fitted = False
         if retrain and self.has_sufficient_experiments():
-            self.fit()
+            self._fit_validated()
             self._tell()
 
     def has_sufficient_experiments(self) -> bool:
@@ -144,7 +138,7 @@ class PreferenceStrategy(BotorchStrategy):
 
     def _fit(self, experiments: pd.DataFrame) -> None:
         assert self.preferences is not None
-        self.surrogate.fit(experiments, self.preferences)
+        self.surrogate._fit_validated(experiments, self.preferences)
         self.model = self.surrogate.model
 
     def _predict_objectives(self, predictions: pd.DataFrame) -> pd.DataFrame:
