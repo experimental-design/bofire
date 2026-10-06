@@ -26,7 +26,11 @@ from bofire.data_models.kernels.api import (
     ScaleKernel,
     TanimotoKernel,
 )
-from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.likelihoods.api import (
+    GaussianLikelihood,
+    PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
+)
 from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
@@ -1052,7 +1056,7 @@ specs.add_valid(
             outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
         ).model_dump(),
         "scaler": Normalize().model_dump(),
-        "likelihood": "probit",
+        "likelihood": PairwiseProbitLikelihood().model_dump(),
         "engineered_features": EngineeredFeatures().model_dump(),
         "hyperconfig": None,
         "categorical_encodings": {},
@@ -1082,7 +1086,7 @@ specs.add_valid(
             outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
         ).model_dump(),
         "scaler": Normalize().model_dump(),
-        "likelihood": "logit",
+        "likelihood": PairwiseLogitLikelihood().model_dump(),
         "engineered_features": EngineeredFeatures().model_dump(),
         "hyperconfig": None,
         "categorical_encodings": {},

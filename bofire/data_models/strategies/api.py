@@ -50,6 +50,7 @@ from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
+from bofire.data_models.strategies.predictives.preference import PreferenceStrategy
 from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
@@ -93,6 +94,7 @@ AnyPredictive = tagged_union(
     MoboStrategy,
     MultiFidelityVarianceBasedStrategy,
     MultiFidelityHVKGStrategy,
+    PreferenceStrategy,
 )
 
 AnyLocalSearchConfig = LSRBO

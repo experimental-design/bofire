@@ -22,7 +22,14 @@ from bofire.data_models.kernels.api import (
     RBFKernel,
     ScaleKernel,
 )
+from bofire.data_models.likelihoods.api import (
+    PairwiseLogitLikelihood as PairwiseLogitLikelihoodSpec,
+)
+from bofire.data_models.likelihoods.api import (
+    PairwiseProbitLikelihood as PairwiseProbitLikelihoodSpec,
+)
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate
+from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 
 
 DIM = 3
@@ -66,6 +73,16 @@ def _make_data(n_points: int = 30, n_comparisons: int = 80, seed: int = 0):
             rows.append((labcodes[loser], labcodes[winner], -1.0))  # B preferred
     preferences = pd.DataFrame(rows, columns=["labcode_A", "labcode_B", "preference"])
     return experiments, preferences, utility
+
+
+def test_pairwise_gp_rejects_hyperconfig():
+    inputs, outputs = _make_domain()
+    with pytest.raises(ValueError):
+        PairwiseGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            hyperconfig=SingleTaskGPHyperconfig(),
+        )
 
 
 def test_pairwise_gp_fit_and_predict():
@@ -162,12 +179,33 @@ def test_pairwise_gp_rejects_missing_preference_columns():
         surrogate.fit(experiments, preferences.drop(columns=["preference"]))
 
 
+def test_pairwise_gp_rejects_malformed_empty_preferences():
+    inputs, outputs = _make_domain()
+    experiments, _, _ = _make_data()
+    surrogate = surrogates.map(PairwiseGPSurrogate(inputs=inputs, outputs=outputs))
+    with pytest.raises(ValueError, match="missing required columns"):
+        surrogate.fit(experiments, pd.DataFrame({"junk": []}))
+
+
 def test_pairwise_gp_rejects_unknown_labcode():
     inputs, outputs = _make_domain()
     experiments, preferences, _ = _make_data()
     preferences.loc[0, "labcode_A"] = "does_not_exist"
     surrogate = surrogates.map(PairwiseGPSurrogate(inputs=inputs, outputs=outputs))
     with pytest.raises(ValueError, match="not present in experiments"):
+        surrogate.fit(experiments, preferences)
+
+
+@pytest.mark.parametrize(
+    "invalid_preference",
+    [float("nan"), float("inf"), -float("inf"), 0.5, 2.0],
+)
+def test_pairwise_gp_rejects_invalid_preference(invalid_preference):
+    inputs, outputs = _make_domain()
+    experiments, preferences, _ = _make_data()
+    preferences.loc[0, "preference"] = invalid_preference
+    surrogate = surrogates.map(PairwiseGPSurrogate(inputs=inputs, outputs=outputs))
+    with pytest.raises(ValueError, match="Preference values must be one of"):
         surrogate.fit(experiments, preferences)
 
 
@@ -215,8 +253,8 @@ def test_pairwise_gp_data_model_validation():
 @pytest.mark.parametrize(
     "likelihood, expected_cls",
     [
-        ("probit", PairwiseProbitLikelihood),
-        ("logit", PairwiseLogitLikelihood),
+        (PairwiseProbitLikelihoodSpec(), PairwiseProbitLikelihood),
+        (PairwiseLogitLikelihoodSpec(), PairwiseLogitLikelihood),
     ],
 )
 def test_pairwise_gp_likelihood(likelihood, expected_cls):
@@ -238,7 +276,10 @@ def test_pairwise_gp_likelihood(likelihood, expected_cls):
 
 def test_pairwise_gp_likelihood_default_is_probit():
     inputs, outputs = _make_domain()
-    assert PairwiseGPSurrogate(inputs=inputs, outputs=outputs).likelihood == "probit"
+    assert isinstance(
+        PairwiseGPSurrogate(inputs=inputs, outputs=outputs).likelihood,
+        PairwiseProbitLikelihoodSpec,
+    )
 
 
 def test_pairwise_gp_feature_specific_kernels():

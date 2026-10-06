@@ -16,7 +16,7 @@ from bofire.data_models.kernels.api import (
     RBFKernel,
     ScaleKernel,
 )
-from bofire.data_models.likelihoods.api import AnyLikelihood, GaussianLikelihood
+from bofire.data_models.likelihoods.api import AnyGaussianLikelihood, GaussianLikelihood
 from bofire.data_models.means.api import AnyMean, ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
@@ -156,7 +156,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         description="Prior mean function, what the model predicts far from any "
         "observation.",
     )
-    likelihood: AnyLikelihood = Field(
+    likelihood: AnyGaussianLikelihood = Field(
         default=GaussianLikelihood(),
         description="How observations scatter around the response, i.e. the model of "
         "the measurement noise.",

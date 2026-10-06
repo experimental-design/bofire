@@ -72,6 +72,20 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
     }
 
 
+def test_botorch_surrogates_fit_requires_comparisons_for_pairwise_models():
+    specs = data_models.BotorchSurrogates(
+        surrogates=[
+            data_models.PairwiseGPSurrogate(
+                inputs=Inputs(features=[ContinuousInput(key="x", bounds=(0, 1))]),
+                outputs=Outputs(features=[ContinuousOutput(key="utility")]),
+            )
+        ]
+    )
+    models = BotorchSurrogates(data_model=specs)
+    with pytest.raises(ValueError, match="require comparison data"):
+        models.fit(pd.DataFrame({"x": [0.1, 0.9], "labcode": ["a", "b"]}))
+
+
 def test_BotorchSurrogates_invalid_outputs():
     data_model1 = data_models.SingleTaskGPSurrogate(
         inputs=Inputs(

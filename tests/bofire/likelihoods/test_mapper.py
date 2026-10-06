@@ -1,10 +1,21 @@
 import gpytorch
+import pytest
+from botorch.models.likelihoods.pairwise import (
+    PairwiseLogitLikelihood as BotorchPairwiseLogitLikelihood,
+)
+from botorch.models.likelihoods.pairwise import (
+    PairwiseProbitLikelihood as BotorchPairwiseProbitLikelihood,
+)
 from botorch.models.utils.gpytorch_modules import (
     get_gaussian_likelihood_with_lognormal_prior,
 )
 
 import bofire.likelihoods.api as likelihoods
-from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.likelihoods.api import (
+    GaussianLikelihood,
+    PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
+)
 from bofire.data_models.priors.api import THREESIX_NOISE_PRIOR, GreaterThan
 
 
@@ -49,3 +60,14 @@ def test_gaussian_likelihood_without_constraint():
     constraint = ours.noise_covar.raw_noise_constraint
     assert isinstance(constraint, gpytorch.constraints.GreaterThan)
     assert abs(float(constraint.lower_bound) - 1e-4) < 1e-9
+
+
+@pytest.mark.parametrize(
+    "data_model, expected_cls",
+    [
+        (PairwiseProbitLikelihood(), BotorchPairwiseProbitLikelihood),
+        (PairwiseLogitLikelihood(), BotorchPairwiseLogitLikelihood),
+    ],
+)
+def test_pairwise_likelihood(data_model, expected_cls):
+    assert isinstance(likelihoods.map(data_model, d=3), expected_cls)

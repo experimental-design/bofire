@@ -229,12 +229,16 @@ class PredictiveStrategy(Strategy):
             predictions=predictions,
             outputs=self.domain.outputs,
         )
-        objectives = self.domain.outputs(
-            predictions, experiments_adapt=self.experiments, predictions=True
-        )
+        objectives = self._predict_objectives(predictions)
         predictions = pd.concat((predictions, objectives), axis=1)
         predictions.index = experiments.index
         return predictions
+
+    def _predict_objectives(self, predictions: pd.DataFrame) -> pd.DataFrame:
+        """Evaluate objectives, adapting them to the observed outputs by default."""
+        return self.domain.outputs(
+            predictions, experiments_adapt=self.experiments, predictions=True
+        )
 
     @abstractmethod
     def _predict(self, experiments: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -244,13 +248,21 @@ class PredictiveStrategy(Strategy):
 
     def fit(self):
         """Fit the model(s) to the experimental data."""
+        self._validate_fit_experiments()
+        self._fit_validated()
+
+    def _fit_validated(self) -> None:
+        """Fit using strategy state that has already been validated."""
+        assert self.experiments is not None
+        self._fit(self.experiments)
+        self._is_fitted = True
+
+    def _validate_fit_experiments(self) -> None:
+        """Validate the observations required by the strategy's training model."""
         assert (
             self.experiments is not None and len(self.experiments) > 0
         ), "No fitting data available"
         self.domain.validate_experiments(self.experiments, strict=True)
-        # transformed = self.transformer.fit_transform(self.experiments)
-        self._fit(self.experiments)
-        self._is_fitted = True
 
     @abstractmethod
     def _fit(self, experiments: pd.DataFrame):

@@ -11,6 +11,7 @@ from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.surrogates.api import BotorchSurrogates as DataModel
 from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.mapper import map as map_surrogate
+from bofire.surrogates.pairwise_trainable import PairwiseTrainableSurrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 
 
@@ -39,6 +40,13 @@ class BotorchSurrogates:
         }
 
     def fit(self, experiments: pd.DataFrame):
+        if any(
+            isinstance(model, PairwiseTrainableSurrogate) for model in self.surrogates
+        ):
+            raise ValueError(
+                "Pairwise surrogates require comparison data. Fit them through "
+                "PreferenceStrategy or the pairwise surrogate directly."
+            )
         for model in self.surrogates:
             if isinstance(model, TrainableSurrogate):
                 model.fit(experiments)

@@ -19,6 +19,7 @@ from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     MixedSingleTaskGPSurrogate,
     MultiTaskGPSurrogate,
+    PairwiseGPSurrogate,
     SingleTaskGPSurrogate,
 )
 
@@ -73,14 +74,24 @@ class BotorchStrategy(PredictiveStrategy):
     @model_validator(mode="after")
     def validate_surrogate_specs(self):
         """Ensures that a prediction model is specified for each output feature"""
-        BotorchStrategy._generate_surrogate_specs(
+        self._generate_surrogate_specs(
             self.domain,
             self.surrogate_specs,
         )
-
+        self._validate_surrogate_specs()
         self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
 
         return self
+
+    def _validate_surrogate_specs(self) -> None:
+        """Validate strategy-specific requirements for the surrogate specs."""
+        if any(
+            isinstance(surrogate, PairwiseGPSurrogate)
+            for surrogate in self.surrogate_specs.surrogates
+        ):
+            raise ValueError(
+                "PairwiseGPSurrogate requires a PreferenceStrategy with comparison data."
+            )
 
     @classmethod
     def _generate_surrogate_specs(

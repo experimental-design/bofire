@@ -1,5 +1,12 @@
-from bofire.data_models.likelihoods.likelihood import GaussianLikelihood, Likelihood
+from bofire.data_models.likelihoods.likelihood import (
+    GaussianLikelihood,
+    Likelihood,
+    PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
+)
 from bofire.data_models.unions import tagged_union
 
 
-AnyLikelihood = tagged_union(GaussianLikelihood)
+AnyGaussianLikelihood = tagged_union(GaussianLikelihood)
+AnyPairwiseLikelihood = tagged_union(PairwiseProbitLikelihood, PairwiseLogitLikelihood)
+AnyLikelihood = AnyGaussianLikelihood | AnyPairwiseLikelihood
