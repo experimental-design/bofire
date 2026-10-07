@@ -179,8 +179,6 @@ class SoboStrategy(BotorchStrategy):
         | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
         convergence_criterion: AnyConvergenceCriterion | None = None,
@@ -192,8 +190,6 @@ class SoboStrategy(BotorchStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation.
             seed: The random seed to use.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.
@@ -282,8 +278,6 @@ class AdditiveSoboStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
         convergence_criterion: AnyConvergenceCriterion | None = None,
@@ -297,8 +291,6 @@ class AdditiveSoboStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.
@@ -342,8 +334,6 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
         convergence_criterion: AnyConvergenceCriterion | None = None,
@@ -356,8 +346,6 @@ class MultiplicativeSoboStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.
@@ -405,8 +393,6 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
         convergence_criterion: AnyConvergenceCriterion | None = None,
@@ -423,8 +409,6 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.
@@ -530,8 +514,6 @@ class CustomSoboStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
         convergence_criterion: AnyConvergenceCriterion | None = None,
@@ -548,8 +530,6 @@ class CustomSoboStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation.
             seed: The random seed to use.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.

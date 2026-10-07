@@ -8,7 +8,6 @@ from bofire.benchmarks.benchmark import (
     SyntheticBoTorch,
 )
 from bofire.benchmarks.detergent import Detergent
-from bofire.benchmarks.hyperopt import Hyperopt
 from bofire.benchmarks.multi import (
     BNH,
     C2DTLZ2,

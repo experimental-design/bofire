@@ -19,15 +19,9 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.data_models.kernels.api import MaternKernel, RBFKernel
+from bofire.data_models.kernels.api import RBFKernel
 from bofire.data_models.priors.api import (
-    HVARFNER_LENGTHSCALE_PRIOR,
-    HVARFNER_NOISE_PRIOR,
     LKJ_PRIOR,
-    MBO_LENGTHSCALE_PRIOR,
-    MBO_NOISE_PRIOR,
-    THREESIX_LENGTHSCALE_PRIOR,
-    THREESIX_NOISE_PRIOR,
     GammaPrior,
     GreaterThan,
     LogNormalPrior,
@@ -38,47 +32,6 @@ from bofire.data_models.surrogates.scaler import Standardize as StandardizeScale
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
-
-
-def test_MultiTaskGPHyperconfig():
-    # we test here also the basic trainable
-    benchmark = MultiTaskHimmelblau()
-    surrogate_data_no_hy = MultiTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-        hyperconfig=None,
-    )
-
-    with pytest.raises(ValueError, match="No hyperconfig available."):
-        surrogate_data_no_hy.update_hyperparameters(
-            benchmark.domain.inputs.sample(1).loc[0],
-        )
-    # test that correct stuff is written
-    surrogate_data = MultiTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-    )
-    candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
-    surrogate_data.update_hyperparameters(candidate)
-
-    assert surrogate_data.kernel.ard == (candidate["ard"] == "True")
-    if candidate.kernel == "matern_1.5":
-        assert isinstance(surrogate_data.kernel, MaternKernel)
-        assert surrogate_data.kernel.nu == 1.5
-    elif candidate.kernel == "matern_2.5":
-        assert isinstance(surrogate_data.kernel, MaternKernel)
-        assert surrogate_data.kernel.nu == 2.5
-    else:
-        assert isinstance(surrogate_data.kernel, RBFKernel)
-    if candidate.prior == "mbo":
-        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
-        assert surrogate_data.kernel.lengthscale_prior == MBO_LENGTHSCALE_PRIOR()
-    elif candidate.prior == "threesix":
-        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
-        assert surrogate_data.kernel.lengthscale_prior == THREESIX_LENGTHSCALE_PRIOR()
-    else:
-        assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
-        assert surrogate_data.kernel.lengthscale_prior == HVARFNER_LENGTHSCALE_PRIOR()
 
 
 def test_MultiTask_input_preprocessing():

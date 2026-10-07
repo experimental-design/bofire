@@ -127,6 +127,7 @@ quartodoc:
             - PolynomialSurrogate
             - RandomForestSurrogate
             - MLPEnsemble
+            - SelectionSurrogate
             - BotorchSurrogates
     - title: Strategies
       desc: Strategy implementations
@@ -164,6 +165,7 @@ quartodoc:
             - EmpiricalSurrogate
             - RandomForestSurrogate
             - MLPEnsemble
+            - SelectionSurrogate
 
 website:
   title: "BoFire"

@@ -198,8 +198,6 @@ class MultiFidelityHVKGStrategy(MoboStrategy):
         fidelity_cost_model_spec: LinearDeterministicSurrogate | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
         convergence_criterion: AnyConvergenceCriterion | None = None,

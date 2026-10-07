@@ -86,8 +86,6 @@ class ActiveLearningStrategy(BotorchStrategy):
         domain: Domain,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         acquisition_function: AnyActiveLearningAcquisitionFunction | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
@@ -100,8 +98,6 @@ class ActiveLearningStrategy(BotorchStrategy):
                 domain: Domain of the strategy.
                 acquisition_optimizer: Acquisition optimizer to use.
                 surrogate_specs: Surrogate specifications.
-                frequency_hyperopt: Frequency of hyperparameter optimization.
-                folds: Number of folds for cross-validation in hyperparameter optimization.
                 acquisition_function: Acquisition function to use.
                 seed: Seed for the random number generator.
                 include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set

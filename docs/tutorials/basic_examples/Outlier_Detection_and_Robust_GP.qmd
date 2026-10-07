@@ -204,15 +204,6 @@ plt.legend()
 plt.show()
 ```
 
-### Hyperparameter optimization
-
-The RobustSingleTaskGPSurrogate also support hyperparameter optimization over different kernels, priors, etc.
-
-```{python}
-# opt_surrogate_data, perf = hyperoptimize(surrogate_data=data_model, training_data=experiments, folds=4)
-# surrogate = surrogates.map(opt_surrogate_data)
-```
-
 ### Obtaining the full model trace
 
 ```{python}

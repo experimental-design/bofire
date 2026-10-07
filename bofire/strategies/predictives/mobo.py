@@ -139,8 +139,6 @@ class MoboStrategy(BotorchStrategy):
         acquisition_function: AnyMultiObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
         convergence_criterion: AnyConvergenceCriterion | None = None,
@@ -158,8 +156,6 @@ class MoboStrategy(BotorchStrategy):
             acquisition_function: Acquisition function.
             acquisition_optimizer: Optimizer for the acquisition function.
             surrogate_specs: Surrogate model specifications.
-            frequency_hyperopt: Frequency at which to perform hyperparameter optimization.
-            folds: Number of folds for cross-validation for hyperparameter optimization.
             seed: Random seed for reproducibility.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.
