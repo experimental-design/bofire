@@ -81,7 +81,12 @@ def test_options_contain_a_scaled_matern_with_hvarfner_priors():
 
 def test_selection_chooses_the_better_candidate():
     surrogate = surrogates.map(
-        SelectionSurrogate(candidates=[_linear(), _rbf()], random_state=0)
+        SelectionSurrogate(
+            inputs=INPUTS,
+            outputs=OUTPUTS,
+            candidates=[_linear(), _rbf()],
+            random_state=0,
+        )
     )
     experiments = _experiments(15)
 
@@ -96,7 +101,9 @@ def test_selection_chooses_the_better_candidate():
 
 def test_selection_prefers_the_earlier_of_equal_candidates():
     surrogate = surrogates.map(
-        SelectionSurrogate(candidates=[_rbf(), _rbf()], random_state=0)
+        SelectionSurrogate(
+            inputs=INPUTS, outputs=OUTPUTS, candidates=[_rbf(), _rbf()], random_state=0
+        )
     )
 
     surrogate.fit(_experiments(10))
@@ -109,7 +116,9 @@ def test_selection_skips_a_candidate_that_cannot_be_fitted():
         inputs=INPUTS, outputs=OUTPUTS, kernel=RBFKernel(features=["unknown"])
     )
     surrogate = surrogates.map(
-        SelectionSurrogate(candidates=[broken, _rbf()], random_state=0)
+        SelectionSurrogate(
+            inputs=INPUTS, outputs=OUTPUTS, candidates=[broken, _rbf()], random_state=0
+        )
     )
 
     with pytest.warns(UserWarning, match="Candidate 0 skipped"):
@@ -123,7 +132,9 @@ def test_selection_fails_when_no_candidate_can_be_fitted():
     broken = SingleTaskGPSurrogate(
         inputs=INPUTS, outputs=OUTPUTS, kernel=RBFKernel(features=["unknown"])
     )
-    surrogate = surrogates.map(SelectionSurrogate(candidates=[broken]))
+    surrogate = surrogates.map(
+        SelectionSurrogate(inputs=INPUTS, outputs=OUTPUTS, candidates=[broken])
+    )
 
     with pytest.warns(UserWarning), pytest.raises(ValueError, match="None of"):
         surrogate.fit(_experiments(10))
@@ -132,13 +143,20 @@ def test_selection_fails_when_no_candidate_can_be_fitted():
 def test_selection_dump_restores_the_chosen_candidate():
     candidates = [_linear(), _rbf()]
     surrogate = surrogates.map(
-        SelectionSurrogate(candidates=candidates, random_state=0)
+        SelectionSurrogate(
+            inputs=INPUTS, outputs=OUTPUTS, candidates=candidates, random_state=0
+        )
     )
     experiments = _experiments(10)
     surrogate.fit(experiments)
 
     restored = surrogates.map(
-        SelectionSurrogate(candidates=candidates, dump=surrogate.dumps())
+        SelectionSurrogate(
+            inputs=INPUTS,
+            outputs=OUTPUTS,
+            candidates=candidates,
+            dump=surrogate.dumps(),
+        )
     )
 
     assert restored.selected == surrogate.selected
@@ -153,7 +171,12 @@ def test_strategy_with_a_selection_surrogate():
             domain=Domain(inputs=INPUTS, outputs=OUTPUTS),
             surrogate_specs=BotorchSurrogates(
                 surrogates=[
-                    SelectionSurrogate(candidates=[_linear(), _rbf()], random_state=0)
+                    SelectionSurrogate(
+                        inputs=INPUTS,
+                        outputs=OUTPUTS,
+                        candidates=[_linear(), _rbf()],
+                        random_state=0,
+                    )
                 ]
             ),
         )

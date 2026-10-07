@@ -50,11 +50,13 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
 
     When fitted, every candidate is cross-validated on the data, and the one with the
     best score in `metric` is fitted on all of the data and makes the predictions. A
-    candidate whose fit fails is skipped. All candidates share their inputs and their
-    single continuous output, which are also those of this surrogate.
+    candidate whose fit fails is skipped. Every candidate has the inputs and the single
+    continuous output of this surrogate.
 
     Examples:
         >>> SelectionSurrogate(
+        ...     inputs=inputs,
+        ...     outputs=outputs,
         ...     candidates=SingleTaskGPSurrogate.options(inputs, outputs),
         ... )
     """
@@ -81,29 +83,6 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
         description="Seed for splitting the experiments into folds. If not provided, "
         "the folds differ from fit to fit.",
     )
-
-    @model_validator(mode="before")
-    @classmethod
-    def validate_inputs_and_outputs_default(cls, data):
-        """Take `inputs` and `outputs` from the first candidate where not given.
-
-        Values that are given are kept; `validate_candidates` checks they match.
-
-        Args:
-            data: The raw input, as passed to the constructor or read from JSON.
-
-        Returns:
-            The input with `inputs` and `outputs` filled in.
-        """
-        if isinstance(data, dict) and data.get("candidates"):
-            first = data["candidates"][0]
-            for key in ("inputs", "outputs"):
-                if key not in data:
-                    value = (
-                        first[key] if isinstance(first, dict) else getattr(first, key)
-                    )
-                    data = {**data, key: value}
-        return data
 
     @model_validator(mode="after")
     def validate_candidates(self):
