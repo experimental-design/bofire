@@ -1,5 +1,4 @@
 import json
-import warnings
 from typing import Optional, cast
 
 import pandas as pd
@@ -24,8 +23,7 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
 
     After fitting, `selected` is the position of the chosen candidate, `chosen` the
     fitted candidate that makes the predictions, and `scores` holds the
-    cross-validation metrics of every candidate evaluated in the last choice, indexed
-    by position.
+    cross-validation metrics of every candidate, one row per candidate in their order.
     """
 
     def __init__(
@@ -51,22 +49,16 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
         self.model = chosen.model
 
     def _select(self, experiments: pd.DataFrame) -> int:
-        scores = {}
+        scores = []
         for i in range(len(self.candidates)):
-            try:
-                _, cv_test, _ = self._map(i).cross_validate(
-                    experiments,
-                    folds=self.folds,
-                    random_state=self.random_state,
-                )
-            except Exception as e:
-                warnings.warn(f"Candidate {i} skipped, it could not be fitted: {e}")
-                continue
-            scores[i] = cv_test.get_metrics(combine_folds=True).iloc[0]
-        self.scores = pd.DataFrame.from_dict(scores, orient="index")
-        ranked = self.scores[self.metric.name].dropna() if scores else pd.Series()
-        if len(ranked) == 0:
-            raise ValueError("None of the candidates could be fitted and scored.")
+            _, cv_test, _ = self._map(i).cross_validate(
+                experiments,
+                folds=self.folds,
+                random_state=self.random_state,
+            )
+            scores.append(cv_test.get_metrics(combine_folds=True).iloc[0])
+        self.scores = pd.DataFrame(scores).reset_index(drop=True)
+        ranked = self.scores[self.metric.name]
         if self.metric in _LOWER_IS_BETTER:
             return int(ranked.idxmin())
         return int(ranked.idxmax())

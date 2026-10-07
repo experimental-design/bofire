@@ -49,9 +49,8 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
     """Surrogate that chooses one of several complete surrogates by cross-validation.
 
     When fitted, every candidate is cross-validated on the data, and the one with the
-    best score in `metric` is fitted on all of the data and makes the predictions. A
-    candidate whose fit fails is skipped. Every candidate has the inputs and the single
-    continuous output of this surrogate.
+    best score in `metric` is fitted on all of the data and makes the predictions.
+    Every candidate has the inputs and the single continuous output of this surrogate.
 
     Examples:
         >>> SelectionSurrogate(
@@ -63,7 +62,7 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
 
     type: Literal["SelectionSurrogate"] = "SelectionSurrogate"
     candidates: List[AnyCandidateSurrogate] = Field(
-        min_length=1,
+        min_length=2,
         description="The complete surrogates to choose from, in order of preference: "
         "of two with the same score, the earlier one is chosen.",
     )

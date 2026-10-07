@@ -1164,17 +1164,6 @@ specs.add_invalid(
     lambda: {
         "inputs": _selection_io()[0],
         "outputs": _selection_io()[1],
-        "candidates": [],
-    },
-    error=ValueError,
-    message="at least 1 item",
-)
-
-specs.add_invalid(
-    models.SelectionSurrogate,
-    lambda: {
-        "inputs": _selection_io()[0],
-        "outputs": _selection_io()[1],
         "candidates": [
             models.SingleTaskGPSurrogate(
                 inputs=_selection_io()[0], outputs=_selection_io()[1]

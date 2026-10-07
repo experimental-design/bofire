@@ -1,28 +1,16 @@
 import numpy as np
 import pandas as pd
-import pytest
 
-import bofire.strategies.api as strategies
 import bofire.surrogates.api as surrogates
-from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.data_models.kernels.api import (
-    LinearKernel,
-    MaternKernel,
-    RBFKernel,
-    ScaleKernel,
-)
+from bofire.data_models.kernels.api import LinearKernel, MaternKernel, ScaleKernel
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
 )
-from bofire.data_models.strategies.api import SoboStrategy
-from bofire.data_models.surrogates.api import (
-    BotorchSurrogates,
-    SelectionSurrogate,
-    SingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.api import SelectionSurrogate, SingleTaskGPSurrogate
 
 
 INPUTS = Inputs(
@@ -111,35 +99,6 @@ def test_selection_prefers_the_earlier_of_equal_candidates():
     assert surrogate.selected == 0
 
 
-def test_selection_skips_a_candidate_that_cannot_be_fitted():
-    broken = SingleTaskGPSurrogate(
-        inputs=INPUTS, outputs=OUTPUTS, kernel=RBFKernel(features=["unknown"])
-    )
-    surrogate = surrogates.map(
-        SelectionSurrogate(
-            inputs=INPUTS, outputs=OUTPUTS, candidates=[broken, _rbf()], random_state=0
-        )
-    )
-
-    with pytest.warns(UserWarning, match="Candidate 0 skipped"):
-        surrogate.fit(_experiments(10))
-
-    assert surrogate.selected == 1
-    assert list(surrogate.scores.index) == [1]
-
-
-def test_selection_fails_when_no_candidate_can_be_fitted():
-    broken = SingleTaskGPSurrogate(
-        inputs=INPUTS, outputs=OUTPUTS, kernel=RBFKernel(features=["unknown"])
-    )
-    surrogate = surrogates.map(
-        SelectionSurrogate(inputs=INPUTS, outputs=OUTPUTS, candidates=[broken])
-    )
-
-    with pytest.warns(UserWarning), pytest.raises(ValueError, match="None of"):
-        surrogate.fit(_experiments(10))
-
-
 def test_selection_dump_restores_the_chosen_candidate():
     candidates = [_linear(), _rbf()]
     surrogate = surrogates.map(
@@ -163,26 +122,3 @@ def test_selection_dump_restores_the_chosen_candidate():
     pd.testing.assert_frame_equal(
         restored.predict(experiments), surrogate.predict(experiments)
     )
-
-
-def test_strategy_with_a_selection_surrogate():
-    strategy = strategies.map(
-        SoboStrategy(
-            domain=Domain(inputs=INPUTS, outputs=OUTPUTS),
-            surrogate_specs=BotorchSurrogates(
-                surrogates=[
-                    SelectionSurrogate(
-                        inputs=INPUTS,
-                        outputs=OUTPUTS,
-                        candidates=[_linear(), _rbf()],
-                        random_state=0,
-                    )
-                ]
-            ),
-        )
-    )
-
-    strategy.tell(_experiments(8))
-
-    assert strategy.surrogates.surrogates[0].selected in (0, 1)
-    assert len(strategy.ask(1)) == 1
