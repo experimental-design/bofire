@@ -29,7 +29,6 @@ from bofire.data_models.descriptor_generators.api import (
 )
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.encodings.api import DescriptorEncoding, OrdinalEncoding
-from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -40,7 +39,6 @@ from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
     HammingDistanceKernel,
-    MaternKernel,
     RBFKernel,
     ScaleKernel,
     SphericalLinearKernel,
@@ -50,14 +48,7 @@ from bofire.data_models.likelihoods.api import GaussianLikelihood
 from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
-    HVARFNER_NOISE_PRIOR,
-    MBO_LENGTHSCALE_PRIOR,
-    MBO_NOISE_PRIOR,
-    MBO_OUTPUTSCALE_PRIOR,
-    ROBUSTGP_LENGTHSCALE_CONSTRAINT,
-    THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
-    THREESIX_SCALE_PRIOR,
     GammaPrior,
     LogNormalPrior,
     NormalPrior,
@@ -67,12 +58,10 @@ from bofire.data_models.surrogates.api import (
     MixedSingleTaskGPSurrogate,
     RobustSingleTaskGPSurrogate,
     ScalerEnum,
-    SingleTaskGPHyperconfig,
     SingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
-from bofire.data_models.surrogates.trainable import metrics2objectives
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -394,85 +383,6 @@ def test_SingleTaskGP_bound_relearning():
     assert not torch.equal(bounds1, bounds2)
 
 
-@pytest.mark.parametrize("target_metric", list(RegressionMetricsEnum))
-def test_hyperconfig_domain(target_metric: RegressionMetricsEnum):
-    # we test here also the abstract methods from the corresponding base class
-    # should be move somewhere else when tidying up all tests
-    hy = SingleTaskGPHyperconfig(target_metric=target_metric)
-    assert hy.domain.inputs == hy.inputs
-    assert hy.domain.outputs.get_keys() == [target_metric.name]
-    assert hy.domain.outputs[0].objective == metrics2objectives[target_metric]()
-
-
-def test_hyperconfig_invalid():
-    with pytest.raises(
-        ValueError,
-        match="It is not allowed to specify the number of its for FractionalFactorialStrategy",
-    ):
-        SingleTaskGPHyperconfig(n_iterations=5)
-    with pytest.raises(
-        ValueError,
-        match="At least number of hyperparams plus 2 iterations has to be specified",
-    ):
-        SingleTaskGPHyperconfig(n_iterations=3, hyperstrategy="RandomStrategy")
-    hy = SingleTaskGPHyperconfig(n_iterations=None, hyperstrategy="RandomStrategy")
-    assert hy.n_iterations == 14
-
-
-def test_SingleTaskGPHyperconfig():
-    # we test here also the basic trainable
-    benchmark = Himmelblau()
-    surrogate_data_no_hy = SingleTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-        hyperconfig=None,
-    )
-    with pytest.raises(ValueError, match="No hyperconfig available."):
-        surrogate_data_no_hy.update_hyperparameters(
-            benchmark.domain.inputs.sample(1).loc[0],
-        )
-    # test that correct stuff is written
-    surrogate_data = SingleTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-    )
-    candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
-    surrogate_data.update_hyperparameters(candidate)
-    # if hasattr(surrogate_data.kernel, "base_kernel"):
-    base_kernel = (
-        surrogate_data.kernel.base_kernel
-        if hasattr(surrogate_data.kernel, "base_kernel")
-        else surrogate_data.kernel
-    )
-    if candidate.scalekernel == "True":
-        assert hasattr(surrogate_data.kernel, "base_kernel")
-    else:
-        assert not hasattr(surrogate_data.kernel, "base_kernel")
-    if candidate.kernel == "matern_1.5":
-        assert isinstance(base_kernel, MaternKernel)
-        assert base_kernel.nu == 1.5
-    elif candidate.kernel == "matern_2.5":
-        assert isinstance(base_kernel, MaternKernel)
-        assert base_kernel.nu == 2.5
-    else:
-        assert isinstance(base_kernel, RBFKernel)
-    if candidate.prior == "mbo":
-        assert surrogate_data.likelihood.noise_prior == MBO_NOISE_PRIOR()
-        if candidate.scalekernel == "True":
-            assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
-        assert base_kernel.lengthscale_prior == MBO_LENGTHSCALE_PRIOR()
-    elif candidate.prior == "threesix":
-        assert surrogate_data.likelihood.noise_prior == THREESIX_NOISE_PRIOR()
-        if candidate.scalekernel == "True":
-            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
-        assert base_kernel.lengthscale_prior == THREESIX_LENGTHSCALE_PRIOR()
-    else:
-        assert surrogate_data.likelihood.noise_prior == HVARFNER_NOISE_PRIOR()
-        if candidate.scalekernel == "True":
-            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
-        assert base_kernel.lengthscale_prior == HVARFNER_LENGTHSCALE_PRIOR()
-
-
 def test_SingleTaskGPModel_feature_subsets():
     """make an additive kernel using feature subsets for each kernel in the sum"""
     benchmark = Hartmann()
@@ -634,53 +544,6 @@ def test_MixedSingleTaskGP_only_categorical():
     surrogate.fit(experiments)
     assert surrogate.model.covar_module.base_kernel.active_dims.tolist() == [0, 1]
     assert surrogate.model.covar_module.base_kernel.ard_num_dims == 2
-
-
-def test_MixedSingleTaskGPHyperconfig():
-    inputs = Inputs(
-        features=[
-            ContinuousInput(
-                key=f"x_{i + 1}",
-                bounds=(-4, 4),
-            )
-            for i in range(2)
-        ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
-    )
-    outputs = Outputs(features=[ContinuousOutput(key="y")])
-    surrogate_data = MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-    )
-    candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
-    surrogate_data.update_hyperparameters(candidate)
-    assert surrogate_data.continuous_kernel.ard == (candidate["ard"] == "True")
-    if candidate.continuous_kernel == "matern_1.5":
-        assert isinstance(surrogate_data.continuous_kernel, MaternKernel)
-        assert surrogate_data.continuous_kernel.nu == 1.5
-    elif candidate.continuous_kernel == "matern_2.5":
-        assert isinstance(surrogate_data.continuous_kernel, MaternKernel)
-        assert surrogate_data.continuous_kernel.nu == 2.5
-    else:
-        assert isinstance(surrogate_data.continuous_kernel, RBFKernel)
-    if candidate.prior == "mbo":
-        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
-        assert (
-            surrogate_data.continuous_kernel.lengthscale_prior
-            == MBO_LENGTHSCALE_PRIOR()
-        )
-    if candidate.prior == "threesix":
-        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
-        assert (
-            surrogate_data.continuous_kernel.lengthscale_prior
-            == THREESIX_LENGTHSCALE_PRIOR()
-        )
-    if candidate.prior == "hvarfner":
-        assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
-        assert (
-            surrogate_data.continuous_kernel.lengthscale_prior
-            == HVARFNER_LENGTHSCALE_PRIOR()
-        )
 
 
 def test_MixedSingletaskGPModel_with_botorch():
@@ -1085,68 +948,6 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
 
     # check for the correct columns
     assert set(preds_outliers.columns) == {"y_pred", "y_sd", "y_rho"}
-
-
-def test_RobustSingleTaskGPHyperconfig():
-    # we test here also the basic trainable
-    benchmark = Himmelblau()
-    surrogate_data_no_hy = RobustSingleTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-        hyperconfig=None,
-    )
-    with pytest.raises(ValueError, match="No hyperconfig available."):
-        surrogate_data_no_hy.update_hyperparameters(
-            benchmark.domain.inputs.sample(1).loc[0],
-        )
-    # test that correct stuff is written
-    surrogate_data = RobustSingleTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-    )
-
-    assert (
-        surrogate_data.kernel.lengthscale_constraint
-        == ROBUSTGP_LENGTHSCALE_CONSTRAINT()
-    )
-
-    candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
-    # surrogate_data.update_hyperparameters(candidate, lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(), outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT())
-    surrogate_data.update_hyperparameters(candidate)
-    if hasattr(surrogate_data.kernel, "base_kernel"):
-        # if surrogate_data.kernel == ScaleKernel():
-        #     assert surrogate_data.kernel.outputscale_constraint == ROBUSTGP_OUTPUTSCALE_CONSTRAINT()
-        assert surrogate_data.kernel.base_kernel.ard == (candidate["ard"] == "True")
-        # assert surrogate_data.kernel.base_kernel.lengthscale_constraint == ROBUSTGP_LENGTHSCALE_CONSTRAINT()
-        if candidate.kernel == "matern_1.5":
-            assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
-            assert surrogate_data.kernel.base_kernel.nu == 1.5
-        elif candidate.kernel == "matern_2.5":
-            assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
-            assert surrogate_data.kernel.base_kernel.nu == 2.5
-        else:
-            assert isinstance(surrogate_data.kernel.base_kernel, RBFKernel)
-        if candidate.prior == "mbo":
-            assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
-            assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
-            assert (
-                surrogate_data.kernel.base_kernel.lengthscale_prior
-                == MBO_LENGTHSCALE_PRIOR()
-            )
-        elif candidate.prior == "threesix":
-            assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
-            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
-            assert (
-                surrogate_data.kernel.base_kernel.lengthscale_prior
-                == THREESIX_LENGTHSCALE_PRIOR()
-            )
-        else:
-            assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
-            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
-            assert (
-                surrogate_data.kernel.base_kernel.lengthscale_prior
-                == HVARFNER_LENGTHSCALE_PRIOR()
-            )
 
 
 @pytest.mark.parametrize(

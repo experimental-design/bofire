@@ -44,10 +44,7 @@ def _rebuild_dependent_models() -> None:
     from bofire.data_models.surrogates.robust_single_task_gp import (
         RobustSingleTaskGPSurrogate,
     )
-    from bofire.data_models.surrogates.single_task_gp import (
-        SingleTaskGPHyperconfig,
-        SingleTaskGPSurrogate,
-    )
+    from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
     from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 
     AnyPrior = priors_api.AnyPrior
@@ -100,8 +97,6 @@ def _rebuild_dependent_models() -> None:
         (PolynomialSurrogate, "noise_constraint"),
         (LinearSurrogate, "noise_constraint"),
         (RobustSingleTaskGPSurrogate, "noise_constraint"),
-        (SingleTaskGPHyperconfig, "lengthscale_constraint"),
-        (SingleTaskGPHyperconfig, "outputscale_constraint"),
     ]:
         patch_field(model_cls, field_name, AnyPriorConstraint)
 
@@ -138,7 +133,6 @@ def _rebuild_dependent_models() -> None:
         cls.model_rebuild(force=True)
 
     # 5. Surrogate models
-    SingleTaskGPHyperconfig.model_rebuild(force=True)
     for cls in [
         SingleTaskGPSurrogate,
         MultiTaskGPSurrogate,

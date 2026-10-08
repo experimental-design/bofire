@@ -6,6 +6,7 @@ from bofire.data_models.encodings.api import (
     OneHotEncoding,
     OrdinalEncoding,
 )
+from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalOutput,
@@ -41,8 +42,6 @@ from bofire.data_models.priors.api import (
     GreaterThan,
 )
 from bofire.data_models.surrogates.api import Normalize, ScalerEnum
-from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPHyperconfig
-from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -81,7 +80,6 @@ specs.add_valid(
         ).model_dump(),
         "categorical_encodings": {},
         "dump": None,
-        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
 )
 
@@ -119,7 +117,6 @@ specs.add_valid(
         ).model_dump(),
         "categorical_encodings": {},
         "dump": None,
-        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
 )
 
@@ -159,7 +156,6 @@ specs.add_valid(
         "prior_mean_of_support": None,
         "categorical_encodings": {},
         "dump": None,
-        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
 )
 
@@ -195,7 +191,6 @@ specs.add_invalid(
         "convex_parametrization": True,
         "prior_mean_of_support": None,
         "dump": None,
-        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
     error=ValueError,
     message="RobustGP only supports one output.",
@@ -240,7 +235,6 @@ specs.add_valid(
         "output_scaler": ScalerEnum.STANDARDIZE,
         "mean": ConstantMean().model_dump(),
         "likelihood": GaussianLikelihood().model_dump(),
-        "hyperconfig": None,
         "categorical_encodings": {},
         "engineered_features": EngineeredFeatures().model_dump(),
         "dump": None,
@@ -266,7 +260,6 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "categorical_encodings": {},
-        "hyperconfig": None,
         "dump": None,
     },
 )
@@ -289,7 +282,6 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "categorical_encodings": {},
-        "hyperconfig": None,
         "dump": None,
     },
 )
@@ -312,7 +304,6 @@ specs.add_invalid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.LOG,
         "categorical_encodings": {},
-        "hyperconfig": None,
         "dump": None,
     },
     error=ValueError,
@@ -337,7 +328,6 @@ specs.add_invalid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.CHAINED_LOG_STANDARDIZE,
         "categorical_encodings": {},
-        "hyperconfig": None,
         "dump": None,
     },
     error=ValueError,
@@ -364,7 +354,6 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "categorical_encodings": {},
-        "hyperconfig": None,
         "dump": None,
         "model_type": "saas",
         "features_to_warp": [],
@@ -440,7 +429,6 @@ specs.add_valid(
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
         "categorical_encodings": {"cat1": OrdinalEncoding().model_dump()},
         "dump": None,
-        "hyperconfig": None,
     },
 )
 specs.add_valid(
@@ -472,7 +460,6 @@ specs.add_valid(
         ).model_dump(),
         "categorical_encodings": {},
         "dump": None,
-        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
 )
 specs.add_invalid(
@@ -585,7 +572,6 @@ specs.add_valid(
         "ccp_alpha": 0.0,
         "max_samples": None,
         "dump": None,
-        "hyperconfig": None,
         "scaler": None,
         "output_scaler": ScalerEnum.IDENTITY,
     },
@@ -619,7 +605,6 @@ specs.add_valid(
         "output_scaler": ScalerEnum.IDENTITY,
         "categorical_encodings": {},
         "dump": None,
-        "hyperconfig": None,
     },
 )
 specs.add_invalid(
@@ -650,7 +635,6 @@ specs.add_invalid(
         "output_scaler": ScalerEnum.IDENTITY,
         "categorical_encodings": {},
         "dump": None,
-        "hyperconfig": None,
     },
     error=ValueError,
 )
@@ -684,7 +668,6 @@ specs.add_valid(
         "output_scaler": ScalerEnum.IDENTITY,
         "categorical_encodings": {},
         "dump": None,
-        "hyperconfig": None,
     },
 )
 specs.add_invalid(
@@ -714,7 +697,6 @@ specs.add_invalid(
         "scaler": None,
         "output_scaler": ScalerEnum.IDENTITY,
         "dump": None,
-        "hyperconfig": None,
     },
     error=ValueError,
 )
@@ -754,7 +736,6 @@ specs.add_valid(
             ).model_dump(),
         },
         "dump": None,
-        "hyperconfig": None,
         "tanimoto_calculation_mode": "pre_computed",
     },
 )
@@ -960,7 +941,6 @@ specs.add_valid(
             "task": OrdinalEncoding().model_dump(),
         },
         "dump": None,
-        "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
     },
 )
 
@@ -990,7 +970,6 @@ specs.add_invalid(
         "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
         "task_prior": None,
         "dump": None,
-        "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
     },
     error=ValueError,
     message="Exactly one task input",
@@ -1025,7 +1004,6 @@ specs.add_invalid(
             "task": OneHotEncoding().model_dump(),
         },
         "dump": None,
-        "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
     },
     error=ValueError,
     message="The task feature task has to be encoded as ordinal",
@@ -1054,7 +1032,6 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "likelihood": "probit",
         "engineered_features": EngineeredFeatures().model_dump(),
-        "hyperconfig": None,
         "categorical_encodings": {},
         "dump": None,
     },
@@ -1084,7 +1061,6 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "likelihood": "logit",
         "engineered_features": EngineeredFeatures().model_dump(),
-        "hyperconfig": None,
         "categorical_encodings": {},
         "dump": None,
     },
@@ -1153,4 +1129,50 @@ specs.add_invalid(
     },
     error=ValueError,
     message="c: descriptor names must be unique",
+)
+
+
+def _selection_io(key: str = "x"):
+    return (
+        Inputs(features=[ContinuousInput(key=key, bounds=(0, 1))]),
+        Outputs(features=[ContinuousOutput(key="y")]),
+    )
+
+
+specs.add_valid(
+    models.SelectionSurrogate,
+    lambda: {
+        "inputs": _selection_io()[0].model_dump(),
+        "outputs": _selection_io()[1].model_dump(),
+        "options": [
+            models.SingleTaskGPSurrogate(
+                inputs=_selection_io()[0], outputs=_selection_io()[1]
+            ).model_dump(),
+            models.RandomForestSurrogate(
+                inputs=_selection_io()[0], outputs=_selection_io()[1]
+            ).model_dump(),
+        ],
+        "metric": RegressionMetricsEnum.MAE,
+        "folds": 5,
+        "random_state": None,
+        "dump": None,
+    },
+)
+
+specs.add_invalid(
+    models.SelectionSurrogate,
+    lambda: {
+        "inputs": _selection_io()[0],
+        "outputs": _selection_io()[1],
+        "options": [
+            models.SingleTaskGPSurrogate(
+                inputs=_selection_io()[0], outputs=_selection_io()[1]
+            ),
+            models.SingleTaskGPSurrogate(
+                inputs=_selection_io("z")[0], outputs=_selection_io()[1]
+            ),
+        ],
+    },
+    error=ValueError,
+    message="Option 1 has different inputs.",
 )

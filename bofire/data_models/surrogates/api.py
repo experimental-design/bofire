@@ -19,7 +19,6 @@ from bofire.data_models.surrogates.map_saas import (
     EnsembleMapSaasSingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.mixed_single_task_gp import (
-    MixedSingleTaskGPHyperconfig,
     MixedSingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.mlp import (
@@ -27,10 +26,7 @@ from bofire.data_models.surrogates.mlp import (
     MLPEnsemble,
     RegressionMLPEnsemble,
 )
-from bofire.data_models.surrogates.multi_task_gp import (
-    MultiTaskGPHyperconfig,
-    MultiTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.data_models.surrogates.pairwise_gp import PairwiseGPSurrogate
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
@@ -43,10 +39,8 @@ from bofire.data_models.surrogates.scaler import (
     ScalerEnum,
     Standardize,
 )
-from bofire.data_models.surrogates.single_task_gp import (
-    SingleTaskGPHyperconfig,
-    SingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.selection import SelectionSurrogate
+from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
@@ -72,6 +66,7 @@ AnySurrogate = tagged_union(
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
     PairwiseGPSurrogate,
+    SelectionSurrogate,
 )
 
 AnyTrainableSurrogate = tagged_union(
@@ -88,6 +83,7 @@ AnyTrainableSurrogate = tagged_union(
     TanimotoGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
+    SelectionSurrogate,
 )
 
 AnyRegressionSurrogate = tagged_union(
@@ -106,6 +102,7 @@ AnyRegressionSurrogate = tagged_union(
     SingleTaskIBNNSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
+    SelectionSurrogate,
 )
 
 AnyClassificationSurrogate = ClassificationMLPEnsemble

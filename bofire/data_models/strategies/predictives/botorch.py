@@ -1,4 +1,4 @@
-from typing import Annotated, Type
+from typing import Type
 
 from pydantic import Field, model_validator
 
@@ -33,9 +33,6 @@ class BotorchStrategy(PredictiveStrategy):
         default_factory=lambda: BotorchSurrogates(surrogates=[]),
         validate_default=True,
     )
-    # hyperopt params
-    frequency_hyperopt: Annotated[int, Field(ge=0)] = 0  # 0 indicates no hyperopt
-    folds: int = 5
     include_infeasible_exps_in_acqf_calc: bool = Field(
         default=False,
         description="Whether infeasible experiments should be included in the set "

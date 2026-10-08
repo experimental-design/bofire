@@ -159,8 +159,6 @@ class QparegoStrategy(BotorchStrategy):
         acquisition_function: qEI | qLogEI | qLogNEI | qNEI | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
         convergence_criterion: AnyConvergenceCriterion | None = None,
@@ -180,8 +178,6 @@ class QparegoStrategy(BotorchStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer for the acquisition function.
             surrogate_specs: Specifications for the surrogate model.
-            frequency_hyperopt: Frequency of hyperparameter optimization.
-            folds: Number of folds for cross-validation for hyperparameter optimization.
             seed: Random seed for reproducibility.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.

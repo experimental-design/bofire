@@ -15,6 +15,7 @@ BoFire offers the following classes of surrogate models.
 [MLP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mlp.py)|a single objective with real-valued inputs|Rich data and black-box function is smooth|Multi layer perceptron
 [MixedSingleTaskGPSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed\_single\_task\_gp.py)|a single objective with categorical and real valued inputs|Limited data and black-box function is smooth|Gaussian process
 [TanimotoGP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed_tanimoto_gp.py)|a single objective|At least one input feature is a molecule represented as fingerprint|Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points
+[SelectionSurrogate](../reference/data_models.surrogates.api.html#bofire.data_models.surrogates.api.SelectionSurrogate)|a single continuous objective|Choosing between several complete surrogate configurations|Cross-validation model selection
 
 All of these are single-objective surrogate models. For optimization of multiple objectives at the same time, a suitable [Strategy](https://github.com/experimental-design/bofire/blob/main/bofire/strategies/strategy.py) has to be chosen. Then for each objective a different surrogate model can be specified. By default the SingleTaskGPSurrogate is used.
 
@@ -40,6 +41,21 @@ All of these are single-objective surrogate models. For optimization of multiple
 - The standard Kernel for all Gaussian Process (GP) surrogates is a 5/2 matern kernel with automated relevance detection and normalization of the input features.
 - The RandomForestSurrogate does not have kernels but quantifies uncertainty using the standard deviation of the predictions of its individual trees.
 - MLP quantifies uncertainty using the standard deviation of multiple predictions that come from different dropout rates (randomly setting neural network weights to zero).
+
+## Model selection by cross-validation
+
+`SelectionSurrogate` chooses between two or more complete surrogate configurations.
+Whenever it is fitted, it cross-validates every option, ranks them using the
+configured regression metric, and then fits the winning option on all available
+experiments. The list of options can mix model families, for example a Gaussian
+process and a random forest, or contain several differently configured Gaussian
+processes.
+
+See [Model Building with BoFire](../tutorials/basic_examples/Model_Fitting_and_analysis.qmd#select-a-surrogate-by-cross-validation)
+for a worked example. `SingleTaskGPSurrogate.options(inputs, outputs)` provides the
+36 GP configurations comprising different kernels, priors, scale-kernel settings,
+and ARD settings. Filtering that list or constructing a smaller list of options
+reduces the number of cross-validation fits performed during each model fit.
 
 ## Customization
 BoFire also offers the option to customize surrogate models. In particular, it is possible to customize the SingleTaskGPSurrogate in the following ways.

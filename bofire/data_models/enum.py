@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Literal
 
 
 class SamplingMethodEnum(str, Enum):
@@ -29,6 +30,19 @@ class RegressionMetricsEnum(str, Enum):
     PEARSON = "PEARSON"
     SPEARMAN = "SPEARMAN"
     FISHER = "FISHER"
+
+
+REGRESSION_METRIC_DIRECTIONS: dict[
+    RegressionMetricsEnum, Literal["MINIMIZE", "MAXIMIZE"]
+] = {
+    RegressionMetricsEnum.MAE: "MINIMIZE",
+    RegressionMetricsEnum.MSD: "MINIMIZE",
+    RegressionMetricsEnum.MAPE: "MINIMIZE",
+    RegressionMetricsEnum.FISHER: "MINIMIZE",
+    RegressionMetricsEnum.R2: "MAXIMIZE",
+    RegressionMetricsEnum.PEARSON: "MAXIMIZE",
+    RegressionMetricsEnum.SPEARMAN: "MAXIMIZE",
+}
 
 
 class UQRegressionMetricsEnum(str, Enum):

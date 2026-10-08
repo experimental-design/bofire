@@ -29,13 +29,15 @@ from bofire.data_models.surrogates.mlp import (
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
+from bofire.data_models.surrogates.selection import SelectionSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.types import InputTransformSpecs
 from bofire.data_models.unions import tagged_union
 
 
-_BOTORCH_SURROGATE_TYPES: List[Type[BotorchSurrogate]] = [
+_BOTORCH_SURROGATE_TYPES: List[Type[Surrogate]] = [
     EmpiricalSurrogate,
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
@@ -51,6 +53,7 @@ _BOTORCH_SURROGATE_TYPES: List[Type[BotorchSurrogate]] = [
     MultiTaskGPSurrogate,
     AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
+    SelectionSurrogate,
 ]
 
 AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)
