@@ -68,11 +68,29 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
 
     def _dumps(self) -> str:
         assert self.chosen is not None
-        return json.dumps({"selected": self.selected, "dump": self.chosen.dumps()})
+        scores = (
+            json.loads(self.scores.to_json(orient="split", double_precision=15))
+            if self.scores is not None
+            else None
+        )
+        return json.dumps(
+            {
+                "selected": self.selected,
+                "scores": scores,
+                "dump": self.chosen.dumps(),
+            }
+        )
 
     def loads(self, data: str):
         loaded = json.loads(data)
         self.selected = loaded["selected"]
+        scores = loaded.get("scores")
+        if scores is not None:
+            self.scores = pd.DataFrame(
+                data=scores["data"],
+                index=scores["index"],
+                columns=scores["columns"],
+            )
         chosen = self._map(self.selected)
         chosen.loads(loaded["dump"])
         self.chosen = chosen
