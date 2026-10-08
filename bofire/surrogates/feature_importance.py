@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import shap
 
-from bofire.data_models.enum import RegressionMetricsEnum
+from bofire.data_models.enum import REGRESSION_METRIC_DIRECTIONS, RegressionMetricsEnum
 from bofire.data_models.features.api import CategoricalOutput, ContinuousOutput
 from bofire.protocols import Predictor
 from bofire.surrogates.diagnostics import metrics
@@ -267,16 +267,6 @@ def permutation_importance(
     assert n_repeats > 1, "Number of repeats has to be larger than 1."
     assert seed > 0, "Seed has to be larger than zero."
 
-    signs = {
-        RegressionMetricsEnum.R2: 1.0,
-        RegressionMetricsEnum.FISHER: -1.0,
-        RegressionMetricsEnum.MAE: -1.0,
-        RegressionMetricsEnum.MAPE: -1.0,
-        RegressionMetricsEnum.MSD: -1.0,
-        RegressionMetricsEnum.PEARSON: 1.0,
-        RegressionMetricsEnum.SPEARMAN: 1.0,
-    }
-
     output_key = surrogate.outputs[0].key
     rng = np.random.default_rng(seed)
     prelim_results = {
@@ -323,7 +313,8 @@ def permutation_importance(
             },
             index=["mean", "std"],
         )
-        results[k.name].loc["mean"] *= signs[k]
+        if REGRESSION_METRIC_DIRECTIONS[k] == "MINIMIZE":
+            results[k.name].loc["mean"] *= -1.0
 
     return results
 

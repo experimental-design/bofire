@@ -3,19 +3,11 @@ from typing import Optional, cast
 
 import pandas as pd
 
-from bofire.data_models.enum import RegressionMetricsEnum
+from bofire.data_models.enum import REGRESSION_METRIC_DIRECTIONS
 from bofire.data_models.surrogates.api import SelectionSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
-
-
-# metrics for which a lower cross-validation score is better
-_LOWER_IS_BETTER = {
-    RegressionMetricsEnum.MAE,
-    RegressionMetricsEnum.MSD,
-    RegressionMetricsEnum.MAPE,
-}
 
 
 class SelectionSurrogate(Surrogate, TrainableSurrogate):
@@ -59,7 +51,7 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
             scores.append(cv_test.get_metrics(combine_folds=True).iloc[0])
         self.scores = pd.DataFrame(scores).reset_index(drop=True)
         ranked = self.scores[self.metric.name]
-        if self.metric in _LOWER_IS_BETTER:
+        if REGRESSION_METRIC_DIRECTIONS[self.metric] == "MINIMIZE":
             return int(ranked.idxmin())
         return int(ranked.idxmax())
 

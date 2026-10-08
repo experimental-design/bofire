@@ -194,16 +194,17 @@ def _fisher_exact_test_p(
     predicted: np.ndarray,
     standard_deviation: Optional[np.ndarray] = None,
 ) -> float:
-    """Test if the model is able to distuinguish the bottom half of the
+    """Test if the model is able to distinguish the bottom half of the
     observations from the top half.
 
     For this purpose Fisher's exact test is used together with the observations
     and predictions. The p value is returned. A low p value indicates that
-    the model has some ability to distuiguish high from low values. A high p
+    the model has some ability to distinguish high from low values. A high p
     value indicates that the model cannot identify the difference or that the
     observations are too noisy to be able to tell.
 
-    This implementation is taken from Ax: https://github.com/facebook/Ax/blob/main/ax/modelbridge/cross_validation.py
+    This implementation follows Ax:
+    https://github.com/facebook/Ax/blob/f4e58e05f9e888cc70da28ef02df9e755b38f985/ax/utils/stats/model_fit_stats.py#L290-L329
 
     Args:
         observed (np.ndarray): Observed data.

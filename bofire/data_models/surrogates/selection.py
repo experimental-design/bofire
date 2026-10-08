@@ -68,8 +68,8 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
     )
     metric: RegressionMetricsEnum = Field(
         default=RegressionMetricsEnum.MAE,
-        description="Cross-validation score the candidates are ranked by. Lower is "
-        "better for the error metrics (MAE, MSD, MAPE), higher for the others.",
+        description="Cross-validation metric used to rank the candidates. Each metric "
+        "defines whether lower or higher values are better.",
     )
     folds: int = Field(
         default=5,

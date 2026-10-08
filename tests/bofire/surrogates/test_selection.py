@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
+import pytest
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.kernels.api import LinearKernel, MaternKernel, ScaleKernel
 from bofire.data_models.priors.api import (
@@ -97,6 +99,43 @@ def test_selection_prefers_the_earlier_of_equal_candidates():
     surrogate.fit(_experiments(10))
 
     assert surrogate.selected == 0
+
+
+@pytest.mark.parametrize(
+    "metric, scores, expected",
+    [
+        (RegressionMetricsEnum.FISHER, [0.01, 1.0], 0),
+        (RegressionMetricsEnum.R2, [0.1, 0.9], 1),
+    ],
+)
+def test_selection_uses_metric_direction(monkeypatch, metric, scores, expected):
+    surrogate = surrogates.map(
+        SelectionSurrogate(
+            inputs=INPUTS,
+            outputs=OUTPUTS,
+            candidates=[_rbf(), _rbf()],
+            metric=metric,
+        )
+    )
+
+    class CrossValidationResults:
+        def __init__(self, score):
+            self.score = score
+
+        def get_metrics(self, combine_folds=True):
+            return pd.DataFrame([{metric.name: self.score}])
+
+    class Candidate:
+        def __init__(self, score):
+            self.score = score
+
+        def cross_validate(self, *args, **kwargs):
+            return None, CrossValidationResults(self.score), {}
+
+    candidates = [Candidate(score) for score in scores]
+    monkeypatch.setattr(surrogate, "_map", lambda i: candidates[i])
+
+    assert surrogate._select(_experiments(2)) == expected
 
 
 def test_selection_dump_restores_the_chosen_candidate():
