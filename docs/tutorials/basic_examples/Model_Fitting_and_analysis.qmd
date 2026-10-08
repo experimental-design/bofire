@@ -20,7 +20,11 @@ import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+from bofire.data_models.kernels.api import LinearKernel
+from bofire.data_models.surrogates.api import (
+    SelectionSurrogate,
+    SingleTaskGPSurrogate,
+)
 from bofire.plot.cv_folds import plot_cv_folds_plotly
 from bofire.plot.feature_importance import plot_feature_importance_by_feature_plotly
 from bofire.plot.gp_slice import plot_gp_slice_plotly
@@ -126,6 +130,46 @@ test_cv.get_metrics(combine_folds=False)
 display(test_cv.get_metrics(combine_folds=False))
 display(test_cv.get_metrics(combine_folds=False).describe())
 ```
+
+### Select a surrogate by cross-validation
+
+The cross-validation results above describe one surrogate configuration. We can
+also use cross-validation to choose between several complete surrogate
+configurations. `SelectionSurrogate` evaluates every candidate with the requested
+metric and fits the best candidate on all experiments. Here, we compare the default
+single-task GP to a GP with a linear kernel.
+
+```{python}
+selection_data_model = SelectionSurrogate(
+    inputs=input_features,
+    outputs=output_features,
+    candidates=[
+        data_model,
+        SingleTaskGPSurrogate(
+            inputs=input_features,
+            outputs=output_features,
+            kernel=LinearKernel(),
+        ),
+    ],
+    metric=RegressionMetricsEnum.MAE,
+    folds=5,
+    random_state=42,
+)
+
+selection_model = surrogates.map(selection_data_model)
+selection_model.fit(experiments)
+
+display(selection_model.scores)
+selection_data_model.candidates[selection_model.selected]
+```
+
+The rows of `scores` correspond to the candidates in their original order, and
+`selected` is the position of the winning configuration. For a broader search,
+`SingleTaskGPSurrogate.options(input_features, output_features)` constructs 36 GP
+configurations comprising different kernels, priors, scale-kernel settings, and ARD
+settings. Using all of them with five folds requires 180 cross-validation fits,
+followed by a fit of the winner on all experiments. A smaller, problem-informed
+candidate set is therefore often more practical.
 
 ### Plot Folds
 
