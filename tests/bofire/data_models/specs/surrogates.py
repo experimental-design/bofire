@@ -1144,7 +1144,7 @@ specs.add_valid(
     lambda: {
         "inputs": _selection_io()[0].model_dump(),
         "outputs": _selection_io()[1].model_dump(),
-        "candidates": [
+        "options": [
             models.SingleTaskGPSurrogate(
                 inputs=_selection_io()[0], outputs=_selection_io()[1]
             ).model_dump(),
@@ -1164,7 +1164,7 @@ specs.add_invalid(
     lambda: {
         "inputs": _selection_io()[0],
         "outputs": _selection_io()[1],
-        "candidates": [
+        "options": [
             models.SingleTaskGPSurrogate(
                 inputs=_selection_io()[0], outputs=_selection_io()[1]
             ),
@@ -1174,5 +1174,5 @@ specs.add_invalid(
         ],
     },
     error=ValueError,
-    message="Candidate 1 has different inputs.",
+    message="Option 1 has different inputs.",
 )

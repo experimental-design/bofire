@@ -64,7 +64,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
 
     @staticmethod
     def options(inputs: Inputs, outputs: Outputs) -> List["SingleTaskGPSurrogate"]:
-        """Single-task GPs that differ in kernel and priors, as candidates to choose from.
+        """Single-task GPs that differ in kernel and priors, as options to choose from.
 
         One for each combination of base kernel (RBF, Matern 1.5, Matern 2.5), set of
         noise, lengthscale and outputscale priors (MBO, THREESIX, HVARFNER), with and

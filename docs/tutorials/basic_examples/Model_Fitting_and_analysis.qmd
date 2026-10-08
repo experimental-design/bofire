@@ -135,15 +135,15 @@ display(test_cv.get_metrics(combine_folds=False).describe())
 
 The cross-validation results above describe one surrogate configuration. We can
 also use cross-validation to choose between several complete surrogate
-configurations. `SelectionSurrogate` evaluates every candidate with the requested
-metric and fits the best candidate on all experiments. Here, we compare the default
+configurations. `SelectionSurrogate` evaluates every option with the requested
+metric and fits the best option on all experiments. Here, we compare the default
 single-task GP to a GP with a linear kernel.
 
 ```{python}
 selection_data_model = SelectionSurrogate(
     inputs=input_features,
     outputs=output_features,
-    candidates=[
+    options=[
         data_model,
         SingleTaskGPSurrogate(
             inputs=input_features,
@@ -160,16 +160,16 @@ selection_model = surrogates.map(selection_data_model)
 selection_model.fit(experiments)
 
 display(selection_model.scores)
-selection_data_model.candidates[selection_model.selected]
+selection_data_model.options[selection_model.selected]
 ```
 
-The rows of `scores` correspond to the candidates in their original order, and
+The rows of `scores` correspond to the options in their original order, and
 `selected` is the position of the winning configuration. For a broader search,
 `SingleTaskGPSurrogate.options(input_features, output_features)` constructs 36 GP
 configurations comprising different kernels, priors, scale-kernel settings, and ARD
 settings. Using all of them with five folds requires 180 cross-validation fits,
 followed by a fit of the winner on all experiments. A smaller, problem-informed
-candidate set is therefore often more practical.
+set of options is therefore often more practical.
 
 ### Plot Folds
 

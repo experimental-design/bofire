@@ -1,6 +1,7 @@
 import json
 from typing import Optional, cast
 
+import numpy as np
 import pandas as pd
 
 from bofire.data_models.enum import REGRESSION_METRIC_DIRECTIONS
@@ -11,11 +12,11 @@ from bofire.surrogates.trainable import TrainableSurrogate
 
 
 class SelectionSurrogate(Surrogate, TrainableSurrogate):
-    """Chooses one of several candidate surrogates by cross-validation.
+    """Chooses one of several surrogate options by cross-validation.
 
-    After fitting, `selected` is the position of the chosen candidate, `chosen` the
-    fitted candidate that makes the predictions, and `scores` holds the
-    cross-validation metrics of every candidate, one row per candidate in their order.
+    After fitting, `selected` is the position of the chosen option, `chosen` the
+    fitted option that makes the predictions, and `scores` holds the
+    cross-validation metrics of every option, one row per option in their order.
     """
 
     def __init__(
@@ -23,10 +24,15 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
         data_model: DataModel,
         **kwargs,
     ):
-        self.candidates = data_model.candidates
+        self.options = data_model.options
         self.metric = data_model.metric
         self.folds = data_model.folds
-        self.random_state = data_model.random_state
+        # drawn once if not given, so that every option is scored on the same folds
+        self.random_state: int = (
+            data_model.random_state
+            if data_model.random_state is not None
+            else np.random.SeedSequence().generate_state(1, dtype=np.uint32).item()
+        )
         self.selected: Optional[int] = None
         self.chosen: Optional[TrainableBotorchSurrogate] = None
         self.scores: Optional[pd.DataFrame] = None
@@ -42,7 +48,7 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
 
     def _select(self, experiments: pd.DataFrame) -> int:
         scores = []
-        for i in range(len(self.candidates)):
+        for i in range(len(self.options)):
             _, cv_test, _ = self._map(i).cross_validate(
                 experiments,
                 folds=self.folds,
@@ -59,8 +65,8 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
         # imported here, as the mapper imports this module
         from bofire.surrogates.mapper import map as map_surrogate
 
-        # every candidate type maps to a trainable botorch surrogate
-        return cast(TrainableBotorchSurrogate, map_surrogate(self.candidates[i]))
+        # every option type maps to a trainable botorch surrogate
+        return cast(TrainableBotorchSurrogate, map_surrogate(self.options[i]))
 
     def _predict(self, transformed_X: pd.DataFrame):
         assert self.chosen is not None

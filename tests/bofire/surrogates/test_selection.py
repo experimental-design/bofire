@@ -67,12 +67,12 @@ def test_options_contain_a_scaled_matern_with_hvarfner_priors():
     assert matches[0].likelihood.noise_prior == HVARFNER_NOISE_PRIOR()
 
 
-def test_selection_chooses_the_better_candidate():
+def test_selection_chooses_the_better_option():
     surrogate = surrogates.map(
         SelectionSurrogate(
             inputs=INPUTS,
             outputs=OUTPUTS,
-            candidates=[_linear(), _rbf()],
+            options=[_linear(), _rbf()],
             random_state=0,
         )
     )
@@ -87,10 +87,10 @@ def test_selection_chooses_the_better_candidate():
     assert surrogate.predict(experiments).shape == (15, 2)
 
 
-def test_selection_prefers_the_earlier_of_equal_candidates():
+def test_selection_prefers_the_earlier_of_equal_options():
     surrogate = surrogates.map(
         SelectionSurrogate(
-            inputs=INPUTS, outputs=OUTPUTS, candidates=[_rbf(), _rbf()], random_state=0
+            inputs=INPUTS, outputs=OUTPUTS, options=[_rbf(), _rbf()], random_state=0
         )
     )
 
@@ -99,11 +99,11 @@ def test_selection_prefers_the_earlier_of_equal_candidates():
     assert surrogate.selected == 0
 
 
-def test_selection_dump_restores_the_chosen_candidate():
-    candidates = [_linear(), _rbf()]
+def test_selection_dump_restores_the_chosen_option():
+    options = [_linear(), _rbf()]
     surrogate = surrogates.map(
         SelectionSurrogate(
-            inputs=INPUTS, outputs=OUTPUTS, candidates=candidates, random_state=0
+            inputs=INPUTS, outputs=OUTPUTS, options=options, random_state=0
         )
     )
     experiments = _experiments(10)
@@ -113,7 +113,7 @@ def test_selection_dump_restores_the_chosen_candidate():
         SelectionSurrogate(
             inputs=INPUTS,
             outputs=OUTPUTS,
-            candidates=candidates,
+            options=options,
             dump=surrogate.dumps(),
         )
     )

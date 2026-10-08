@@ -2,10 +2,9 @@ from pydantic import Field, model_validator
 
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.scaler import AnyScaler, Normalize, ScalerEnum
-from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 
-class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
+class TrainableBotorchSurrogate(BotorchSurrogate):
     scaler: AnyScaler = Field(default_factory=Normalize)
     output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
 
