@@ -1,7 +1,9 @@
 import unittest
 from typing import cast
 
+import numpy as np
 import pandas as pd
+import pytest
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.utils.testing import MockAcquisitionFunction
@@ -20,6 +22,9 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.strategies.predictives.acqf_optimization import (
     BotorchOptimizer as BotorchOptimizerModel,
+)
+from bofire.data_models.strategies.predictives.acqf_optimization import (
+    GeneticAlgorithmOptimizer as GeneticAlgorithmOptimizerModel,
 )
 from bofire.data_models.strategies.predictives.sobo import (
     SoboStrategy as SoboStrategyModel,
@@ -407,3 +412,179 @@ def test_ask_with_semicontinuous_and_categorical():
         assert (
             (values == 0.0) | ((values >= feat.bounds[0]) & (values <= feat.bounds[1]))
         ).all()
+
+
+def _sobo_with_experiments(domain, optimizer, n_experiments=5):
+    strategy = SoboStrategy(
+        data_model=SoboStrategyModel(
+            domain=domain, acquisition_optimizer=optimizer, seed=42
+        )
+    )
+    experiments = domain.inputs.sample(n_experiments, seed=1)
+    experiments = experiments.assign(
+        **{
+            key: [float(i) for i in range(n_experiments)]
+            for key in domain.outputs.get_keys()
+        },
+        **{f"valid_{key}": 1 for key in domain.outputs.get_keys()},
+    )
+    strategy.tell(experiments)
+    return strategy
+
+
+def _assert_botorch_progress(events, max_steps, allow_missing_values=False):
+    assert len(events) > 0
+    assert [e.step for e in events] == list(range(1, len(events) + 1))
+    assert all(e.optimizer == "botorch" for e in events)
+    assert {e.max_steps for e in events} == {max_steps}
+    assert events[-1].step <= max_steps
+    values = [e.value for e in events]
+    if allow_missing_values:
+        values = [v for v in values if v is not None]
+    else:
+        assert None not in values
+    assert all(np.isfinite(v) for v in values)
+
+
+def test_botorch_optimizer_reports_progress():
+    strategy = _sobo_with_experiments(
+        Hartmann().domain,
+        BotorchOptimizerModel(n_restarts=2, n_raw_samples=16, maxiter=5),
+    )
+    events = []
+    strategy.ask(1, progress_callback=events.append)
+    # 2 restarts, 3 iterations each
+    _assert_botorch_progress(events, max_steps=10)
+
+
+def test_botorch_optimizer_max_steps_scales_with_restarts_and_categorical_combinations():
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x", bounds=(0, 1)),
+            CategoricalInput(key="c", categories=["u", "v", "w"]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    strategy = _sobo_with_experiments(
+        domain,
+        BotorchOptimizerModel(n_restarts=4, batch_limit=2, n_raw_samples=16, maxiter=3),
+    )
+    events = []
+    strategy.ask(1, progress_callback=events.append)
+    # 3 categorical combinations, 4 restarts each, 3 iterations per restart; the
+    # bound does not depend on how botorch groups the restarts (`batch_limit`)
+    _assert_botorch_progress(events, max_steps=36)
+
+
+def test_botorch_optimizer_reports_progress_with_linear_constraint():
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x_1", bounds=(0, 1)),
+            ContinuousInput(key="x_2", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearInequalityConstraint(
+                features=["x_1", "x_2"], coefficients=[1.0, 1.0], rhs=1.5
+            )
+        ],
+    )
+    strategy = _sobo_with_experiments(
+        domain, BotorchOptimizerModel(n_restarts=2, n_raw_samples=16, maxiter=5)
+    )
+    events = []
+    strategy.ask(1, progress_callback=events.append)
+    # whether SLSQP (used under constraints) reports a value depends on the scipy version
+    _assert_botorch_progress(events, max_steps=10, allow_missing_values=True)
+
+
+def test_ga_optimizer_reports_progress():
+    strategy = _sobo_with_experiments(
+        Hartmann().domain,
+        GeneticAlgorithmOptimizerModel(population_size=20, n_max_gen=5),
+    )
+    events = []
+    acqfs = strategy._get_acqfs(1)
+    # call the optimizer directly: `ask` post-processes the candidates
+    candidates = strategy.acqf_optimizer.optimize(
+        1, acqfs, strategy.domain, strategy.experiments, callback=events.append
+    )
+    assert len(events) > 0
+    steps = [e.step for e in events]
+    assert steps[0] == 1
+    assert all(b > a for a, b in zip(steps, steps[1:]))
+    assert all(e.optimizer == "genetic_algorithm" for e in events)
+    # the best value never decreases, and the last one is the acqf value of the
+    # returned candidate (pins the sign convention: the GA minimizes -acqf)
+    values = [e.value for e in events]
+    assert values == sorted(values)
+    X = torch.tensor(candidates[strategy.domain.inputs.get_keys()].values, **tkwargs)
+    assert values[-1] == pytest.approx(acqfs[0](X.unsqueeze(0)).item(), rel=1e-6)
+    assert {e.max_steps for e in events} == {5}
+
+
+def test_ga_optimizer_max_steps_follows_evaluation_budget():
+    strategy = _sobo_with_experiments(
+        Hartmann().domain,
+        GeneticAlgorithmOptimizerModel(population_size=20, n_max_evals=70),
+    )
+    events = []
+    strategy.ask(1, progress_callback=events.append)
+    # 70 evaluations at 20 per generation are exhausted after 4 generations
+    assert {e.max_steps for e in events} == {4}
+    assert events[-1].step == 4
+
+
+def _categorical_domain(*n_categories):
+    return Domain.from_lists(
+        inputs=[
+            CategoricalInput(key=f"c{i}", categories=[f"v{j}" for j in range(n)])
+            for i, n in enumerate(n_categories)
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+
+@pytest.mark.parametrize("candidate_count", [1, 2])
+def test_exhaustive_search_reports_progress(candidate_count):
+    strategy = _sobo_with_experiments(
+        _categorical_domain(3, 2), BotorchOptimizerModel(), n_experiments=4
+    )
+    events = []
+    candidates = strategy.ask(candidate_count, progress_callback=events.append)
+    assert len(candidates) == candidate_count
+    # the 2 remaining choices fit one batch, which is scored once per candidate
+    assert [e.step for e in events] == list(range(1, candidate_count + 1))
+    assert {e.max_steps for e in events} == {candidate_count}
+    assert all(e.optimizer == "botorch" for e in events)
+    assert all(np.isfinite(e.value) for e in events)
+
+
+def test_exhaustive_search_reports_one_step_per_batch_of_choices():
+    # 13 ** 3 = 2197 choices, i.e. 2 batches of at most 2048
+    strategy = _sobo_with_experiments(
+        _categorical_domain(13, 13, 13), BotorchOptimizerModel(), n_experiments=5
+    )
+    events = []
+    strategy.ask(1, progress_callback=events.append)
+    assert [e.step for e in events] == [1, 2]
+    assert {e.max_steps for e in events} == {2}
+    # the value is the best one seen so far in the pass
+    assert events[1].value >= events[0].value
+
+
+def test_callback_warns_with_mixed_alternating_optimizer():
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="x", bounds=(0, 1)),
+            CategoricalInput(key="c", categories=[f"v{j}" for j in range(11)]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    strategy = _sobo_with_experiments(
+        domain, BotorchOptimizerModel(n_raw_samples=16, n_restarts=2, maxiter=5)
+    )
+    events = []
+    with pytest.warns(UserWarning, match="optimize_acqf_mixed_alternating"):
+        strategy.ask(1, progress_callback=events.append)
+    assert events == []

@@ -1607,3 +1607,19 @@ def test_nchoosek_overlapping_formulation_complex():
 
 if __name__ == "__main__":
     test_nchoosek_none_valid()
+
+
+def test_doe_strategy_ask_reports_progress():
+    data_model = data_models.DoEStrategy(
+        domain=domain, criterion=DOptimalityCriterion(formula="linear")
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    events = []
+    candidates = strategy.ask(candidate_count=12, progress_callback=events.append)
+    assert candidates.shape == (12, 3)
+    assert len(events) > 0
+    assert [e.step for e in events] == list(range(1, len(events) + 1))
+    # the default `max_iter` of the solver options
+    assert {e.max_steps for e in events} == {500}
+    assert all(e.optimizer == "ipopt" for e in events)
+    assert all(np.isfinite(e.value) for e in events)

@@ -10,6 +10,7 @@ from bofire.data_models.strategies.stepwise.stepwise import Step
 from bofire.data_models.surrogates.api import BotorchSurrogates as BotorchSurrogateSpecs
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.mapper_actual import map as map_actual
+from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.strategy import Strategy, make_strategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.transforms.transform import Transform
@@ -51,7 +52,11 @@ class StepwiseStrategy(Strategy):
                 return self.strategies[i], self.transforms[i]
         raise ValueError("No condition could be satisfied.")
 
-    def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:
+    def _ask(
+        self,
+        candidate_count: Optional[PositiveInt],
+        progress_callback: Optional[AskProgressCallback] = None,
+    ) -> pd.DataFrame:
         strategy, transform = self.get_step()
 
         candidate_count = candidate_count or 1
@@ -70,7 +75,9 @@ class StepwiseStrategy(Strategy):
         if transformed_candidates is not None and len(transformed_candidates) > 0:
             strategy.set_candidates(transformed_candidates)
         # ask and return
-        candidates = strategy.ask(candidate_count=candidate_count)
+        candidates = strategy.ask(
+            candidate_count=candidate_count, progress_callback=progress_callback
+        )
         if transform is not None:
             return transform.untransform_candidates(candidates)
         return candidates

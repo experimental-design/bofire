@@ -10,7 +10,7 @@ except ImportError:
             )
 
 
-from typing import List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import numpy as np
 from scipy import sparse
@@ -20,6 +20,8 @@ from bofire.strategies.doe.objective_base import Objective
 
 
 class FirstOrderDoEProblem(Problem):
+    on_iteration: Optional[Callable[[float], None]] = None
+
     def __init__(
         self,
         doe_objective: Objective,
@@ -97,6 +99,11 @@ class FirstOrderDoEProblem(Problem):
 
     def gradient(self, x: np.ndarray) -> np.ndarray:
         return self.doe_objective.evaluate_jacobian(x)
+
+    def intermediate(self, alg_mod, iter_count, obj_value, *args) -> None:
+        """Ipopt calls this once per iteration; the remaining arguments are unused."""
+        if self.on_iteration is not None:
+            self.on_iteration(obj_value)
 
     def constraints(self, x: np.ndarray) -> np.ndarray:
         linear = (

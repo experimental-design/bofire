@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import List, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -18,6 +18,7 @@ from bofire.data_models.strategies.predictives.multi_fidelity import (
 )
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.strategies.predictives.sobo import SoboStrategy
+from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.strategy import make_strategy
 from bofire.utils.naming_conventions import get_column_names
 
@@ -35,7 +36,11 @@ class MultiFidelityVarianceBasedStrategy(SoboStrategy):
         )
         self.fidelity_thresholds = ft if isinstance(ft, list) else [ft] * M
 
-    def _ask(self, candidate_count: int) -> pd.DataFrame:
+    def _ask(
+        self,
+        candidate_count: int,
+        progress_callback: Optional[AskProgressCallback] = None,
+    ) -> pd.DataFrame:
         """Generate new candidates (x, m).
 
         This is a greedy optimization of the acquisition function. We first
@@ -45,6 +50,8 @@ class MultiFidelityVarianceBasedStrategy(SoboStrategy):
 
         Args:
             candidate_count (int): number of candidates to be generated
+            progress_callback: Called with an `AskOptimizationProgress` while the
+                acquisition function is optimized.
 
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
@@ -61,7 +68,7 @@ class MultiFidelityVarianceBasedStrategy(SoboStrategy):
         # we fix the fidelity by setting all other fidelities to 'not allowed'
         prev_allowed = task_feature.allowed
         task_feature.allowed = [fidelity == 0 for fidelity in task_feature.fidelities]
-        x = super()._ask(candidate_count)
+        x = super()._ask(candidate_count, progress_callback=progress_callback)
         task_feature.allowed = prev_allowed
         fidelity_pred = self._select_fidelity_and_get_predict(x)
         x.update(fidelity_pred)
