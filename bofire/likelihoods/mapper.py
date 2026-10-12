@@ -10,7 +10,9 @@ def map_GaussianLikelihood(
     data_model: data_models.GaussianLikelihood, d: int, **kwargs
 ) -> gpytorch.likelihoods.GaussianLikelihood:
     return gpytorch.likelihoods.GaussianLikelihood(
-        noise_prior=priors.map(data_model.noise_prior, d=d),
+        noise_prior=priors.map(data_model.noise_prior, d=d)
+        if data_model.noise_prior is not None
+        else None,
         noise_constraint=priors.map(data_model.noise_constraint)
         if data_model.noise_constraint is not None
         else None,

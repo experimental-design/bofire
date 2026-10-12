@@ -15,6 +15,7 @@ from bofire.data_models.kernels.api import (
     ScaleKernel,
 )
 from bofire.data_models.likelihoods.api import (
+    HVARFNER_LIKELIHOOD,
     THREESIX_LIKELIHOOD,
     AnyLikelihood,
     GaussianLikelihood,
@@ -22,12 +23,10 @@ from bofire.data_models.likelihoods.api import (
 from bofire.data_models.means.api import AnyMean, ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
-    HVARFNER_NOISE_PRIOR,
     MBO_LENGTHSCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
     THREESIX_LENGTHSCALE_PRIOR,
-    THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
     NormalPrior,
 )
@@ -42,11 +41,16 @@ _BASE_KERNELS = [
     lambda ard, prior: MaternKernel(nu=2.5, ard=ard, lengthscale_prior=prior),
 ]
 
-# (noise, lengthscale, outputscale) priors tried by `SingleTaskGPSurrogate.options`
+# (likelihood, lengthscale prior, outputscale prior) tried by
+# `SingleTaskGPSurrogate.options`
 _PRIOR_SETS = [
-    (MBO_NOISE_PRIOR, MBO_LENGTHSCALE_PRIOR, MBO_OUTPUTSCALE_PRIOR),
-    (THREESIX_NOISE_PRIOR, THREESIX_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
-    (HVARFNER_NOISE_PRIOR, HVARFNER_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
+    (
+        lambda: GaussianLikelihood(noise_prior=MBO_NOISE_PRIOR()),
+        MBO_LENGTHSCALE_PRIOR,
+        MBO_OUTPUTSCALE_PRIOR,
+    ),
+    (THREESIX_LIKELIHOOD, THREESIX_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
+    (HVARFNER_LIKELIHOOD, HVARFNER_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
 ]
 
 
@@ -65,7 +69,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         "observation.",
     )
     likelihood: AnyLikelihood = Field(
-        default=GaussianLikelihood(),
+        default=HVARFNER_LIKELIHOOD(),
         description="How observations scatter around the response, i.e. the model of "
         "the measurement noise.",
     )
@@ -90,7 +94,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         for base_kernel, priors, scale, ard in itertools.product(
             _BASE_KERNELS, _PRIOR_SETS, [True, False], [True, False]
         ):
-            noise_prior, lengthscale_prior, outputscale_prior = priors
+            likelihood, lengthscale_prior, outputscale_prior = priors
             kernel = base_kernel(ard, lengthscale_prior())
             if scale:
                 kernel = ScaleKernel(
@@ -101,7 +105,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
                     inputs=inputs,
                     outputs=outputs,
                     kernel=kernel,
-                    likelihood=GaussianLikelihood(noise_prior=noise_prior()),
+                    likelihood=likelihood(),
                 )
             )
         return options
