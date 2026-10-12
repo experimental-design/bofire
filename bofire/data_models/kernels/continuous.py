@@ -86,6 +86,7 @@ class PolynomialKernel(ContinuousKernel):
     )
     power: int = Field(
         default=2,
+        ge=1,
         description="Degree $p$ of the polynomial. $p=2$ captures pairwise "
         "interactions and quadratic curvature; higher degrees fit more complex "
         "functions, but lead to worse extrapolation and overfitting.",

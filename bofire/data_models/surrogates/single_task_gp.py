@@ -14,7 +14,11 @@ from bofire.data_models.kernels.api import (
     RBFKernel,
     ScaleKernel,
 )
-from bofire.data_models.likelihoods.api import AnyLikelihood, GaussianLikelihood
+from bofire.data_models.likelihoods.api import (
+    THREESIX_LIKELIHOOD,
+    AnyLikelihood,
+    GaussianLikelihood,
+)
 from bofire.data_models.means.api import AnyMean, ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
@@ -25,7 +29,6 @@ from bofire.data_models.priors.api import (
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
-    GreaterThan,
     NormalPrior,
 )
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
@@ -45,14 +48,6 @@ _PRIOR_SETS = [
     (THREESIX_NOISE_PRIOR, THREESIX_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
     (HVARFNER_NOISE_PRIOR, HVARFNER_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
 ]
-
-
-def _threesix_likelihood() -> GaussianLikelihood:
-    """The likelihood of the linear and polynomial factories."""
-    return GaussianLikelihood(
-        noise_prior=THREESIX_NOISE_PRIOR(),
-        noise_constraint=GreaterThan(lower_bound=1e-4),
-    )
 
 
 class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
@@ -129,7 +124,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
             inputs=inputs,
             outputs=outputs,
             kernel=LinearKernel(),
-            likelihood=_threesix_likelihood(),
+            likelihood=THREESIX_LIKELIHOOD(),
         )
 
     @staticmethod
@@ -153,7 +148,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
             inputs=inputs,
             outputs=outputs,
             kernel=PolynomialKernel(power=power),
-            likelihood=_threesix_likelihood(),
+            likelihood=THREESIX_LIKELIHOOD(),
         )
 
     @staticmethod
