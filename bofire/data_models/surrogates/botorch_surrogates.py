@@ -14,11 +14,7 @@ from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
 from bofire.data_models.surrogates.fully_bayesian import (
     FullyBayesianSingleTaskGPSurrogate,
 )
-from bofire.data_models.surrogates.linear import LinearSurrogate
-from bofire.data_models.surrogates.map_saas import (
-    AdditiveMapSaasSingleTaskGPSurrogate,
-    EnsembleMapSaasSingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.map_saas import EnsembleMapSaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.mixed_single_task_gp import (
     MixedSingleTaskGPSurrogate,
 )
@@ -27,7 +23,6 @@ from bofire.data_models.surrogates.mlp import (
     RegressionMLPEnsemble,
 )
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
-from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.selection import SelectionSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
@@ -46,12 +41,9 @@ _BOTORCH_SURROGATE_TYPES: List[Type[Surrogate]] = [
     ClassificationMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
     TanimotoGPSurrogate,
-    LinearSurrogate,
-    PolynomialSurrogate,
     LinearDeterministicSurrogate,
     CategoricalDeterministicSurrogate,
     MultiTaskGPSurrogate,
-    AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
     SelectionSurrogate,
 ]

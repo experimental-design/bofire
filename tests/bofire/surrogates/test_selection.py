@@ -1,14 +1,26 @@
 import numpy as np
 import pandas as pd
+import pytest
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.data_models.kernels.api import LinearKernel, MaternKernel, ScaleKernel
+from bofire.data_models.kernels.api import (
+    AdditiveMapSaasKernel,
+    LinearKernel,
+    MaternKernel,
+    PolynomialKernel,
+    ScaleKernel,
+)
+from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
+    THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
+    GreaterThan,
+    NormalPrior,
 )
 from bofire.data_models.surrogates.api import SelectionSurrogate, SingleTaskGPSurrogate
 
@@ -65,6 +77,40 @@ def test_options_contain_a_scaled_matern_with_hvarfner_priors():
 
     assert len(matches) == 1
     assert matches[0].likelihood.noise_prior == HVARFNER_NOISE_PRIOR()
+
+
+_THREESIX_LIKELIHOOD = GaussianLikelihood(
+    noise_prior=THREESIX_NOISE_PRIOR(), noise_constraint=GreaterThan(lower_bound=1e-4)
+)
+
+
+@pytest.mark.parametrize(
+    "surrogate, kernel, mean, likelihood",
+    [
+        (
+            SingleTaskGPSurrogate.linear(INPUTS, OUTPUTS),
+            LinearKernel(),
+            ConstantMean(),
+            _THREESIX_LIKELIHOOD,
+        ),
+        (
+            SingleTaskGPSurrogate.polynomial(INPUTS, OUTPUTS, power=3),
+            PolynomialKernel(power=3),
+            ConstantMean(),
+            _THREESIX_LIKELIHOOD,
+        ),
+        (
+            SingleTaskGPSurrogate.additive_map_saas(INPUTS, OUTPUTS, n_taus=2),
+            AdditiveMapSaasKernel(n_taus=2),
+            ConstantMean(prior=NormalPrior(loc=0, scale=1), bounds=(-10, 10)),
+            GaussianLikelihood(),
+        ),
+    ],
+)
+def test_factories_build_their_components(surrogate, kernel, mean, likelihood):
+    assert surrogate.kernel == kernel
+    assert surrogate.mean == mean
+    assert surrogate.likelihood == likelihood
 
 
 def test_selection_chooses_the_better_option():

@@ -13,10 +13,7 @@ from bofire.surrogates.deterministic import (
 )
 from bofire.surrogates.empirical import EmpiricalSurrogate
 from bofire.surrogates.fully_bayesian import FullyBayesianSingleTaskGPSurrogate
-from bofire.surrogates.map_saas import (
-    AdditiveMapSaasSingleTaskGPSurrogate,
-    EnsembleMapSaasSingleTaskGPSurrogate,
-)
+from bofire.surrogates.map_saas import EnsembleMapSaasSingleTaskGPSurrogate
 from bofire.surrogates.mlp import ClassificationMLPEnsemble, RegressionMLPEnsemble
 from bofire.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.surrogates.pairwise_gp import PairwiseGPSurrogate
@@ -75,33 +72,11 @@ def map_MixedSingleTaskGPSurrogate(
     )
 
 
-def map_to_SingleTaskGPSurrogate(
-    data_model: "data_models.LinearSurrogate | data_models.PolynomialSurrogate",
-) -> data_models.SingleTaskGPSurrogate:
-    """Express a GP with a fixed kernel and flat noise fields as a single-task GP."""
-    return data_models.SingleTaskGPSurrogate(
-        inputs=data_model.inputs,
-        outputs=data_model.outputs,
-        categorical_encodings=data_model.categorical_encodings,
-        engineered_features=data_model.engineered_features,
-        dump=data_model.dump,
-        scaler=data_model.scaler,
-        output_scaler=data_model.output_scaler,
-        likelihood=GaussianLikelihood(
-            noise_prior=data_model.noise_prior,
-            noise_constraint=data_model.noise_constraint,
-        ),
-        kernel=data_model.kernel,
-    )
-
-
 DATA_MODEL_MAP: Dict[
     Type[data_models.Surrogate],
     Callable[..., data_models.AnySurrogate],
 ] = {
     data_models.MixedSingleTaskGPSurrogate: map_MixedSingleTaskGPSurrogate,
-    data_models.LinearSurrogate: map_to_SingleTaskGPSurrogate,
-    data_models.PolynomialSurrogate: map_to_SingleTaskGPSurrogate,
 }
 
 
@@ -116,9 +91,7 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.TanimotoGPSurrogate: TanimotoGPSurrogate,
     data_models.LinearDeterministicSurrogate: LinearDeterministicSurrogate,
     data_models.MultiTaskGPSurrogate: MultiTaskGPSurrogate,
-    data_models.SingleTaskIBNNSurrogate: SingleTaskGPSurrogate,
     data_models.CategoricalDeterministicSurrogate: CategoricalDeterministicSurrogate,
-    data_models.AdditiveMapSaasSingleTaskGPSurrogate: AdditiveMapSaasSingleTaskGPSurrogate,
     data_models.EnsembleMapSaasSingleTaskGPSurrogate: EnsembleMapSaasSingleTaskGPSurrogate,
     data_models.PairwiseGPSurrogate: PairwiseGPSurrogate,
     data_models.SelectionSurrogate: SelectionSurrogate,

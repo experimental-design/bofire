@@ -10,6 +10,7 @@ from bofire.data_models.kernels.categorical import (
 )
 from bofire.data_models.kernels.conditional import WedgeKernel
 from bofire.data_models.kernels.continuous import (
+    AdditiveMapSaasKernel,
     InfiniteWidthBNNKernel,
     LinearKernel,
     MaternKernel,
@@ -38,6 +39,7 @@ class AdditiveKernel(AggregationKernel):
             IndexKernel,
             PositiveIndexKernel,
             TanimotoKernel,
+            AdditiveMapSaasKernel,
             WassersteinKernel,
             ExactWassersteinKernel,
             DownsamplingKernel,
@@ -64,6 +66,7 @@ class MultiplicativeKernel(AggregationKernel):
             PositiveIndexKernel,
             AdditiveKernel,
             TanimotoKernel,
+            AdditiveMapSaasKernel,
             WassersteinKernel,
             ExactWassersteinKernel,
             DownsamplingKernel,
@@ -94,6 +97,7 @@ class ScaleKernel(AggregationKernel):
         AdditiveKernel,
         MultiplicativeKernel,
         TanimotoKernel,
+        AdditiveMapSaasKernel,
         DownsamplingKernel,
         WedgeKernel,
         "ScaleKernel",
@@ -164,6 +168,7 @@ class PolynomialFeatureInteractionKernel(AggregationKernel):
             RBFKernel,
             SphericalLinearKernel,
             TanimotoKernel,
+            AdditiveMapSaasKernel,
             InfiniteWidthBNNKernel,
             WassersteinKernel,
             ExactWassersteinKernel,

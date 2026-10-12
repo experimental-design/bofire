@@ -76,8 +76,7 @@ Translational invariance means that the similarity between two input points is n
 
 **Note:**
 
-- SingleTaskGPSurrogate with PolynomialKernel is equivalent to PolynomialSurrogate.
-- SingleTaskGPSurrogate with LinearKernel is equivalent to LinearSurrogate.
+- `SingleTaskGPSurrogate.linear(inputs, outputs)` and `SingleTaskGPSurrogate.polynomial(inputs, outputs, power=2)` build a SingleTaskGPSurrogate with a LinearKernel or PolynomialKernel.
 - SingleTaskGPSurrogate with TanimotoKernel is equivalent to TanimotoGP.
 - One can combine two Kernels by using AdditiveKernel or MultiplicativeKernel.
 

@@ -13,6 +13,7 @@ from bofire.data_models.kernels.categorical import (
 )
 from bofire.data_models.kernels.conditional import WedgeKernel
 from bofire.data_models.kernels.continuous import (
+    AdditiveMapSaasKernel,
     ContinuousKernel,
     InfiniteWidthBNNKernel,
     LinearKernel,
@@ -38,6 +39,7 @@ _CONTINUOUS_KERNEL_TYPES: list[type[ContinuousKernel]] = [
     PolynomialKernel,
     RBFKernel,
     SphericalLinearKernel,
+    AdditiveMapSaasKernel,
     InfiniteWidthBNNKernel,
 ]
 
@@ -67,6 +69,7 @@ _KERNEL_TYPES: list[type[Kernel]] = [
     RBFKernel,
     SphericalLinearKernel,
     TanimotoKernel,
+    AdditiveMapSaasKernel,
     InfiniteWidthBNNKernel,
     WassersteinKernel,
     ExactWassersteinKernel,

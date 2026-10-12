@@ -6,8 +6,11 @@ from pydantic import Field
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import (
+    AdditiveMapSaasKernel,
     AnyKernel,
+    LinearKernel,
     MaternKernel,
+    PolynomialKernel,
     RBFKernel,
     ScaleKernel,
 )
@@ -22,6 +25,8 @@ from bofire.data_models.priors.api import (
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
+    GreaterThan,
+    NormalPrior,
 )
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -40,6 +45,14 @@ _PRIOR_SETS = [
     (THREESIX_NOISE_PRIOR, THREESIX_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
     (HVARFNER_NOISE_PRIOR, HVARFNER_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
 ]
+
+
+def _threesix_likelihood() -> GaussianLikelihood:
+    """The likelihood of the linear and polynomial factories."""
+    return GaussianLikelihood(
+        noise_prior=THREESIX_NOISE_PRIOR(),
+        noise_constraint=GreaterThan(lower_bound=1e-4),
+    )
 
 
 class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
@@ -97,6 +110,79 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
                 )
             )
         return options
+
+    @staticmethod
+    def linear(inputs: Inputs, outputs: Outputs) -> "SingleTaskGPSurrogate":
+        """Single-task GP whose response is linear in the inputs.
+
+        Equivalent to Bayesian linear regression. The noise has a THREESIX prior with a
+        lower bound of 1e-4; every other field keeps its default.
+
+        Args:
+            inputs: The input features.
+            outputs: The output feature.
+
+        Returns:
+            The surrogate, with a linear kernel.
+        """
+        return SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            kernel=LinearKernel(),
+            likelihood=_threesix_likelihood(),
+        )
+
+    @staticmethod
+    def polynomial(
+        inputs: Inputs, outputs: Outputs, power: int = 2
+    ) -> "SingleTaskGPSurrogate":
+        """Single-task GP whose response is a polynomial in the inputs.
+
+        The noise has a THREESIX prior with a lower bound of 1e-4; every other field
+        keeps its default.
+
+        Args:
+            inputs: The input features.
+            outputs: The output feature.
+            power: Degree of the polynomial.
+
+        Returns:
+            The surrogate, with a polynomial kernel of the given power.
+        """
+        return SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            kernel=PolynomialKernel(power=power),
+            likelihood=_threesix_likelihood(),
+        )
+
+    @staticmethod
+    def additive_map_saas(
+        inputs: Inputs, outputs: Outputs, n_taus: int = 4
+    ) -> "SingleTaskGPSurrogate":
+        """Single-task GP for many inputs of which only a few are expected to matter.
+
+        The maximum-a-posteriori approximation of the fully Bayesian SAAS model, as
+        BoTorch's `AdditiveMapSaasSingleTaskGP` builds it: an additive sparse kernel, a
+        constant mean with a standard normal prior bounded to [-10, 10], and the default
+        likelihood.
+
+        Args:
+            inputs: The input features.
+            outputs: The output feature.
+            n_taus: Number of sparse kernels summed up, each at its own sparsity level.
+
+        Returns:
+            The surrogate, with an additive MAP-SAAS kernel.
+        """
+        return SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            kernel=AdditiveMapSaasKernel(n_taus=n_taus),
+            mean=ConstantMean(
+                prior=NormalPrior(loc=0.0, scale=1.0), bounds=(-10.0, 10.0)
+            ),
+        )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
