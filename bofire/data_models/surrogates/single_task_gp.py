@@ -16,15 +16,14 @@ from bofire.data_models.kernels.api import (
 )
 from bofire.data_models.likelihoods.api import (
     HVARFNER_LIKELIHOOD,
+    MBO_LIKELIHOOD,
     THREESIX_LIKELIHOOD,
     AnyLikelihood,
-    GaussianLikelihood,
 )
 from bofire.data_models.means.api import AnyMean, ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     MBO_LENGTHSCALE_PRIOR,
-    MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_SCALE_PRIOR,
@@ -44,11 +43,7 @@ _BASE_KERNELS = [
 # (likelihood, lengthscale prior, outputscale prior) tried by
 # `SingleTaskGPSurrogate.options`
 _PRIOR_SETS = [
-    (
-        lambda: GaussianLikelihood(noise_prior=MBO_NOISE_PRIOR()),
-        MBO_LENGTHSCALE_PRIOR,
-        MBO_OUTPUTSCALE_PRIOR,
-    ),
+    (MBO_LIKELIHOOD, MBO_LENGTHSCALE_PRIOR, MBO_OUTPUTSCALE_PRIOR),
     (THREESIX_LIKELIHOOD, THREESIX_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
     (HVARFNER_LIKELIHOOD, HVARFNER_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
 ]
