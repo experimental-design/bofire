@@ -9,15 +9,40 @@ import bofire.priors.api as priors
 def map_ConstantMean(
     data_model: data_models.ConstantMean, d: int, **kwargs
 ) -> gpytorch.means.ConstantMean:
-    return gpytorch.means.ConstantMean(
+    mean = gpytorch.means.ConstantMean(
         constant_prior=priors.map(data_model.prior, d=d)
         if data_model.prior is not None
         else None,
-        constant_constraint=gpytorch.constraints.Interval(
-            *data_model.bounds, transform=None, initial_value=0.0
-        )
+        constant_constraint=_bounds(data_model, d)
         if data_model.bounds is not None
         else None,
+    )
+    if data_model.bounds is None and data_model.prior is not None:
+        # unbounded, so the fit starts at the prior's mode where it has one
+        mode = priors.map(data_model.prior, d=d)
+        try:
+            mean.initialize(constant=float(mode.mode))
+        except (NotImplementedError, AttributeError):
+            pass
+    return mean
+
+
+def _bounds(
+    data_model: data_models.ConstantMean, d: int
+) -> gpytorch.constraints.Interval:
+    """The bounds on the constant, starting at the prior's mode moved into them, or
+    at their middle without a prior."""
+    assert data_model.bounds is not None
+    lower, upper = data_model.bounds
+    start = (lower + upper) / 2
+    if data_model.prior is not None:
+        try:
+            mode = float(priors.map(data_model.prior, d=d).mode)
+            start = min(max(mode, lower), upper)
+        except (NotImplementedError, AttributeError):
+            pass
+    return gpytorch.constraints.Interval(
+        lower, upper, transform=None, initial_value=start
     )
 
 

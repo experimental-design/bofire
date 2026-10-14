@@ -97,9 +97,11 @@ def map_RBFKernel(
             else None
         ),
         lengthscale_constraint=(
-            priors.map(data_model.lengthscale_constraint)
-            if data_model.lengthscale_constraint is not None
-            else None
+            priors.map_constraint(
+                data_model.lengthscale_constraint,
+                prior=data_model.lengthscale_prior,
+                d=len(active_dims),
+            )
         ),
     )
 
@@ -123,9 +125,11 @@ def map_MaternKernel(
             else None
         ),
         lengthscale_constraint=(
-            priors.map(data_model.lengthscale_constraint)
-            if data_model.lengthscale_constraint is not None
-            else None
+            priors.map_constraint(
+                data_model.lengthscale_constraint,
+                prior=data_model.lengthscale_prior,
+                d=len(active_dims),
+            )
         ),
     )
 
@@ -179,6 +183,9 @@ def map_LinearKernel(
             if data_model.variance_prior is not None
             else None
         ),
+        variance_constraint=priors.map_constraint(
+            None, prior=data_model.variance_prior, d=len(active_dims)
+        ),
     )
 
 
@@ -198,6 +205,9 @@ def map_PolynomialKernel(
             priors.map(data_model.offset_prior, d=len(active_dims))
             if data_model.offset_prior is not None
             else None
+        ),
+        offset_constraint=priors.map_constraint(
+            None, prior=data_model.offset_prior, d=len(active_dims)
         ),
     )
 
@@ -265,9 +275,11 @@ def map_ScaleKernel(
             else None
         ),
         outputscale_constraint=(
-            priors.map(data_model.outputscale_constraint)
-            if data_model.outputscale_constraint is not None
-            else None
+            priors.map_constraint(
+                data_model.outputscale_constraint,
+                prior=data_model.outputscale_prior,
+                d=len(active_dims),
+            )
         ),
     )
 
@@ -309,9 +321,11 @@ def map_HammingDistanceKernel(
             else None
         ),
         lengthscale_constraint=(
-            priors.map(data_model.lengthscale_constraint)
-            if data_model.lengthscale_constraint is not None
-            else None
+            priors.map_constraint(
+                data_model.lengthscale_constraint,
+                prior=data_model.lengthscale_prior,
+                d=len(active_dims),
+            )
         ),
     )
 
@@ -392,9 +406,11 @@ def map_WassersteinKernel(
             else None
         ),
         lengthscale_constraint=(
-            priors.map(data_model.lengthscale_constraint)
-            if data_model.lengthscale_constraint is not None
-            else None
+            priors.map_constraint(
+                data_model.lengthscale_constraint,
+                prior=data_model.lengthscale_prior,
+                d=len(active_dims),
+            )
         ),
         active_dims=active_dims,
     )
@@ -423,9 +439,11 @@ def map_ExactWassersteinKernel(
             else None
         ),
         lengthscale_constraint=(
-            priors.map(data_model.lengthscale_constraint)
-            if data_model.lengthscale_constraint is not None
-            else None
+            priors.map_constraint(
+                data_model.lengthscale_constraint,
+                prior=data_model.lengthscale_prior,
+                d=len(active_dims),
+            )
         ),
         idx_x=idx_x,
         idx_y=idx_y,
@@ -502,9 +520,11 @@ def map_WedgeKernel(
             else None
         ),
         lengthscale_constraint=(
-            priors.map(data_model.lengthscale_constraint)
-            if data_model.lengthscale_constraint is not None
-            else None
+            priors.map_constraint(
+                data_model.lengthscale_constraint,
+                prior=data_model.lengthscale_prior,
+                d=len(active_dims),
+            )
         ),
         angle_prior=(
             priors.map(data_model.angle_prior, d=len(active_dims))
@@ -537,9 +557,11 @@ def map_SphericalLinearKernel(
             else None
         ),
         lengthscale_constraint=(
-            priors.map(data_model.lengthscale_constraint)
-            if data_model.lengthscale_constraint is not None
-            else None
+            priors.map_constraint(
+                data_model.lengthscale_constraint,
+                prior=data_model.lengthscale_prior,
+                d=len(active_dims),
+            )
         ),
         bounds=data_model.bounds,
     )
@@ -561,9 +583,11 @@ def map_DownsamplingKernel(
             else None
         ),
         offset_constraint=(
-            priors.map(data_model.offset_constraint)
-            if data_model.offset_constraint is not None
-            else None
+            priors.map_constraint(
+                data_model.offset_constraint,
+                prior=data_model.offset_prior,
+                d=1,
+            )
         ),
         power_prior=(
             priors.map(data_model.power_prior, d=1)
@@ -571,9 +595,11 @@ def map_DownsamplingKernel(
             else None
         ),
         power_constraint=(
-            priors.map(data_model.power_constraint)
-            if data_model.power_constraint is not None
-            else None
+            priors.map_constraint(
+                data_model.power_constraint,
+                prior=data_model.power_prior,
+                d=1,
+            )
         ),
     )
 

@@ -1,5 +1,6 @@
 from typing import Dict, Optional
 
+import gpytorch
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
@@ -22,7 +23,6 @@ from bofire.data_models.enum import OutputFilteringEnum
 # from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.api import RobustSingleTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
-from bofire.surrogates.starting_values import set_starting_values
 
 
 class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
@@ -79,9 +79,14 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
 
         likelihood = GaussianLikelihood(
             noise_prior=priors.map(self.noise_prior, d=n_dim),
-            noise_constraint=priors.map(self.noise_constraint)
-            if self.noise_constraint is not None
-            else None,
+            noise_constraint=priors.map_constraint(
+                self.noise_constraint,
+                prior=self.noise_prior,
+                d=n_dim,
+                default=lambda **kwargs: gpytorch.constraints.GreaterThan(
+                    1e-4, **kwargs
+                ),
+            ),
         )
 
         self.model = RobustRelevancePursuitSingleTaskGP(
@@ -102,7 +107,6 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         if self.prior_mean_of_support is not None:
             self.model.prior_mean_of_support = self.prior_mean_of_support
 
-        set_starting_values(self.model)
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(
             mll,

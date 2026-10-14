@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
 import botorch
+import gpytorch
 import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import InputTransform
@@ -13,7 +14,6 @@ import bofire.priors.api as priors
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import TanimotoGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
-from bofire.surrogates.starting_values import set_starting_values
 
 
 class TanimotoGPSurrogate(TrainableBotorchSurrogate):
@@ -80,9 +80,14 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
 
         likelihood = GaussianLikelihood(
             noise_prior=priors.map(self.noise_prior, d=n_dim),
-            noise_constraint=priors.map(self.noise_constraint)
-            if self.noise_constraint is not None
-            else None,
+            noise_constraint=priors.map_constraint(
+                self.noise_constraint,
+                prior=self.noise_prior,
+                d=n_dim,
+                default=lambda **kwargs: gpytorch.constraints.GreaterThan(
+                    1e-4, **kwargs
+                ),
+            ),
         )
 
         self.model = botorch.models.SingleTaskGP(
@@ -102,7 +107,6 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
             input_transform=input_transform_use,
         )
 
-        set_starting_values(self.model)
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(
             mll, optimizer_kwargs={"options": self.training_specs}, max_attempts=50

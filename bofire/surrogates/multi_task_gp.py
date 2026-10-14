@@ -2,6 +2,7 @@ import warnings
 from typing import Dict, Optional
 
 import botorch
+import gpytorch
 import numpy as np
 import pandas as pd
 import torch
@@ -18,7 +19,6 @@ from bofire.data_models.features.api import CategoricalTaskInput
 from bofire.data_models.priors.api import LKJPrior
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
-from bofire.surrogates.starting_values import set_starting_values
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -60,9 +60,14 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         n_dim = tX.shape[-1]
         likelihood = GaussianLikelihood(
             noise_prior=priors.map(self.noise_prior, d=n_dim),
-            noise_constraint=priors.map(self.noise_constraint)
-            if self.noise_constraint is not None
-            else None,
+            noise_constraint=priors.map_constraint(
+                self.noise_constraint,
+                prior=self.noise_prior,
+                d=n_dim,
+                default=lambda **kwargs: gpytorch.constraints.GreaterThan(
+                    1e-4, **kwargs
+                ),
+            ),
         )
 
         self.model = botorch.models.MultiTaskGP(
@@ -101,7 +106,6 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             #     "IndexKernelPrior", priors.map(self.lkj_prior), _index_kernel_prior_closure
             # )
 
-        set_starting_values(self.model)
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(
             mll, optimizer_kwargs={"options": self.training_specs}, max_attempts=50

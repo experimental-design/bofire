@@ -14,7 +14,6 @@ import bofire.kernels.api as kernels
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate as DataModel
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.pairwise_trainable import PairwiseTrainableSurrogate
-from bofire.surrogates.starting_values import set_starting_values
 
 
 # maps the serializable likelihood name to the BoTorch PairwiseLikelihood class
@@ -63,7 +62,6 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
             input_transform=input_transform,
         )
 
-        set_starting_values(self.model)
         mll = PairwiseLaplaceMarginalLogLikelihood(
             likelihood=self.model.likelihood,
             model=self.model,

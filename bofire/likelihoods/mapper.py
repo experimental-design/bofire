@@ -13,10 +13,18 @@ def map_GaussianLikelihood(
         noise_prior=priors.map(data_model.noise_prior, d=d)
         if data_model.noise_prior is not None
         else None,
-        noise_constraint=priors.map(data_model.noise_constraint)
-        if data_model.noise_constraint is not None
-        else None,
+        noise_constraint=priors.map_constraint(
+            data_model.noise_constraint,
+            prior=data_model.noise_prior,
+            d=d,
+            default=_noise_constraint,
+        ),
     )
+
+
+def _noise_constraint(**kwargs) -> gpytorch.constraints.GreaterThan:
+    """GPyTorch's own constraint on the noise of a Gaussian likelihood."""
+    return gpytorch.constraints.GreaterThan(1e-4, **kwargs)
 
 
 LIKELIHOOD_MAP: Dict[Type[data_models.Likelihood], Callable] = {

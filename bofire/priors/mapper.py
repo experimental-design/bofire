@@ -207,3 +207,76 @@ def map(
     data_model: Union[data_models.AnyPrior, data_models.AnyPriorConstraint], **kwargs
 ) -> Union[gpytorch.priors.Prior, Constraint]:
     return PRIOR_MAP[data_model.__class__](data_model, **kwargs)
+
+
+def map_constraint(
+    data_model: Optional[data_models.AnyPriorConstraint],
+    prior: Optional[data_models.AnyPrior] = None,
+    d: int = 1,
+    default: Callable[..., gpytorch.constraints.Interval] = Positive,
+) -> Optional[gpytorch.constraints.Interval]:
+    """The constraint of a hyperparameter, starting its fit where it should start.
+
+    The fit starts at the constraint's `initial_value` if it gives one. Otherwise it
+    starts at the mode of the hyperparameter's prior, moved into the bounds, as
+    BoTorch's default models do; for a transformed bound only if the mode lies inside
+    it. Without a usable mode, a bound without a transform starts inside it: at the
+    lower bound plus ln 2, the upper bound minus ln 2, or the middle of an interval.
+
+    Args:
+        data_model: The constraint, if any.
+        prior: The prior of the same hyperparameter, if any.
+        d: Number of input dimensions, for dimensionality-scaled priors.
+        default: GPyTorch's own constraint for the hyperparameter, used without a
+            constraint so that the fit can start at the prior's mode.
+
+    Returns:
+        The constraint, or `None` to keep GPyTorch's own constraint and start.
+    """
+    mode = _prior_mode(prior, d)
+    if data_model is None:
+        if mode is None or _start(default(), mode) is None:
+            return None
+        return default(initial_value=mode)
+    constraint = map(data_model)
+    if data_model.initial_value is not None:
+        return constraint
+    start = _start(constraint, mode)
+    if start is None:
+        return constraint
+    return map(data_model.model_copy(update={"initial_value": start}))
+
+
+def _prior_mode(prior: Optional[data_models.AnyPrior], d: int) -> Optional[float]:
+    """The mode of a prior, if it has a single one."""
+    if prior is None:
+        return None
+    try:
+        mode = map(prior, d=d).mode
+    except (NotImplementedError, AttributeError):
+        return None
+    if mode.numel() != 1:
+        return None
+    return float(mode)
+
+
+def _start(
+    constraint: gpytorch.constraints.Interval, mode: Optional[float]
+) -> Optional[float]:
+    """Where the fit starts under a constraint; `None` keeps GPyTorch's start."""
+    lower = float(constraint.lower_bound)
+    upper = float(constraint.upper_bound)
+    if mode is not None:
+        if not constraint.enforced:
+            return min(max(mode, lower), upper)
+        if lower < mode < upper:
+            return mode
+    if constraint.enforced:
+        return None
+    if math.isfinite(lower) and math.isfinite(upper):
+        return (lower + upper) / 2
+    if math.isfinite(lower):
+        return lower + math.log(2)
+    if math.isfinite(upper):
+        return upper - math.log(2)
+    return None

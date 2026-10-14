@@ -1,7 +1,6 @@
 import copy
 import math
 
-import gpytorch
 import pytest
 import torch
 from botorch.fit import fit_gpytorch_mll
@@ -9,10 +8,12 @@ from botorch.models import SingleTaskGP
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
+import bofire.kernels.api as kernels
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.single import Himmelblau
+from bofire.data_models.kernels.api import RBFKernel
+from bofire.data_models.priors.api import GammaPrior, GreaterThan
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
-from bofire.surrogates.starting_values import set_starting_values
 
 
 def test_default_single_task_gp_is_botorchs():
@@ -47,49 +48,51 @@ def test_default_single_task_gp_is_botorchs():
     assert torch.equal(a.variance, b.variance)
 
 
-def _kernel(constraint, prior=None):
-    return gpytorch.kernels.RBFKernel(
-        lengthscale_constraint=constraint, lengthscale_prior=prior
+def _lengthscale(**kwargs) -> float:
+    kernel = kernels.map(
+        RBFKernel(**kwargs),
+        batch_shape=torch.Size(),
+        active_dims=[0],
+        features_to_idx_mapper=None,
     )
+    return float(kernel.lengthscale)
 
 
 @pytest.mark.parametrize(
-    "kernel, start",
+    "kwargs, start",
     [
-        # no prior, bound without a transform: moved into the bound
-        (
-            _kernel(gpytorch.constraints.GreaterThan(0.5, transform=None)),
-            0.5 + math.log(2),
-        ),
+        # no prior, bound without a transform: inside the bound
+        ({"lengthscale_constraint": GreaterThan(lower_bound=0.5)}, 0.5 + math.log(2)),
         # a starting value on the constraint is kept
         (
-            _kernel(
-                gpytorch.constraints.GreaterThan(0.5, transform=None, initial_value=2.0)
-            ),
+            {
+                "lengthscale_constraint": GreaterThan(lower_bound=0.5, initial_value=2),
+                "lengthscale_prior": GammaPrior(concentration=2, rate=4),
+            },
             2.0,
         ),
-        # the prior's mode, here below the bound, moved onto it
+        # the prior's mode (0.25), here below the bound, moved onto it
         (
-            _kernel(
-                gpytorch.constraints.GreaterThan(0.5, transform=None),
-                gpytorch.priors.GammaPrior(2.0, 4.0),
-            ),
+            {
+                "lengthscale_constraint": GreaterThan(lower_bound=0.5),
+                "lengthscale_prior": GammaPrior(concentration=2, rate=4),
+            },
             0.5,
         ),
         # the prior's mode inside the bound
         (
-            _kernel(
-                gpytorch.constraints.GreaterThan(0.1, transform=None),
-                gpytorch.priors.GammaPrior(2.0, 4.0),
-            ),
+            {
+                "lengthscale_constraint": GreaterThan(lower_bound=0.1),
+                "lengthscale_prior": GammaPrior(concentration=2, rate=4),
+            },
             0.25,
         ),
+        # a prior without a constraint: GPyTorch's positivity, starting at the mode
+        ({"lengthscale_prior": GammaPrior(concentration=2, rate=4)}, 0.25),
     ],
 )
-def test_starting_values(kernel, start):
-    set_starting_values(kernel)
-
-    assert float(kernel.lengthscale) == pytest.approx(start)
+def test_starting_values(kwargs, start):
+    assert _lengthscale(**kwargs) == pytest.approx(start)
 
 
 def test_training_specs_reach_scipy(monkeypatch):

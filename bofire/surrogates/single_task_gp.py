@@ -13,7 +13,6 @@ import bofire.means.api as means
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
-from bofire.surrogates.starting_values import set_starting_values
 
 
 class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
@@ -59,7 +58,6 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
             input_transform=input_transform,
         )
 
-        set_starting_values(self.model)
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(
             mll, optimizer_kwargs={"options": self.training_specs}, max_attempts=50
