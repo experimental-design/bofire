@@ -23,6 +23,10 @@ class GaussianLikelihood(Likelihood):
     The noise variance is fitted along with the kernel hyperparameters;
     `noise_prior` regularises it and `noise_constraint` bounds it. By default there is
     no prior and the noise is at least 1e-4.
+
+    The noise is that of the outputs as the model sees them, after the surrogate's
+    output scaler (standardized by default), so priors and bounds refer to that scale
+    and not to the raw measurements.
     """
 
     type: Literal["GaussianLikelihood"] = "GaussianLikelihood"

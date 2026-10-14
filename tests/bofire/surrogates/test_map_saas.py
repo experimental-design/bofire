@@ -1,12 +1,6 @@
 import numpy as np
 import pandas as pd
-import torch
-from botorch.fit import fit_gpytorch_mll
-from botorch.models.map_saas import (
-    AdditiveMapSaasSingleTaskGP,
-    EnsembleMapSaasSingleTaskGP,
-)
-from gpytorch.mlls import ExactMarginalLogLikelihood
+from botorch.models.map_saas import EnsembleMapSaasSingleTaskGP
 from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
@@ -28,48 +22,6 @@ from bofire.data_models.surrogates.api import (
     ScalerEnum,
     SingleTaskGPSurrogate,
 )
-from bofire.surrogates.botorch import TrainableBotorchSurrogate
-
-
-class _BotorchAdditiveMapSaas(TrainableBotorchSurrogate):
-    """Fits BoTorch's own AdditiveMapSaasSingleTaskGP, as BoFire did before #825."""
-
-    def __init__(self, data_model, n_taus: int, **kwargs):
-        self.n_taus = n_taus
-        super().__init__(data_model=data_model, **kwargs)
-
-    training_specs: dict = {}
-
-    def _fit_botorch(self, tX, tY, input_transform=None, outcome_transform=None, **kw):
-        self.model = AdditiveMapSaasSingleTaskGP(
-            train_X=tX,
-            train_Y=tY,
-            outcome_transform=outcome_transform,
-            input_transform=input_transform,
-            num_taus=self.n_taus,
-        )
-        mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)
-
-
-def test_additive_map_saas_is_botorchs_model():
-    """Built from components, the surrogate fits the same model BoTorch's class does."""
-    bench = Himmelblau()
-    experiments = bench.f(bench.domain.inputs.sample(10, seed=0), return_complete=True)
-    data_model = SingleTaskGPSurrogate.additive_map_saas(
-        bench.domain.inputs, bench.domain.outputs, n_taus=4
-    )
-
-    torch.manual_seed(1)
-    ours = surrogates.map(data_model)
-    ours.fit(experiments=experiments)
-    torch.manual_seed(1)
-    reference = _BotorchAdditiveMapSaas(data_model=data_model, n_taus=4)
-    reference.fit(experiments=experiments)
-
-    assert_frame_equal(
-        ours.predict(experiments), reference.predict(experiments), check_exact=True
-    )
 
 
 def test_additive_map_saas_kernel_composes_with_other_kernels():

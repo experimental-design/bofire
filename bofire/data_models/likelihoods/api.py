@@ -33,7 +33,8 @@ def MBO_LIKELIHOOD() -> GaussianLikelihood:
 def HVARFNER_LIKELIHOOD() -> GaussianLikelihood:
     """Gaussian likelihood with the HVARFNER noise prior, BoTorch's default.
 
-    The noise is at least 1e-4 and its fit starts at the prior's mode.
+    The prior is LogNormal(-4, 1); the noise is at least 1e-4 and its fit starts at
+    exp(-5), the prior's mode.
     """
     return GaussianLikelihood(
         noise_prior=HVARFNER_NOISE_PRIOR(),

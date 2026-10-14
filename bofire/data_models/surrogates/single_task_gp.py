@@ -1,9 +1,9 @@
 import itertools
-from typing import List, Literal, Type
+from typing import List, Literal, Optional, Type
 
 from pydantic import Field
 
-from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import (
     AdditiveMapSaasKernel,
@@ -49,6 +49,13 @@ _PRIOR_SETS = [
 ]
 
 
+def _copy(engineered_features: Optional[EngineeredFeatures]) -> EngineeredFeatures:
+    """A copy of its own for every surrogate a factory builds; none if not given."""
+    if engineered_features is None:
+        return EngineeredFeatures()
+    return engineered_features.model_copy(deep=True)
+
+
 class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
@@ -70,7 +77,12 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
     )
 
     @staticmethod
-    def options(inputs: Inputs, outputs: Outputs) -> List["SingleTaskGPSurrogate"]:
+    def options(
+        inputs: Inputs,
+        outputs: Outputs,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
+    ) -> List["SingleTaskGPSurrogate"]:
         """Single-task GPs that differ in kernel and priors, as options to choose from.
 
         One for each combination of base kernel (RBF, Matern 1.5, Matern 2.5), set of
@@ -81,6 +93,8 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         Args:
             inputs: The input features of every option.
             outputs: The output feature of every option.
+            engineered_features: Quantities derived from the inputs that every option
+                sees as well; the kernel works on them too. If not provided, none.
 
         Returns:
             The options, each with its own kernel and likelihood.
@@ -99,6 +113,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
                 SingleTaskGPSurrogate(
                     inputs=inputs,
                     outputs=outputs,
+                    engineered_features=_copy(engineered_features),
                     kernel=kernel,
                     likelihood=likelihood(),
                 )
@@ -106,7 +121,12 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         return options
 
     @staticmethod
-    def linear(inputs: Inputs, outputs: Outputs) -> "SingleTaskGPSurrogate":
+    def linear(
+        inputs: Inputs,
+        outputs: Outputs,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
+    ) -> "SingleTaskGPSurrogate":
         """Single-task GP whose response is linear in the inputs.
 
         Equivalent to Bayesian linear regression. The noise has a THREESIX prior with a
@@ -115,6 +135,8 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         Args:
             inputs: The input features.
             outputs: The output feature.
+            engineered_features: Quantities derived from the inputs that the model
+                sees as well; the kernel works on them too. If not provided, none.
 
         Returns:
             The surrogate, with a linear kernel.
@@ -122,13 +144,18 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         return SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
+            engineered_features=_copy(engineered_features),
             kernel=LinearKernel(),
             likelihood=THREESIX_LIKELIHOOD(),
         )
 
     @staticmethod
     def polynomial(
-        inputs: Inputs, outputs: Outputs, power: int = 2
+        inputs: Inputs,
+        outputs: Outputs,
+        power: int = 2,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
     ) -> "SingleTaskGPSurrogate":
         """Single-task GP whose response is a polynomial in the inputs.
 
@@ -138,6 +165,8 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         Args:
             inputs: The input features.
             outputs: The output feature.
+            engineered_features: Quantities derived from the inputs that the model
+                sees as well; the kernel works on them too. If not provided, none.
             power: Degree of the polynomial.
 
         Returns:
@@ -146,13 +175,18 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         return SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
+            engineered_features=_copy(engineered_features),
             kernel=PolynomialKernel(power=power),
             likelihood=THREESIX_LIKELIHOOD(),
         )
 
     @staticmethod
     def additive_map_saas(
-        inputs: Inputs, outputs: Outputs, n_taus: int = 4
+        inputs: Inputs,
+        outputs: Outputs,
+        n_taus: int = 4,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
     ) -> "SingleTaskGPSurrogate":
         """Single-task GP for many inputs of which only a few are expected to matter.
 
@@ -164,6 +198,8 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         Args:
             inputs: The input features.
             outputs: The output feature.
+            engineered_features: Quantities derived from the inputs that the model
+                sees as well; the kernel works on them too. If not provided, none.
             n_taus: Number of sparse kernels summed up, each at its own sparsity level.
 
         Returns:
@@ -172,6 +208,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         return SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
+            engineered_features=_copy(engineered_features),
             kernel=AdditiveMapSaasKernel(n_taus=n_taus),
             mean=ConstantMean(
                 prior=NormalPrior(loc=0.0, scale=1.0), bounds=(-10.0, 10.0)

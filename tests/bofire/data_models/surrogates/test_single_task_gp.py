@@ -1,7 +1,11 @@
 import pytest
 
-from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
+from bofire.data_models.features.api import (
+    ContinuousInput,
+    ContinuousOutput,
+    SumFeature,
+)
 from bofire.data_models.kernels.api import (
     AdditiveMapSaasKernel,
     LinearKernel,
@@ -81,3 +85,26 @@ def test_factories_build_their_components(surrogate, kernel, mean, likelihood):
     assert surrogate.kernel == kernel
     assert surrogate.mean == mean
     assert surrogate.likelihood == likelihood
+
+
+@pytest.mark.parametrize(
+    "factory",
+    [
+        SingleTaskGPSurrogate.linear,
+        SingleTaskGPSurrogate.polynomial,
+        SingleTaskGPSurrogate.additive_map_saas,
+        lambda *args, **kwargs: SingleTaskGPSurrogate.options(*args, **kwargs)[0],
+    ],
+)
+def test_factories_take_engineered_features(factory):
+    engineered = EngineeredFeatures(
+        features=[SumFeature(key="s", features=["x0", "x1"])]
+    )
+
+    first = factory(INPUTS, OUTPUTS, engineered_features=engineered)
+    second = factory(INPUTS, OUTPUTS, engineered_features=engineered)
+
+    assert first.engineered_features == engineered
+    # every surrogate gets a copy of its own
+    assert first.engineered_features is not second.engineered_features
+    assert first.engineered_features is not engineered
