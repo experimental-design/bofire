@@ -22,6 +22,7 @@ from bofire.data_models.enum import OutputFilteringEnum
 # from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.api import RobustSingleTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.starting_values import set_starting_values
 
 
 class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
@@ -101,6 +102,7 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         if self.prior_mean_of_support is not None:
             self.model.prior_mean_of_support = self.prior_mean_of_support
 
+        set_starting_values(self.model)
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(
             mll,

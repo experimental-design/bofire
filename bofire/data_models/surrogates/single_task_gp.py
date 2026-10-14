@@ -27,6 +27,7 @@ from bofire.data_models.priors.api import (
     MBO_OUTPUTSCALE_PRIOR,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_SCALE_PRIOR,
+    GreaterThan,
     NormalPrior,
 )
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
@@ -63,6 +64,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         default_factory=lambda: RBFKernel(
             ard=True,
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+            lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),
         )
     )
     mean: AnyMean = Field(

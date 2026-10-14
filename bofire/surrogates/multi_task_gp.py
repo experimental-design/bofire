@@ -18,6 +18,7 @@ from bofire.data_models.features.api import CategoricalTaskInput
 from bofire.data_models.priors.api import LKJPrior
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.starting_values import set_starting_values
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -100,8 +101,11 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             #     "IndexKernelPrior", priors.map(self.lkj_prior), _index_kernel_prior_closure
             # )
 
+        set_starting_values(self.model)
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)
+        fit_gpytorch_mll(
+            mll, optimizer_kwargs={"options": self.training_specs}, max_attempts=50
+        )
 
     def _predict(self, transformed_X: pd.DataFrame):
         # transform to tensor
