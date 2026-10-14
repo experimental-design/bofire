@@ -12,6 +12,7 @@ from gpytorch.kernels import Kernel as GpytorchKernel
 
 import bofire.data_models.kernels.api as data_models
 import bofire.priors.api as priors
+from bofire.data_models.priors.api import Positive
 from bofire.kernels.aggregation import PolynomialFeatureInteractionKernel
 from bofire.kernels.conditional import (
     WedgeKernel,
@@ -99,7 +100,7 @@ def map_RBFKernel(
         lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
-                data_model.lengthscale_constraint,
+                data_model.lengthscale_constraint or Positive(),
                 prior=lengthscale_prior,
             )
         ),
@@ -127,7 +128,7 @@ def map_MaternKernel(
         lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
-                data_model.lengthscale_constraint,
+                data_model.lengthscale_constraint or Positive(),
                 prior=lengthscale_prior,
             )
         ),
@@ -184,7 +185,7 @@ def map_LinearKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,
         variance_prior=variance_prior,
-        variance_constraint=priors.map_constraint(None, prior=variance_prior),
+        variance_constraint=priors.map_constraint(Positive(), prior=variance_prior),
     )
 
 
@@ -206,7 +207,7 @@ def map_PolynomialKernel(
         active_dims=active_dims,
         power=data_model.power,
         offset_prior=offset_prior,
-        offset_constraint=priors.map_constraint(None, prior=offset_prior),
+        offset_constraint=priors.map_constraint(Positive(), prior=offset_prior),
     )
 
 
@@ -275,7 +276,7 @@ def map_ScaleKernel(
         outputscale_prior=outputscale_prior,
         outputscale_constraint=(
             priors.map_constraint(
-                data_model.outputscale_constraint,
+                data_model.outputscale_constraint or Positive(),
                 prior=outputscale_prior,
             )
         ),
@@ -321,7 +322,7 @@ def map_HammingDistanceKernel(
         lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
-                data_model.lengthscale_constraint,
+                data_model.lengthscale_constraint or Positive(),
                 prior=lengthscale_prior,
             )
         ),
@@ -346,7 +347,7 @@ def map_IndexKernel(
             if data_model.prior is not None
             else None
         ),
-        var_constraint=priors.map_constraint(data_model.var_constraint),
+        var_constraint=priors.map_constraint(data_model.var_constraint or Positive()),
     )
 
 
@@ -374,7 +375,7 @@ def map_PositiveIndexKernel(
             else None
         ),
         normalize_covar_matrix=data_model.normalize_covar_matrix,
-        var_constraint=priors.map_constraint(data_model.var_constraint),
+        var_constraint=priors.map_constraint(data_model.var_constraint or Positive()),
         target_task_index=data_model.target_task_index,
         unit_scale_for_target=data_model.unit_scale_for_target,
     )
@@ -398,7 +399,7 @@ def map_WassersteinKernel(
         lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
-                data_model.lengthscale_constraint,
+                data_model.lengthscale_constraint or Positive(),
                 prior=lengthscale_prior,
             )
         ),
@@ -431,7 +432,7 @@ def map_ExactWassersteinKernel(
         lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
-                data_model.lengthscale_constraint,
+                data_model.lengthscale_constraint or Positive(),
                 prior=lengthscale_prior,
             )
         ),
@@ -512,7 +513,7 @@ def map_WedgeKernel(
         lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
-                data_model.lengthscale_constraint,
+                data_model.lengthscale_constraint or Positive(),
                 prior=lengthscale_prior,
             )
         ),
@@ -549,7 +550,7 @@ def map_SphericalLinearKernel(
         lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
-                data_model.lengthscale_constraint,
+                data_model.lengthscale_constraint or Positive(),
                 prior=lengthscale_prior,
             )
         ),
@@ -580,14 +581,14 @@ def map_DownsamplingKernel(
         offset_prior=offset_prior,
         offset_constraint=(
             priors.map_constraint(
-                data_model.offset_constraint,
+                data_model.offset_constraint or Positive(),
                 prior=offset_prior,
             )
         ),
         power_prior=power_prior,
         power_constraint=(
             priors.map_constraint(
-                data_model.power_constraint,
+                data_model.power_constraint or Positive(),
                 prior=power_prior,
             )
         ),

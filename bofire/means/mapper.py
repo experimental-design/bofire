@@ -10,36 +10,29 @@ def map_ConstantMean(
     data_model: data_models.ConstantMean, d: int, **kwargs
 ) -> gpytorch.means.ConstantMean:
     prior = priors.map(data_model.prior, d=d) if data_model.prior is not None else None
-    mode = _mode(prior)
     mean = gpytorch.means.ConstantMean(
         constant_prior=prior,
-        constant_constraint=_bounds(data_model.bounds, mode)
+        constant_constraint=_bounds(data_model.bounds, prior)
         if data_model.bounds is not None
         else None,
     )
-    if data_model.bounds is None and mode is not None:
+    if data_model.bounds is None and prior is not None:
         # unbounded, so the fit starts at the prior's mode
-        mean.initialize(constant=mode)
+        mean.initialize(constant=priors.mode(prior))
     return mean
 
 
-def _mode(prior: Optional[gpytorch.priors.Prior]) -> Optional[float]:
-    """The mode of the prior on the constant, if it has one."""
-    if prior is None:
-        return None
-    try:
-        return float(prior.mode)
-    except (NotImplementedError, AttributeError):
-        return None
-
-
 def _bounds(
-    bounds: Tuple[float, float], mode: Optional[float]
+    bounds: Tuple[float, float], prior: Optional[gpytorch.priors.Prior]
 ) -> gpytorch.constraints.Interval:
     """The bounds on the constant, starting at the prior's mode moved into them, or
-    at their middle without one."""
+    at their middle without a prior."""
     lower, upper = bounds
-    start = (lower + upper) / 2 if mode is None else min(max(mode, lower), upper)
+    start = (
+        (lower + upper) / 2
+        if prior is None
+        else min(max(priors.mode(prior), lower), upper)
+    )
     return gpytorch.constraints.Interval(
         lower, upper, transform=None, initial_value=start
     )

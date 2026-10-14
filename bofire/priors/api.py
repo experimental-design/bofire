@@ -1,1 +1,1 @@
-from bofire.priors.mapper import map, map_constraint, register
+from bofire.priors.mapper import map, map_constraint, mode, register

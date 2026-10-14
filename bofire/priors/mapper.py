@@ -134,59 +134,108 @@ def map_SmoothedBoxPrior(
 
 
 def map_Interval(
-    data_model: data_models.Interval,
+    data_model: data_models.Interval, prior: Optional[gpytorch.priors.Prior] = None
 ) -> gpytorch.constraints.Interval:
     return gpytorch.constraints.Interval(
         lower_bound=data_model.lower_bound,
         upper_bound=data_model.upper_bound,
-        initial_value=data_model.initial_value,
+        initial_value=_initial_value(
+            data_model, prior, data_model.lower_bound, data_model.upper_bound
+        ),
     )
 
 
 def map_NonTransformedInterval(
     data_model: data_models.NonTransformedInterval,
+    prior: Optional[gpytorch.priors.Prior] = None,
 ) -> NonTransformedInterval:
     return NonTransformedInterval(
         lower_bound=data_model.lower_bound,
         upper_bound=data_model.upper_bound,
-        initial_value=data_model.initial_value,
+        initial_value=_initial_value(
+            data_model,
+            prior,
+            data_model.lower_bound,
+            data_model.upper_bound,
+            default=(data_model.lower_bound + data_model.upper_bound) / 2,
+        ),
     )
 
 
 def map_LogTransformedInterval(
     data_model: data_models.LogTransformedInterval,
+    prior: Optional[gpytorch.priors.Prior] = None,
 ) -> LogTransformedInterval:
     return LogTransformedInterval(
         lower_bound=data_model.lower_bound,
         upper_bound=data_model.upper_bound,
-        initial_value=data_model.initial_value,
+        initial_value=_initial_value(
+            data_model, prior, data_model.lower_bound, data_model.upper_bound
+        ),
     )
 
 
 def map_Positive(
-    data_model: data_models.Positive,
+    data_model: data_models.Positive, prior: Optional[gpytorch.priors.Prior] = None
 ) -> Positive:
-    return Positive(initial_value=data_model.initial_value)
+    return Positive(initial_value=_initial_value(data_model, prior, lower=0.0))
 
 
 def map_GreaterThan(
-    data_model: data_models.GreaterThan,
+    data_model: data_models.GreaterThan, prior: Optional[gpytorch.priors.Prior] = None
 ) -> GreaterThan:
     return GreaterThan(
         lower_bound=data_model.lower_bound,
         transform=None,
-        initial_value=data_model.initial_value,
+        initial_value=_initial_value(
+            data_model,
+            prior,
+            lower=data_model.lower_bound,
+            default=data_model.lower_bound + math.log(2),
+        ),
     )
 
 
 def map_LessThan(
-    data_model: data_models.LessThan,
+    data_model: data_models.LessThan, prior: Optional[gpytorch.priors.Prior] = None
 ) -> LessThan:
     return LessThan(
         upper_bound=data_model.upper_bound,
         transform=None,
-        initial_value=data_model.initial_value,
+        initial_value=_initial_value(
+            data_model,
+            prior,
+            upper=data_model.upper_bound,
+            default=data_model.upper_bound - math.log(2),
+        ),
     )
+
+
+def _initial_value(
+    data_model: data_models.PriorConstraint,
+    prior: Optional[gpytorch.priors.Prior],
+    lower: float = -math.inf,
+    upper: float = math.inf,
+    default: Optional[float] = None,
+) -> Optional[float]:
+    """Where the fit starts: the constraint's own starting value, else the mode of the
+    prior moved into the bounds, else `default` (`None` keeps GPyTorch's start)."""
+    if data_model.initial_value is not None:
+        return data_model.initial_value
+    if prior is None:
+        return default
+    return min(max(mode(prior), lower), upper)
+
+
+def mode(prior: gpytorch.priors.Prior) -> float:
+    """The most likely value under a prior.
+
+    A smoothed box is flat between its bounds, so it has no single mode; its middle
+    is used.
+    """
+    if isinstance(prior, gpytorch.priors.SmoothedBoxPrior):
+        return float((prior.a + prior.b) / 2)
+    return float(prior.mode)
 
 
 PRIOR_MAP = {
@@ -224,72 +273,21 @@ def map(data_model: data_models.AnyPrior, **kwargs) -> gpytorch.priors.Prior:
 
 
 def map_constraint(
-    data_model: Optional[data_models.AnyPriorConstraint],
+    data_model: data_models.AnyPriorConstraint,
     prior: Optional[gpytorch.priors.Prior] = None,
-    default: Callable[..., gpytorch.constraints.Interval] = Positive,
-) -> Optional[gpytorch.constraints.Interval]:
-    """The constraint of a hyperparameter, starting its fit where it should start.
+) -> gpytorch.constraints.Interval:
+    """Build the GPyTorch constraint of a hyperparameter, with where its fit starts.
 
-    The fit starts at the constraint's `initial_value` if it gives one. Otherwise it
-    starts at the mode of the hyperparameter's prior, moved into the bounds, as
-    BoTorch's default models do; for a transformed bound only if the mode lies inside
-    it. Without a usable mode, a bound without a transform starts inside it: at the
+    The fit starts at the constraint's `initial_value` if it gives one, else at the
+    mode of the hyperparameter's prior moved into the bounds, as BoTorch's default
+    models do. Without either, a bound without a transform starts inside it: at the
     lower bound plus ln 2, the upper bound minus ln 2, or the middle of an interval.
 
     Args:
-        data_model: The constraint, if any.
-        prior: The GPyTorch prior of the same hyperparameter, if any.
-        default: GPyTorch's own constraint for the hyperparameter, used without a
-            constraint so that the fit can start at the prior's mode.
+        data_model: The constraint.
+        prior: The GPyTorch prior of the same hyperparameter, if it has one.
 
     Returns:
-        The constraint, or `None` to keep GPyTorch's own constraint and start.
+        The GPyTorch constraint.
     """
-    mode = _prior_mode(prior)
-    if data_model is None:
-        if mode is None or _start(default(), mode) is None:
-            return None
-        return default(initial_value=mode)
-    to_constraint = CONSTRAINT_MAP[data_model.__class__]
-    constraint = to_constraint(data_model)
-    if data_model.initial_value is not None:
-        return constraint
-    start = _start(constraint, mode)
-    if start is None:
-        return constraint
-    return to_constraint(data_model.model_copy(update={"initial_value": start}))
-
-
-def _prior_mode(prior: Optional[gpytorch.priors.Prior]) -> Optional[float]:
-    """The mode of a prior, if it has a single one."""
-    if prior is None:
-        return None
-    try:
-        mode = prior.mode
-    except (NotImplementedError, AttributeError):
-        return None
-    if mode.numel() != 1:
-        return None
-    return float(mode)
-
-
-def _start(
-    constraint: gpytorch.constraints.Interval, mode: Optional[float]
-) -> Optional[float]:
-    """Where the fit starts under a constraint; `None` keeps GPyTorch's start."""
-    lower = float(constraint.lower_bound)
-    upper = float(constraint.upper_bound)
-    if mode is not None:
-        if not constraint.enforced:
-            return min(max(mode, lower), upper)
-        if lower < mode < upper:
-            return mode
-    if constraint.enforced:
-        return None
-    if math.isfinite(lower) and math.isfinite(upper):
-        return (lower + upper) / 2
-    if math.isfinite(lower):
-        return lower + math.log(2)
-    if math.isfinite(upper):
-        return upper - math.log(2)
-    return None
+    return CONSTRAINT_MAP[data_model.__class__](data_model, prior=prior)

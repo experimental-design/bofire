@@ -12,7 +12,7 @@ import bofire.kernels.api as kernels
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.kernels.api import RBFKernel
-from bofire.data_models.priors.api import GammaPrior, GreaterThan
+from bofire.data_models.priors.api import GammaPrior, GreaterThan, SmoothedBoxPrior
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 
 
@@ -86,6 +86,16 @@ def _lengthscale(**kwargs) -> float:
                 "lengthscale_prior": GammaPrior(concentration=2, rate=4),
             },
             0.25,
+        ),
+        # a smoothed box has no single mode: the middle of the box
+        (
+            {
+                "lengthscale_constraint": GreaterThan(lower_bound=0.05),
+                "lengthscale_prior": SmoothedBoxPrior(
+                    lower_bound=0.1, upper_bound=1.0, sigma=0.01
+                ),
+            },
+            0.55,
         ),
         # a prior without a constraint: GPyTorch's positivity, starting at the mode
         ({"lengthscale_prior": GammaPrior(concentration=2, rate=4)}, 0.25),
