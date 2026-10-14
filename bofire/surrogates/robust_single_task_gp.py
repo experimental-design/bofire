@@ -1,6 +1,5 @@
 from typing import Dict, Optional
 
-import gpytorch
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
@@ -13,12 +12,14 @@ from botorch.models.robust_relevance_pursuit_model import (
 )
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
-from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
-import bofire.priors.api as priors
+import bofire.likelihoods.api as likelihoods
 from bofire.data_models.enum import OutputFilteringEnum
+from bofire.data_models.likelihoods.api import (
+    GaussianLikelihood as GaussianLikelihoodDataModel,
+)
 
 # from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.api import RobustSingleTaskGPSurrogate as DataModel
@@ -77,16 +78,11 @@ class RobustSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         else:
             n_dim = tX.shape[-1]
 
-        likelihood = GaussianLikelihood(
-            noise_prior=priors.map(self.noise_prior, d=n_dim),
-            noise_constraint=priors.map_constraint(
-                self.noise_constraint,
-                prior=self.noise_prior,
-                d=n_dim,
-                default=lambda **kwargs: gpytorch.constraints.GreaterThan(
-                    1e-4, **kwargs
-                ),
+        likelihood = likelihoods.map(
+            GaussianLikelihoodDataModel(
+                noise_prior=self.noise_prior, noise_constraint=self.noise_constraint
             ),
+            d=n_dim,
         )
 
         self.model = RobustRelevancePursuitSingleTaskGP(

@@ -9,15 +9,15 @@ import bofire.priors.api as priors
 def map_GaussianLikelihood(
     data_model: data_models.GaussianLikelihood, d: int, **kwargs
 ) -> gpytorch.likelihoods.GaussianLikelihood:
-    return gpytorch.likelihoods.GaussianLikelihood(
-        noise_prior=priors.map(data_model.noise_prior, d=d)
+    noise_prior = (
+        priors.map(data_model.noise_prior, d=d)
         if data_model.noise_prior is not None
-        else None,
+        else None
+    )
+    return gpytorch.likelihoods.GaussianLikelihood(
+        noise_prior=noise_prior,
         noise_constraint=priors.map_constraint(
-            data_model.noise_constraint,
-            prior=data_model.noise_prior,
-            d=d,
-            default=_noise_constraint,
+            data_model.noise_constraint, prior=noise_prior, default=_noise_constraint
         ),
     )
 

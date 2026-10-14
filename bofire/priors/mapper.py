@@ -1,5 +1,5 @@
 import math
-from typing import Callable, Optional, Type, Union
+from typing import Callable, Optional, Type
 
 import gpytorch
 from botorch.utils.constraints import LogTransformedInterval, NonTransformedInterval
@@ -8,16 +8,14 @@ from gpytorch.constraints import GreaterThan, LessThan, Positive
 import bofire.data_models.priors.api as data_models
 
 
-Constraint = Union[
-    Positive, GreaterThan, LessThan, LogTransformedInterval, NonTransformedInterval
-]
-
-
 def register(
     data_model_cls: Type,
     map_fn: Optional[Callable] = None,
 ):
-    """Register a custom prior/constraint mapping from data model to factory function.
+    """Register a custom prior or constraint mapping from data model to factory function.
+
+    Constraints (subclasses of `PriorConstraint` or `Interval`) are mapped by
+    `map_constraint`, priors by `map`.
 
     Can be used as a decorator or as a direct function call::
 
@@ -48,7 +46,12 @@ def register(
         ):
             data_models.register_prior_constraint(data_model_cls)
 
-        PRIOR_MAP[data_model_cls] = fn
+        if issubclass(
+            data_model_cls, (data_models.PriorConstraint, data_models.Interval)
+        ):
+            CONSTRAINT_MAP[data_model_cls] = fn
+        else:
+            PRIOR_MAP[data_model_cls] = fn
 
         return fn
 
@@ -194,6 +197,9 @@ PRIOR_MAP = {
     data_models.DimensionalityScaledLogNormalPrior: map_DimensionalityScaledLogNormalPrior,
     data_models.DimensionalityScaledGammaPrior: map_DimensionalityScaledGammaPrior,
     data_models.SmoothedBoxPrior: map_SmoothedBoxPrior,
+}
+
+CONSTRAINT_MAP = {
     data_models.Interval: map_Interval,
     data_models.NonTransformedInterval: map_NonTransformedInterval,
     data_models.LogTransformedInterval: map_LogTransformedInterval,
@@ -203,16 +209,23 @@ PRIOR_MAP = {
 }
 
 
-def map(
-    data_model: Union[data_models.AnyPrior, data_models.AnyPriorConstraint], **kwargs
-) -> Union[gpytorch.priors.Prior, Constraint]:
+def map(data_model: data_models.AnyPrior, **kwargs) -> gpytorch.priors.Prior:
+    """Build the GPyTorch prior for a prior data model.
+
+    Args:
+        data_model: The prior.
+        **kwargs: Passed to the prior's mapper, e.g. `d`, the number of input
+            dimensions, for dimensionality-scaled priors.
+
+    Returns:
+        The GPyTorch prior.
+    """
     return PRIOR_MAP[data_model.__class__](data_model, **kwargs)
 
 
 def map_constraint(
     data_model: Optional[data_models.AnyPriorConstraint],
-    prior: Optional[data_models.AnyPrior] = None,
-    d: int = 1,
+    prior: Optional[gpytorch.priors.Prior] = None,
     default: Callable[..., gpytorch.constraints.Interval] = Positive,
 ) -> Optional[gpytorch.constraints.Interval]:
     """The constraint of a hyperparameter, starting its fit where it should start.
@@ -225,34 +238,34 @@ def map_constraint(
 
     Args:
         data_model: The constraint, if any.
-        prior: The prior of the same hyperparameter, if any.
-        d: Number of input dimensions, for dimensionality-scaled priors.
+        prior: The GPyTorch prior of the same hyperparameter, if any.
         default: GPyTorch's own constraint for the hyperparameter, used without a
             constraint so that the fit can start at the prior's mode.
 
     Returns:
         The constraint, or `None` to keep GPyTorch's own constraint and start.
     """
-    mode = _prior_mode(prior, d)
+    mode = _prior_mode(prior)
     if data_model is None:
         if mode is None or _start(default(), mode) is None:
             return None
         return default(initial_value=mode)
-    constraint = map(data_model)
+    to_constraint = CONSTRAINT_MAP[data_model.__class__]
+    constraint = to_constraint(data_model)
     if data_model.initial_value is not None:
         return constraint
     start = _start(constraint, mode)
     if start is None:
         return constraint
-    return map(data_model.model_copy(update={"initial_value": start}))
+    return to_constraint(data_model.model_copy(update={"initial_value": start}))
 
 
-def _prior_mode(prior: Optional[data_models.AnyPrior], d: int) -> Optional[float]:
+def _prior_mode(prior: Optional[gpytorch.priors.Prior]) -> Optional[float]:
     """The mode of a prior, if it has a single one."""
     if prior is None:
         return None
     try:
-        mode = map(prior, d=d).mode
+        mode = prior.mode
     except (NotImplementedError, AttributeError):
         return None
     if mode.numel() != 1:

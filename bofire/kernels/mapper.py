@@ -87,20 +87,20 @@ def map_RBFKernel(
     **kwargs,
 ) -> gpytorch.kernels.RBFKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    lengthscale_prior = (
+        priors.map(data_model.lengthscale_prior, d=len(active_dims))
+        if data_model.lengthscale_prior is not None
+        else None
+    )
     return gpytorch.kernels.RBFKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,
-        lengthscale_prior=(
-            priors.map(data_model.lengthscale_prior, d=len(active_dims))
-            if data_model.lengthscale_prior is not None
-            else None
-        ),
+        lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
                 data_model.lengthscale_constraint,
-                prior=data_model.lengthscale_prior,
-                d=len(active_dims),
+                prior=lengthscale_prior,
             )
         ),
     )
@@ -114,21 +114,21 @@ def map_MaternKernel(
     **kwargs,
 ) -> gpytorch.kernels.MaternKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    lengthscale_prior = (
+        priors.map(data_model.lengthscale_prior, d=len(active_dims))
+        if data_model.lengthscale_prior is not None
+        else None
+    )
     return gpytorch.kernels.MaternKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,
         nu=data_model.nu,
-        lengthscale_prior=(
-            priors.map(data_model.lengthscale_prior, d=len(active_dims))
-            if data_model.lengthscale_prior is not None
-            else None
-        ),
+        lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
                 data_model.lengthscale_constraint,
-                prior=data_model.lengthscale_prior,
-                d=len(active_dims),
+                prior=lengthscale_prior,
             )
         ),
     )
@@ -175,17 +175,16 @@ def map_LinearKernel(
     **kwargs,
 ) -> gpytorch.kernels.LinearKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    variance_prior = (
+        priors.map(data_model.variance_prior, d=len(active_dims))
+        if data_model.variance_prior is not None
+        else None
+    )
     return gpytorch.kernels.LinearKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,
-        variance_prior=(
-            priors.map(data_model.variance_prior, d=len(active_dims))
-            if data_model.variance_prior is not None
-            else None
-        ),
-        variance_constraint=priors.map_constraint(
-            None, prior=data_model.variance_prior, d=len(active_dims)
-        ),
+        variance_prior=variance_prior,
+        variance_constraint=priors.map_constraint(None, prior=variance_prior),
     )
 
 
@@ -197,18 +196,17 @@ def map_PolynomialKernel(
     **kwargs,
 ) -> gpytorch.kernels.PolynomialKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    offset_prior = (
+        priors.map(data_model.offset_prior, d=len(active_dims))
+        if data_model.offset_prior is not None
+        else None
+    )
     return gpytorch.kernels.PolynomialKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,
         power=data_model.power,
-        offset_prior=(
-            priors.map(data_model.offset_prior, d=len(active_dims))
-            if data_model.offset_prior is not None
-            else None
-        ),
-        offset_constraint=priors.map_constraint(
-            None, prior=data_model.offset_prior, d=len(active_dims)
-        ),
+        offset_prior=offset_prior,
+        offset_constraint=priors.map_constraint(None, prior=offset_prior),
     )
 
 
@@ -261,6 +259,11 @@ def map_ScaleKernel(
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
     **kwargs,
 ) -> gpytorch.kernels.ScaleKernel:
+    outputscale_prior = (
+        priors.map(data_model.outputscale_prior, d=len(active_dims))
+        if data_model.outputscale_prior is not None
+        else None
+    )
     return gpytorch.kernels.ScaleKernel(
         base_kernel=map(
             data_model.base_kernel,
@@ -269,16 +272,11 @@ def map_ScaleKernel(
             features_to_idx_mapper=features_to_idx_mapper,
             **kwargs,
         ),
-        outputscale_prior=(
-            priors.map(data_model.outputscale_prior, d=len(active_dims))
-            if data_model.outputscale_prior is not None
-            else None
-        ),
+        outputscale_prior=outputscale_prior,
         outputscale_constraint=(
             priors.map_constraint(
                 data_model.outputscale_constraint,
-                prior=data_model.outputscale_prior,
-                d=len(active_dims),
+                prior=outputscale_prior,
             )
         ),
     )
@@ -311,20 +309,20 @@ def map_HammingDistanceKernel(
     **kwargs,
 ) -> GpytorchKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    lengthscale_prior = (
+        priors.map(data_model.lengthscale_prior, d=len(active_dims))
+        if data_model.lengthscale_prior is not None
+        else None
+    )
     return CategoricalKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,
-        lengthscale_prior=(
-            priors.map(data_model.lengthscale_prior, d=len(active_dims))
-            if data_model.lengthscale_prior is not None
-            else None
-        ),
+        lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
                 data_model.lengthscale_constraint,
-                prior=data_model.lengthscale_prior,
-                d=len(active_dims),
+                prior=lengthscale_prior,
             )
         ),
     )
@@ -348,11 +346,7 @@ def map_IndexKernel(
             if data_model.prior is not None
             else None
         ),
-        var_constraint=(
-            priors.map(data_model.var_constraint)
-            if data_model.var_constraint is not None
-            else None
-        ),
+        var_constraint=priors.map_constraint(data_model.var_constraint),
     )
 
 
@@ -380,11 +374,7 @@ def map_PositiveIndexKernel(
             else None
         ),
         normalize_covar_matrix=data_model.normalize_covar_matrix,
-        var_constraint=(
-            priors.map(data_model.var_constraint)
-            if data_model.var_constraint is not None
-            else None
-        ),
+        var_constraint=priors.map_constraint(data_model.var_constraint),
         target_task_index=data_model.target_task_index,
         unit_scale_for_target=data_model.unit_scale_for_target,
     )
@@ -398,18 +388,18 @@ def map_WassersteinKernel(
     **kwargs,
 ) -> WassersteinKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    lengthscale_prior = (
+        priors.map(data_model.lengthscale_prior, d=len(active_dims))
+        if data_model.lengthscale_prior is not None
+        else None
+    )
     return WassersteinKernel(
         squared=data_model.squared,
-        lengthscale_prior=(
-            priors.map(data_model.lengthscale_prior, d=len(active_dims))
-            if data_model.lengthscale_prior is not None
-            else None
-        ),
+        lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
                 data_model.lengthscale_constraint,
-                prior=data_model.lengthscale_prior,
-                d=len(active_dims),
+                prior=lengthscale_prior,
             )
         ),
         active_dims=active_dims,
@@ -431,18 +421,18 @@ def map_ExactWassersteinKernel(
     append_x = torch.tensor(data_model.append_x, dtype=torch.double)
     append_y = torch.tensor(data_model.append_y, dtype=torch.double)
     normalize_y = torch.tensor(data_model.normalize_y, dtype=torch.double)
+    lengthscale_prior = (
+        priors.map(data_model.lengthscale_prior, d=len(active_dims))
+        if data_model.lengthscale_prior is not None
+        else None
+    )
     return ExactWassersteinKernel(
         squared=data_model.squared,
-        lengthscale_prior=(
-            priors.map(data_model.lengthscale_prior, d=len(active_dims))
-            if data_model.lengthscale_prior is not None
-            else None
-        ),
+        lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
                 data_model.lengthscale_constraint,
-                prior=data_model.lengthscale_prior,
-                d=len(active_dims),
+                prior=lengthscale_prior,
             )
         ),
         idx_x=idx_x,
@@ -511,19 +501,19 @@ def map_WedgeKernel(
         features_to_idx_mapper=features_to_idx_mapper,
         **kwargs,
     )
+    lengthscale_prior = (
+        priors.map(data_model.lengthscale_prior, d=len(active_dims))
+        if data_model.lengthscale_prior is not None
+        else None
+    )
     return WedgeKernel(
         base_kernel,
         indicator_func,
-        lengthscale_prior=(
-            priors.map(data_model.lengthscale_prior, d=len(active_dims))
-            if data_model.lengthscale_prior is not None
-            else None
-        ),
+        lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
                 data_model.lengthscale_constraint,
-                prior=data_model.lengthscale_prior,
-                d=len(active_dims),
+                prior=lengthscale_prior,
             )
         ),
         angle_prior=(
@@ -547,20 +537,20 @@ def map_SphericalLinearKernel(
     **kwargs,
 ) -> SphericalLinearKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    lengthscale_prior = (
+        priors.map(data_model.lengthscale_prior, d=len(active_dims))
+        if data_model.lengthscale_prior is not None
+        else None
+    )
     return SphericalLinearKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,
-        lengthscale_prior=(
-            priors.map(data_model.lengthscale_prior, d=len(active_dims))
-            if data_model.lengthscale_prior is not None
-            else None
-        ),
+        lengthscale_prior=lengthscale_prior,
         lengthscale_constraint=(
             priors.map_constraint(
                 data_model.lengthscale_constraint,
-                prior=data_model.lengthscale_prior,
-                d=len(active_dims),
+                prior=lengthscale_prior,
             )
         ),
         bounds=data_model.bounds,
@@ -574,31 +564,31 @@ def map_DownsamplingKernel(
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
 ) -> DownsamplingKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    offset_prior = (
+        priors.map(data_model.offset_prior, d=1)
+        if data_model.offset_prior is not None
+        else None
+    )
+    power_prior = (
+        priors.map(data_model.power_prior, d=1)
+        if data_model.power_prior is not None
+        else None
+    )
     return DownsamplingKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,
-        offset_prior=(
-            priors.map(data_model.offset_prior, d=1)
-            if data_model.offset_prior is not None
-            else None
-        ),
+        offset_prior=offset_prior,
         offset_constraint=(
             priors.map_constraint(
                 data_model.offset_constraint,
-                prior=data_model.offset_prior,
-                d=1,
+                prior=offset_prior,
             )
         ),
-        power_prior=(
-            priors.map(data_model.power_prior, d=1)
-            if data_model.power_prior is not None
-            else None
-        ),
+        power_prior=power_prior,
         power_constraint=(
             priors.map_constraint(
                 data_model.power_constraint,
-                prior=data_model.power_prior,
-                d=1,
+                prior=power_prior,
             )
         ),
     )

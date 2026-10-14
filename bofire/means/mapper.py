@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Type
+from typing import Callable, Dict, Optional, Tuple, Type
 
 import gpytorch
 
@@ -9,38 +9,37 @@ import bofire.priors.api as priors
 def map_ConstantMean(
     data_model: data_models.ConstantMean, d: int, **kwargs
 ) -> gpytorch.means.ConstantMean:
+    prior = priors.map(data_model.prior, d=d) if data_model.prior is not None else None
+    mode = _mode(prior)
     mean = gpytorch.means.ConstantMean(
-        constant_prior=priors.map(data_model.prior, d=d)
-        if data_model.prior is not None
-        else None,
-        constant_constraint=_bounds(data_model, d)
+        constant_prior=prior,
+        constant_constraint=_bounds(data_model.bounds, mode)
         if data_model.bounds is not None
         else None,
     )
-    if data_model.bounds is None and data_model.prior is not None:
-        # unbounded, so the fit starts at the prior's mode where it has one
-        mode = priors.map(data_model.prior, d=d)
-        try:
-            mean.initialize(constant=float(mode.mode))
-        except (NotImplementedError, AttributeError):
-            pass
+    if data_model.bounds is None and mode is not None:
+        # unbounded, so the fit starts at the prior's mode
+        mean.initialize(constant=mode)
     return mean
 
 
+def _mode(prior: Optional[gpytorch.priors.Prior]) -> Optional[float]:
+    """The mode of the prior on the constant, if it has one."""
+    if prior is None:
+        return None
+    try:
+        return float(prior.mode)
+    except (NotImplementedError, AttributeError):
+        return None
+
+
 def _bounds(
-    data_model: data_models.ConstantMean, d: int
+    bounds: Tuple[float, float], mode: Optional[float]
 ) -> gpytorch.constraints.Interval:
     """The bounds on the constant, starting at the prior's mode moved into them, or
-    at their middle without a prior."""
-    assert data_model.bounds is not None
-    lower, upper = data_model.bounds
-    start = (lower + upper) / 2
-    if data_model.prior is not None:
-        try:
-            mode = float(priors.map(data_model.prior, d=d).mode)
-            start = min(max(mode, lower), upper)
-        except (NotImplementedError, AttributeError):
-            pass
+    at their middle without one."""
+    lower, upper = bounds
+    start = (lower + upper) / 2 if mode is None else min(max(mode, lower), upper)
     return gpytorch.constraints.Interval(
         lower, upper, transform=None, initial_value=start
     )

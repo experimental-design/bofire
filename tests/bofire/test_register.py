@@ -18,6 +18,9 @@ from bofire.data_models.features.api import (
 from bofire.data_models.kernels.continuous import ContinuousKernel as _ContinuousBase
 from bofire.data_models.kernels.kernel import Kernel as KernelDataModel
 from bofire.data_models.llm.provider import LLMProvider
+from bofire.data_models.priors.constraint import (
+    PriorConstraint as PriorConstraintDataModel,
+)
 from bofire.data_models.priors.prior import Prior as PriorDataModel
 from bofire.data_models.strategies.strategy import Strategy as StrategyDataModel
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
@@ -459,6 +462,10 @@ class _CustomPriorDataModel(PriorDataModel):
     type: Literal["CustomPrior"] = "CustomPrior"
 
 
+class _CustomConstraintDataModel(PriorConstraintDataModel):
+    type: Literal["CustomConstraint"] = "CustomConstraint"
+
+
 # ---------------------------------------------------------------------------
 # Kernel registration tests
 # ---------------------------------------------------------------------------
@@ -564,6 +571,25 @@ class TestRegisterPrior:
 
         # cleanup
         PRIOR_MAP.pop(_CustomPriorDataModel, None)
+
+    def test_register_constraint_is_mapped_as_a_constraint(self):
+        import bofire.priors.api as priors_api
+        from bofire.priors.mapper import CONSTRAINT_MAP, PRIOR_MAP
+
+        sentinel = MagicMock(name="gpytorch_constraint")
+
+        def my_map_fn(data_model, **kwargs):
+            return sentinel
+
+        priors_api.register(_CustomConstraintDataModel, my_map_fn)
+        assert CONSTRAINT_MAP[_CustomConstraintDataModel] is my_map_fn
+        assert _CustomConstraintDataModel not in PRIOR_MAP
+
+        dm = _CustomConstraintDataModel(initial_value=1.0)
+        assert priors_api.map_constraint(dm) is sentinel
+
+        # cleanup
+        CONSTRAINT_MAP.pop(_CustomConstraintDataModel, None)
 
     def test_register_exported_from_api(self):
         from bofire.priors.api import register
