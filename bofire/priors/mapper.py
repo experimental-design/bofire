@@ -170,7 +170,15 @@ def map_LogTransformedInterval(
         lower_bound=data_model.lower_bound,
         upper_bound=data_model.upper_bound,
         initial_value=_initial_value(
-            data_model, prior, data_model.lower_bound, data_model.upper_bound
+            data_model,
+            prior,
+            data_model.lower_bound,
+            data_model.upper_bound,
+            # GPyTorch starts at exp(0) = 1; if that lies outside the bounds, at
+            # their middle on the log scale
+            default=1.0
+            if data_model.lower_bound <= 1.0 <= data_model.upper_bound
+            else math.sqrt(data_model.lower_bound * data_model.upper_bound),
         ),
     )
 
