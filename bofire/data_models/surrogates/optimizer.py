@@ -10,8 +10,8 @@ class LBFGSB(BaseModel):
     maximizing the marginal likelihood.
 
     Options left at None keep BoTorch's defaults: scipy's for an ordinary fit, and
-    tighter ones (at most 10000 iterations, tolerances of 1e-8) for the relevance
-    pursuit of a GP with a `SparseOutlierGaussianLikelihood`.
+    its own (at most 10000 iterations, tolerances of 1e-8) for the relevance pursuit
+    of a GP with a `SparseOutlierGaussianLikelihood`.
 
     Examples:
         >>> LBFGSB(maxiter=200)

@@ -324,13 +324,14 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
         *,
         engineered_features: Optional[EngineeredFeatures] = None,
     ) -> "SingleTaskGPSurrogate":
-        """Single-task GP that detects outliers and discounts them, as BoTorch's
-        `RobustRelevancePursuitSingleTaskGP` builds it.
+        """Single-task GP that detects outliers and discounts them: BoTorch's
+        `RobustRelevancePursuitSingleTaskGP`, with the lengthscales bounded at 0.05
+        instead of 0.025.
 
-        The likelihood gives every observation a noise level of its own, of which as
-        few as possible are non-zero, on top of the HVARFNER noise model. The kernel is
-        an RBF kernel with the HVARFNER prior whose lengthscales are at least 0.05, so
-        that the model cannot simply explain the outliers.
+        The likelihood adds an extra noise variance for observations treated as
+        outliers to the HVARFNER noise model. The kernel is an RBF kernel with the
+        HVARFNER prior whose lengthscales are at least 0.05, so that the model cannot
+        simply explain the outliers.
 
         Args:
             inputs: The input features.

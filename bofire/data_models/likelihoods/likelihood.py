@@ -44,12 +44,12 @@ class GaussianLikelihood(Likelihood):
 
 
 class SparseOutlierGaussianLikelihood(GaussianLikelihood):
-    """Gaussian noise plus a noise level of its own for every observation, of which
-    as few as possible are non-zero.
+    """Gaussian noise plus an extra noise variance for observations treated as
+    outliers, so that they do not distort the fit.
 
-    Observations the model cannot explain get a large noise level of their own and
-    are treated as outliers instead of distorting the fit; the number of outliers is
-    chosen by Bayesian model comparison (relevance pursuit, Ament et al. 2024,
+    Models with different numbers of outliers (0%, 5%, 10%, 20%, ... of the
+    observations) are fitted, and one is chosen by Bayesian model comparison, under a
+    prior that favours few outliers (relevance pursuit, Ament et al. 2024,
     https://arxiv.org/abs/2410.24222). `noise_prior` and `noise_constraint` refer to
     the noise shared by all observations. Works with one output only.
 
