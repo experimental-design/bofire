@@ -120,7 +120,6 @@ quartodoc:
           members:
             - Surrogate
             - SingleTaskGPSurrogate
-            - MixedSingleTaskGPSurrogate
             - MultiTaskGPSurrogate
             - RobustSingleTaskGPSurrogate
             - TanimotoGPSurrogate

@@ -38,10 +38,15 @@ CLOUDPICKLE_NOT_AVAILABLE = find_spec("cloudpickle") is None
 
 
 @pytest.mark.parametrize(
-    "modelclass",
-    [(data_models.SingleTaskGPSurrogate), (data_models.MixedSingleTaskGPSurrogate)],
+    "build",
+    [
+        lambda inputs, outputs: data_models.SingleTaskGPSurrogate(
+            inputs=inputs, outputs=outputs
+        ),
+        data_models.SingleTaskGPSurrogate.mixed,
+    ],
 )
-def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
+def test_BotorchModel_validate_input_preprocessing_steps(build):
     inputs = Inputs(
         features=[
             ContinuousInput(
@@ -60,10 +65,7 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
         ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
-    data_model = modelclass(
-        inputs=inputs,
-        outputs=outputs,
-    )
+    data_model = build(inputs, outputs)
     surrogate = surrogates.map(data_model)
     # input_preprocessing_specs is derived: every categorical is ordinal-encoded.
     assert surrogate.input_preprocessing_specs == {
@@ -656,12 +658,8 @@ def test_botorch_models_fit_and_compatibilize():
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
     experiments2.loc[experiments2.x_cat == "papa", "y2"] /= 2.0
     experiments2["valid_y2"] = 1
-    data_model2 = data_models.MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        scaler=StandardizeScaler(),
-        output_scaler=ScalerEnum.STANDARDIZE,
-    )
+    data_model2 = data_models.SingleTaskGPSurrogate.mixed(inputs, outputs)
+    data_model2.scaler = StandardizeScaler()
     # create models
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
     botorch_surrogates = BotorchSurrogates(data_model=data_model)
@@ -910,12 +908,8 @@ def test_empirical_model():
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
     experiments2.loc[experiments2.x_cat == "papa", "y2"] /= 2.0
     experiments2["valid_y2"] = 1
-    data_model2 = data_models.MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        scaler=StandardizeScaler(),
-        output_scaler=ScalerEnum.STANDARDIZE,
-    )
+    data_model2 = data_models.SingleTaskGPSurrogate.mixed(inputs, outputs)
+    data_model2.scaler = StandardizeScaler()
     # create models
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
     botorch_surrogates = BotorchSurrogates(data_model=data_model)

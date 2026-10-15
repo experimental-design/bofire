@@ -35,9 +35,6 @@ def _rebuild_dependent_models() -> None:
     from bofire.data_models.likelihoods.likelihood import GaussianLikelihood
     from bofire.data_models.means.mean import ConstantMean
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
-    from bofire.data_models.surrogates.mixed_single_task_gp import (
-        MixedSingleTaskGPSurrogate,
-    )
     from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
     from bofire.data_models.surrogates.robust_single_task_gp import (
         RobustSingleTaskGPSurrogate,
@@ -70,7 +67,6 @@ def _rebuild_dependent_models() -> None:
         (ConstantMean, "prior"),
         (GaussianLikelihood, "noise_prior"),
         (MultiTaskGPSurrogate, "noise_prior"),
-        (MixedSingleTaskGPSurrogate, "noise_prior"),
         (TanimotoGPSurrogate, "noise_prior"),
         (RobustSingleTaskGPSurrogate, "noise_prior"),
     ]:
@@ -88,7 +84,6 @@ def _rebuild_dependent_models() -> None:
         (ScaleKernel, "outputscale_constraint"),
         (GaussianLikelihood, "noise_constraint"),
         (MultiTaskGPSurrogate, "noise_constraint"),
-        (MixedSingleTaskGPSurrogate, "noise_constraint"),
         (TanimotoGPSurrogate, "noise_constraint"),
         (RobustSingleTaskGPSurrogate, "noise_constraint"),
     ]:
@@ -130,7 +125,6 @@ def _rebuild_dependent_models() -> None:
     for cls in [
         SingleTaskGPSurrogate,
         MultiTaskGPSurrogate,
-        MixedSingleTaskGPSurrogate,
         TanimotoGPSurrogate,
         RobustSingleTaskGPSurrogate,
     ]:

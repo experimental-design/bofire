@@ -1,13 +1,17 @@
 import pytest
 
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
+from bofire.data_models.encodings.api import OrdinalEncoding
 from bofire.data_models.features.api import (
+    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     SumFeature,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import (
     AdditiveMapSaasKernel,
+    HammingDistanceKernel,
     LinearKernel,
     MaternKernel,
     PolynomialKernel,
@@ -108,3 +112,74 @@ def test_factories_take_engineered_features(factory):
     # every surrogate gets a copy of its own
     assert first.engineered_features is not second.engineered_features
     assert first.engineered_features is not engineered
+
+
+MIXED_INPUTS = Inputs(
+    features=[
+        ContinuousInput(key="x0", bounds=(0, 1)),
+        ContinuousInput(key="x1", bounds=(0, 1)),
+        CategoricalInput(key="c", categories=["a", "b"]),
+        CategoricalInput(
+            key="d",
+            categories=["a", "b"],
+            descriptors=Descriptors(columns={"size": [1.0, 2.0]}),
+        ),
+    ]
+)
+
+
+def test_mixed_routes_plain_categoricals_to_the_hamming_kernel():
+    engineered = EngineeredFeatures(
+        features=[SumFeature(key="s", features=["x0", "x1"])]
+    )
+
+    surrogate = SingleTaskGPSurrogate.mixed(
+        MIXED_INPUTS, OUTPUTS, engineered_features=engineered
+    )
+
+    sum_part, product_part = surrogate.kernel.kernels
+    continuous, scaled_categorical = sum_part.base_kernel.kernels
+    # descriptor-carrying categoricals and engineered features are continuous columns
+    assert continuous.features == ["x0", "x1", "d", "s"]
+    assert scaled_categorical.base_kernel.features == ["c"]
+    assert [k.features for k in product_part.base_kernel.kernels] == [
+        ["x0", "x1", "d", "s"],
+        ["c"],
+    ]
+    # each occurrence has hyperparameters of its own
+    assert continuous is not product_part.base_kernel.kernels[0]
+    assert isinstance(surrogate.categorical_encodings["c"], OrdinalEncoding)
+    assert not isinstance(surrogate.categorical_encodings["d"], OrdinalEncoding)
+
+
+def test_mixed_without_continuous_inputs_is_a_scaled_hamming_kernel():
+    inputs = Inputs(features=[CategoricalInput(key="c", categories=["a", "b"])])
+
+    kernel = SingleTaskGPSurrogate.mixed(inputs, OUTPUTS).kernel
+
+    assert isinstance(kernel, ScaleKernel)
+    assert kernel.base_kernel == HammingDistanceKernel(ard=True, features=["c"])
+
+
+@pytest.mark.parametrize(
+    "inputs, engineered, message",
+    [
+        (
+            Inputs(features=[ContinuousInput(key="x0", bounds=(0, 1))]),
+            None,
+            "at least one categorical input without descriptor data",
+        ),
+        (
+            MIXED_INPUTS,
+            EngineeredFeatures(
+                features=[
+                    SumFeature(key="s", features=["x0", "x1"], keep_features=False)
+                ]
+            ),
+            "keep the features it is computed from",
+        ),
+    ],
+)
+def test_mixed_rejects(inputs, engineered, message):
+    with pytest.raises(ValueError, match=message):
+        SingleTaskGPSurrogate.mixed(inputs, OUTPUTS, engineered_features=engineered)

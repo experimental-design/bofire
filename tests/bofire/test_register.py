@@ -9,7 +9,6 @@ from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     AnyOutput,
-    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     EngineeredFeature,
@@ -657,32 +656,16 @@ class TestKernelPydanticIntegration:
         sk = ScaleKernel(base_kernel=_IntegrationKernelDataModel(my_param=3.0))
         assert isinstance(sk.base_kernel, _IntegrationKernelDataModel)
 
-    def test_custom_continuous_kernel_in_mixed_surrogate(self):
+    def test_custom_continuous_kernel_is_a_continuous_kernel(self):
         """A ContinuousKernel subclass should be auto-added to AnyContinuousKernel."""
         from bofire.data_models.kernels.api import (
             _CONTINUOUS_KERNEL_TYPES,
             register_kernel,
         )
-        from bofire.data_models.surrogates.mixed_single_task_gp import (
-            MixedSingleTaskGPSurrogate,
-        )
 
         register_kernel(_IntegrationContinuousKernel)
 
         assert _IntegrationContinuousKernel in _CONTINUOUS_KERNEL_TYPES
-
-        s = MixedSingleTaskGPSurrogate(
-            inputs=Inputs(
-                features=[
-                    ContinuousInput(key="a", bounds=(0, 1)),
-                    ContinuousInput(key="b", bounds=(0, 1)),
-                    CategoricalInput(key="c", categories=["x", "y"]),
-                ]
-            ),
-            outputs=_OUTPUTS,
-            continuous_kernel=_IntegrationContinuousKernel(),
-        )
-        assert isinstance(s.continuous_kernel, _IntegrationContinuousKernel)
 
     def test_custom_kernel_in_wedge_kernel(self):
         """A registered kernel should be usable as WedgeKernel.base_kernel."""

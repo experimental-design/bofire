@@ -4,12 +4,20 @@ from typing import List, Literal, Optional, Type
 from pydantic import Field
 
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
-from bofire.data_models.features.api import AnyOutput, ContinuousOutput
+from bofire.data_models.encodings.api import OrdinalEncoding
+from bofire.data_models.features.api import (
+    AnyOutput,
+    CategoricalInput,
+    ContinuousOutput,
+)
 from bofire.data_models.kernels.api import (
+    AdditiveKernel,
     AdditiveMapSaasKernel,
     AnyKernel,
+    HammingDistanceKernel,
     LinearKernel,
     MaternKernel,
+    MultiplicativeKernel,
     PolynomialKernel,
     RBFKernel,
     ScaleKernel,
@@ -215,6 +223,94 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
             mean=ConstantMean(
                 prior=NormalPrior(loc=0.0, scale=1.0), bounds=(-10.0, 10.0)
             ),
+        )
+
+    @staticmethod
+    def mixed(
+        inputs: Inputs,
+        outputs: Outputs,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
+    ) -> "SingleTaskGPSurrogate":
+        """Single-task GP for continuous and categorical inputs, as BoTorch's
+        `MixedSingleTaskGP` builds it.
+
+        Categorical inputs without descriptor data are encoded as ordinal codes and
+        compared by a Hamming kernel; all other inputs and the engineered features by
+        an RBF kernel with the HVARFNER prior. The kernel is the sum of the two plus
+        their product, each scaled; without other inputs, the scaled Hamming kernel.
+
+        Args:
+            inputs: The input features, at least one of them categorical without
+                descriptor data.
+            outputs: The output feature.
+            engineered_features: Quantities derived from the inputs that the model
+                sees as well; the RBF kernel works on them. If not provided, none.
+
+        Returns:
+            The surrogate.
+
+        Raises:
+            ValueError: If no categorical input lacks descriptor data, or if an
+                engineered feature replaces the features it is computed from.
+        """
+        engineered_features = _copy(engineered_features)
+        if any(not feat.keep_features for feat in engineered_features.get()):
+            raise ValueError(
+                "The mixed GP needs every engineered feature to keep the features it "
+                "is computed from (keep_features=True)."
+            )
+        categorical = [
+            feat.key
+            for feat in inputs.get(CategoricalInput, exact=False)
+            if feat.descriptors is None
+        ]
+        if not categorical:
+            raise ValueError(
+                "The mixed GP needs at least one categorical input without "
+                "descriptor data."
+            )
+        continuous = [
+            key for key in inputs.get_keys() if key not in categorical
+        ] + engineered_features.get_keys()
+
+        def continuous_kernel() -> RBFKernel:
+            return RBFKernel(
+                ard=True,
+                lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),
+                features=continuous,
+            )
+
+        def categorical_kernel() -> HammingDistanceKernel:
+            return HammingDistanceKernel(ard=True, features=categorical)
+
+        if continuous:
+            kernel = AdditiveKernel(
+                kernels=[
+                    ScaleKernel(
+                        base_kernel=AdditiveKernel(
+                            kernels=[
+                                continuous_kernel(),
+                                ScaleKernel(base_kernel=categorical_kernel()),
+                            ]
+                        )
+                    ),
+                    ScaleKernel(
+                        base_kernel=MultiplicativeKernel(
+                            kernels=[continuous_kernel(), categorical_kernel()]
+                        )
+                    ),
+                ]
+            )
+        else:
+            kernel = ScaleKernel(base_kernel=categorical_kernel())
+        return SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            engineered_features=engineered_features,
+            categorical_encodings={key: OrdinalEncoding() for key in categorical},
+            kernel=kernel,
         )
 
     @classmethod

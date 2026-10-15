@@ -8,9 +8,6 @@ from bofire.data_models.surrogates.fully_bayesian import (
     FullyBayesianSingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.map_saas import EnsembleMapSaasSingleTaskGPSurrogate
-from bofire.data_models.surrogates.mixed_single_task_gp import (
-    MixedSingleTaskGPSurrogate,
-)
 from bofire.data_models.surrogates.mlp import RegressionMLPEnsemble
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.robust_single_task_gp import (
@@ -26,7 +23,6 @@ AnyOptionSurrogate = tagged_union(
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
     RobustSingleTaskGPSurrogate,
-    MixedSingleTaskGPSurrogate,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
     TanimotoGPSurrogate,

@@ -15,9 +15,6 @@ from bofire.data_models.surrogates.fully_bayesian import (
     FullyBayesianSingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.map_saas import EnsembleMapSaasSingleTaskGPSurrogate
-from bofire.data_models.surrogates.mixed_single_task_gp import (
-    MixedSingleTaskGPSurrogate,
-)
 from bofire.data_models.surrogates.mlp import (
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
@@ -36,7 +33,6 @@ _BOTORCH_SURROGATE_TYPES: List[Type[Surrogate]] = [
     EmpiricalSurrogate,
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
-    MixedSingleTaskGPSurrogate,
     RegressionMLPEnsemble,
     ClassificationMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,

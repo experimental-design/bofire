@@ -1,11 +1,5 @@
 from typing import Callable, Dict, Optional, Type
 
-from bofire.data_models.kernels.api import (
-    AdditiveKernel,
-    MultiplicativeKernel,
-    ScaleKernel,
-)
-from bofire.data_models.likelihoods.api import GaussianLikelihood
 from bofire.data_models.surrogates import api as data_models
 from bofire.surrogates.deterministic import (
     CategoricalDeterministicSurrogate,
@@ -25,59 +19,10 @@ from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.tanimoto_gp_surrogate import TanimotoGPSurrogate
 
 
-def map_MixedSingleTaskGPSurrogate(
-    data_model: data_models.MixedSingleTaskGPSurrogate,
-) -> data_models.SingleTaskGPSurrogate:
-    if (
-        data_model.continuous_kernel.features is None
-        or len(data_model.continuous_kernel.features) == 0
-    ):
-        # model is purely categorical
-        kernel = ScaleKernel(base_kernel=data_model.categorical_kernel)
-    else:
-        sum_kernel = ScaleKernel(
-            base_kernel=AdditiveKernel(
-                kernels=[
-                    data_model.continuous_kernel,
-                    ScaleKernel(base_kernel=data_model.categorical_kernel),
-                ]
-            )
-        )
-        product_kernel = ScaleKernel(
-            base_kernel=MultiplicativeKernel(
-                kernels=[
-                    data_model.continuous_kernel,
-                    data_model.categorical_kernel,
-                ]
-            )
-        )
-        kernel = AdditiveKernel(
-            kernels=[
-                sum_kernel,
-                product_kernel,
-            ]
-        )
-    return data_models.SingleTaskGPSurrogate(
-        inputs=data_model.inputs,
-        outputs=data_model.outputs,
-        categorical_encodings=data_model.categorical_encodings,
-        dump=data_model.dump,
-        scaler=data_model.scaler,
-        output_scaler=data_model.output_scaler,
-        likelihood=GaussianLikelihood(
-            noise_prior=data_model.noise_prior,
-            noise_constraint=data_model.noise_constraint,
-        ),
-        kernel=kernel,
-    )
-
-
 DATA_MODEL_MAP: Dict[
     Type[data_models.Surrogate],
     Callable[..., data_models.AnySurrogate],
-] = {
-    data_models.MixedSingleTaskGPSurrogate: map_MixedSingleTaskGPSurrogate,
-}
+] = {}
 
 
 SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
