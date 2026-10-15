@@ -1,7 +1,7 @@
 import itertools
 from typing import List, Literal, Optional, Type
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.encodings.api import OrdinalEncoding
@@ -27,12 +27,15 @@ from bofire.data_models.likelihoods.api import (
     MBO_LIKELIHOOD,
     THREESIX_LIKELIHOOD,
     AnyLikelihood,
+    SparseOutlierGaussianLikelihood,
 )
 from bofire.data_models.means.api import AnyMean, ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
+    HVARFNER_NOISE_PRIOR,
     MBO_LENGTHSCALE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
+    ROBUSTGP_LENGTHSCALE_CONSTRAINT,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_SCALE_PRIOR,
     GreaterThan,
@@ -312,6 +315,56 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
             categorical_encodings={key: OrdinalEncoding() for key in categorical},
             kernel=kernel,
         )
+
+    @staticmethod
+    def robust(
+        inputs: Inputs,
+        outputs: Outputs,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
+    ) -> "SingleTaskGPSurrogate":
+        """Single-task GP that detects outliers and discounts them, as BoTorch's
+        `RobustRelevancePursuitSingleTaskGP` builds it.
+
+        The likelihood gives every observation a noise level of its own, of which as
+        few as possible are non-zero, on top of the HVARFNER noise model. The kernel is
+        an RBF kernel with the HVARFNER prior whose lengthscales are at least 0.05, so
+        that the model cannot simply explain the outliers.
+
+        Args:
+            inputs: The input features.
+            outputs: The output feature, exactly one.
+            engineered_features: Quantities derived from the inputs that the model
+                sees as well; the kernel works on them too. If not provided, none.
+
+        Returns:
+            The surrogate, with a `SparseOutlierGaussianLikelihood`.
+        """
+        return SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            engineered_features=_copy(engineered_features),
+            kernel=RBFKernel(
+                ard=True,
+                lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
+            ),
+            likelihood=SparseOutlierGaussianLikelihood(
+                noise_prior=HVARFNER_NOISE_PRIOR()
+            ),
+        )
+
+    @model_validator(mode="after")
+    def validate_sparse_outlier_likelihood(self):
+        """Outlier noise levels are fitted for one output only."""
+        if (
+            isinstance(self.likelihood, SparseOutlierGaussianLikelihood)
+            and len(self.outputs) > 1
+        ):
+            raise ValueError(
+                "A SparseOutlierGaussianLikelihood supports one output only."
+            )
+        return self
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

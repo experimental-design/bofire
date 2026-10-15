@@ -15,13 +15,19 @@ from bofire.data_models.kernels.api import (
     LinearKernel,
     MaternKernel,
     PolynomialKernel,
+    RBFKernel,
     ScaleKernel,
 )
-from bofire.data_models.likelihoods.api import HVARFNER_LIKELIHOOD, THREESIX_LIKELIHOOD
+from bofire.data_models.likelihoods.api import (
+    HVARFNER_LIKELIHOOD,
+    THREESIX_LIKELIHOOD,
+    SparseOutlierGaussianLikelihood,
+)
 from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
+    ROBUSTGP_LENGTHSCALE_CONSTRAINT,
     THREESIX_SCALE_PRIOR,
     NormalPrior,
 )
@@ -83,6 +89,16 @@ def test_options_contain_a_scaled_matern_with_hvarfner_priors():
             ConstantMean(prior=NormalPrior(loc=0, scale=1), bounds=(-10, 10)),
             HVARFNER_LIKELIHOOD(),
         ),
+        (
+            SingleTaskGPSurrogate.robust(INPUTS, OUTPUTS),
+            RBFKernel(
+                ard=True,
+                lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
+            ),
+            ConstantMean(),
+            SparseOutlierGaussianLikelihood(noise_prior=HVARFNER_NOISE_PRIOR()),
+        ),
     ],
 )
 def test_factories_build_their_components(surrogate, kernel, mean, likelihood):
@@ -97,6 +113,7 @@ def test_factories_build_their_components(surrogate, kernel, mean, likelihood):
         SingleTaskGPSurrogate.linear,
         SingleTaskGPSurrogate.polynomial,
         SingleTaskGPSurrogate.additive_map_saas,
+        SingleTaskGPSurrogate.robust,
         lambda *args, **kwargs: SingleTaskGPSurrogate.options(*args, **kwargs)[0],
     ],
 )

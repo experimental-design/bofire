@@ -25,7 +25,10 @@ from bofire.data_models.kernels.api import (
     ScaleKernel,
     TanimotoKernel,
 )
-from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.likelihoods.api import (
+    GaussianLikelihood,
+    SparseOutlierGaussianLikelihood,
+)
 from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
@@ -119,7 +122,7 @@ specs.add_valid(
 )
 
 specs.add_valid(
-    models.RobustSingleTaskGPSurrogate,
+    models.SingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
             features=[
@@ -147,18 +150,17 @@ specs.add_valid(
         ).model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "cache_model_trace": False,
-        "convex_parametrization": True,
-        "prior_mean_of_support": None,
+        "mean": ConstantMean().model_dump(),
+        "likelihood": SparseOutlierGaussianLikelihood(
+            noise_prior=THREESIX_NOISE_PRIOR()
+        ).model_dump(),
         "categorical_encodings": {},
         "dump": None,
     },
 )
 
 specs.add_invalid(
-    models.RobustSingleTaskGPSurrogate,
+    models.SingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
             features=[
@@ -184,14 +186,10 @@ specs.add_invalid(
         ).model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "cache_model_trace": False,
-        "convex_parametrization": True,
-        "prior_mean_of_support": None,
-        "dump": None,
+        "likelihood": SparseOutlierGaussianLikelihood().model_dump(),
     },
     error=ValueError,
-    message="RobustGP only supports one output.",
+    message="A SparseOutlierGaussianLikelihood supports one output only.",
 )
 
 specs.add_invalid(

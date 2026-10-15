@@ -32,13 +32,13 @@ def _rebuild_dependent_models() -> None:
         ExactWassersteinKernel,
         WassersteinKernel,
     )
-    from bofire.data_models.likelihoods.likelihood import GaussianLikelihood
+    from bofire.data_models.likelihoods.likelihood import (
+        GaussianLikelihood,
+        SparseOutlierGaussianLikelihood,
+    )
     from bofire.data_models.means.mean import ConstantMean
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
     from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
-    from bofire.data_models.surrogates.robust_single_task_gp import (
-        RobustSingleTaskGPSurrogate,
-    )
     from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
     from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 
@@ -68,7 +68,7 @@ def _rebuild_dependent_models() -> None:
         (GaussianLikelihood, "noise_prior"),
         (MultiTaskGPSurrogate, "noise_prior"),
         (TanimotoGPSurrogate, "noise_prior"),
-        (RobustSingleTaskGPSurrogate, "noise_prior"),
+        (SparseOutlierGaussianLikelihood, "noise_prior"),
     ]:
         patch_field(model_cls, field_name, AnyPrior)
 
@@ -85,7 +85,7 @@ def _rebuild_dependent_models() -> None:
         (GaussianLikelihood, "noise_constraint"),
         (MultiTaskGPSurrogate, "noise_constraint"),
         (TanimotoGPSurrogate, "noise_constraint"),
-        (RobustSingleTaskGPSurrogate, "noise_constraint"),
+        (SparseOutlierGaussianLikelihood, "noise_constraint"),
     ]:
         patch_field(model_cls, field_name, AnyPriorConstraint)
 
@@ -118,7 +118,7 @@ def _rebuild_dependent_models() -> None:
         cls.model_rebuild(force=True)
 
     # 4. Means and likelihoods, which surrogates hold
-    for cls in [ConstantMean, GaussianLikelihood]:
+    for cls in [ConstantMean, GaussianLikelihood, SparseOutlierGaussianLikelihood]:
         cls.model_rebuild(force=True)
 
     # 5. Surrogate models
@@ -126,7 +126,6 @@ def _rebuild_dependent_models() -> None:
         SingleTaskGPSurrogate,
         MultiTaskGPSurrogate,
         TanimotoGPSurrogate,
-        RobustSingleTaskGPSurrogate,
     ]:
         cls.model_rebuild(force=True)
 

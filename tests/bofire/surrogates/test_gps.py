@@ -44,21 +44,21 @@ from bofire.data_models.kernels.api import (
     SphericalLinearKernel,
     TanimotoKernel,
 )
-from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.likelihoods.api import (
+    GaussianLikelihood,
+    SparseOutlierGaussianLikelihood,
+)
 from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
+    HVARFNER_NOISE_PRIOR,
     THREESIX_NOISE_PRIOR,
     GammaPrior,
     LogNormalPrior,
     NormalPrior,
 )
 from bofire.data_models.priors.api import GreaterThan as BoFireGreaterThan
-from bofire.data_models.surrogates.api import (
-    RobustSingleTaskGPSurrogate,
-    ScalerEnum,
-    SingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.api import ScalerEnum, SingleTaskGPSurrogate
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
 from bofire.utils.torch_tools import tkwargs
@@ -846,10 +846,11 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
         engine="python",
     )
     experiments["valid_y"] = 1
-    model = RobustSingleTaskGPSurrogate(
+    model = SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
+        likelihood=SparseOutlierGaussianLikelihood(noise_prior=HVARFNER_NOISE_PRIOR()),
         scaler=scaler,
         output_scaler=output_scaler,
     )
@@ -883,10 +884,11 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
             assert model.model.input_transform is None
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
-    model2 = RobustSingleTaskGPSurrogate(
+    model2 = SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
+        likelihood=SparseOutlierGaussianLikelihood(noise_prior=HVARFNER_NOISE_PRIOR()),
         scaler=scaler,
         output_scaler=output_scaler,
     )
@@ -896,10 +898,11 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
 
     assert_frame_equal(preds, preds2)
 
-    model3 = RobustSingleTaskGPSurrogate(
+    model3 = SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
+        likelihood=SparseOutlierGaussianLikelihood(noise_prior=HVARFNER_NOISE_PRIOR()),
         scaler=scaler,
     )
 
@@ -912,6 +915,15 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
 
     # check for the correct columns
     assert set(preds_outliers.columns) == {"y_pred", "y_sd", "y_rho"}
+
+
+def test_predict_outliers_needs_sparse_outlier_likelihood():
+    bench = Himmelblau()
+    surrogate = surrogates.map(
+        SingleTaskGPSurrogate(inputs=bench.domain.inputs, outputs=bench.domain.outputs)
+    )
+    with pytest.raises(ValueError, match="SparseOutlierGaussianLikelihood"):
+        surrogate.predict_outliers(pd.DataFrame())
 
 
 @pytest.mark.parametrize(
@@ -1094,10 +1106,12 @@ def test_noise_prior_registered_for_robust_single_task_gp():
     )
 
     surrogate = surrogates.map(
-        RobustSingleTaskGPSurrogate(
+        SingleTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=GammaPrior(concentration=1.1, rate=0.001),
+            likelihood=SparseOutlierGaussianLikelihood(
+                noise_prior=GammaPrior(concentration=1.1, rate=0.001)
+            ),
         )
     )
     surrogate.fit(experiments)

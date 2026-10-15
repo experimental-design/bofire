@@ -41,3 +41,37 @@ class GaussianLikelihood(Likelihood):
         description="Bounds the noise variance is restricted to during fitting. A "
         "positive lower bound keeps the fit numerically stable.",
     )
+
+
+class SparseOutlierGaussianLikelihood(GaussianLikelihood):
+    """Gaussian noise plus a noise level of its own for every observation, of which
+    as few as possible are non-zero.
+
+    Observations the model cannot explain get a large noise level of their own and
+    are treated as outliers instead of distorting the fit; the number of outliers is
+    chosen by Bayesian model comparison (relevance pursuit, Ament et al. 2024,
+    https://arxiv.org/abs/2410.24222). `noise_prior` and `noise_constraint` refer to
+    the noise shared by all observations. Works with one output only.
+
+    What counts as an outlier depends on how flexible the model is: a kernel with
+    short lengthscales can explain almost any point. Bound the lengthscales from
+    below, e.g. with `ROBUSTGP_LENGTHSCALE_CONSTRAINT()`.
+    """
+
+    type: Literal["SparseOutlierGaussianLikelihood"] = "SparseOutlierGaussianLikelihood"
+    prior_mean_of_support: Optional[int] = Field(
+        default=None,
+        description="Number of outliers expected a priori, the mean of the prior over "
+        "the number of outliers used to compare the candidate models. If not "
+        "provided, 20% of the observations.",
+    )
+    convex_parametrization: bool = Field(
+        default=True,
+        description="Whether the outlier noise levels are fitted in a convex "
+        "parametrization, which generally gives better fits.",
+    )
+    cache_model_trace: bool = Field(
+        default=False,
+        description="Whether to keep every model fitted along the way, one per number "
+        "of outliers, on the fitted model for inspection.",
+    )

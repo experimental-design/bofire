@@ -1,6 +1,10 @@
 import math
 
-from bofire.data_models.likelihoods.likelihood import GaussianLikelihood, Likelihood
+from bofire.data_models.likelihoods.likelihood import (
+    GaussianLikelihood,
+    Likelihood,
+    SparseOutlierGaussianLikelihood,
+)
 from bofire.data_models.priors.api import (
     HVARFNER_NOISE_PRIOR,
     MBO_NOISE_PRIOR,
@@ -10,7 +14,7 @@ from bofire.data_models.priors.api import (
 from bofire.data_models.unions import tagged_union
 
 
-AnyLikelihood = tagged_union(GaussianLikelihood)
+AnyLikelihood = tagged_union(GaussianLikelihood, SparseOutlierGaussianLikelihood)
 
 
 # likelihoods of interest, built anew on every call so that no two models share them

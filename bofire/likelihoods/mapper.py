@@ -26,6 +26,8 @@ def map_GaussianLikelihood(
 
 LIKELIHOOD_MAP: Dict[Type[data_models.Likelihood], Callable] = {
     data_models.GaussianLikelihood: map_GaussianLikelihood,
+    # the shared noise; the robust GP adds the outlier noise levels around it
+    data_models.SparseOutlierGaussianLikelihood: map_GaussianLikelihood,
 }
 
 

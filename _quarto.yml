@@ -113,6 +113,7 @@ quartodoc:
           members:
             - Likelihood
             - GaussianLikelihood
+            - SparseOutlierGaussianLikelihood
     - title: Data Models - Surrogates
       desc: Surrogate model configuration data models
       contents:
@@ -121,7 +122,6 @@ quartodoc:
             - Surrogate
             - SingleTaskGPSurrogate
             - MultiTaskGPSurrogate
-            - RobustSingleTaskGPSurrogate
             - TanimotoGPSurrogate
             - RandomForestSurrogate
             - MLPEnsemble

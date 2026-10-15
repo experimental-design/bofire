@@ -21,9 +21,6 @@ from bofire.data_models.surrogates.mlp import (
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.data_models.surrogates.pairwise_gp import PairwiseGPSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
-from bofire.data_models.surrogates.robust_single_task_gp import (
-    RobustSingleTaskGPSurrogate,
-)
 from bofire.data_models.surrogates.scaler import (
     AnyScaler,
     Normalize,
@@ -42,7 +39,6 @@ AnySurrogate = tagged_union(
     EmpiricalSurrogate,
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
-    RobustSingleTaskGPSurrogate,
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
@@ -58,7 +54,6 @@ AnySurrogate = tagged_union(
 AnyTrainableSurrogate = tagged_union(
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
-    RobustSingleTaskGPSurrogate,
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
@@ -71,7 +66,6 @@ AnyRegressionSurrogate = tagged_union(
     EmpiricalSurrogate,
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
-    RobustSingleTaskGPSurrogate,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
     TanimotoGPSurrogate,
