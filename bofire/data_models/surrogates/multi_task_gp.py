@@ -18,10 +18,11 @@ from bofire.data_models.priors.api import (
     GreaterThan,
 )
 from bofire.data_models.priors.lkj import LKJPrior
+from bofire.data_models.surrogates.optimizer import LBFGSBFitted
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
+class MultiTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
     type: Literal["MultiTaskGPSurrogate"] = "MultiTaskGPSurrogate"
     kernel: AnyKernel = Field(
         default_factory=lambda: RBFKernel(

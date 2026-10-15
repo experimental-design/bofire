@@ -126,6 +126,7 @@ quartodoc:
             - RandomForestSurrogate
             - MLPEnsemble
             - SelectionSurrogate
+            - LBFGSB
             - BotorchSurrogates
     - title: Strategies
       desc: Strategy implementations

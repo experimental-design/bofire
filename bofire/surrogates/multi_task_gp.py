@@ -1,5 +1,5 @@
 import warnings
-from typing import Dict, Optional
+from typing import Optional
 
 import botorch
 import numpy as np
@@ -20,6 +20,7 @@ from bofire.data_models.likelihoods.api import (
 from bofire.data_models.priors.api import LKJPrior
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.utils import scipy_options
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -33,6 +34,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             data_model.inputs.get(CategoricalTaskInput).features[0].categories
         )
         self.kernel = data_model.kernel
+        self.optimizer = data_model.optimizer
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
         self.noise_prior = data_model.noise_prior
@@ -48,7 +50,6 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
 
     model: Optional[botorch.models.MultiTaskGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
-    training_specs: Dict = {}
 
     def _fit_botorch(
         self,
@@ -104,7 +105,9 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(
-            mll, optimizer_kwargs={"options": self.training_specs}, max_attempts=50
+            mll,
+            optimizer_kwargs={"options": scipy_options(self.optimizer)},
+            max_attempts=self.optimizer.max_attempts,
         )
 
     def _predict(self, transformed_X: pd.DataFrame):

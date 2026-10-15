@@ -42,7 +42,7 @@ from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     GreaterThan,
 )
-from bofire.data_models.surrogates.api import Normalize, ScalerEnum
+from bofire.data_models.surrogates.api import LBFGSB, Normalize, ScalerEnum
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -80,6 +80,7 @@ specs.add_valid(
             noise_constraint=GreaterThan(lower_bound=1e-4),
         ).model_dump(),
         "categorical_encodings": {},
+        "optimizer": LBFGSB(maxiter=100, ftol=1e-6, max_attempts=3).model_dump(),
         "dump": None,
     },
 )
@@ -117,6 +118,7 @@ specs.add_valid(
             noise_constraint=None,
         ).model_dump(),
         "categorical_encodings": {},
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
@@ -155,6 +157,7 @@ specs.add_valid(
             noise_prior=THREESIX_NOISE_PRIOR()
         ).model_dump(),
         "categorical_encodings": {},
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
@@ -231,6 +234,7 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "categorical_encodings": {},
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
@@ -379,6 +383,7 @@ specs.add_valid(
             noise_constraint=GreaterThan(lower_bound=1e-4),
         ).model_dump(),
         "categorical_encodings": {},
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
@@ -575,6 +580,7 @@ specs.add_valid(
                 generators=[Fingerprints(n_bits=32, bond_radius=3)],
             ).model_dump(),
         },
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
         "tanimoto_calculation_mode": "pre_computed",
     },
@@ -780,6 +786,7 @@ specs.add_valid(
         "categorical_encodings": {
             "task": OrdinalEncoding().model_dump(),
         },
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
@@ -873,6 +880,7 @@ specs.add_valid(
         "likelihood": "probit",
         "engineered_features": EngineeredFeatures().model_dump(),
         "categorical_encodings": {},
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
@@ -902,6 +910,7 @@ specs.add_valid(
         "likelihood": "logit",
         "engineered_features": EngineeredFeatures().model_dump(),
         "categorical_encodings": {},
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )

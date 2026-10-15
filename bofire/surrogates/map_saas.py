@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,7 @@ from bofire.data_models.surrogates.api import (
     EnsembleMapSaasSingleTaskGPSurrogate as DataModel,
 )
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.utils import scipy_options
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -24,13 +25,13 @@ class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         **kwargs,
     ):
         self.n_taus = data_model.n_taus
+        self.optimizer = data_model.optimizer
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[EnsembleMapSaasSingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
-    training_specs: Dict = {}
 
     def _fit_botorch(
         self,
@@ -56,7 +57,9 @@ class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         )
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(
-            mll, optimizer_kwargs={"options": self.training_specs}, max_attempts=50
+            mll,
+            optimizer_kwargs={"options": scipy_options(self.optimizer)},
+            max_attempts=self.optimizer.max_attempts,
         )
 
     def _predict(self, transformed_X: pd.DataFrame):

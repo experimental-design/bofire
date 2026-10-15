@@ -18,7 +18,7 @@ from bofire.data_models.priors.api import (
     LogTransformedInterval,
     SmoothedBoxPrior,
 )
-from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+from bofire.data_models.surrogates.api import LBFGSB, SingleTaskGPSurrogate
 
 
 def test_default_single_task_gp_is_botorchs():
@@ -119,24 +119,35 @@ def test_starting_values(kwargs, start):
     assert _lengthscale(**kwargs) == pytest.approx(start)
 
 
-def test_training_specs_reach_scipy(monkeypatch):
-    import botorch.optim.fit as botorch_fit
+@pytest.mark.parametrize(
+    "optimizer, options",
+    [
+        (LBFGSB(), {}),
+        (LBFGSB(maxiter=3, gtol=1e-3, max_attempts=2), {"maxiter": 3, "gtol": 1e-3}),
+    ],
+)
+def test_optimizer_reaches_the_fit(monkeypatch, optimizer, options):
+    import bofire.surrogates.single_task_gp as single_task_gp
 
     received = []
-    scipy_minimize = botorch_fit.scipy_minimize
+    fit = single_task_gp.fit_gpytorch_mll
 
-    def spy(*args, **kwargs):
-        received.append(kwargs.get("options"))
-        return scipy_minimize(*args, **kwargs)
+    def spy(mll, **kwargs):
+        received.append(kwargs)
+        return fit(mll, **kwargs)
 
-    monkeypatch.setattr(botorch_fit, "scipy_minimize", spy)
+    monkeypatch.setattr(single_task_gp, "fit_gpytorch_mll", spy)
     bench = Himmelblau()
     experiments = bench.f(bench.domain.inputs.sample(10, seed=0), return_complete=True)
     surrogate = surrogates.map(
-        SingleTaskGPSurrogate(inputs=bench.domain.inputs, outputs=bench.domain.outputs)
+        SingleTaskGPSurrogate(
+            inputs=bench.domain.inputs,
+            outputs=bench.domain.outputs,
+            optimizer=optimizer,
+        )
     )
-    surrogate.training_specs = {"maxiter": 3}
 
     surrogate.fit(experiments)
 
-    assert received and all(options["maxiter"] == 3 for options in received)
+    assert received[0]["optimizer_kwargs"] == {"options": options}
+    assert received[0]["max_attempts"] == optimizer.max_attempts

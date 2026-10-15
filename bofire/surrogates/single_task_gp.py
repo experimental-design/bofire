@@ -19,6 +19,7 @@ from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.likelihoods.api import SparseOutlierGaussianLikelihood
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.utils import scipy_options
 
 
 class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
@@ -30,11 +31,11 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         self.kernel = data_model.kernel
         self.mean = data_model.mean
         self.likelihood = data_model.likelihood
+        self.optimizer = data_model.optimizer
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[botorch.models.SingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
-    training_specs: Dict = {}
 
     def _fit_botorch(
         self,
@@ -63,8 +64,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
             "outcome_transform": outcome_transform,
             "input_transform": input_transform,
         }
-        # a copy: relevance pursuit writes its defaults into the options
-        optimizer_kwargs = {"options": dict(self.training_specs)}
+        optimizer_kwargs = {"options": scipy_options(self.optimizer)}
 
         if isinstance(self.likelihood, SparseOutlierGaussianLikelihood):
             self.model = RobustRelevancePursuitSingleTaskGP(
@@ -79,7 +79,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
             }
         else:
             self.model = botorch.models.SingleTaskGP(**model_kwargs)
-            fit_kwargs = {"max_attempts": 50}
+            fit_kwargs = {"max_attempts": self.optimizer.max_attempts}
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, optimizer_kwargs=optimizer_kwargs, **fit_kwargs)

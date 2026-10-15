@@ -19,6 +19,7 @@ from bofire.data_models.surrogates.mlp import (
     RegressionMLPEnsemble,
 )
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
+from bofire.data_models.surrogates.optimizer import LBFGSB
 from bofire.data_models.surrogates.pairwise_gp import PairwiseGPSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.scaler import (

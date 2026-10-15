@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Optional
 
 import botorch
 import torch
@@ -15,6 +15,7 @@ from bofire.data_models.likelihoods.api import (
 )
 from bofire.data_models.surrogates.api import TanimotoGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.utils import scipy_options
 
 
 class TanimotoGPSurrogate(TrainableBotorchSurrogate):
@@ -25,6 +26,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
         **kwargs,
     ):
         self.kernel = data_model.kernel
+        self.optimizer = data_model.optimizer
         self.noise_prior = data_model.noise_prior
         self.noise_constraint = data_model.noise_constraint
         self.tanimoto_calculation_mode = data_model.tanimoto_calculation_mode
@@ -33,7 +35,6 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
 
     model: Optional[botorch.models.SingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
-    training_specs: Dict = {}
 
     @property
     def re_init_kwargs(self) -> dict:
@@ -105,5 +106,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(
-            mll, optimizer_kwargs={"options": self.training_specs}, max_attempts=50
+            mll,
+            optimizer_kwargs={"options": scipy_options(self.optimizer)},
+            max_attempts=self.optimizer.max_attempts,
         )

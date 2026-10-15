@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Optional
 
 import botorch
 import torch
@@ -14,6 +14,7 @@ import bofire.kernels.api as kernels
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate as DataModel
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.pairwise_trainable import PairwiseTrainableSurrogate
+from bofire.surrogates.utils import scipy_options
 
 
 # maps the serializable likelihood name to the BoTorch PairwiseLikelihood class
@@ -30,12 +31,12 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
         **kwargs,
     ):
         self.kernel = data_model.kernel
+        self.optimizer = data_model.optimizer
         self.scaler = data_model.scaler
         self.likelihood = data_model.likelihood
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[botorch.models.PairwiseGP] = None
-    training_specs: Dict = {}
 
     def _fit_pairwise(
         self,
@@ -67,7 +68,9 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
             model=self.model,
         )
         fit_gpytorch_mll(
-            mll, optimizer_kwargs={"options": self.training_specs}, max_attempts=50
+            mll,
+            optimizer_kwargs={"options": scipy_options(self.optimizer)},
+            max_attempts=self.optimizer.max_attempts,
         )
 
     # `_predict` is inherited from BotorchSurrogate: it calls

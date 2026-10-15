@@ -3,11 +3,12 @@ from typing import Literal, Type
 from pydantic import PositiveInt, field_validator
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
+from bofire.data_models.surrogates.optimizer import LBFGSBFitted
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
+class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
     """Ensemble MAP SAAS single-task GP
 
     Batched ensemble of ``SingleTaskGP``s with the Matern-5/2 kernel and a SAAS prior.

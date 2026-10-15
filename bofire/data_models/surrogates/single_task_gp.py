@@ -41,6 +41,7 @@ from bofire.data_models.priors.api import (
     GreaterThan,
     NormalPrior,
 )
+from bofire.data_models.surrogates.optimizer import LBFGSBFitted
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
@@ -68,7 +69,7 @@ def _copy(engineered_features: Optional[EngineeredFeatures]) -> EngineeredFeatur
     return engineered_features.model_copy(deep=True)
 
 
-class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
+class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
     kernel: AnyKernel = Field(
