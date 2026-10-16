@@ -1,7 +1,8 @@
 import pytest
 
+from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
-from bofire.data_models.encodings.api import OrdinalEncoding
+from bofire.data_models.encodings.api import DescriptorEncoding, OrdinalEncoding
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -17,6 +18,7 @@ from bofire.data_models.kernels.api import (
     PolynomialKernel,
     RBFKernel,
     ScaleKernel,
+    TanimotoKernel,
 )
 from bofire.data_models.likelihoods.api import (
     HVARFNER_LIKELIHOOD,
@@ -200,3 +202,36 @@ def test_mixed_without_continuous_inputs_is_a_scaled_hamming_kernel():
 def test_mixed_rejects(inputs, engineered, message):
     with pytest.raises(ValueError, match=message):
         SingleTaskGPSurrogate.mixed(inputs, OUTPUTS, engineered_features=engineered)
+
+
+MOLECULES = CategoricalInput(
+    key="mol",
+    categories=["C", "CC"],
+    descriptors=Descriptors(structure=["C", "CC"]),
+)
+
+
+def test_tanimoto_precomputes_the_similarities_of_the_molecular_input():
+    surrogate = SingleTaskGPSurrogate.tanimoto(Inputs(features=[MOLECULES]), OUTPUTS)
+
+    assert surrogate.kernel == ScaleKernel(
+        base_kernel=TanimotoKernel(
+            features=["mol"],
+            fingerprints=DescriptorEncoding(columns=[], generators=[Fingerprints()]),
+        ),
+        outputscale_prior=THREESIX_SCALE_PRIOR(),
+    )
+    assert surrogate.categorical_encodings == {"mol": OrdinalEncoding()}
+    assert surrogate.likelihood == THREESIX_LIKELIHOOD()
+
+
+@pytest.mark.parametrize(
+    "inputs",
+    [
+        Inputs(features=[CategoricalInput(key="c", categories=["a", "b"])]),
+        Inputs(features=[MOLECULES, ContinuousInput(key="x", bounds=(0, 1))]),
+    ],
+)
+def test_tanimoto_rejects(inputs):
+    with pytest.raises(ValueError, match="exactly one input"):
+        SingleTaskGPSurrogate.tanimoto(inputs, OUTPUTS)

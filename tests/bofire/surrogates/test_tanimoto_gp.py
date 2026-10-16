@@ -1,175 +1,76 @@
 import importlib
 
-import gpytorch
-import numpy as np
 import pandas as pd
 import pytest
 import torch
+from pandas.testing import assert_frame_equal
 
-from bofire.data_models.descriptor_generators.api import (
-    DescriptorGenerator,
-    Fingerprints,
-    Fragments,
-)
-from bofire.data_models.domain import api as domain_api
+from bofire.data_models.descriptor_generators.api import Fingerprints, Fragments
 from bofire.data_models.encodings.api import DescriptorEncoding
-from bofire.data_models.priors.api import GammaPrior
-from bofire.data_models.strategies import api as strategies_api
-from bofire.data_models.surrogates.api import BotorchSurrogates, TanimotoGPSurrogate
-from bofire.strategies.api import map as map_strategy
+from bofire.data_models.kernels.api import ScaleKernel, TanimotoKernel
+from bofire.data_models.likelihoods.api import THREESIX_LIKELIHOOD
+from bofire.data_models.priors.api import THREESIX_SCALE_PRIOR
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 from bofire.surrogates.api import map
-from bofire.utils.torch_tools import tkwargs
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
-@pytest.fixture(params=[24, 48])
-def n_bits(request) -> int:
-    return request.param
-
-
-@pytest.fixture(params=["Figerprints", "Fragments", "Composite"])
-def mol_feature_data_model(request, n_bits):
-    # a generator is applied through a DescriptorEncoding; the composite case is two
-    # generators on one structure column.
-    if request.param == "Figerprints":
-        return DescriptorEncoding(
-            columns=[], generators=[Fingerprints(bond_radius=3, n_bits=n_bits)]
-        )
-    elif request.param == "Fragments":
-        return DescriptorEncoding(columns=[], generators=[Fragments()])
-    elif request.param == "Composite":
-        return DescriptorEncoding(
-            columns=[],
-            generators=[Fingerprints(bond_radius=2, n_bits=n_bits), Fragments()],
-        )
+def _experiments(X: pd.DataFrame, Y: pd.DataFrame) -> pd.DataFrame:
+    return pd.concat([X, Y, pd.Series([1] * len(X), name="valid_output")], axis=1)
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_tanimoto_calculation(
-    chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame],
-    mol_feature_data_model: DescriptorGenerator,
-):
+@pytest.mark.parametrize(
+    "fingerprints",
+    [
+        DescriptorEncoding(columns=[], generators=[Fingerprints(n_bits=48)]),
+        DescriptorEncoding(columns=[], generators=[Fragments()]),
+        DescriptorEncoding(
+            columns=[], generators=[Fingerprints(bond_radius=2, n_bits=24), Fragments()]
+        ),
+    ],
+)
+def test_precomputed_similarities_equal_on_the_fly(chem_domain_simple, fingerprints):
     domain, X, Y = chem_domain_simple
-
-    surrogate_data_model_no_pre_computation = TanimotoGPSurrogate(
+    precomputed = SingleTaskGPSurrogate.tanimoto(
+        domain.inputs, domain.outputs, fingerprints=fingerprints
+    )
+    on_the_fly = SingleTaskGPSurrogate(
         inputs=domain.inputs,
         outputs=domain.outputs,
-        tanimoto_calculation_mode="on_the_fly",
-        categorical_encodings={domain.inputs.get_keys()[0]: mol_feature_data_model},
+        categorical_encodings={"molecules": fingerprints},
+        scaler=None,
+        kernel=ScaleKernel(
+            base_kernel=TanimotoKernel(features=["molecules"]),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
+        ),
+        likelihood=THREESIX_LIKELIHOOD(),
     )
-    surrogate_data_model_with_pre_computation = TanimotoGPSurrogate(
-        inputs=domain.inputs,
-        outputs=domain.outputs,
-        tanimoto_calculation_mode="pre_computed",
-        categorical_encodings={domain.inputs.get_keys()[0]: mol_feature_data_model},
-    )
 
-    surrogate1, surrogate2 = (
-        map(surrogate_data_model_no_pre_computation),
-        map(surrogate_data_model_with_pre_computation),
-    )
-    surrogate1._fit(X, Y)
-    surrogate2._fit(X, Y)
+    predictions = []
+    for data_model in [precomputed, on_the_fly]:
+        torch.manual_seed(0)
+        surrogate = map(data_model)
+        surrogate.fit(_experiments(X, Y))
+        predictions.append(surrogate.predict(X))
 
-    # prediction: take molecules indeces 0, 2
-    x = torch.from_numpy(
-        surrogate2.inputs.transform(
-            X, specs=surrogate2.input_preprocessing_specs
-        ).values
-    ).to(**tkwargs)
-
-    # test predictions
-    fingerprints = surrogate1.model.input_transform(x)
-    prediction1 = surrogate1.model.forward(fingerprints)
-    prediction2 = surrogate2.model.forward(x)
-    mean1 = prediction1.mean.detach().numpy()
-    cov1 = prediction1.covariance_matrix.detach().numpy()
-    mean2 = prediction2.mean.detach().numpy()
-    cov2 = prediction2.covariance_matrix.detach().numpy()
-
-    assert np.allclose(mean1, mean2, rtol=1e-3, atol=1e-3)
-    assert np.allclose(cov1, cov2)
+    assert_frame_equal(*predictions, rtol=1e-4)
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_passing_of_tanimoto_sim_matrices(
-    chem_domain_simple: tuple[domain_api.Domain, pd.DataFrame, pd.DataFrame],
-):
+def test_precomputed_similarities_need_ordinal_encoding(chem_domain_simple):
     domain, X, Y = chem_domain_simple
-
-    surrogate_data_model = TanimotoGPSurrogate(
-        inputs=domain.inputs,
-        outputs=domain.outputs,
-        tanimoto_calculation_mode="pre_computed",
-        categorical_encodings={
-            domain.inputs.get_keys()[0]: DescriptorEncoding(
-                columns=[], generators=[Fingerprints()]
-            )
-        },
-    )
-
-    strategy_data_model = strategies_api.SoboStrategy(
-        domain=domain,
-        surrogate_specs=BotorchSurrogates(surrogates=[surrogate_data_model]),
-    )
-
-    strategy = map_strategy(strategy_data_model)
-
-    strategy.tell(
-        pd.concat((X, Y), axis=1)
-    )  # computation of tanimoto distances happens here
-    id_tensor_1 = id(
-        strategy.surrogates.surrogates[
-            0
-        ].model.covar_module.base_kernel.tanimoto_similarity_matrix
-    )
-
-    strategy.tell(
-        pd.concat((X, Y), axis=1)
-    )  # computation of tanimoto distances happens here
-    id_tensor_2 = id(
-        strategy.surrogates.surrogates[
-            0
-        ].model.covar_module.base_kernel.tanimoto_similarity_matrix
-    )
-
-    assert (
-        id_tensor_1 == id_tensor_2
-    )  # passing matrix works would not change the id of the tensor
-
-
-# --- Regression test for issue #762: noise_prior registration on TanimotoGPSurrogate ---
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_noise_prior_registered_for_tanimoto_gp(chem_domain_simple):
-    """The user-supplied ``noise_prior`` must end up in the fitted likelihood's
-    ``_priors`` registry (which MLL reads from). Before the fix it was only set
-    as an attribute and MLL silently used the BoTorch default.
-    """
-    torch.manual_seed(42)
-    domain, X, Y = chem_domain_simple
-    experiments = pd.concat(
-        [X, Y, pd.Series([1] * len(X), name="valid_output")], axis=1
-    )
-
+    fingerprints = DescriptorEncoding(columns=[], generators=[Fingerprints()])
     surrogate = map(
-        TanimotoGPSurrogate(
+        SingleTaskGPSurrogate(
             inputs=domain.inputs,
             outputs=domain.outputs,
-            noise_prior=GammaPrior(concentration=1.1, rate=0.001),
-            categorical_encodings={
-                "molecules": DescriptorEncoding(columns=[], generators=[Fingerprints()])
-            },
+            categorical_encodings={"molecules": fingerprints},
+            kernel=TanimotoKernel(features=["molecules"], fingerprints=fingerprints),
         )
     )
-    surrogate.fit(experiments)
 
-    priors = {n: p for n, _, p, _, _ in surrogate.model.likelihood.named_priors()}
-    prior = priors.get("noise_covar.noise_prior")
-    assert isinstance(prior, gpytorch.priors.GammaPrior), (
-        f"User-supplied GammaPrior must be in the likelihood's _priors registry "
-        f"(got {type(prior).__name__})"
-    )
+    with pytest.raises(ValueError, match="encoded as ordinal codes"):
+        surrogate.fit(_experiments(X, Y))

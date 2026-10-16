@@ -106,7 +106,7 @@ specs = BotorchSurrogates(surrogates=[
 
 ### Data model transforms
 
-Some surrogates are conceptually a special case of another. For example, `TanimotoGPSurrogate` is converted to a `SingleTaskGPSurrogate` before instantiation. You can do the same with the `data_model_transform` argument:
+A custom surrogate can be a special case of another, converted to it before instantiation, with the `data_model_transform` argument:
 
 ```python
 def my_transform(data_model):

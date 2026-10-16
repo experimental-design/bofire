@@ -37,7 +37,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import RandomStrategy, SoboStrategy
-from bofire.data_models.surrogates.api import BotorchSurrogates, TanimotoGPSurrogate
+from bofire.data_models.surrogates.api import BotorchSurrogates, SingleTaskGPSurrogate
 from bofire.runners.api import run
 
 
@@ -81,7 +81,7 @@ domain = Domain(inputs=inputs, outputs=outputs)
 ```
 
 ## Random vs SOBO optimization
-For molecules, we use Tanimoto GP which has a Tanimoto kernel as default
+For molecules, we use a single-task GP with a Tanimoto kernel on the molecules' fingerprints (`SingleTaskGPSurrogate.tanimoto`)
 
 ```{python}
 #| papermill: {duration: 0.640563, end_time: '2024-10-10T20:35:25.055378', exception: true, start_time: '2024-10-10T20:35:24.414815', status: failed}
@@ -116,16 +116,13 @@ for _ in range(n_iter):
         n_procs=1,
     )
 
-    specs = {
-        Benchmark.domain.inputs.get_keys()[0]: DescriptorEncoding(
+    surrogate = SingleTaskGPSurrogate.tanimoto(
+        Benchmark.domain.inputs,
+        Benchmark.domain.outputs,
+        fingerprints=DescriptorEncoding(
             columns=[],
             generators=[Fingerprints(n_bits=2048), Fragments()],
-        )
-    }
-    surrogate = TanimotoGPSurrogate(
-        inputs=Benchmark.domain.inputs,
-        outputs=Benchmark.domain.outputs,
-        categorical_encodings=specs,
+        ),
     )
 
     def sobo_factory(domain: Domain, surrogate=surrogate):
