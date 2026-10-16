@@ -796,18 +796,18 @@ window.Quarto = {
 
 
 <p>Usage is possible in multiple ways: 1. As an alternative to the botorch optimizer in predictive strategies 2. To optimize custom function in the bofire domain. The utiliy function take care of the definition of the objective domain (variable types, constraints, etc.) and the handling of multiple experiment (<span class="math inline">\(q\)</span> points).</p>
-<div id="28ab3df3" class="cell" data-execution_count="1">
+<div id="13e6cd38" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> copy <span class="im">import</span> deepcopy</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> time <span class="im">import</span> time</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> List</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="13a44167" class="cell" data-execution_count="2">
+<div id="9d8e3c01" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="a194dbed" class="cell" data-execution_count="3">
+<div id="862f0713" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks <span class="im">import</span> api <span class="im">as</span> benchmarks</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.constraints <span class="im">import</span> api <span class="im">as</span> constraints_data_models</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain <span class="im">import</span> api <span class="im">as</span> domains_data_models</span>
@@ -822,7 +822,7 @@ window.Quarto = {
   warnings.warn(</code></pre>
 </div>
 </div>
-<div id="922d9c0a" class="cell" data-execution_count="4">
+<div id="5f94adc8" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -839,12 +839,12 @@ window.Quarto = {
 <section id="example-1-usage-for-acquisition-function-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="example-1-usage-for-acquisition-function-optimization">Example 1) Usage for Acquisition Function Optimization</h2>
 <p>Just pass the <code>GeneticAlgorithmOptimizer</code> to the <code>acquisition_optimizer</code> argument of a strategy. The optimizer will then be used to optimize the acquisition function.</p>
-<div id="3358acd6" class="cell" data-execution_count="5">
+<div id="79a2121a" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> benchmarks.Himmelblau()</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># generate experiments</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(benchmark.domain.inputs.sample(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="e9381112" class="cell" data-execution_count="6">
+<div id="ee9c8c40" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> strategies_data_models.GeneticAlgorithmOptimizer(</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    population_size<span class="op">=</span><span class="dv">100</span>,</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    n_max_gen<span class="op">=</span><span class="dv">100</span>,</span>
@@ -853,7 +853,7 @@ window.Quarto = {
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    ga_progress_csv_path<span class="op">=</span><span class="st">"_custom_ga_progress.csv"</span>,</span>
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="7d1d962b" class="cell" data-execution_count="7">
+<div id="81dbf375" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>benchmark_grid <span class="op">=</span> np.hstack(</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    [</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>        x.reshape((<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>))</span>
@@ -865,7 +865,7 @@ window.Quarto = {
 <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>benchmark_grid[<span class="st">"y"</span>] <span class="op">=</span> benchmark.f(benchmark_grid)[<span class="st">"y"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="fdc5bd1a" class="cell" data-execution_count="8">
+<div id="d287ea38" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_proposals(domain, n: <span class="bu">int</span> <span class="op">=</span> <span class="dv">10</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    strategy <span class="op">=</span> strategies_data_models.SoboStrategy(</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        domain<span class="op">=</span>domain, acquisition_optimizer<span class="op">=</span>optimizer</span>
@@ -880,7 +880,7 @@ window.Quarto = {
 </div>
 <section id="linear-equality-and-inequality-constraints-are-handled-by-a-repair-function-using-qp" class="level4">
 <h4 class="anchored" data-anchor-id="linear-equality-and-inequality-constraints-are-handled-by-a-repair-function-using-qp">Linear Equality and Inequality Constraints are handled by a repair function, using QP</h4>
-<div id="c7fe836e" class="cell" data-execution_count="9">
+<div id="96a59126" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># generate different cases</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>domain.constraints.constraints <span class="op">+=</span> [</span>
@@ -900,17 +900,17 @@ window.Quarto = {
 <span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    strategies.RandomStrategy.make(domain<span class="op">=</span>domain).ask(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span></span>
 <span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="29b1b896" class="cell" data-execution_count="10">
+<div id="5de0fe72" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/bofire/utils/torch_tools.py:51: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:213.)
   return torch.from_numpy(np.ascontiguousarray(df.to_numpy())).to(**tkwargs)</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Generated 10 experiments, Time taken: 13.29s</code></pre>
+<pre><code>Generated 10 experiments, Time taken: 16.06s</code></pre>
 </div>
 </div>
-<div id="10479938" class="cell" data-execution_count="11">
+<div id="6c0c0d4d" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
@@ -927,7 +927,7 @@ window.Quarto = {
 <span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
 <span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/tmp/ipykernel_2651/1104301492.py:14: UserWarning: Legend does not support handles for QuadContourSet instances.
+<pre><code>/tmp/ipykernel_2867/1104301492.py:14: UserWarning: Legend does not support handles for QuadContourSet instances.
 See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#implementing-a-custom-legend-handler
   plt.legend()</code></pre>
 </div>
@@ -942,7 +942,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 </section>
 <section id="nchoosek-constraints-are-also-handled-by-a-repair-function-using-qp" class="level4">
 <h4 class="anchored" data-anchor-id="nchoosek-constraints-are-also-handled-by-a-repair-function-using-qp">NChooseK Constraints are also handled by a repair function, using QP</h4>
-<div id="ac4549e2" class="cell" data-execution_count="12">
+<div id="bc8cb027" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>domain.inputs.get_by_key(<span class="st">"x_1"</span>).bounds <span class="op">=</span> (<span class="fl">0.0</span>, <span class="fl">6.0</span>)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>domain.inputs.get_by_key(<span class="st">"x_2"</span>).bounds <span class="op">=</span> (<span class="fl">0.0</span>, <span class="fl">6.0</span>)</span>
@@ -959,7 +959,7 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    strategies.RandomStrategy.make(domain<span class="op">=</span>domain).ask(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span></span>
 <span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="50fc841c" class="cell" data-execution_count="13">
+<div id="f961b721" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain, n<span class="op">=</span><span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Polishing not needed - no active set detected at optimal point
@@ -977,33 +977,25 @@ Polishing not needed - no active set detected at optimal point
 Polishing not needed - no active set detected at optimal point
 Polishing not needed - no active set detected at optimal point
 Polishing not needed - no active set detected at optimal point
-Polishing not needed - no active set detected at optimal point
-Polishing not needed - no active set detected at optimal point
-Generated 10 experiments, Time taken: 8.11s</code></pre>
+Generated 10 experiments, Time taken: 10.12s</code></pre>
 </div>
+</div>
+<div id="ce63998d" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_2"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"y"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    levels<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"true system response"</span>,</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="dv">0</span>, <span class="dv">6</span>)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="dv">0</span>, <span class="dv">6</span>)</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/bofire/data_models/domain/domain.py:398: UserWarning: Not all constraints are fulfilled.
-  warnings.warn("Not all constraints are fulfilled.")
-/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/bofire/data_models/domain/domain.py:398: UserWarning: Not all constraints are fulfilled.
-  warnings.warn("Not all constraints are fulfilled.")</code></pre>
-</div>
-</div>
-<div id="66292ead" class="cell" data-execution_count="14">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_2"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"y"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    levels<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"true system response"</span>,</span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="dv">0</span>, <span class="dv">6</span>)</span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="dv">0</span>, <span class="dv">6</span>)</span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>/tmp/ipykernel_2651/2170543038.py:12: UserWarning: Legend does not support handles for QuadContourSet instances.
+<pre><code>/tmp/ipykernel_2867/2170543038.py:12: UserWarning: Legend does not support handles for QuadContourSet instances.
 See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#implementing-a-custom-legend-handler
   plt.legend()</code></pre>
 </div>
@@ -1018,40 +1010,40 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 </section>
 <section id="inequality-constraints-are-handled-by-the-ga-objctive-function" class="level4">
 <h4 class="anchored" data-anchor-id="inequality-constraints-are-handled-by-the-ga-objctive-function">Inequality Constraints are handled by the GA objctive function</h4>
-<div id="4baab15c" class="cell" data-execution_count="15">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>domain.constraints.constraints <span class="op">+=</span> [</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    constraints_data_models.NonlinearInequalityConstraint(</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>        expression<span class="op">=</span><span class="st">"x_1**2 + x_2**2 - 16"</span>,</span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain, n<span class="op">=</span><span class="dv">20</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="c182446b" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>domain.constraints.constraints <span class="op">+=</span> [</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    constraints_data_models.NonlinearInequalityConstraint(</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>        expression<span class="op">=</span><span class="st">"x_1**2 + x_2**2 - 16"</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain, n<span class="op">=</span><span class="dv">20</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Generated 20 experiments, Time taken: 7.73s</code></pre>
+<pre><code>Generated 20 experiments, Time taken: 9.29s</code></pre>
 </div>
 </div>
-<div id="29f56c36" class="cell" data-execution_count="16">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_2"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"y"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    levels<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"true system response"</span>,</span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">100</span>)</span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> np.sqrt(<span class="dv">16</span> <span class="op">-</span> x<span class="op">**</span><span class="dv">2</span>)</span>
-<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> <span class="op">-</span>y1</span>
-<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y1, <span class="st">"r--"</span>, label<span class="op">=</span><span class="st">"x_1**2 + x_2**2 &lt;= 4"</span>)</span>
-<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y2, <span class="st">"r--"</span>)</span>
-<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
-<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
-<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="eda0db4a" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_2"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"y"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    levels<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"true system response"</span>,</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">100</span>)</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> np.sqrt(<span class="dv">16</span> <span class="op">-</span> x<span class="op">**</span><span class="dv">2</span>)</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> <span class="op">-</span>y1</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y1, <span class="st">"r--"</span>, label<span class="op">=</span><span class="st">"x_1**2 + x_2**2 &lt;= 4"</span>)</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y2, <span class="st">"r--"</span>)</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/tmp/ipykernel_2651/1844526682.py:17: UserWarning: Legend does not support handles for QuadContourSet instances.
+<pre><code>/tmp/ipykernel_2867/1844526682.py:17: UserWarning: Legend does not support handles for QuadContourSet instances.
 See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#implementing-a-custom-legend-handler
   plt.legend()</code></pre>
 </div>
@@ -1064,8 +1056,8 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 </div>
 </div>
 <p>Inspect the current progress rows written by the optimizer. Note, that these results can also be obtained during execution.</p>
-<div id="dff7784a" class="cell" data-execution_count="17">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>pd.read_csv(<span class="st">"_custom_ga_progress.csv"</span>).head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="1e455592" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>pd.read_csv(<span class="st">"_custom_ga_progress.csv"</span>).head()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="17">
 <div>
 
@@ -1084,31 +1076,31 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <th data-quarto-table-cell-role="th">0</th>
 <td>1</td>
 <td>100</td>
-<td>-4.821948</td>
+<td>-4.549828</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
 <td>2</td>
 <td>200</td>
-<td>-4.821948</td>
+<td>-4.544356</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
 <td>3</td>
 <td>300</td>
-<td>-4.821948</td>
+<td>-4.544356</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
 <td>4</td>
 <td>400</td>
-<td>-4.750991</td>
+<td>-4.544356</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
 <td>5</td>
 <td>500</td>
-<td>-4.611286</td>
+<td>-4.604738</td>
 </tr>
 </tbody>
 </table>
@@ -1121,59 +1113,59 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <section id="example-2-usage-for-custom-function-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="example-2-usage-for-custom-function-optimization">Example 2) Usage for Custom Function Optimization</h2>
 <p>We can define a domain with input features, and constraints. Output features are not required</p>
-<div id="6257b1ef" class="cell" data-execution_count="18">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> domains_data_models.Domain(</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>domains_data_models.Inputs(</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>            features_data_models.ContinuousInput(</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>                key<span class="op">=</span><span class="st">"x_1"</span>,</span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>                bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>),</span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>            ),</span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>            features_data_models.ContinuousInput(</span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>                key<span class="op">=</span><span class="st">"x_2"</span>,</span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>                bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>),</span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>            ),</span>
-<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>        ]</span>
-<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
-<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>        constraints_data_models.NonlinearInequalityConstraint(</span>
-<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"x_1**2 + x_2**2 - 16"</span>,</span>
-<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
-<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="c6907ca3" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> domains_data_models.Domain(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>domains_data_models.Inputs(</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>            features_data_models.ContinuousInput(</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>                key<span class="op">=</span><span class="st">"x_1"</span>,</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>                bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>),</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>            features_data_models.ContinuousInput(</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>                key<span class="op">=</span><span class="st">"x_2"</span>,</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>                bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>),</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>        constraints_data_models.NonlinearInequalityConstraint(</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"x_1**2 + x_2**2 - 16"</span>,</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="c8203268" class="cell" data-execution_count="19">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> strategies_data_models.GeneticAlgorithmOptimizer(</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    population_size<span class="op">=</span><span class="dv">100</span>,</span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    n_max_gen<span class="op">=</span><span class="dv">100</span>,</span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="ff4f4507" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> strategies_data_models.GeneticAlgorithmOptimizer(</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    population_size<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    n_max_gen<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The GA progress file is updated generation-by-generation and can already be read while the GA run is still executing.</p>
 <section id="define-the-optimization-problem-a-using-evaluations-on-pd.dataframe" class="level3">
 <h3 class="anchored" data-anchor-id="define-the-optimization-problem-a-using-evaluations-on-pd.dataframe">Define the optimization problem: a) Using evaluations on <code>pd.DataFrame</code></h3>
 <p>We want to maximize the mean variance of the experiments dataframe. The objective function will be called with a list of dataframes, each representing a set of experiments. Each list entry is one individual in the population of the GA. The direction of the optimizer is a minimization of the objective function. So we minimize the negative mean variance of each 3 experiments in a batch in this case.</p>
-<div id="e3b3cadd" class="cell" data-execution_count="20">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""assume we want to maximize the mean variance of the experiments dataframe"""</span></span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.var(numeric_only<span class="op">=</span><span class="va">True</span>).mean() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="35aa3b14" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""assume we want to maximize the mean variance of the experiments dataframe"""</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.var(numeric_only<span class="op">=</span><span class="va">True</span>).mean() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Run the optimization with the utility function <code>run_ga</code></p>
-<div id="efb43c81" class="cell" data-execution_count="21">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    objective_callables<span class="op">=</span>[objective_function],  <span class="co"># list of objective functions to optimize</span></span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span><span class="dv">3</span>,  <span class="co"># number of points to optimize</span></span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    callable_format<span class="op">=</span><span class="st">"pandas"</span>,</span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="fcbb2929" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    objective_callables<span class="op">=</span>[objective_function],  <span class="co"># list of objective functions to optimize</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span><span class="dv">3</span>,  <span class="co"># number of points to optimize</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    callable_format<span class="op">=</span><span class="st">"pandas"</span>,</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="9c452140" class="cell" data-execution_count="22">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> x_opt[<span class="dv">0</span>]</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>proposals</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="5e03c9a9" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> x_opt[<span class="dv">0</span>]</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>proposals</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="22">
 <div>
 
@@ -1189,18 +1181,18 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.787003</td>
-<td>-3.920979</td>
+<td>3.847358</td>
+<td>1.074288</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>2.762393</td>
-<td>2.892802</td>
+<td>-1.659280</td>
+<td>-3.636469</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>-3.831825</td>
-<td>1.142386</td>
+<td>-2.506478</td>
+<td>3.111999</td>
 </tr>
 </tbody>
 </table>
@@ -1208,18 +1200,18 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 </div>
 </div>
 </div>
-<div id="efa59a7c" class="cell" data-execution_count="23">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">100</span>)</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> np.sqrt(<span class="dv">16</span> <span class="op">-</span> x<span class="op">**</span><span class="dv">2</span>)</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> <span class="op">-</span>y1</span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y1, <span class="st">"r--"</span>, label<span class="op">=</span><span class="st">"x_1**2 + x_2**2 &lt;= 4"</span>)</span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y2, <span class="st">"r--"</span>)</span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f9b762e1" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">100</span>)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> np.sqrt(<span class="dv">16</span> <span class="op">-</span> x<span class="op">**</span><span class="dv">2</span>)</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> <span class="op">-</span>y1</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y1, <span class="st">"r--"</span>, label<span class="op">=</span><span class="st">"x_1**2 + x_2**2 &lt;= 4"</span>)</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y2, <span class="st">"r--"</span>)</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -1234,28 +1226,28 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <p>For efficiency, we can also compute the objective function as a callable of type <code>Tensor</code>. In this case, the computation is in the <em>numerical domain</em>.</p>
 <p>This means, that categorical columns etc. are encoded. A specification with <code>input_preprocessing_specs</code> can be passed to the objective function (otherwise, defaults are used)</p>
 <p>The objective accepts a Tensor in shape (n, q, d) and should return a Tensor of shape (n,)</p>
-<div id="da1e88a1" class="cell" data-execution_count="24">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function(x: torch.Tensor) <span class="op">-&gt;</span> torch.Tensor:</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    var <span class="op">=</span> torch.var(x, dim<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    var_mean <span class="op">=</span> torch.mean(var, dim<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> var_mean</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="7b7ccc16" class="cell" data-execution_count="24">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function(x: torch.Tensor) <span class="op">-&gt;</span> torch.Tensor:</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    var <span class="op">=</span> torch.var(x, dim<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    var_mean <span class="op">=</span> torch.mean(var, dim<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> var_mean</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="406d854a" class="cell" data-execution_count="25">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    objective_callables<span class="op">=</span>[objective_function],  <span class="co"># list of objective functions to optimize</span></span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span><span class="dv">3</span>,  <span class="co"># number of points to optimize</span></span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    callable_format<span class="op">=</span><span class="st">"torch"</span>,</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="be057884" class="cell" data-execution_count="25">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    objective_callables<span class="op">=</span>[objective_function],  <span class="co"># list of objective functions to optimize</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span><span class="dv">3</span>,  <span class="co"># number of points to optimize</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    callable_format<span class="op">=</span><span class="st">"torch"</span>,</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="2c9f3dc5" class="cell" data-execution_count="26">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>x_opt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="44392a23" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>x_opt</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="26">
-<pre><code>tensor([[-2.9152,  2.7386],
-        [ 2.6007, -3.0388],
-        [ 2.7881, -2.8670]], dtype=torch.float64)</code></pre>
+<pre><code>tensor([[ 2.9140, -2.7371],
+        [ 2.9144, -2.7375],
+        [ 2.6876, -2.9553]], dtype=torch.float64)</code></pre>
 </div>
 </div>
 </section>
@@ -1263,36 +1255,36 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <section id="example-3-multiobjective-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="example-3-multiobjective-optimization">Example 3: Multiobjective Optimization</h2>
 <p>by giving multiple objective functions, or returning a 2D array from the objective, we will trigger multiobjective optimization</p>
-<div id="96ba0364" class="cell" data-execution_count="27">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function_1(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""assume we want to maximize the mean variance of the experiments dataframe"""</span></span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.var(numeric_only<span class="op">=</span><span class="va">True</span>).mean() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
+<div id="7bd6d56d" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function_1(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""assume we want to maximize the mean variance of the experiments dataframe"""</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.var(numeric_only<span class="op">=</span><span class="va">True</span>).mean() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="2d6189a2" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function_2(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Maximize the sum of all inputs"""</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.<span class="bu">sum</span>().<span class="bu">sum</span>() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
 <span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="265f9bb4" class="cell" data-execution_count="28">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function_2(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Maximize the sum of all inputs"""</span></span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.<span class="bu">sum</span>().<span class="bu">sum</span>() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<div id="a9400776" class="cell" data-execution_count="29">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    objective_callables<span class="op">=</span>[</span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>        objective_function_1,</span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>        objective_function_2,</span>
-<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    ],  <span class="co"># list of objective functions to optimize</span></span>
-<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span><span class="dv">3</span>,  <span class="co"># number of points to optimize</span></span>
-<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>    callable_format<span class="op">=</span><span class="st">"pandas"</span>,</span>
-<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
-<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="7dfa4a69" class="cell" data-execution_count="29">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    objective_callables<span class="op">=</span>[</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>        objective_function_1,</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>        objective_function_2,</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    ],  <span class="co"># list of objective functions to optimize</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span><span class="dv">3</span>,  <span class="co"># number of points to optimize</span></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>    callable_format<span class="op">=</span><span class="st">"pandas"</span>,</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>In the multiobjective-case, the result is a list of <code>pd.DataFrame</code> with different pareto-optimal solutions</p>
-<div id="d6a873a6" class="cell" data-execution_count="30">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>plt.scatter(f_opt[:, <span class="dv">0</span>], f_opt[:, <span class="dv">1</span>])</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"objective function 1"</span>)</span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"objective function 2"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="7d066c31" class="cell" data-execution_count="30">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>plt.scatter(f_opt[:, <span class="dv">0</span>], f_opt[:, <span class="dv">1</span>])</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"objective function 1"</span>)</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"objective function 2"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="30">
 <pre><code>Text(0, 0.5, 'objective function 2')</code></pre>
 </div>
@@ -1304,8 +1296,8 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 </div>
 </div>
 </div>
-<div id="cb262d71" class="cell" data-execution_count="31">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>x_opt[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="7df8c3df" class="cell" data-execution_count="31">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>x_opt[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="31">
 <div>
 
@@ -1321,18 +1313,18 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>-1.430594</td>
-<td>-3.635427</td>
+<td>1.819291</td>
+<td>3.293830</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>-2.200986</td>
-<td>3.297770</td>
+<td>3.021456</td>
+<td>2.618208</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>3.630878</td>
-<td>1.374944</td>
+<td>2.436668</td>
+<td>3.121830</td>
 </tr>
 </tbody>
 </table>
@@ -1340,8 +1332,8 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 </div>
 </div>
 </div>
-<div id="52cc0827" class="cell" data-execution_count="32">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>x_opt[<span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="1043ee9a" class="cell" data-execution_count="32">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>x_opt[<span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="32">
 <div>
 
@@ -1357,18 +1349,18 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>3.044090</td>
-<td>2.556339</td>
+<td>1.403442</td>
+<td>3.675099</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>1.611596</td>
-<td>3.612820</td>
+<td>2.677364</td>
+<td>-2.970663</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>3.227904</td>
-<td>2.247415</td>
+<td>-3.938624</td>
+<td>-0.582877</td>
 </tr>
 </tbody>
 </table>
@@ -1863,381 +1855,381 @@ See: https://matplotlib.org/stable/tutorials/intermediate/legend_guide.html#impl
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb44" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Genetic Algorithm</span></span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>Usage is possible in multiple ways:</span>
-<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>As an alternative to the botorch optimizer in predictive strategies</span>
-<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>To optimize custom function in the bofire domain. The utiliy function take care of the definition of the objective domain (variable types, constraints, etc.) and the handling of multiple experiment ($q$ points).</span>
-<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> copy <span class="im">import</span> deepcopy</span>
-<span id="cb44-15"><a href="#cb44-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> time <span class="im">import</span> time</span>
-<span id="cb44-16"><a href="#cb44-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> List</span>
-<span id="cb44-17"><a href="#cb44-17" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-18"><a href="#cb44-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-21"><a href="#cb44-21" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-22"><a href="#cb44-22" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb44-23"><a href="#cb44-23" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb44-24"><a href="#cb44-24" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb44-25"><a href="#cb44-25" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
-<span id="cb44-26"><a href="#cb44-26" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-27"><a href="#cb44-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-30"><a href="#cb44-30" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-31"><a href="#cb44-31" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks <span class="im">import</span> api <span class="im">as</span> benchmarks</span>
-<span id="cb44-32"><a href="#cb44-32" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.constraints <span class="im">import</span> api <span class="im">as</span> constraints_data_models</span>
-<span id="cb44-33"><a href="#cb44-33" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain <span class="im">import</span> api <span class="im">as</span> domains_data_models</span>
-<span id="cb44-34"><a href="#cb44-34" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features <span class="im">import</span> api <span class="im">as</span> features_data_models</span>
-<span id="cb44-35"><a href="#cb44-35" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies <span class="im">import</span> api <span class="im">as</span> strategies_data_models</span>
-<span id="cb44-36"><a href="#cb44-36" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies <span class="im">import</span> api <span class="im">as</span> strategies</span>
-<span id="cb44-37"><a href="#cb44-37" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies.utils <span class="im">import</span> run_ga</span>
-<span id="cb44-38"><a href="#cb44-38" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-39"><a href="#cb44-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-42"><a href="#cb44-42" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-43"><a href="#cb44-43" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
-<span id="cb44-44"><a href="#cb44-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-45"><a href="#cb44-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-46"><a href="#cb44-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Suppress specific warnings</span></span>
-<span id="cb44-47"><a href="#cb44-47" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>, message<span class="op">=</span><span class="st">".*A not p.d., added jitter"</span>)</span>
-<span id="cb44-48"><a href="#cb44-48" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(</span>
-<span id="cb44-49"><a href="#cb44-49" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ignore"</span>, message<span class="op">=</span><span class="st">".*np.power((rand * alpha), (1.0 / (eta + 1.0)))[mask]"</span></span>
-<span id="cb44-50"><a href="#cb44-50" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-51"><a href="#cb44-51" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-52"><a href="#cb44-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-53"><a href="#cb44-53" aria-hidden="true" tabindex="-1"></a><span class="fu">### The GA supports multiple different constraints</span></span>
-<span id="cb44-54"><a href="#cb44-54" aria-hidden="true" tabindex="-1"></a>Genetic algorithms are quite flexible and can handle a variety of constraints. However, they usually struggle with equality constraints. In the implementation, linear equality- and inequality constraints, as well as N-choose-k cosntraints are handled by a repair function, using QP. Nonlinear constraints are handled by the GA objective function.</span>
-<span id="cb44-55"><a href="#cb44-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-56"><a href="#cb44-56" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example 1) Usage for Acquisition Function Optimization</span></span>
-<span id="cb44-57"><a href="#cb44-57" aria-hidden="true" tabindex="-1"></a>Just pass the <span class="in">`GeneticAlgorithmOptimizer`</span> to the <span class="in">`acquisition_optimizer`</span> argument of a strategy. The optimizer will then be used to optimize the acquisition function.</span>
-<span id="cb44-58"><a href="#cb44-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-61"><a href="#cb44-61" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-62"><a href="#cb44-62" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> benchmarks.Himmelblau()</span>
-<span id="cb44-63"><a href="#cb44-63" aria-hidden="true" tabindex="-1"></a><span class="co"># generate experiments</span></span>
-<span id="cb44-64"><a href="#cb44-64" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(benchmark.domain.inputs.sample(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb44-65"><a href="#cb44-65" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-66"><a href="#cb44-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-69"><a href="#cb44-69" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-70"><a href="#cb44-70" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> strategies_data_models.GeneticAlgorithmOptimizer(</span>
-<span id="cb44-71"><a href="#cb44-71" aria-hidden="true" tabindex="-1"></a>    population_size<span class="op">=</span><span class="dv">100</span>,</span>
-<span id="cb44-72"><a href="#cb44-72" aria-hidden="true" tabindex="-1"></a>    n_max_gen<span class="op">=</span><span class="dv">100</span>,</span>
-<span id="cb44-73"><a href="#cb44-73" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb44-74"><a href="#cb44-74" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Write per-generation GA progress so it can be inspected while optimization runs.</span></span>
-<span id="cb44-75"><a href="#cb44-75" aria-hidden="true" tabindex="-1"></a>    ga_progress_csv_path<span class="op">=</span><span class="st">"_custom_ga_progress.csv"</span>,</span>
-<span id="cb44-76"><a href="#cb44-76" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-77"><a href="#cb44-77" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-78"><a href="#cb44-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-81"><a href="#cb44-81" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-82"><a href="#cb44-82" aria-hidden="true" tabindex="-1"></a>benchmark_grid <span class="op">=</span> np.hstack(</span>
-<span id="cb44-83"><a href="#cb44-83" aria-hidden="true" tabindex="-1"></a>    [</span>
-<span id="cb44-84"><a href="#cb44-84" aria-hidden="true" tabindex="-1"></a>        x.reshape((<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>))</span>
-<span id="cb44-85"><a href="#cb44-85" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> x <span class="kw">in</span> np.meshgrid(np.linspace(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>, <span class="dv">100</span>), np.linspace(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>, <span class="dv">100</span>))</span>
-<span id="cb44-86"><a href="#cb44-86" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb44-87"><a href="#cb44-87" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-88"><a href="#cb44-88" aria-hidden="true" tabindex="-1"></a>benchmark_grid <span class="op">=</span> pd.DataFrame(</span>
-<span id="cb44-89"><a href="#cb44-89" aria-hidden="true" tabindex="-1"></a>    benchmark_grid, columns<span class="op">=</span>benchmark.domain.inputs.get_keys()</span>
-<span id="cb44-90"><a href="#cb44-90" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-91"><a href="#cb44-91" aria-hidden="true" tabindex="-1"></a>benchmark_grid[<span class="st">"y"</span>] <span class="op">=</span> benchmark.f(benchmark_grid)[<span class="st">"y"</span>]</span>
-<span id="cb44-92"><a href="#cb44-92" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-93"><a href="#cb44-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-96"><a href="#cb44-96" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-97"><a href="#cb44-97" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_proposals(domain, n: <span class="bu">int</span> <span class="op">=</span> <span class="dv">10</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
-<span id="cb44-98"><a href="#cb44-98" aria-hidden="true" tabindex="-1"></a>    strategy <span class="op">=</span> strategies_data_models.SoboStrategy(</span>
-<span id="cb44-99"><a href="#cb44-99" aria-hidden="true" tabindex="-1"></a>        domain<span class="op">=</span>domain, acquisition_optimizer<span class="op">=</span>optimizer</span>
-<span id="cb44-100"><a href="#cb44-100" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb44-101"><a href="#cb44-101" aria-hidden="true" tabindex="-1"></a>    <span class="co"># map to strategy object, and train the model</span></span>
-<span id="cb44-102"><a href="#cb44-102" aria-hidden="true" tabindex="-1"></a>    strategy <span class="op">=</span> strategies.<span class="bu">map</span>(strategy)</span>
-<span id="cb44-103"><a href="#cb44-103" aria-hidden="true" tabindex="-1"></a>    strategy.tell(experiments)</span>
-<span id="cb44-104"><a href="#cb44-104" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">=</span> time()</span>
-<span id="cb44-105"><a href="#cb44-105" aria-hidden="true" tabindex="-1"></a>    proposals <span class="op">=</span> strategy.ask(n, raise_validation_error<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb44-106"><a href="#cb44-106" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Generated </span><span class="sc">{</span><span class="bu">len</span>(proposals)<span class="sc">}</span><span class="ss"> experiments, Time taken: </span><span class="sc">{</span>time() <span class="op">-</span> t0<span class="sc">:.2f}</span><span class="ss">s"</span>)</span>
-<span id="cb44-107"><a href="#cb44-107" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> proposals</span>
-<span id="cb44-108"><a href="#cb44-108" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-109"><a href="#cb44-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-110"><a href="#cb44-110" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Linear Equality and Inequality Constraints are handled by a repair function, using QP</span></span>
-<span id="cb44-111"><a href="#cb44-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-114"><a href="#cb44-114" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-115"><a href="#cb44-115" aria-hidden="true" tabindex="-1"></a><span class="co"># generate different cases</span></span>
-<span id="cb44-116"><a href="#cb44-116" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
-<span id="cb44-117"><a href="#cb44-117" aria-hidden="true" tabindex="-1"></a>domain.constraints.constraints <span class="op">+=</span> [</span>
-<span id="cb44-118"><a href="#cb44-118" aria-hidden="true" tabindex="-1"></a>    constraints_data_models.LinearEqualityConstraint(  <span class="co"># x_1 + x_2 = 3</span></span>
-<span id="cb44-119"><a href="#cb44-119" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
-<span id="cb44-120"><a href="#cb44-120" aria-hidden="true" tabindex="-1"></a>        coefficients<span class="op">=</span>[<span class="dv">1</span>, <span class="dv">1</span>],</span>
-<span id="cb44-121"><a href="#cb44-121" aria-hidden="true" tabindex="-1"></a>        rhs<span class="op">=</span><span class="dv">3</span>,</span>
-<span id="cb44-122"><a href="#cb44-122" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb44-123"><a href="#cb44-123" aria-hidden="true" tabindex="-1"></a>    constraints_data_models.LinearInequalityConstraint(  <span class="co"># x_2 &lt;= x_1</span></span>
-<span id="cb44-124"><a href="#cb44-124" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
-<span id="cb44-125"><a href="#cb44-125" aria-hidden="true" tabindex="-1"></a>        coefficients<span class="op">=</span>[<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>],</span>
-<span id="cb44-126"><a href="#cb44-126" aria-hidden="true" tabindex="-1"></a>        rhs<span class="op">=</span><span class="dv">0</span>,</span>
-<span id="cb44-127"><a href="#cb44-127" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb44-128"><a href="#cb44-128" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb44-129"><a href="#cb44-129" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-130"><a href="#cb44-130" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(</span>
-<span id="cb44-131"><a href="#cb44-131" aria-hidden="true" tabindex="-1"></a>    strategies.RandomStrategy.make(domain<span class="op">=</span>domain).ask(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span></span>
-<span id="cb44-132"><a href="#cb44-132" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-133"><a href="#cb44-133" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-134"><a href="#cb44-134" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-137"><a href="#cb44-137" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-138"><a href="#cb44-138" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain)</span>
-<span id="cb44-139"><a href="#cb44-139" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-140"><a href="#cb44-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-143"><a href="#cb44-143" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-144"><a href="#cb44-144" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
-<span id="cb44-145"><a href="#cb44-145" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
-<span id="cb44-146"><a href="#cb44-146" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb44-147"><a href="#cb44-147" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_2"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb44-148"><a href="#cb44-148" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"y"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb44-149"><a href="#cb44-149" aria-hidden="true" tabindex="-1"></a>    levels<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb44-150"><a href="#cb44-150" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"true system response"</span>,</span>
-<span id="cb44-151"><a href="#cb44-151" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-152"><a href="#cb44-152" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
-<span id="cb44-153"><a href="#cb44-153" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
-<span id="cb44-154"><a href="#cb44-154" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
-<span id="cb44-155"><a href="#cb44-155" aria-hidden="true" tabindex="-1"></a>plt.plot((<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>), (<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>), <span class="st">"r--"</span>, label<span class="op">=</span><span class="st">"x_1 &lt; x_2"</span>)</span>
-<span id="cb44-156"><a href="#cb44-156" aria-hidden="true" tabindex="-1"></a>plt.plot((<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>), (<span class="dv">9</span>, <span class="op">-</span><span class="dv">3</span>), <span class="st">"g--"</span>, label<span class="op">=</span><span class="st">"x_1 + x_2 = 3"</span>)</span>
-<span id="cb44-157"><a href="#cb44-157" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb44-158"><a href="#cb44-158" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
-<span id="cb44-159"><a href="#cb44-159" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-160"><a href="#cb44-160" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-161"><a href="#cb44-161" aria-hidden="true" tabindex="-1"></a><span class="fu">#### NChooseK Constraints are also handled by a repair function, using QP</span></span>
-<span id="cb44-162"><a href="#cb44-162" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-165"><a href="#cb44-165" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-166"><a href="#cb44-166" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
-<span id="cb44-167"><a href="#cb44-167" aria-hidden="true" tabindex="-1"></a>domain.inputs.get_by_key(<span class="st">"x_1"</span>).bounds <span class="op">=</span> (<span class="fl">0.0</span>, <span class="fl">6.0</span>)</span>
-<span id="cb44-168"><a href="#cb44-168" aria-hidden="true" tabindex="-1"></a>domain.inputs.get_by_key(<span class="st">"x_2"</span>).bounds <span class="op">=</span> (<span class="fl">0.0</span>, <span class="fl">6.0</span>)</span>
-<span id="cb44-169"><a href="#cb44-169" aria-hidden="true" tabindex="-1"></a>domain.constraints.constraints <span class="op">+=</span> [</span>
-<span id="cb44-170"><a href="#cb44-170" aria-hidden="true" tabindex="-1"></a>    constraints_data_models.NChooseKConstraint(</span>
-<span id="cb44-171"><a href="#cb44-171" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
-<span id="cb44-172"><a href="#cb44-172" aria-hidden="true" tabindex="-1"></a>        min_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb44-173"><a href="#cb44-173" aria-hidden="true" tabindex="-1"></a>        max_count<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb44-174"><a href="#cb44-174" aria-hidden="true" tabindex="-1"></a>        none_also_valid<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb44-175"><a href="#cb44-175" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb44-176"><a href="#cb44-176" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb44-177"><a href="#cb44-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-178"><a href="#cb44-178" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(</span>
-<span id="cb44-179"><a href="#cb44-179" aria-hidden="true" tabindex="-1"></a>    strategies.RandomStrategy.make(domain<span class="op">=</span>domain).ask(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span></span>
-<span id="cb44-180"><a href="#cb44-180" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-181"><a href="#cb44-181" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-182"><a href="#cb44-182" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-185"><a href="#cb44-185" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-186"><a href="#cb44-186" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain, n<span class="op">=</span><span class="dv">10</span>)</span>
-<span id="cb44-187"><a href="#cb44-187" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-188"><a href="#cb44-188" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-191"><a href="#cb44-191" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-192"><a href="#cb44-192" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
-<span id="cb44-193"><a href="#cb44-193" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
-<span id="cb44-194"><a href="#cb44-194" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb44-195"><a href="#cb44-195" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_2"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb44-196"><a href="#cb44-196" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"y"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb44-197"><a href="#cb44-197" aria-hidden="true" tabindex="-1"></a>    levels<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb44-198"><a href="#cb44-198" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"true system response"</span>,</span>
-<span id="cb44-199"><a href="#cb44-199" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-200"><a href="#cb44-200" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
-<span id="cb44-201"><a href="#cb44-201" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="dv">0</span>, <span class="dv">6</span>)</span>
-<span id="cb44-202"><a href="#cb44-202" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="dv">0</span>, <span class="dv">6</span>)</span>
-<span id="cb44-203"><a href="#cb44-203" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb44-204"><a href="#cb44-204" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
-<span id="cb44-205"><a href="#cb44-205" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-206"><a href="#cb44-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-207"><a href="#cb44-207" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Inequality Constraints are handled by the GA objctive function</span></span>
-<span id="cb44-208"><a href="#cb44-208" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-211"><a href="#cb44-211" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-212"><a href="#cb44-212" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
-<span id="cb44-213"><a href="#cb44-213" aria-hidden="true" tabindex="-1"></a>domain.constraints.constraints <span class="op">+=</span> [</span>
-<span id="cb44-214"><a href="#cb44-214" aria-hidden="true" tabindex="-1"></a>    constraints_data_models.NonlinearInequalityConstraint(</span>
-<span id="cb44-215"><a href="#cb44-215" aria-hidden="true" tabindex="-1"></a>        expression<span class="op">=</span><span class="st">"x_1**2 + x_2**2 - 16"</span>,</span>
-<span id="cb44-216"><a href="#cb44-216" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
-<span id="cb44-217"><a href="#cb44-217" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb44-218"><a href="#cb44-218" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb44-219"><a href="#cb44-219" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain, n<span class="op">=</span><span class="dv">20</span>)</span>
-<span id="cb44-220"><a href="#cb44-220" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-221"><a href="#cb44-221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-224"><a href="#cb44-224" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-225"><a href="#cb44-225" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
-<span id="cb44-226"><a href="#cb44-226" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
-<span id="cb44-227"><a href="#cb44-227" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb44-228"><a href="#cb44-228" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_2"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb44-229"><a href="#cb44-229" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"y"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
-<span id="cb44-230"><a href="#cb44-230" aria-hidden="true" tabindex="-1"></a>    levels<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb44-231"><a href="#cb44-231" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"true system response"</span>,</span>
-<span id="cb44-232"><a href="#cb44-232" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-233"><a href="#cb44-233" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
-<span id="cb44-234"><a href="#cb44-234" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">100</span>)</span>
-<span id="cb44-235"><a href="#cb44-235" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> np.sqrt(<span class="dv">16</span> <span class="op">-</span> x<span class="op">**</span><span class="dv">2</span>)</span>
-<span id="cb44-236"><a href="#cb44-236" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> <span class="op">-</span>y1</span>
-<span id="cb44-237"><a href="#cb44-237" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y1, <span class="st">"r--"</span>, label<span class="op">=</span><span class="st">"x_1**2 + x_2**2 &lt;= 4"</span>)</span>
-<span id="cb44-238"><a href="#cb44-238" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y2, <span class="st">"r--"</span>)</span>
-<span id="cb44-239"><a href="#cb44-239" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
-<span id="cb44-240"><a href="#cb44-240" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
-<span id="cb44-241"><a href="#cb44-241" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb44-242"><a href="#cb44-242" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
-<span id="cb44-243"><a href="#cb44-243" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-244"><a href="#cb44-244" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-245"><a href="#cb44-245" aria-hidden="true" tabindex="-1"></a>Inspect the current progress rows written by the optimizer. Note, that these results can also be obtained during execution.</span>
-<span id="cb44-246"><a href="#cb44-246" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-249"><a href="#cb44-249" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-250"><a href="#cb44-250" aria-hidden="true" tabindex="-1"></a>pd.read_csv(<span class="st">"_custom_ga_progress.csv"</span>).head()</span>
-<span id="cb44-251"><a href="#cb44-251" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-252"><a href="#cb44-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-253"><a href="#cb44-253" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-254"><a href="#cb44-254" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example 2) Usage for Custom Function Optimization</span></span>
-<span id="cb44-255"><a href="#cb44-255" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-256"><a href="#cb44-256" aria-hidden="true" tabindex="-1"></a>We can define a domain with input features, and constraints. Output features are not required</span>
-<span id="cb44-257"><a href="#cb44-257" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-260"><a href="#cb44-260" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-261"><a href="#cb44-261" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> domains_data_models.Domain(</span>
-<span id="cb44-262"><a href="#cb44-262" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>domains_data_models.Inputs(</span>
-<span id="cb44-263"><a href="#cb44-263" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
-<span id="cb44-264"><a href="#cb44-264" aria-hidden="true" tabindex="-1"></a>            features_data_models.ContinuousInput(</span>
-<span id="cb44-265"><a href="#cb44-265" aria-hidden="true" tabindex="-1"></a>                key<span class="op">=</span><span class="st">"x_1"</span>,</span>
-<span id="cb44-266"><a href="#cb44-266" aria-hidden="true" tabindex="-1"></a>                bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>),</span>
-<span id="cb44-267"><a href="#cb44-267" aria-hidden="true" tabindex="-1"></a>            ),</span>
-<span id="cb44-268"><a href="#cb44-268" aria-hidden="true" tabindex="-1"></a>            features_data_models.ContinuousInput(</span>
-<span id="cb44-269"><a href="#cb44-269" aria-hidden="true" tabindex="-1"></a>                key<span class="op">=</span><span class="st">"x_2"</span>,</span>
-<span id="cb44-270"><a href="#cb44-270" aria-hidden="true" tabindex="-1"></a>                bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>),</span>
-<span id="cb44-271"><a href="#cb44-271" aria-hidden="true" tabindex="-1"></a>            ),</span>
-<span id="cb44-272"><a href="#cb44-272" aria-hidden="true" tabindex="-1"></a>        ]</span>
-<span id="cb44-273"><a href="#cb44-273" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb44-274"><a href="#cb44-274" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
-<span id="cb44-275"><a href="#cb44-275" aria-hidden="true" tabindex="-1"></a>        constraints_data_models.NonlinearInequalityConstraint(</span>
-<span id="cb44-276"><a href="#cb44-276" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"x_1**2 + x_2**2 - 16"</span>,</span>
-<span id="cb44-277"><a href="#cb44-277" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
-<span id="cb44-278"><a href="#cb44-278" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb44-279"><a href="#cb44-279" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb44-280"><a href="#cb44-280" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-281"><a href="#cb44-281" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-282"><a href="#cb44-282" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-285"><a href="#cb44-285" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-286"><a href="#cb44-286" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> strategies_data_models.GeneticAlgorithmOptimizer(</span>
-<span id="cb44-287"><a href="#cb44-287" aria-hidden="true" tabindex="-1"></a>    population_size<span class="op">=</span><span class="dv">100</span>,</span>
-<span id="cb44-288"><a href="#cb44-288" aria-hidden="true" tabindex="-1"></a>    n_max_gen<span class="op">=</span><span class="dv">100</span>,</span>
-<span id="cb44-289"><a href="#cb44-289" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb44-290"><a href="#cb44-290" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-291"><a href="#cb44-291" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-292"><a href="#cb44-292" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-293"><a href="#cb44-293" aria-hidden="true" tabindex="-1"></a>The GA progress file is updated generation-by-generation and can already be read</span>
-<span id="cb44-294"><a href="#cb44-294" aria-hidden="true" tabindex="-1"></a>while the GA run is still executing.</span>
-<span id="cb44-295"><a href="#cb44-295" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-296"><a href="#cb44-296" aria-hidden="true" tabindex="-1"></a><span class="fu">### Define the optimization problem: a) Using evaluations on `pd.DataFrame`</span></span>
-<span id="cb44-297"><a href="#cb44-297" aria-hidden="true" tabindex="-1"></a>We want to maximize the mean variance of the experiments dataframe. The objective function will be called with a list of dataframes, each representing a set of experiments. Each list entry is one individual in the population of the GA.</span>
-<span id="cb44-298"><a href="#cb44-298" aria-hidden="true" tabindex="-1"></a>The direction of the optimizer is a minimization of the objective function. So we minimize the negative mean variance of each 3 experiments in a batch in this case.</span>
-<span id="cb44-299"><a href="#cb44-299" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-302"><a href="#cb44-302" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-303"><a href="#cb44-303" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb44-304"><a href="#cb44-304" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""assume we want to maximize the mean variance of the experiments dataframe"""</span></span>
-<span id="cb44-305"><a href="#cb44-305" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.var(numeric_only<span class="op">=</span><span class="va">True</span>).mean() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
-<span id="cb44-306"><a href="#cb44-306" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span>
-<span id="cb44-307"><a href="#cb44-307" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-308"><a href="#cb44-308" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-309"><a href="#cb44-309" aria-hidden="true" tabindex="-1"></a>Run the optimization with the utility function <span class="in">`run_ga`</span></span>
-<span id="cb44-310"><a href="#cb44-310" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-313"><a href="#cb44-313" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-314"><a href="#cb44-314" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
-<span id="cb44-315"><a href="#cb44-315" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
-<span id="cb44-316"><a href="#cb44-316" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb44-317"><a href="#cb44-317" aria-hidden="true" tabindex="-1"></a>    objective_callables<span class="op">=</span>[objective_function],  <span class="co"># list of objective functions to optimize</span></span>
-<span id="cb44-318"><a href="#cb44-318" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span><span class="dv">3</span>,  <span class="co"># number of points to optimize</span></span>
-<span id="cb44-319"><a href="#cb44-319" aria-hidden="true" tabindex="-1"></a>    callable_format<span class="op">=</span><span class="st">"pandas"</span>,</span>
-<span id="cb44-320"><a href="#cb44-320" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
-<span id="cb44-321"><a href="#cb44-321" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-322"><a href="#cb44-322" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-323"><a href="#cb44-323" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-326"><a href="#cb44-326" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-327"><a href="#cb44-327" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> x_opt[<span class="dv">0</span>]</span>
-<span id="cb44-328"><a href="#cb44-328" aria-hidden="true" tabindex="-1"></a>proposals</span>
-<span id="cb44-329"><a href="#cb44-329" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-330"><a href="#cb44-330" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-333"><a href="#cb44-333" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-334"><a href="#cb44-334" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
-<span id="cb44-335"><a href="#cb44-335" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
-<span id="cb44-336"><a href="#cb44-336" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">100</span>)</span>
-<span id="cb44-337"><a href="#cb44-337" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> np.sqrt(<span class="dv">16</span> <span class="op">-</span> x<span class="op">**</span><span class="dv">2</span>)</span>
-<span id="cb44-338"><a href="#cb44-338" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> <span class="op">-</span>y1</span>
-<span id="cb44-339"><a href="#cb44-339" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y1, <span class="st">"r--"</span>, label<span class="op">=</span><span class="st">"x_1**2 + x_2**2 &lt;= 4"</span>)</span>
-<span id="cb44-340"><a href="#cb44-340" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y2, <span class="st">"r--"</span>)</span>
-<span id="cb44-341"><a href="#cb44-341" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
-<span id="cb44-342"><a href="#cb44-342" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
-<span id="cb44-343"><a href="#cb44-343" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb44-344"><a href="#cb44-344" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
-<span id="cb44-345"><a href="#cb44-345" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-346"><a href="#cb44-346" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-347"><a href="#cb44-347" aria-hidden="true" tabindex="-1"></a><span class="fu">### Define the optimization problem: a) Using evaluations on `torch.Tensor`</span></span>
-<span id="cb44-348"><a href="#cb44-348" aria-hidden="true" tabindex="-1"></a>For efficiency, we can also compute the objective function as a callable of type <span class="in">`Tensor`</span>. In this case, the computation is in the *numerical domain*.</span>
-<span id="cb44-349"><a href="#cb44-349" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-350"><a href="#cb44-350" aria-hidden="true" tabindex="-1"></a>This means, that categorical columns etc. are encoded. A specification with <span class="in">`input_preprocessing_specs`</span> can be passed to the objective function (otherwise, defaults are used)</span>
-<span id="cb44-351"><a href="#cb44-351" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-352"><a href="#cb44-352" aria-hidden="true" tabindex="-1"></a>The objective accepts a Tensor in shape (n, q, d) and should return a Tensor of shape (n,)</span>
-<span id="cb44-353"><a href="#cb44-353" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-356"><a href="#cb44-356" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-357"><a href="#cb44-357" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function(x: torch.Tensor) <span class="op">-&gt;</span> torch.Tensor:</span>
-<span id="cb44-358"><a href="#cb44-358" aria-hidden="true" tabindex="-1"></a>    var <span class="op">=</span> torch.var(x, dim<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb44-359"><a href="#cb44-359" aria-hidden="true" tabindex="-1"></a>    var_mean <span class="op">=</span> torch.mean(var, dim<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb44-360"><a href="#cb44-360" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> var_mean</span>
-<span id="cb44-361"><a href="#cb44-361" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-362"><a href="#cb44-362" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-365"><a href="#cb44-365" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-366"><a href="#cb44-366" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
-<span id="cb44-367"><a href="#cb44-367" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
-<span id="cb44-368"><a href="#cb44-368" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb44-369"><a href="#cb44-369" aria-hidden="true" tabindex="-1"></a>    objective_callables<span class="op">=</span>[objective_function],  <span class="co"># list of objective functions to optimize</span></span>
-<span id="cb44-370"><a href="#cb44-370" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span><span class="dv">3</span>,  <span class="co"># number of points to optimize</span></span>
-<span id="cb44-371"><a href="#cb44-371" aria-hidden="true" tabindex="-1"></a>    callable_format<span class="op">=</span><span class="st">"torch"</span>,</span>
-<span id="cb44-372"><a href="#cb44-372" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
-<span id="cb44-373"><a href="#cb44-373" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-374"><a href="#cb44-374" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-375"><a href="#cb44-375" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-378"><a href="#cb44-378" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-379"><a href="#cb44-379" aria-hidden="true" tabindex="-1"></a>x_opt</span>
-<span id="cb44-380"><a href="#cb44-380" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-381"><a href="#cb44-381" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-382"><a href="#cb44-382" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example 3: Multiobjective Optimization</span></span>
-<span id="cb44-383"><a href="#cb44-383" aria-hidden="true" tabindex="-1"></a>by giving multiple objective functions, or returning a 2D array from the objective, we will trigger multiobjective optimization</span>
-<span id="cb44-384"><a href="#cb44-384" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-387"><a href="#cb44-387" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-388"><a href="#cb44-388" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function_1(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb44-389"><a href="#cb44-389" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""assume we want to maximize the mean variance of the experiments dataframe"""</span></span>
-<span id="cb44-390"><a href="#cb44-390" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.var(numeric_only<span class="op">=</span><span class="va">True</span>).mean() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
-<span id="cb44-391"><a href="#cb44-391" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span>
-<span id="cb44-392"><a href="#cb44-392" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-393"><a href="#cb44-393" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-396"><a href="#cb44-396" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-397"><a href="#cb44-397" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function_2(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb44-398"><a href="#cb44-398" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Maximize the sum of all inputs"""</span></span>
-<span id="cb44-399"><a href="#cb44-399" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.<span class="bu">sum</span>().<span class="bu">sum</span>() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
-<span id="cb44-400"><a href="#cb44-400" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span>
-<span id="cb44-401"><a href="#cb44-401" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-402"><a href="#cb44-402" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-405"><a href="#cb44-405" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-406"><a href="#cb44-406" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
-<span id="cb44-407"><a href="#cb44-407" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
-<span id="cb44-408"><a href="#cb44-408" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb44-409"><a href="#cb44-409" aria-hidden="true" tabindex="-1"></a>    objective_callables<span class="op">=</span>[</span>
-<span id="cb44-410"><a href="#cb44-410" aria-hidden="true" tabindex="-1"></a>        objective_function_1,</span>
-<span id="cb44-411"><a href="#cb44-411" aria-hidden="true" tabindex="-1"></a>        objective_function_2,</span>
-<span id="cb44-412"><a href="#cb44-412" aria-hidden="true" tabindex="-1"></a>    ],  <span class="co"># list of objective functions to optimize</span></span>
-<span id="cb44-413"><a href="#cb44-413" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span><span class="dv">3</span>,  <span class="co"># number of points to optimize</span></span>
-<span id="cb44-414"><a href="#cb44-414" aria-hidden="true" tabindex="-1"></a>    callable_format<span class="op">=</span><span class="st">"pandas"</span>,</span>
-<span id="cb44-415"><a href="#cb44-415" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
-<span id="cb44-416"><a href="#cb44-416" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb44-417"><a href="#cb44-417" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-418"><a href="#cb44-418" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-419"><a href="#cb44-419" aria-hidden="true" tabindex="-1"></a>In the multiobjective-case, the result is a list of <span class="in">`pd.DataFrame`</span> with different pareto-optimal solutions</span>
-<span id="cb44-420"><a href="#cb44-420" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-423"><a href="#cb44-423" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-424"><a href="#cb44-424" aria-hidden="true" tabindex="-1"></a>plt.scatter(f_opt[:, <span class="dv">0</span>], f_opt[:, <span class="dv">1</span>])</span>
-<span id="cb44-425"><a href="#cb44-425" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"objective function 1"</span>)</span>
-<span id="cb44-426"><a href="#cb44-426" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"objective function 2"</span>)</span>
-<span id="cb44-427"><a href="#cb44-427" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-428"><a href="#cb44-428" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-431"><a href="#cb44-431" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-432"><a href="#cb44-432" aria-hidden="true" tabindex="-1"></a>x_opt[<span class="dv">0</span>]</span>
-<span id="cb44-433"><a href="#cb44-433" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb44-434"><a href="#cb44-434" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-437"><a href="#cb44-437" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb44-438"><a href="#cb44-438" aria-hidden="true" tabindex="-1"></a>x_opt[<span class="dv">1</span>]</span>
-<span id="cb44-439"><a href="#cb44-439" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb43" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Genetic Algorithm</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>Usage is possible in multiple ways:</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>As an alternative to the botorch optimizer in predictive strategies</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>To optimize custom function in the bofire domain. The utiliy function take care of the definition of the objective domain (variable types, constraints, etc.) and the handling of multiple experiment ($q$ points).</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> copy <span class="im">import</span> deepcopy</span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> time <span class="im">import</span> time</span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> List</span>
+<span id="cb43-17"><a href="#cb43-17" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-18"><a href="#cb43-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-21"><a href="#cb43-21" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-22"><a href="#cb43-22" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb43-23"><a href="#cb43-23" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb43-24"><a href="#cb43-24" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb43-25"><a href="#cb43-25" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb43-26"><a href="#cb43-26" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-27"><a href="#cb43-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-30"><a href="#cb43-30" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-31"><a href="#cb43-31" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks <span class="im">import</span> api <span class="im">as</span> benchmarks</span>
+<span id="cb43-32"><a href="#cb43-32" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.constraints <span class="im">import</span> api <span class="im">as</span> constraints_data_models</span>
+<span id="cb43-33"><a href="#cb43-33" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain <span class="im">import</span> api <span class="im">as</span> domains_data_models</span>
+<span id="cb43-34"><a href="#cb43-34" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features <span class="im">import</span> api <span class="im">as</span> features_data_models</span>
+<span id="cb43-35"><a href="#cb43-35" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies <span class="im">import</span> api <span class="im">as</span> strategies_data_models</span>
+<span id="cb43-36"><a href="#cb43-36" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies <span class="im">import</span> api <span class="im">as</span> strategies</span>
+<span id="cb43-37"><a href="#cb43-37" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies.utils <span class="im">import</span> run_ga</span>
+<span id="cb43-38"><a href="#cb43-38" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-39"><a href="#cb43-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-42"><a href="#cb43-42" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-43"><a href="#cb43-43" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
+<span id="cb43-44"><a href="#cb43-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-45"><a href="#cb43-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-46"><a href="#cb43-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Suppress specific warnings</span></span>
+<span id="cb43-47"><a href="#cb43-47" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>, message<span class="op">=</span><span class="st">".*A not p.d., added jitter"</span>)</span>
+<span id="cb43-48"><a href="#cb43-48" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(</span>
+<span id="cb43-49"><a href="#cb43-49" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ignore"</span>, message<span class="op">=</span><span class="st">".*np.power((rand * alpha), (1.0 / (eta + 1.0)))[mask]"</span></span>
+<span id="cb43-50"><a href="#cb43-50" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-51"><a href="#cb43-51" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-52"><a href="#cb43-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-53"><a href="#cb43-53" aria-hidden="true" tabindex="-1"></a><span class="fu">### The GA supports multiple different constraints</span></span>
+<span id="cb43-54"><a href="#cb43-54" aria-hidden="true" tabindex="-1"></a>Genetic algorithms are quite flexible and can handle a variety of constraints. However, they usually struggle with equality constraints. In the implementation, linear equality- and inequality constraints, as well as N-choose-k cosntraints are handled by a repair function, using QP. Nonlinear constraints are handled by the GA objective function.</span>
+<span id="cb43-55"><a href="#cb43-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-56"><a href="#cb43-56" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example 1) Usage for Acquisition Function Optimization</span></span>
+<span id="cb43-57"><a href="#cb43-57" aria-hidden="true" tabindex="-1"></a>Just pass the <span class="in">`GeneticAlgorithmOptimizer`</span> to the <span class="in">`acquisition_optimizer`</span> argument of a strategy. The optimizer will then be used to optimize the acquisition function.</span>
+<span id="cb43-58"><a href="#cb43-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-61"><a href="#cb43-61" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-62"><a href="#cb43-62" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> benchmarks.Himmelblau()</span>
+<span id="cb43-63"><a href="#cb43-63" aria-hidden="true" tabindex="-1"></a><span class="co"># generate experiments</span></span>
+<span id="cb43-64"><a href="#cb43-64" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(benchmark.domain.inputs.sample(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb43-65"><a href="#cb43-65" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-66"><a href="#cb43-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-69"><a href="#cb43-69" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-70"><a href="#cb43-70" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> strategies_data_models.GeneticAlgorithmOptimizer(</span>
+<span id="cb43-71"><a href="#cb43-71" aria-hidden="true" tabindex="-1"></a>    population_size<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb43-72"><a href="#cb43-72" aria-hidden="true" tabindex="-1"></a>    n_max_gen<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb43-73"><a href="#cb43-73" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb43-74"><a href="#cb43-74" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Write per-generation GA progress so it can be inspected while optimization runs.</span></span>
+<span id="cb43-75"><a href="#cb43-75" aria-hidden="true" tabindex="-1"></a>    ga_progress_csv_path<span class="op">=</span><span class="st">"_custom_ga_progress.csv"</span>,</span>
+<span id="cb43-76"><a href="#cb43-76" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-77"><a href="#cb43-77" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-78"><a href="#cb43-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-81"><a href="#cb43-81" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-82"><a href="#cb43-82" aria-hidden="true" tabindex="-1"></a>benchmark_grid <span class="op">=</span> np.hstack(</span>
+<span id="cb43-83"><a href="#cb43-83" aria-hidden="true" tabindex="-1"></a>    [</span>
+<span id="cb43-84"><a href="#cb43-84" aria-hidden="true" tabindex="-1"></a>        x.reshape((<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>))</span>
+<span id="cb43-85"><a href="#cb43-85" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> x <span class="kw">in</span> np.meshgrid(np.linspace(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>, <span class="dv">100</span>), np.linspace(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>, <span class="dv">100</span>))</span>
+<span id="cb43-86"><a href="#cb43-86" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb43-87"><a href="#cb43-87" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-88"><a href="#cb43-88" aria-hidden="true" tabindex="-1"></a>benchmark_grid <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb43-89"><a href="#cb43-89" aria-hidden="true" tabindex="-1"></a>    benchmark_grid, columns<span class="op">=</span>benchmark.domain.inputs.get_keys()</span>
+<span id="cb43-90"><a href="#cb43-90" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-91"><a href="#cb43-91" aria-hidden="true" tabindex="-1"></a>benchmark_grid[<span class="st">"y"</span>] <span class="op">=</span> benchmark.f(benchmark_grid)[<span class="st">"y"</span>]</span>
+<span id="cb43-92"><a href="#cb43-92" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-93"><a href="#cb43-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-96"><a href="#cb43-96" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-97"><a href="#cb43-97" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_proposals(domain, n: <span class="bu">int</span> <span class="op">=</span> <span class="dv">10</span>) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb43-98"><a href="#cb43-98" aria-hidden="true" tabindex="-1"></a>    strategy <span class="op">=</span> strategies_data_models.SoboStrategy(</span>
+<span id="cb43-99"><a href="#cb43-99" aria-hidden="true" tabindex="-1"></a>        domain<span class="op">=</span>domain, acquisition_optimizer<span class="op">=</span>optimizer</span>
+<span id="cb43-100"><a href="#cb43-100" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb43-101"><a href="#cb43-101" aria-hidden="true" tabindex="-1"></a>    <span class="co"># map to strategy object, and train the model</span></span>
+<span id="cb43-102"><a href="#cb43-102" aria-hidden="true" tabindex="-1"></a>    strategy <span class="op">=</span> strategies.<span class="bu">map</span>(strategy)</span>
+<span id="cb43-103"><a href="#cb43-103" aria-hidden="true" tabindex="-1"></a>    strategy.tell(experiments)</span>
+<span id="cb43-104"><a href="#cb43-104" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">=</span> time()</span>
+<span id="cb43-105"><a href="#cb43-105" aria-hidden="true" tabindex="-1"></a>    proposals <span class="op">=</span> strategy.ask(n, raise_validation_error<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb43-106"><a href="#cb43-106" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Generated </span><span class="sc">{</span><span class="bu">len</span>(proposals)<span class="sc">}</span><span class="ss"> experiments, Time taken: </span><span class="sc">{</span>time() <span class="op">-</span> t0<span class="sc">:.2f}</span><span class="ss">s"</span>)</span>
+<span id="cb43-107"><a href="#cb43-107" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> proposals</span>
+<span id="cb43-108"><a href="#cb43-108" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-109"><a href="#cb43-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-110"><a href="#cb43-110" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Linear Equality and Inequality Constraints are handled by a repair function, using QP</span></span>
+<span id="cb43-111"><a href="#cb43-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-114"><a href="#cb43-114" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-115"><a href="#cb43-115" aria-hidden="true" tabindex="-1"></a><span class="co"># generate different cases</span></span>
+<span id="cb43-116"><a href="#cb43-116" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
+<span id="cb43-117"><a href="#cb43-117" aria-hidden="true" tabindex="-1"></a>domain.constraints.constraints <span class="op">+=</span> [</span>
+<span id="cb43-118"><a href="#cb43-118" aria-hidden="true" tabindex="-1"></a>    constraints_data_models.LinearEqualityConstraint(  <span class="co"># x_1 + x_2 = 3</span></span>
+<span id="cb43-119"><a href="#cb43-119" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
+<span id="cb43-120"><a href="#cb43-120" aria-hidden="true" tabindex="-1"></a>        coefficients<span class="op">=</span>[<span class="dv">1</span>, <span class="dv">1</span>],</span>
+<span id="cb43-121"><a href="#cb43-121" aria-hidden="true" tabindex="-1"></a>        rhs<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb43-122"><a href="#cb43-122" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb43-123"><a href="#cb43-123" aria-hidden="true" tabindex="-1"></a>    constraints_data_models.LinearInequalityConstraint(  <span class="co"># x_2 &lt;= x_1</span></span>
+<span id="cb43-124"><a href="#cb43-124" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
+<span id="cb43-125"><a href="#cb43-125" aria-hidden="true" tabindex="-1"></a>        coefficients<span class="op">=</span>[<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>],</span>
+<span id="cb43-126"><a href="#cb43-126" aria-hidden="true" tabindex="-1"></a>        rhs<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb43-127"><a href="#cb43-127" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb43-128"><a href="#cb43-128" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb43-129"><a href="#cb43-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-130"><a href="#cb43-130" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(</span>
+<span id="cb43-131"><a href="#cb43-131" aria-hidden="true" tabindex="-1"></a>    strategies.RandomStrategy.make(domain<span class="op">=</span>domain).ask(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span></span>
+<span id="cb43-132"><a href="#cb43-132" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-133"><a href="#cb43-133" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-134"><a href="#cb43-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-137"><a href="#cb43-137" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-138"><a href="#cb43-138" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain)</span>
+<span id="cb43-139"><a href="#cb43-139" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-140"><a href="#cb43-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-143"><a href="#cb43-143" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-144"><a href="#cb43-144" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
+<span id="cb43-145"><a href="#cb43-145" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
+<span id="cb43-146"><a href="#cb43-146" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb43-147"><a href="#cb43-147" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_2"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb43-148"><a href="#cb43-148" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"y"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb43-149"><a href="#cb43-149" aria-hidden="true" tabindex="-1"></a>    levels<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb43-150"><a href="#cb43-150" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"true system response"</span>,</span>
+<span id="cb43-151"><a href="#cb43-151" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-152"><a href="#cb43-152" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
+<span id="cb43-153"><a href="#cb43-153" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
+<span id="cb43-154"><a href="#cb43-154" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
+<span id="cb43-155"><a href="#cb43-155" aria-hidden="true" tabindex="-1"></a>plt.plot((<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>), (<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>), <span class="st">"r--"</span>, label<span class="op">=</span><span class="st">"x_1 &lt; x_2"</span>)</span>
+<span id="cb43-156"><a href="#cb43-156" aria-hidden="true" tabindex="-1"></a>plt.plot((<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>), (<span class="dv">9</span>, <span class="op">-</span><span class="dv">3</span>), <span class="st">"g--"</span>, label<span class="op">=</span><span class="st">"x_1 + x_2 = 3"</span>)</span>
+<span id="cb43-157"><a href="#cb43-157" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb43-158"><a href="#cb43-158" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb43-159"><a href="#cb43-159" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-160"><a href="#cb43-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-161"><a href="#cb43-161" aria-hidden="true" tabindex="-1"></a><span class="fu">#### NChooseK Constraints are also handled by a repair function, using QP</span></span>
+<span id="cb43-162"><a href="#cb43-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-165"><a href="#cb43-165" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-166"><a href="#cb43-166" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
+<span id="cb43-167"><a href="#cb43-167" aria-hidden="true" tabindex="-1"></a>domain.inputs.get_by_key(<span class="st">"x_1"</span>).bounds <span class="op">=</span> (<span class="fl">0.0</span>, <span class="fl">6.0</span>)</span>
+<span id="cb43-168"><a href="#cb43-168" aria-hidden="true" tabindex="-1"></a>domain.inputs.get_by_key(<span class="st">"x_2"</span>).bounds <span class="op">=</span> (<span class="fl">0.0</span>, <span class="fl">6.0</span>)</span>
+<span id="cb43-169"><a href="#cb43-169" aria-hidden="true" tabindex="-1"></a>domain.constraints.constraints <span class="op">+=</span> [</span>
+<span id="cb43-170"><a href="#cb43-170" aria-hidden="true" tabindex="-1"></a>    constraints_data_models.NChooseKConstraint(</span>
+<span id="cb43-171"><a href="#cb43-171" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
+<span id="cb43-172"><a href="#cb43-172" aria-hidden="true" tabindex="-1"></a>        min_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb43-173"><a href="#cb43-173" aria-hidden="true" tabindex="-1"></a>        max_count<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb43-174"><a href="#cb43-174" aria-hidden="true" tabindex="-1"></a>        none_also_valid<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb43-175"><a href="#cb43-175" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb43-176"><a href="#cb43-176" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb43-177"><a href="#cb43-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-178"><a href="#cb43-178" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(</span>
+<span id="cb43-179"><a href="#cb43-179" aria-hidden="true" tabindex="-1"></a>    strategies.RandomStrategy.make(domain<span class="op">=</span>domain).ask(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span></span>
+<span id="cb43-180"><a href="#cb43-180" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-181"><a href="#cb43-181" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-182"><a href="#cb43-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-185"><a href="#cb43-185" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-186"><a href="#cb43-186" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain, n<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb43-187"><a href="#cb43-187" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-188"><a href="#cb43-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-191"><a href="#cb43-191" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-192"><a href="#cb43-192" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
+<span id="cb43-193"><a href="#cb43-193" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
+<span id="cb43-194"><a href="#cb43-194" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb43-195"><a href="#cb43-195" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_2"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb43-196"><a href="#cb43-196" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"y"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb43-197"><a href="#cb43-197" aria-hidden="true" tabindex="-1"></a>    levels<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb43-198"><a href="#cb43-198" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"true system response"</span>,</span>
+<span id="cb43-199"><a href="#cb43-199" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-200"><a href="#cb43-200" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
+<span id="cb43-201"><a href="#cb43-201" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="dv">0</span>, <span class="dv">6</span>)</span>
+<span id="cb43-202"><a href="#cb43-202" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="dv">0</span>, <span class="dv">6</span>)</span>
+<span id="cb43-203"><a href="#cb43-203" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb43-204"><a href="#cb43-204" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb43-205"><a href="#cb43-205" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-206"><a href="#cb43-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-207"><a href="#cb43-207" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Inequality Constraints are handled by the GA objctive function</span></span>
+<span id="cb43-208"><a href="#cb43-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-211"><a href="#cb43-211" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-212"><a href="#cb43-212" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> deepcopy(benchmark.domain)</span>
+<span id="cb43-213"><a href="#cb43-213" aria-hidden="true" tabindex="-1"></a>domain.constraints.constraints <span class="op">+=</span> [</span>
+<span id="cb43-214"><a href="#cb43-214" aria-hidden="true" tabindex="-1"></a>    constraints_data_models.NonlinearInequalityConstraint(</span>
+<span id="cb43-215"><a href="#cb43-215" aria-hidden="true" tabindex="-1"></a>        expression<span class="op">=</span><span class="st">"x_1**2 + x_2**2 - 16"</span>,</span>
+<span id="cb43-216"><a href="#cb43-216" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
+<span id="cb43-217"><a href="#cb43-217" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb43-218"><a href="#cb43-218" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb43-219"><a href="#cb43-219" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> get_proposals(domain, n<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb43-220"><a href="#cb43-220" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-221"><a href="#cb43-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-224"><a href="#cb43-224" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-225"><a href="#cb43-225" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
+<span id="cb43-226"><a href="#cb43-226" aria-hidden="true" tabindex="-1"></a>plt.contour(</span>
+<span id="cb43-227"><a href="#cb43-227" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_1"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb43-228"><a href="#cb43-228" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"x_2"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb43-229"><a href="#cb43-229" aria-hidden="true" tabindex="-1"></a>    benchmark_grid[<span class="st">"y"</span>].values.reshape((<span class="dv">100</span>, <span class="dv">100</span>)),</span>
+<span id="cb43-230"><a href="#cb43-230" aria-hidden="true" tabindex="-1"></a>    levels<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb43-231"><a href="#cb43-231" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"true system response"</span>,</span>
+<span id="cb43-232"><a href="#cb43-232" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-233"><a href="#cb43-233" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
+<span id="cb43-234"><a href="#cb43-234" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">100</span>)</span>
+<span id="cb43-235"><a href="#cb43-235" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> np.sqrt(<span class="dv">16</span> <span class="op">-</span> x<span class="op">**</span><span class="dv">2</span>)</span>
+<span id="cb43-236"><a href="#cb43-236" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> <span class="op">-</span>y1</span>
+<span id="cb43-237"><a href="#cb43-237" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y1, <span class="st">"r--"</span>, label<span class="op">=</span><span class="st">"x_1**2 + x_2**2 &lt;= 4"</span>)</span>
+<span id="cb43-238"><a href="#cb43-238" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y2, <span class="st">"r--"</span>)</span>
+<span id="cb43-239"><a href="#cb43-239" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
+<span id="cb43-240"><a href="#cb43-240" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
+<span id="cb43-241"><a href="#cb43-241" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb43-242"><a href="#cb43-242" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb43-243"><a href="#cb43-243" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-244"><a href="#cb43-244" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-245"><a href="#cb43-245" aria-hidden="true" tabindex="-1"></a>Inspect the current progress rows written by the optimizer. Note, that these results can also be obtained during execution.</span>
+<span id="cb43-246"><a href="#cb43-246" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-249"><a href="#cb43-249" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-250"><a href="#cb43-250" aria-hidden="true" tabindex="-1"></a>pd.read_csv(<span class="st">"_custom_ga_progress.csv"</span>).head()</span>
+<span id="cb43-251"><a href="#cb43-251" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-252"><a href="#cb43-252" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-253"><a href="#cb43-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-254"><a href="#cb43-254" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example 2) Usage for Custom Function Optimization</span></span>
+<span id="cb43-255"><a href="#cb43-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-256"><a href="#cb43-256" aria-hidden="true" tabindex="-1"></a>We can define a domain with input features, and constraints. Output features are not required</span>
+<span id="cb43-257"><a href="#cb43-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-260"><a href="#cb43-260" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-261"><a href="#cb43-261" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> domains_data_models.Domain(</span>
+<span id="cb43-262"><a href="#cb43-262" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>domains_data_models.Inputs(</span>
+<span id="cb43-263"><a href="#cb43-263" aria-hidden="true" tabindex="-1"></a>        features<span class="op">=</span>[</span>
+<span id="cb43-264"><a href="#cb43-264" aria-hidden="true" tabindex="-1"></a>            features_data_models.ContinuousInput(</span>
+<span id="cb43-265"><a href="#cb43-265" aria-hidden="true" tabindex="-1"></a>                key<span class="op">=</span><span class="st">"x_1"</span>,</span>
+<span id="cb43-266"><a href="#cb43-266" aria-hidden="true" tabindex="-1"></a>                bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>),</span>
+<span id="cb43-267"><a href="#cb43-267" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb43-268"><a href="#cb43-268" aria-hidden="true" tabindex="-1"></a>            features_data_models.ContinuousInput(</span>
+<span id="cb43-269"><a href="#cb43-269" aria-hidden="true" tabindex="-1"></a>                key<span class="op">=</span><span class="st">"x_2"</span>,</span>
+<span id="cb43-270"><a href="#cb43-270" aria-hidden="true" tabindex="-1"></a>                bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>),</span>
+<span id="cb43-271"><a href="#cb43-271" aria-hidden="true" tabindex="-1"></a>            ),</span>
+<span id="cb43-272"><a href="#cb43-272" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb43-273"><a href="#cb43-273" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb43-274"><a href="#cb43-274" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
+<span id="cb43-275"><a href="#cb43-275" aria-hidden="true" tabindex="-1"></a>        constraints_data_models.NonlinearInequalityConstraint(</span>
+<span id="cb43-276"><a href="#cb43-276" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"x_1**2 + x_2**2 - 16"</span>,</span>
+<span id="cb43-277"><a href="#cb43-277" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x_1"</span>, <span class="st">"x_2"</span>],</span>
+<span id="cb43-278"><a href="#cb43-278" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb43-279"><a href="#cb43-279" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb43-280"><a href="#cb43-280" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-281"><a href="#cb43-281" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-282"><a href="#cb43-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-285"><a href="#cb43-285" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-286"><a href="#cb43-286" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> strategies_data_models.GeneticAlgorithmOptimizer(</span>
+<span id="cb43-287"><a href="#cb43-287" aria-hidden="true" tabindex="-1"></a>    population_size<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb43-288"><a href="#cb43-288" aria-hidden="true" tabindex="-1"></a>    n_max_gen<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb43-289"><a href="#cb43-289" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb43-290"><a href="#cb43-290" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-291"><a href="#cb43-291" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-292"><a href="#cb43-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-293"><a href="#cb43-293" aria-hidden="true" tabindex="-1"></a>The GA progress file is updated generation-by-generation and can already be read</span>
+<span id="cb43-294"><a href="#cb43-294" aria-hidden="true" tabindex="-1"></a>while the GA run is still executing.</span>
+<span id="cb43-295"><a href="#cb43-295" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-296"><a href="#cb43-296" aria-hidden="true" tabindex="-1"></a><span class="fu">### Define the optimization problem: a) Using evaluations on `pd.DataFrame`</span></span>
+<span id="cb43-297"><a href="#cb43-297" aria-hidden="true" tabindex="-1"></a>We want to maximize the mean variance of the experiments dataframe. The objective function will be called with a list of dataframes, each representing a set of experiments. Each list entry is one individual in the population of the GA.</span>
+<span id="cb43-298"><a href="#cb43-298" aria-hidden="true" tabindex="-1"></a>The direction of the optimizer is a minimization of the objective function. So we minimize the negative mean variance of each 3 experiments in a batch in this case.</span>
+<span id="cb43-299"><a href="#cb43-299" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-302"><a href="#cb43-302" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-303"><a href="#cb43-303" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb43-304"><a href="#cb43-304" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""assume we want to maximize the mean variance of the experiments dataframe"""</span></span>
+<span id="cb43-305"><a href="#cb43-305" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.var(numeric_only<span class="op">=</span><span class="va">True</span>).mean() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
+<span id="cb43-306"><a href="#cb43-306" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span>
+<span id="cb43-307"><a href="#cb43-307" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-308"><a href="#cb43-308" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-309"><a href="#cb43-309" aria-hidden="true" tabindex="-1"></a>Run the optimization with the utility function <span class="in">`run_ga`</span></span>
+<span id="cb43-310"><a href="#cb43-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-313"><a href="#cb43-313" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-314"><a href="#cb43-314" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
+<span id="cb43-315"><a href="#cb43-315" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
+<span id="cb43-316"><a href="#cb43-316" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb43-317"><a href="#cb43-317" aria-hidden="true" tabindex="-1"></a>    objective_callables<span class="op">=</span>[objective_function],  <span class="co"># list of objective functions to optimize</span></span>
+<span id="cb43-318"><a href="#cb43-318" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span><span class="dv">3</span>,  <span class="co"># number of points to optimize</span></span>
+<span id="cb43-319"><a href="#cb43-319" aria-hidden="true" tabindex="-1"></a>    callable_format<span class="op">=</span><span class="st">"pandas"</span>,</span>
+<span id="cb43-320"><a href="#cb43-320" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
+<span id="cb43-321"><a href="#cb43-321" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-322"><a href="#cb43-322" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-323"><a href="#cb43-323" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-326"><a href="#cb43-326" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-327"><a href="#cb43-327" aria-hidden="true" tabindex="-1"></a>proposals <span class="op">=</span> x_opt[<span class="dv">0</span>]</span>
+<span id="cb43-328"><a href="#cb43-328" aria-hidden="true" tabindex="-1"></a>proposals</span>
+<span id="cb43-329"><a href="#cb43-329" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-330"><a href="#cb43-330" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-333"><a href="#cb43-333" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-334"><a href="#cb43-334" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">4</span>))</span>
+<span id="cb43-335"><a href="#cb43-335" aria-hidden="true" tabindex="-1"></a>plt.plot(proposals[<span class="st">"x_1"</span>], proposals[<span class="st">"x_2"</span>], <span class="st">"o"</span>, label<span class="op">=</span><span class="st">"Proposals"</span>)</span>
+<span id="cb43-336"><a href="#cb43-336" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.linspace(<span class="op">-</span><span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">100</span>)</span>
+<span id="cb43-337"><a href="#cb43-337" aria-hidden="true" tabindex="-1"></a>y1 <span class="op">=</span> np.sqrt(<span class="dv">16</span> <span class="op">-</span> x<span class="op">**</span><span class="dv">2</span>)</span>
+<span id="cb43-338"><a href="#cb43-338" aria-hidden="true" tabindex="-1"></a>y2 <span class="op">=</span> <span class="op">-</span>y1</span>
+<span id="cb43-339"><a href="#cb43-339" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y1, <span class="st">"r--"</span>, label<span class="op">=</span><span class="st">"x_1**2 + x_2**2 &lt;= 4"</span>)</span>
+<span id="cb43-340"><a href="#cb43-340" aria-hidden="true" tabindex="-1"></a>plt.plot(x, y2, <span class="st">"r--"</span>)</span>
+<span id="cb43-341"><a href="#cb43-341" aria-hidden="true" tabindex="-1"></a>plt.xlim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
+<span id="cb43-342"><a href="#cb43-342" aria-hidden="true" tabindex="-1"></a>plt.ylim(<span class="op">-</span><span class="dv">6</span>, <span class="dv">6</span>)</span>
+<span id="cb43-343"><a href="#cb43-343" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb43-344"><a href="#cb43-344" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb43-345"><a href="#cb43-345" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-346"><a href="#cb43-346" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-347"><a href="#cb43-347" aria-hidden="true" tabindex="-1"></a><span class="fu">### Define the optimization problem: a) Using evaluations on `torch.Tensor`</span></span>
+<span id="cb43-348"><a href="#cb43-348" aria-hidden="true" tabindex="-1"></a>For efficiency, we can also compute the objective function as a callable of type <span class="in">`Tensor`</span>. In this case, the computation is in the *numerical domain*.</span>
+<span id="cb43-349"><a href="#cb43-349" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-350"><a href="#cb43-350" aria-hidden="true" tabindex="-1"></a>This means, that categorical columns etc. are encoded. A specification with <span class="in">`input_preprocessing_specs`</span> can be passed to the objective function (otherwise, defaults are used)</span>
+<span id="cb43-351"><a href="#cb43-351" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-352"><a href="#cb43-352" aria-hidden="true" tabindex="-1"></a>The objective accepts a Tensor in shape (n, q, d) and should return a Tensor of shape (n,)</span>
+<span id="cb43-353"><a href="#cb43-353" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-356"><a href="#cb43-356" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-357"><a href="#cb43-357" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function(x: torch.Tensor) <span class="op">-&gt;</span> torch.Tensor:</span>
+<span id="cb43-358"><a href="#cb43-358" aria-hidden="true" tabindex="-1"></a>    var <span class="op">=</span> torch.var(x, dim<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb43-359"><a href="#cb43-359" aria-hidden="true" tabindex="-1"></a>    var_mean <span class="op">=</span> torch.mean(var, dim<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb43-360"><a href="#cb43-360" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> var_mean</span>
+<span id="cb43-361"><a href="#cb43-361" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-362"><a href="#cb43-362" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-365"><a href="#cb43-365" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-366"><a href="#cb43-366" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
+<span id="cb43-367"><a href="#cb43-367" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
+<span id="cb43-368"><a href="#cb43-368" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb43-369"><a href="#cb43-369" aria-hidden="true" tabindex="-1"></a>    objective_callables<span class="op">=</span>[objective_function],  <span class="co"># list of objective functions to optimize</span></span>
+<span id="cb43-370"><a href="#cb43-370" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span><span class="dv">3</span>,  <span class="co"># number of points to optimize</span></span>
+<span id="cb43-371"><a href="#cb43-371" aria-hidden="true" tabindex="-1"></a>    callable_format<span class="op">=</span><span class="st">"torch"</span>,</span>
+<span id="cb43-372"><a href="#cb43-372" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
+<span id="cb43-373"><a href="#cb43-373" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-374"><a href="#cb43-374" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-375"><a href="#cb43-375" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-378"><a href="#cb43-378" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-379"><a href="#cb43-379" aria-hidden="true" tabindex="-1"></a>x_opt</span>
+<span id="cb43-380"><a href="#cb43-380" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-381"><a href="#cb43-381" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-382"><a href="#cb43-382" aria-hidden="true" tabindex="-1"></a><span class="fu">## Example 3: Multiobjective Optimization</span></span>
+<span id="cb43-383"><a href="#cb43-383" aria-hidden="true" tabindex="-1"></a>by giving multiple objective functions, or returning a 2D array from the objective, we will trigger multiobjective optimization</span>
+<span id="cb43-384"><a href="#cb43-384" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-387"><a href="#cb43-387" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-388"><a href="#cb43-388" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function_1(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb43-389"><a href="#cb43-389" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""assume we want to maximize the mean variance of the experiments dataframe"""</span></span>
+<span id="cb43-390"><a href="#cb43-390" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.var(numeric_only<span class="op">=</span><span class="va">True</span>).mean() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
+<span id="cb43-391"><a href="#cb43-391" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span>
+<span id="cb43-392"><a href="#cb43-392" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-393"><a href="#cb43-393" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-396"><a href="#cb43-396" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-397"><a href="#cb43-397" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> objective_function_2(x: List[pd.DataFrame]) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb43-398"><a href="#cb43-398" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Maximize the sum of all inputs"""</span></span>
+<span id="cb43-399"><a href="#cb43-399" aria-hidden="true" tabindex="-1"></a>    <span class="bu">vars</span> <span class="op">=</span> [xi.<span class="bu">sum</span>().<span class="bu">sum</span>() <span class="cf">for</span> xi <span class="kw">in</span> x]</span>
+<span id="cb43-400"><a href="#cb43-400" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(<span class="bu">vars</span>)</span>
+<span id="cb43-401"><a href="#cb43-401" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-402"><a href="#cb43-402" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-405"><a href="#cb43-405" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-406"><a href="#cb43-406" aria-hidden="true" tabindex="-1"></a>x_opt, f_opt <span class="op">=</span> run_ga(</span>
+<span id="cb43-407"><a href="#cb43-407" aria-hidden="true" tabindex="-1"></a>    data_model<span class="op">=</span>optimizer,</span>
+<span id="cb43-408"><a href="#cb43-408" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb43-409"><a href="#cb43-409" aria-hidden="true" tabindex="-1"></a>    objective_callables<span class="op">=</span>[</span>
+<span id="cb43-410"><a href="#cb43-410" aria-hidden="true" tabindex="-1"></a>        objective_function_1,</span>
+<span id="cb43-411"><a href="#cb43-411" aria-hidden="true" tabindex="-1"></a>        objective_function_2,</span>
+<span id="cb43-412"><a href="#cb43-412" aria-hidden="true" tabindex="-1"></a>    ],  <span class="co"># list of objective functions to optimize</span></span>
+<span id="cb43-413"><a href="#cb43-413" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span><span class="dv">3</span>,  <span class="co"># number of points to optimize</span></span>
+<span id="cb43-414"><a href="#cb43-414" aria-hidden="true" tabindex="-1"></a>    callable_format<span class="op">=</span><span class="st">"pandas"</span>,</span>
+<span id="cb43-415"><a href="#cb43-415" aria-hidden="true" tabindex="-1"></a>    optimization_direction<span class="op">=</span><span class="st">"max"</span>,  <span class="co"># maximize the objective function</span></span>
+<span id="cb43-416"><a href="#cb43-416" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb43-417"><a href="#cb43-417" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-418"><a href="#cb43-418" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-419"><a href="#cb43-419" aria-hidden="true" tabindex="-1"></a>In the multiobjective-case, the result is a list of <span class="in">`pd.DataFrame`</span> with different pareto-optimal solutions</span>
+<span id="cb43-420"><a href="#cb43-420" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-423"><a href="#cb43-423" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-424"><a href="#cb43-424" aria-hidden="true" tabindex="-1"></a>plt.scatter(f_opt[:, <span class="dv">0</span>], f_opt[:, <span class="dv">1</span>])</span>
+<span id="cb43-425"><a href="#cb43-425" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"objective function 1"</span>)</span>
+<span id="cb43-426"><a href="#cb43-426" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"objective function 2"</span>)</span>
+<span id="cb43-427"><a href="#cb43-427" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-428"><a href="#cb43-428" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-431"><a href="#cb43-431" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-432"><a href="#cb43-432" aria-hidden="true" tabindex="-1"></a>x_opt[<span class="dv">0</span>]</span>
+<span id="cb43-433"><a href="#cb43-433" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb43-434"><a href="#cb43-434" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-437"><a href="#cb43-437" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb43-438"><a href="#cb43-438" aria-hidden="true" tabindex="-1"></a>x_opt[<span class="dv">1</span>]</span>
+<span id="cb43-439"><a href="#cb43-439" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
