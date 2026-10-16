@@ -1,5 +1,4 @@
-import functools
-from typing import Callable, List, Optional, Tuple, Type
+from typing import Callable, Dict, List, Optional, Tuple, Type
 
 import gpytorch
 import torch
@@ -15,7 +14,7 @@ import bofire.data_models.kernels.api as data_models
 import bofire.priors.api as priors
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.encodings.api import DescriptorEncoding
-from bofire.data_models.features.descriptors import Descriptors
+from bofire.data_models.features.api import CategoricalInput
 from bofire.data_models.priors.api import Positive
 from bofire.kernels.aggregation import PolynomialFeatureInteractionKernel
 from bofire.kernels.conditional import (
@@ -308,25 +307,24 @@ def map_TanimotoKernel(
     return TanimotoKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,
-        tanimoto_similarity_matrix=_similarities(
-            data_model.fingerprints.model_dump_json(),
-            feature.descriptors.model_dump_json(),
-            tuple(feature.categories),
-        ),
+        tanimoto_similarity_matrix=_similarities(data_model.fingerprints, feature),
     )
 
 
-@functools.lru_cache(maxsize=16)
+# Tanimoto similarities between all categories of an input, by fingerprint settings
+# and descriptor data (in category order); computed once per process
+_SIMILARITIES: Dict[Tuple[str, str], torch.Tensor] = {}
+
+
 def _similarities(
-    fingerprints: str, descriptors: str, categories: Tuple[str, ...]
+    fingerprints: DescriptorEncoding, feature: CategoricalInput
 ) -> torch.Tensor:
-    """Tanimoto similarities between all categories, computed once per process for a
-    set of categories and fingerprints (given as JSON, to be hashable)."""
-    table = DescriptorEncoding.model_validate_json(fingerprints).build(
-        Descriptors.model_validate_json(descriptors), list(categories)
-    )
-    bits = torch.tensor(table.to_numpy(), **tkwargs)
-    return batch_tanimoto_sim(bits, bits).clamp_min(0)
+    assert feature.descriptors is not None  # checked by validate_for_feature
+    key = (fingerprints.model_dump_json(), feature.descriptors.model_dump_json())
+    if key not in _SIMILARITIES:
+        bits = torch.tensor(fingerprints.table(feature).to_numpy(), **tkwargs)
+        _SIMILARITIES[key] = batch_tanimoto_sim(bits, bits).clamp_min(0)
+    return _SIMILARITIES[key]
 
 
 def map_HammingDistanceKernel(
