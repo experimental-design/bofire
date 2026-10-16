@@ -20,14 +20,15 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import (
-    HammingDistanceKernel,
-    InfiniteWidthBNNKernel,
     MaternKernel,
     RBFKernel,
     ScaleKernel,
     TanimotoKernel,
 )
-from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.likelihoods.api import (
+    GaussianLikelihood,
+    SparseOutlierGaussianLikelihood,
+)
 from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
@@ -41,7 +42,7 @@ from bofire.data_models.priors.api import (
     THREESIX_SCALE_PRIOR,
     GreaterThan,
 )
-from bofire.data_models.surrogates.api import Normalize, ScalerEnum
+from bofire.data_models.surrogates.api import LBFGSB, Normalize, ScalerEnum
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -79,6 +80,7 @@ specs.add_valid(
             noise_constraint=GreaterThan(lower_bound=1e-4),
         ).model_dump(),
         "categorical_encodings": {},
+        "optimizer": LBFGSB(maxiter=100, ftol=1e-6, max_attempts=3).model_dump(),
         "dump": None,
     },
 )
@@ -116,12 +118,13 @@ specs.add_valid(
             noise_constraint=None,
         ).model_dump(),
         "categorical_encodings": {},
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
 
 specs.add_valid(
-    models.RobustSingleTaskGPSurrogate,
+    models.SingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
             features=[
@@ -149,18 +152,18 @@ specs.add_valid(
         ).model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "cache_model_trace": False,
-        "convex_parametrization": True,
-        "prior_mean_of_support": None,
+        "mean": ConstantMean().model_dump(),
+        "likelihood": SparseOutlierGaussianLikelihood(
+            noise_prior=THREESIX_NOISE_PRIOR()
+        ).model_dump(),
         "categorical_encodings": {},
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
 
 specs.add_invalid(
-    models.RobustSingleTaskGPSurrogate,
+    models.SingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
             features=[
@@ -186,14 +189,10 @@ specs.add_invalid(
         ).model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "cache_model_trace": False,
-        "convex_parametrization": True,
-        "prior_mean_of_support": None,
-        "dump": None,
+        "likelihood": SparseOutlierGaussianLikelihood().model_dump(),
     },
     error=ValueError,
-    message="RobustGP only supports one output.",
+    message="A SparseOutlierGaussianLikelihood supports one output only.",
 )
 
 specs.add_invalid(
@@ -218,53 +217,6 @@ specs.add_invalid(
 
 
 specs.add_valid(
-    models.SingleTaskIBNNSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                ContinuousInput(key="a", bounds=(0, 1)),
-                ContinuousInput(key="b", bounds=(0, 1)),
-            ],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "scaler": Normalize().model_dump(),
-        "output_scaler": ScalerEnum.STANDARDIZE,
-        "mean": ConstantMean().model_dump(),
-        "likelihood": GaussianLikelihood().model_dump(),
-        "categorical_encodings": {},
-        "engineered_features": EngineeredFeatures().model_dump(),
-        "dump": None,
-        "kernel": InfiniteWidthBNNKernel(depth=3).model_dump(),
-    },
-)
-
-specs.add_valid(
-    models.AdditiveMapSaasSingleTaskGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                features.valid(ContinuousInput).obj(),
-            ],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "engineered_features": EngineeredFeatures().model_dump(),
-        "n_taus": 4,
-        "scaler": Normalize().model_dump(),
-        "output_scaler": ScalerEnum.STANDARDIZE,
-        "categorical_encodings": {},
-        "dump": None,
-    },
-)
-
-specs.add_valid(
     models.EnsembleMapSaasSingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
@@ -282,6 +234,7 @@ specs.add_valid(
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
         "categorical_encodings": {},
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
@@ -403,35 +356,6 @@ specs.add_invalid(
 
 
 specs.add_valid(
-    models.MixedSingleTaskGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                ContinuousInput(key="num1", bounds=[0, 1]),
-            ]
-            + [CategoricalInput(key="cat1", categories=["a", "b", "c"])],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "engineered_features": EngineeredFeatures().model_dump(),
-        "continuous_kernel": MaternKernel(
-            ard=True, nu=2.5, features=["num1"]
-        ).model_dump(),
-        "categorical_kernel": HammingDistanceKernel(
-            ard=True, features=["cat1"]
-        ).model_dump(),
-        "scaler": Normalize().model_dump(),
-        "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "categorical_encodings": {"cat1": OrdinalEncoding().model_dump()},
-        "dump": None,
-    },
-)
-specs.add_valid(
     models.SingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
@@ -459,89 +383,10 @@ specs.add_valid(
             noise_constraint=GreaterThan(lower_bound=1e-4),
         ).model_dump(),
         "categorical_encodings": {},
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
-specs.add_invalid(
-    models.MixedSingleTaskGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                features.valid(ContinuousInput).obj(),
-            ],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-    },
-    error=ValueError,
-    message="MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is present.",
-)
-
-specs.add_invalid(
-    models.MixedSingleTaskGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
-            ],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "categorical_encodings": {"x_cat": OneHotEncoding().model_dump()},
-    },
-    error=ValueError,
-    message="MixedSingleTaskGPSurrogate can only be used if at least one categorical feature is ordinal encoded.",
-)
-
-specs.add_invalid(
-    models.MixedSingleTaskGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                ContinuousInput(key="x_cont", bounds=[0, 1]),
-                CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
-            ],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "continuous_kernel": MaternKernel(nu=2.5, features=["x_cat"]).model_dump(),
-    },
-    error=ValueError,
-    message="The features defined in",
-)
-
-specs.add_invalid(
-    models.MixedSingleTaskGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[
-                ContinuousInput(key="x_cont", bounds=[0, 1]),
-                CategoricalInput(key="x_cat", categories=["a", "b", "c"]),
-            ],
-        ).model_dump(),
-        "outputs": Outputs(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ],
-        ).model_dump(),
-        "categorical_kernel": HammingDistanceKernel(
-            ard=True, features=["x_cont"]
-        ).model_dump(),
-    },
-    error=ValueError,
-    message="The features defined in the categorical",
-)
-
-
 specs.add_valid(
     models.RandomForestSurrogate,
     lambda: {
@@ -735,6 +580,7 @@ specs.add_valid(
                 generators=[Fingerprints(n_bits=32, bond_radius=3)],
             ).model_dump(),
         },
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
         "tanimoto_calculation_mode": "pre_computed",
     },
@@ -940,6 +786,7 @@ specs.add_valid(
         "categorical_encodings": {
             "task": OrdinalEncoding().model_dump(),
         },
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
@@ -1033,6 +880,7 @@ specs.add_valid(
         "likelihood": "probit",
         "engineered_features": EngineeredFeatures().model_dump(),
         "categorical_encodings": {},
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
@@ -1062,6 +910,7 @@ specs.add_valid(
         "likelihood": "logit",
         "engineered_features": EngineeredFeatures().model_dump(),
         "categorical_encodings": {},
+        "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )

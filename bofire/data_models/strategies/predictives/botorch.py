@@ -17,7 +17,6 @@ from bofire.data_models.strategies.predictives.predictive import PredictiveStrat
 from bofire.data_models.surrogates.api import (
     AnyBotorchSurrogate,
     BotorchSurrogates,
-    MixedSingleTaskGPSurrogate,
     MultiTaskGPSurrogate,
     SingleTaskGPSurrogate,
 )
@@ -132,11 +131,9 @@ class BotorchStrategy(PredictiveStrategy):
             for feat in domain.inputs.get(CategoricalInput, exact=False)
             if not isinstance(feat, CategoricalTaskInput)
         ):
-            return MixedSingleTaskGPSurrogate(
-                inputs=domain.inputs,
-                outputs=Outputs(
-                    features=[domain.outputs.get_by_key(output_feature)],
-                ),
+            return SingleTaskGPSurrogate.mixed(
+                domain.inputs,
+                Outputs(features=[domain.outputs.get_by_key(output_feature)]),
             )
 
         return SingleTaskGPSurrogate(

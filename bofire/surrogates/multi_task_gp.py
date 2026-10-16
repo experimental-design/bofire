@@ -1,5 +1,5 @@
 import warnings
-from typing import Dict, Optional
+from typing import Optional
 
 import botorch
 import numpy as np
@@ -8,16 +8,19 @@ import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
-from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
-import bofire.priors.api as priors
+import bofire.likelihoods.api as likelihoods
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import CategoricalTaskInput
+from bofire.data_models.likelihoods.api import (
+    GaussianLikelihood as GaussianLikelihoodDataModel,
+)
 from bofire.data_models.priors.api import LKJPrior
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.utils import scipy_options
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -31,6 +34,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             data_model.inputs.get(CategoricalTaskInput).features[0].categories
         )
         self.kernel = data_model.kernel
+        self.optimizer = data_model.optimizer
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
         self.noise_prior = data_model.noise_prior
@@ -46,7 +50,6 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
 
     model: Optional[botorch.models.MultiTaskGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
-    training_specs: Dict = {}
 
     def _fit_botorch(
         self,
@@ -57,11 +60,11 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         **kwargs,
     ) -> None:
         n_dim = tX.shape[-1]
-        likelihood = GaussianLikelihood(
-            noise_prior=priors.map(self.noise_prior, d=n_dim),
-            noise_constraint=priors.map(self.noise_constraint)
-            if self.noise_constraint is not None
-            else None,
+        likelihood = likelihoods.map(
+            GaussianLikelihoodDataModel(
+                noise_prior=self.noise_prior, noise_constraint=self.noise_constraint
+            ),
+            d=n_dim,
         )
 
         self.model = botorch.models.MultiTaskGP(
@@ -101,7 +104,11 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             # )
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=50)
+        fit_gpytorch_mll(
+            mll,
+            optimizer_kwargs={"options": scipy_options(self.optimizer)},
+            max_attempts=self.optimizer.max_attempts,
+        )
 
     def _predict(self, transformed_X: pd.DataFrame):
         # transform to tensor

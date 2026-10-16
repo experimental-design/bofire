@@ -1,4 +1,3 @@
-from bofire.data_models.surrogates.bnn import SingleTaskIBNNSurrogate
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.botorch_surrogates import (
     AnyBotorchSurrogate,
@@ -13,26 +12,16 @@ from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
 from bofire.data_models.surrogates.fully_bayesian import (
     FullyBayesianSingleTaskGPSurrogate,
 )
-from bofire.data_models.surrogates.linear import LinearSurrogate
-from bofire.data_models.surrogates.map_saas import (
-    AdditiveMapSaasSingleTaskGPSurrogate,
-    EnsembleMapSaasSingleTaskGPSurrogate,
-)
-from bofire.data_models.surrogates.mixed_single_task_gp import (
-    MixedSingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.map_saas import EnsembleMapSaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.mlp import (
     ClassificationMLPEnsemble,
     MLPEnsemble,
     RegressionMLPEnsemble,
 )
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
+from bofire.data_models.surrogates.optimizer import LBFGSB
 from bofire.data_models.surrogates.pairwise_gp import PairwiseGPSurrogate
-from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
-from bofire.data_models.surrogates.robust_single_task_gp import (
-    RobustSingleTaskGPSurrogate,
-)
 from bofire.data_models.surrogates.scaler import (
     AnyScaler,
     Normalize,
@@ -51,19 +40,13 @@ AnySurrogate = tagged_union(
     EmpiricalSurrogate,
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
-    RobustSingleTaskGPSurrogate,
-    MixedSingleTaskGPSurrogate,
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
-    LinearSurrogate,
-    PolynomialSurrogate,
     TanimotoGPSurrogate,
     LinearDeterministicSurrogate,
     CategoricalDeterministicSurrogate,
     MultiTaskGPSurrogate,
-    SingleTaskIBNNSurrogate,
-    AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
     PairwiseGPSurrogate,
     SelectionSurrogate,
@@ -72,16 +55,10 @@ AnySurrogate = tagged_union(
 AnyTrainableSurrogate = tagged_union(
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
-    RobustSingleTaskGPSurrogate,
-    MixedSingleTaskGPSurrogate,
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
-    LinearSurrogate,
-    PolynomialSurrogate,
-    SingleTaskIBNNSurrogate,
     TanimotoGPSurrogate,
-    AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
     SelectionSurrogate,
 )
@@ -90,17 +67,11 @@ AnyRegressionSurrogate = tagged_union(
     EmpiricalSurrogate,
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
-    RobustSingleTaskGPSurrogate,
-    MixedSingleTaskGPSurrogate,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
-    LinearSurrogate,
-    PolynomialSurrogate,
     TanimotoGPSurrogate,
     LinearDeterministicSurrogate,
     MultiTaskGPSurrogate,
-    SingleTaskIBNNSurrogate,
-    AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
     SelectionSurrogate,
 )

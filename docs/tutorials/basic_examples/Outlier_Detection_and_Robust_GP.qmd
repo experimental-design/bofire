@@ -4,7 +4,7 @@ jupyter: python3
 ---
 
 
-This notebook shows how to use RobustSingleTaskGPSurrogate in Bofire to autmomatically detect outliers in your data and/or fit Gaussian process models robust to outliers.
+This notebook shows how to use a robust single-task GP (`SingleTaskGPSurrogate.robust`, a single-task GP with a `SparseOutlierGaussianLikelihood`) in Bofire to autmomatically detect outliers in your data and/or fit Gaussian process models robust to outliers.
 
 It is based on the [Robust Gaussian Processes via Relevance Pursuit](https://arxiv.org/pdf/2410.24222) paper and is based on the accompanying implementation and tutorial in [BoTorch](https://botorch.org/docs/tutorials/relevance_pursuit_robust_regression/)
 
@@ -26,10 +26,7 @@ from torch import Tensor
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.data_models.surrogates.api import (
-    RobustSingleTaskGPSurrogate,
-    SingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 ```
 
 ### Setting up a Synthetic example
@@ -116,10 +113,7 @@ plt.show()
 ### Testing the Robust GP
 
 ```{python}
-data_model = RobustSingleTaskGPSurrogate(
-    inputs=input_features,
-    outputs=output_features,
-)
+data_model = SingleTaskGPSurrogate.robust(input_features, output_features)
 
 model = surrogates.map(data_model=data_model)
 model.fit(experiments)
@@ -239,11 +233,8 @@ def bmc_plot(bmc_support_sizes: Tensor, bmc_probabilities: Tensor) -> None:
 ```
 
 ```{python}
-data_model = RobustSingleTaskGPSurrogate(
-    inputs=input_features,
-    outputs=output_features,
-    cache_model_trace=True,
-)
+data_model = SingleTaskGPSurrogate.robust(input_features, output_features)
+data_model.likelihood.cache_model_trace = True
 
 model = surrogates.map(data_model=data_model)
 model.fit(experiments)

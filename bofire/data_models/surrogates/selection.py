@@ -4,24 +4,12 @@ from pydantic import Field, model_validator
 
 from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
-from bofire.data_models.surrogates.bnn import SingleTaskIBNNSurrogate
 from bofire.data_models.surrogates.fully_bayesian import (
     FullyBayesianSingleTaskGPSurrogate,
 )
-from bofire.data_models.surrogates.linear import LinearSurrogate
-from bofire.data_models.surrogates.map_saas import (
-    AdditiveMapSaasSingleTaskGPSurrogate,
-    EnsembleMapSaasSingleTaskGPSurrogate,
-)
-from bofire.data_models.surrogates.mixed_single_task_gp import (
-    MixedSingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.map_saas import EnsembleMapSaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.mlp import RegressionMLPEnsemble
-from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
-from bofire.data_models.surrogates.robust_single_task_gp import (
-    RobustSingleTaskGPSurrogate,
-)
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
@@ -31,15 +19,9 @@ from bofire.data_models.unions import tagged_union
 AnyOptionSurrogate = tagged_union(
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
-    RobustSingleTaskGPSurrogate,
-    MixedSingleTaskGPSurrogate,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
-    LinearSurrogate,
-    PolynomialSurrogate,
-    SingleTaskIBNNSurrogate,
     TanimotoGPSurrogate,
-    AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
 )
 

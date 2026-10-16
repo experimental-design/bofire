@@ -27,3 +27,13 @@ specs.add_valid(
         "noise_constraint": None,
     },
 )
+specs.add_valid(
+    likelihoods.SparseOutlierGaussianLikelihood,
+    lambda: {
+        "noise_prior": HVARFNER_NOISE_PRIOR().model_dump(),
+        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
+        "prior_mean_of_support": 3,
+        "convex_parametrization": False,
+        "cache_model_trace": True,
+    },
+)

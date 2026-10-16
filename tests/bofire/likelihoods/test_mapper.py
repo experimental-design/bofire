@@ -4,7 +4,7 @@ from botorch.models.utils.gpytorch_modules import (
 )
 
 import bofire.likelihoods.api as likelihoods
-from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.likelihoods.api import HVARFNER_LIKELIHOOD, GaussianLikelihood
 from bofire.data_models.priors.api import THREESIX_NOISE_PRIOR, GreaterThan
 
 
@@ -22,11 +22,18 @@ def _describe(likelihood: gpytorch.likelihoods.GaussianLikelihood) -> tuple:
     )
 
 
-def test_default_gaussian_likelihood_is_botorchs():
-    """The default is exactly BoTorch's log-normal noise likelihood."""
-    ours = likelihoods.map(GaussianLikelihood(), d=3)
+def test_hvarfner_likelihood_is_botorchs():
+    """The preset is exactly BoTorch's log-normal noise likelihood."""
+    ours = likelihoods.map(HVARFNER_LIKELIHOOD(), d=3)
 
     assert _describe(ours) == _describe(get_gaussian_likelihood_with_lognormal_prior())
+
+
+def test_default_gaussian_likelihood_has_no_prior():
+    ours = likelihoods.map(GaussianLikelihood(), d=3)
+
+    assert list(ours.named_priors()) == []
+    assert abs(float(ours.noise_covar.raw_noise_constraint.lower_bound) - 1e-4) < 1e-9
 
 
 def test_gaussian_likelihood_maps_prior_and_constraint():

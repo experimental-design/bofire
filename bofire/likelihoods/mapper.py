@@ -9,9 +9,16 @@ import bofire.priors.api as priors
 def map_GaussianLikelihood(
     data_model: data_models.GaussianLikelihood, d: int, **kwargs
 ) -> gpytorch.likelihoods.GaussianLikelihood:
+    noise_prior = (
+        priors.map(data_model.noise_prior, d=d)
+        if data_model.noise_prior is not None
+        else None
+    )
     return gpytorch.likelihoods.GaussianLikelihood(
-        noise_prior=priors.map(data_model.noise_prior, d=d),
-        noise_constraint=priors.map(data_model.noise_constraint)
+        noise_prior=noise_prior,
+        noise_constraint=priors.map_constraint(
+            data_model.noise_constraint, prior=noise_prior
+        )
         if data_model.noise_constraint is not None
         else None,
     )
@@ -19,6 +26,9 @@ def map_GaussianLikelihood(
 
 LIKELIHOOD_MAP: Dict[Type[data_models.Likelihood], Callable] = {
     data_models.GaussianLikelihood: map_GaussianLikelihood,
+    # the base likelihood: BoTorch's RobustRelevancePursuitSingleTaskGP wraps it into
+    # its SparseOutlierGaussianLikelihood, which needs the number of training points
+    data_models.SparseOutlierGaussianLikelihood: map_GaussianLikelihood,
 }
 
 

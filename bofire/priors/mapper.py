@@ -1,5 +1,5 @@
 import math
-from typing import Callable, Optional, Type, Union
+from typing import Callable, Optional, Type
 
 import gpytorch
 from botorch.utils.constraints import LogTransformedInterval, NonTransformedInterval
@@ -8,16 +8,14 @@ from gpytorch.constraints import GreaterThan, LessThan, Positive
 import bofire.data_models.priors.api as data_models
 
 
-Constraint = Union[
-    Positive, GreaterThan, LessThan, LogTransformedInterval, NonTransformedInterval
-]
-
-
 def register(
     data_model_cls: Type,
     map_fn: Optional[Callable] = None,
 ):
-    """Register a custom prior/constraint mapping from data model to factory function.
+    """Register a custom prior or constraint mapping from data model to factory function.
+
+    Constraints (subclasses of `PriorConstraint` or `Interval`) are mapped by
+    `map_constraint`, priors by `map`.
 
     Can be used as a decorator or as a direct function call::
 
@@ -48,7 +46,12 @@ def register(
         ):
             data_models.register_prior_constraint(data_model_cls)
 
-        PRIOR_MAP[data_model_cls] = fn
+        if issubclass(
+            data_model_cls, (data_models.PriorConstraint, data_models.Interval)
+        ):
+            CONSTRAINT_MAP[data_model_cls] = fn
+        else:
+            PRIOR_MAP[data_model_cls] = fn
 
         return fn
 
@@ -131,59 +134,116 @@ def map_SmoothedBoxPrior(
 
 
 def map_Interval(
-    data_model: data_models.Interval,
+    data_model: data_models.Interval, prior: Optional[gpytorch.priors.Prior] = None
 ) -> gpytorch.constraints.Interval:
     return gpytorch.constraints.Interval(
         lower_bound=data_model.lower_bound,
         upper_bound=data_model.upper_bound,
-        initial_value=data_model.initial_value,
+        initial_value=_initial_value(
+            data_model, prior, data_model.lower_bound, data_model.upper_bound
+        ),
     )
 
 
 def map_NonTransformedInterval(
     data_model: data_models.NonTransformedInterval,
+    prior: Optional[gpytorch.priors.Prior] = None,
 ) -> NonTransformedInterval:
     return NonTransformedInterval(
         lower_bound=data_model.lower_bound,
         upper_bound=data_model.upper_bound,
-        initial_value=data_model.initial_value,
+        initial_value=_initial_value(
+            data_model,
+            prior,
+            data_model.lower_bound,
+            data_model.upper_bound,
+            default=(data_model.lower_bound + data_model.upper_bound) / 2,
+        ),
     )
 
 
 def map_LogTransformedInterval(
     data_model: data_models.LogTransformedInterval,
+    prior: Optional[gpytorch.priors.Prior] = None,
 ) -> LogTransformedInterval:
     return LogTransformedInterval(
         lower_bound=data_model.lower_bound,
         upper_bound=data_model.upper_bound,
-        initial_value=data_model.initial_value,
+        initial_value=_initial_value(
+            data_model,
+            prior,
+            data_model.lower_bound,
+            data_model.upper_bound,
+            # GPyTorch starts at exp(0) = 1; if that lies outside the bounds, at
+            # their middle on the log scale
+            default=1.0
+            if data_model.lower_bound <= 1.0 <= data_model.upper_bound
+            else math.sqrt(data_model.lower_bound * data_model.upper_bound),
+        ),
     )
 
 
 def map_Positive(
-    data_model: data_models.Positive,
+    data_model: data_models.Positive, prior: Optional[gpytorch.priors.Prior] = None
 ) -> Positive:
-    return Positive(initial_value=data_model.initial_value)
+    return Positive(initial_value=_initial_value(data_model, prior, lower=0.0))
 
 
 def map_GreaterThan(
-    data_model: data_models.GreaterThan,
+    data_model: data_models.GreaterThan, prior: Optional[gpytorch.priors.Prior] = None
 ) -> GreaterThan:
     return GreaterThan(
         lower_bound=data_model.lower_bound,
         transform=None,
-        initial_value=data_model.initial_value,
+        initial_value=_initial_value(
+            data_model,
+            prior,
+            lower=data_model.lower_bound,
+            default=data_model.lower_bound + math.log(2),
+        ),
     )
 
 
 def map_LessThan(
-    data_model: data_models.LessThan,
+    data_model: data_models.LessThan, prior: Optional[gpytorch.priors.Prior] = None
 ) -> LessThan:
     return LessThan(
         upper_bound=data_model.upper_bound,
         transform=None,
-        initial_value=data_model.initial_value,
+        initial_value=_initial_value(
+            data_model,
+            prior,
+            upper=data_model.upper_bound,
+            default=data_model.upper_bound - math.log(2),
+        ),
     )
+
+
+def _initial_value(
+    data_model: data_models.PriorConstraint,
+    prior: Optional[gpytorch.priors.Prior],
+    lower: float = -math.inf,
+    upper: float = math.inf,
+    default: Optional[float] = None,
+) -> Optional[float]:
+    """Where the fit starts: the constraint's own starting value, else the mode of the
+    prior moved into the bounds, else `default` (`None` keeps GPyTorch's start)."""
+    if data_model.initial_value is not None:
+        return data_model.initial_value
+    if prior is None:
+        return default
+    return min(max(mode(prior), lower), upper)
+
+
+def mode(prior: gpytorch.priors.Prior) -> float:
+    """The most likely value under a prior.
+
+    A smoothed box is flat between its bounds, so it has no single mode; its middle
+    is used.
+    """
+    if isinstance(prior, gpytorch.priors.SmoothedBoxPrior):
+        return float((prior.a + prior.b) / 2)
+    return float(prior.mode)
 
 
 PRIOR_MAP = {
@@ -194,6 +254,9 @@ PRIOR_MAP = {
     data_models.DimensionalityScaledLogNormalPrior: map_DimensionalityScaledLogNormalPrior,
     data_models.DimensionalityScaledGammaPrior: map_DimensionalityScaledGammaPrior,
     data_models.SmoothedBoxPrior: map_SmoothedBoxPrior,
+}
+
+CONSTRAINT_MAP = {
     data_models.Interval: map_Interval,
     data_models.NonTransformedInterval: map_NonTransformedInterval,
     data_models.LogTransformedInterval: map_LogTransformedInterval,
@@ -203,7 +266,36 @@ PRIOR_MAP = {
 }
 
 
-def map(
-    data_model: Union[data_models.AnyPrior, data_models.AnyPriorConstraint], **kwargs
-) -> Union[gpytorch.priors.Prior, Constraint]:
+def map(data_model: data_models.AnyPrior, **kwargs) -> gpytorch.priors.Prior:
+    """Build the GPyTorch prior for a prior data model.
+
+    Args:
+        data_model: The prior.
+        **kwargs: Passed to the prior's mapper, e.g. `d`, the number of input
+            dimensions, for dimensionality-scaled priors.
+
+    Returns:
+        The GPyTorch prior.
+    """
     return PRIOR_MAP[data_model.__class__](data_model, **kwargs)
+
+
+def map_constraint(
+    data_model: data_models.AnyPriorConstraint,
+    prior: Optional[gpytorch.priors.Prior] = None,
+) -> gpytorch.constraints.Interval:
+    """Build the GPyTorch constraint of a hyperparameter, with where its fit starts.
+
+    The fit starts at the constraint's `initial_value` if it gives one, else at the
+    mode of the hyperparameter's prior moved into the bounds, as BoTorch's default
+    models do. Without either, a bound without a transform starts inside it: at the
+    lower bound plus ln 2, the upper bound minus ln 2, or the middle of an interval.
+
+    Args:
+        data_model: The constraint.
+        prior: The GPyTorch prior of the same hyperparameter, if it has one.
+
+    Returns:
+        The GPyTorch constraint.
+    """
+    return CONSTRAINT_MAP[data_model.__class__](data_model, prior=prior)

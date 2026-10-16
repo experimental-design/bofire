@@ -13,16 +13,11 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
         PolynomialFeatureInteractionKernel,
         ScaleKernel,
     )
-    from bofire.data_models.kernels.categorical import CategoricalKernel
     from bofire.data_models.kernels.conditional import (
         ConditionalEmbeddingKernel,
         WedgeKernel,
     )
-    from bofire.data_models.kernels.continuous import ContinuousKernel
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
-    from bofire.data_models.surrogates.mixed_single_task_gp import (
-        MixedSingleTaskGPSurrogate,
-    )
     from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
     from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
     from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
@@ -58,26 +53,11 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
     ]:
         patch_field(model_cls, field_name, kernels_api.AnyKernel)
 
-    # Patch sub-category kernel fields if the new type is a subclass
-    if issubclass(new_kernel_cls, ContinuousKernel):
-        patch_field(
-            MixedSingleTaskGPSurrogate,
-            "continuous_kernel",
-            kernels_api.AnyContinuousKernel,
-        )
-    if issubclass(new_kernel_cls, CategoricalKernel):
-        patch_field(
-            MixedSingleTaskGPSurrogate,
-            "categorical_kernel",
-            kernels_api.AnyCategoricalKernel,
-        )
-
     # Rebuild surrogate models
     for cls in [
         SingleTaskGPSurrogate,
         MultiTaskGPSurrogate,
         TanimotoGPSurrogate,
-        MixedSingleTaskGPSurrogate,
     ]:
         cls.model_rebuild(force=True)
 

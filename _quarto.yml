@@ -96,6 +96,7 @@ quartodoc:
             - ScaleKernel
             - MaternKernel
             - RBFKernel
+            - AdditiveMapSaasKernel
             - LinearKernel
             - PolynomialKernel
             - HammingDistanceKernel
@@ -112,6 +113,7 @@ quartodoc:
           members:
             - Likelihood
             - GaussianLikelihood
+            - SparseOutlierGaussianLikelihood
     - title: Data Models - Surrogates
       desc: Surrogate model configuration data models
       contents:
@@ -119,15 +121,12 @@ quartodoc:
           members:
             - Surrogate
             - SingleTaskGPSurrogate
-            - MixedSingleTaskGPSurrogate
             - MultiTaskGPSurrogate
-            - RobustSingleTaskGPSurrogate
             - TanimotoGPSurrogate
-            - LinearSurrogate
-            - PolynomialSurrogate
             - RandomForestSurrogate
             - MLPEnsemble
             - SelectionSurrogate
+            - LBFGSB
             - BotorchSurrogates
     - title: Strategies
       desc: Strategy implementations

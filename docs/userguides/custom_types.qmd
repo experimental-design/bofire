@@ -175,7 +175,7 @@ additive = AdditiveKernel(kernels=[MyKernelDataModel(), ...])
 scaled = ScaleKernel(base_kernel=MyKernelDataModel())
 ```
 
-If the custom kernel subclasses `ContinuousKernel` or `CategoricalKernel`, it is also added to the corresponding sub-union (`AnyContinuousKernel` / `AnyCategoricalKernel`) and accepted in `MixedSingleTaskGPSurrogate`.
+If the custom kernel subclasses `ContinuousKernel` or `CategoricalKernel`, it is also added to the corresponding sub-union (`AnyContinuousKernel` / `AnyCategoricalKernel`).
 
 ## Registering a custom prior
 

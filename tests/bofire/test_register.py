@@ -9,7 +9,6 @@ from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     AnyOutput,
-    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     EngineeredFeature,
@@ -18,6 +17,9 @@ from bofire.data_models.features.api import (
 from bofire.data_models.kernels.continuous import ContinuousKernel as _ContinuousBase
 from bofire.data_models.kernels.kernel import Kernel as KernelDataModel
 from bofire.data_models.llm.provider import LLMProvider
+from bofire.data_models.priors.constraint import (
+    PriorConstraint as PriorConstraintDataModel,
+)
 from bofire.data_models.priors.prior import Prior as PriorDataModel
 from bofire.data_models.strategies.strategy import Strategy as StrategyDataModel
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
@@ -459,6 +461,10 @@ class _CustomPriorDataModel(PriorDataModel):
     type: Literal["CustomPrior"] = "CustomPrior"
 
 
+class _CustomConstraintDataModel(PriorConstraintDataModel):
+    type: Literal["CustomConstraint"] = "CustomConstraint"
+
+
 # ---------------------------------------------------------------------------
 # Kernel registration tests
 # ---------------------------------------------------------------------------
@@ -565,6 +571,25 @@ class TestRegisterPrior:
         # cleanup
         PRIOR_MAP.pop(_CustomPriorDataModel, None)
 
+    def test_register_constraint_is_mapped_as_a_constraint(self):
+        import bofire.priors.api as priors_api
+        from bofire.priors.mapper import CONSTRAINT_MAP, PRIOR_MAP
+
+        sentinel = MagicMock(name="gpytorch_constraint")
+
+        def my_map_fn(data_model, **kwargs):
+            return sentinel
+
+        priors_api.register(_CustomConstraintDataModel, my_map_fn)
+        assert CONSTRAINT_MAP[_CustomConstraintDataModel] is my_map_fn
+        assert _CustomConstraintDataModel not in PRIOR_MAP
+
+        dm = _CustomConstraintDataModel(initial_value=1.0)
+        assert priors_api.map_constraint(dm) is sentinel
+
+        # cleanup
+        CONSTRAINT_MAP.pop(_CustomConstraintDataModel, None)
+
     def test_register_exported_from_api(self):
         from bofire.priors.api import register
 
@@ -631,32 +656,16 @@ class TestKernelPydanticIntegration:
         sk = ScaleKernel(base_kernel=_IntegrationKernelDataModel(my_param=3.0))
         assert isinstance(sk.base_kernel, _IntegrationKernelDataModel)
 
-    def test_custom_continuous_kernel_in_mixed_surrogate(self):
+    def test_custom_continuous_kernel_is_a_continuous_kernel(self):
         """A ContinuousKernel subclass should be auto-added to AnyContinuousKernel."""
         from bofire.data_models.kernels.api import (
             _CONTINUOUS_KERNEL_TYPES,
             register_kernel,
         )
-        from bofire.data_models.surrogates.mixed_single_task_gp import (
-            MixedSingleTaskGPSurrogate,
-        )
 
         register_kernel(_IntegrationContinuousKernel)
 
         assert _IntegrationContinuousKernel in _CONTINUOUS_KERNEL_TYPES
-
-        s = MixedSingleTaskGPSurrogate(
-            inputs=Inputs(
-                features=[
-                    ContinuousInput(key="a", bounds=(0, 1)),
-                    ContinuousInput(key="b", bounds=(0, 1)),
-                    CategoricalInput(key="c", categories=["x", "y"]),
-                ]
-            ),
-            outputs=_OUTPUTS,
-            continuous_kernel=_IntegrationContinuousKernel(),
-        )
-        assert isinstance(s.continuous_kernel, _IntegrationContinuousKernel)
 
     def test_custom_kernel_in_wedge_kernel(self):
         """A registered kernel should be usable as WedgeKernel.base_kernel."""
