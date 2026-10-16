@@ -1,6 +1,8 @@
 from pydantic import ValidationError
 
 import bofire.data_models.kernels.api as kernels
+from bofire.data_models.descriptor_generators.api import Fingerprints
+from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.priors.api import (
     GammaPrior,
     LogNormalPrior,
@@ -349,9 +351,27 @@ specs.add_valid(
 specs.add_valid(
     kernels.TanimotoKernel,
     lambda: {
-        "ard": True,
         "features": None,
+        "fingerprints": None,
     },
+)
+specs.add_valid(
+    kernels.TanimotoKernel,
+    lambda: {
+        "features": ["mol"],
+        "fingerprints": DescriptorEncoding(
+            columns=[], generators=[Fingerprints(n_bits=32)]
+        ).model_dump(),
+    },
+)
+specs.add_invalid(
+    kernels.TanimotoKernel,
+    lambda: {
+        "features": ["mol1", "mol2"],
+        "fingerprints": DescriptorEncoding(columns=[], generators=[Fingerprints()]),
+    },
+    error=ValueError,
+    message="A Tanimoto kernel with fingerprints needs exactly one feature.",
 )
 specs.add_valid(
     kernels.PolynomialFeatureInteractionKernel,

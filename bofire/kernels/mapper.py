@@ -1,4 +1,5 @@
-from typing import Callable, List, Optional, Type
+import functools
+from typing import Callable, List, Optional, Tuple, Type
 
 import gpytorch
 import torch
@@ -12,12 +13,18 @@ from gpytorch.kernels import Kernel as GpytorchKernel
 
 import bofire.data_models.kernels.api as data_models
 import bofire.priors.api as priors
+from bofire.data_models.domain.api import Inputs
+from bofire.data_models.encodings.api import DescriptorEncoding
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.priors.api import Positive
 from bofire.kernels.aggregation import PolynomialFeatureInteractionKernel
 from bofire.kernels.conditional import (
     WedgeKernel,
     build_indicator_func,
     compute_base_kernel_active_dims,
+)
+from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import (
+    batch_tanimoto_sim,
 )
 from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from bofire.kernels.shape import ExactWassersteinKernel, WassersteinKernel
@@ -282,18 +289,44 @@ def map_TanimotoKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
-    pre_computed_tanimoto: bool = True,
-    tanimoto_similarity_matrix: Optional[torch.Tensor] = None,
+    inputs: Optional[Inputs] = None,
     **kwargs,
 ) -> TanimotoKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
+    if data_model.fingerprints is None:
+        return TanimotoKernel(batch_shape=batch_shape, active_dims=active_dims)
+    if len(active_dims) != 1:
+        raise ValueError(
+            "A Tanimoto kernel with fingerprints needs its input encoded as ordinal "
+            f"codes, but {data_model.features} is encoded into {len(active_dims)} "
+            "columns."
+        )
+    # one feature by the kernel's validator; inputs are passed by the single-task GP
+    assert data_model.features is not None and inputs is not None
+    feature = inputs.get_by_key(data_model.features[0])
+    data_model.fingerprints.validate_for_feature(feature)
     return TanimotoKernel(
         batch_shape=batch_shape,
-        ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,
-        pre_computed_tanimoto=pre_computed_tanimoto,
-        tanimoto_similarity_matrix=tanimoto_similarity_matrix,
+        tanimoto_similarity_matrix=_similarities(
+            data_model.fingerprints.model_dump_json(),
+            feature.descriptors.model_dump_json(),
+            tuple(feature.categories),
+        ),
     )
+
+
+@functools.lru_cache(maxsize=16)
+def _similarities(
+    fingerprints: str, descriptors: str, categories: Tuple[str, ...]
+) -> torch.Tensor:
+    """Tanimoto similarities between all categories, computed once per process for a
+    set of categories and fingerprints (given as JSON, to be hashable)."""
+    table = DescriptorEncoding.model_validate_json(fingerprints).build(
+        Descriptors.model_validate_json(descriptors), list(categories)
+    )
+    bits = torch.tensor(table.to_numpy(), **tkwargs)
+    return batch_tanimoto_sim(bits, bits).clamp_min(0)
 
 
 def map_HammingDistanceKernel(

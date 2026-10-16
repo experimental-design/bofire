@@ -10,7 +10,7 @@ from bofire.data_models.domain import api as domain_api
 from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.features import api as features_api
 from bofire.data_models.features.descriptors import Descriptors
-from bofire.data_models.surrogates.api import SingleTaskGPSurrogate, TanimotoGPSurrogate
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 from bofire.surrogates.api import map
 
 
@@ -48,7 +48,7 @@ def test_re_init_kwargs_fingerprints(
             columns=[], generators=[Fingerprints(n_bits=2048)]
         )
     }
-    surrogate_data_model = TanimotoGPSurrogate(
+    surrogate_data_model = SingleTaskGPSurrogate(
         inputs=domain.inputs,
         outputs=domain.outputs,
         categorical_encodings=specs,

@@ -58,6 +58,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
                 batch_shape=torch.Size(),
                 active_dims=list(range(n_dim)),
                 features_to_idx_mapper=self.get_feature_indices,
+                inputs=self.inputs,
             ),
             "mean_module": means.map(self.mean, d=n_dim),
             "likelihood": likelihoods.map(self.likelihood, d=n_dim),
