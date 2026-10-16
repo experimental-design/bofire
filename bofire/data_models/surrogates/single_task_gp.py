@@ -39,6 +39,7 @@ from bofire.data_models.priors.api import (
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_SCALE_PRIOR,
     GreaterThan,
+    NonTransformedInterval,
     NormalPrior,
 )
 from bofire.data_models.surrogates.optimizer import LBFGSBFitted
@@ -60,13 +61,6 @@ _PRIOR_SETS = [
     (THREESIX_LIKELIHOOD, THREESIX_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
     (HVARFNER_LIKELIHOOD, HVARFNER_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
 ]
-
-
-def _copy(engineered_features: Optional[EngineeredFeatures]) -> EngineeredFeatures:
-    """A copy of its own for every surrogate a factory builds; none if not given."""
-    if engineered_features is None:
-        return EngineeredFeatures()
-    return engineered_features.model_copy(deep=True)
 
 
 class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
@@ -127,7 +121,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
                 SingleTaskGPSurrogate(
                     inputs=inputs,
                     outputs=outputs,
-                    engineered_features=_copy(engineered_features),
+                    engineered_features=engineered_features or EngineeredFeatures(),
                     kernel=kernel,
                     likelihood=likelihood(),
                 )
@@ -158,7 +152,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
         return SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            engineered_features=_copy(engineered_features),
+            engineered_features=engineered_features or EngineeredFeatures(),
             kernel=LinearKernel(),
             likelihood=THREESIX_LIKELIHOOD(),
         )
@@ -189,7 +183,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
         return SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            engineered_features=_copy(engineered_features),
+            engineered_features=engineered_features or EngineeredFeatures(),
             kernel=PolynomialKernel(power=power),
             likelihood=THREESIX_LIKELIHOOD(),
         )
@@ -222,10 +216,11 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
         return SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            engineered_features=_copy(engineered_features),
+            engineered_features=engineered_features or EngineeredFeatures(),
             kernel=AdditiveMapSaasKernel(n_taus=n_taus),
             mean=ConstantMean(
-                prior=NormalPrior(loc=0.0, scale=1.0), bounds=(-10.0, 10.0)
+                prior=NormalPrior(loc=0.0, scale=1.0),
+                constraint=NonTransformedInterval(lower_bound=-10.0, upper_bound=10.0),
             ),
         )
 
@@ -258,7 +253,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
             ValueError: If no categorical input lacks descriptor data, or if an
                 engineered feature replaces the features it is computed from.
         """
-        engineered_features = _copy(engineered_features)
+        engineered_features = engineered_features or EngineeredFeatures()
         if any(not feat.keep_features for feat in engineered_features.get()):
             raise ValueError(
                 "The mixed GP needs every engineered feature to keep the features it "
@@ -345,7 +340,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
         return SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            engineered_features=_copy(engineered_features),
+            engineered_features=engineered_features or EngineeredFeatures(),
             kernel=RBFKernel(
                 ard=True,
                 lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),

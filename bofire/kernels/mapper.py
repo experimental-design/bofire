@@ -80,6 +80,22 @@ def _compute_active_dims(
     return active_dims
 
 
+def _lengthscale(data_model, d: int) -> dict:
+    """The lengthscale prior and constraint of a kernel over `d` dimensions, as
+    gpytorch keyword arguments; without a constraint, the lengthscale is positive."""
+    prior = (
+        priors.map(data_model.lengthscale_prior, d=d)
+        if data_model.lengthscale_prior is not None
+        else None
+    )
+    return {
+        "lengthscale_prior": prior,
+        "lengthscale_constraint": priors.map_constraint(
+            data_model.lengthscale_constraint or Positive(), prior=prior
+        ),
+    }
+
+
 def map_RBFKernel(
     data_model: data_models.RBFKernel,
     batch_shape: torch.Size,
@@ -88,22 +104,11 @@ def map_RBFKernel(
     **kwargs,
 ) -> gpytorch.kernels.RBFKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
-    lengthscale_prior = (
-        priors.map(data_model.lengthscale_prior, d=len(active_dims))
-        if data_model.lengthscale_prior is not None
-        else None
-    )
     return gpytorch.kernels.RBFKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,
-        lengthscale_prior=lengthscale_prior,
-        lengthscale_constraint=(
-            priors.map_constraint(
-                data_model.lengthscale_constraint or Positive(),
-                prior=lengthscale_prior,
-            )
-        ),
+        **_lengthscale(data_model, d=len(active_dims)),
     )
 
 
@@ -115,23 +120,12 @@ def map_MaternKernel(
     **kwargs,
 ) -> gpytorch.kernels.MaternKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
-    lengthscale_prior = (
-        priors.map(data_model.lengthscale_prior, d=len(active_dims))
-        if data_model.lengthscale_prior is not None
-        else None
-    )
     return gpytorch.kernels.MaternKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,
         nu=data_model.nu,
-        lengthscale_prior=lengthscale_prior,
-        lengthscale_constraint=(
-            priors.map_constraint(
-                data_model.lengthscale_constraint or Positive(),
-                prior=lengthscale_prior,
-            )
-        ),
+        **_lengthscale(data_model, d=len(active_dims)),
     )
 
 
@@ -310,22 +304,11 @@ def map_HammingDistanceKernel(
     **kwargs,
 ) -> GpytorchKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
-    lengthscale_prior = (
-        priors.map(data_model.lengthscale_prior, d=len(active_dims))
-        if data_model.lengthscale_prior is not None
-        else None
-    )
     return CategoricalKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,
-        lengthscale_prior=lengthscale_prior,
-        lengthscale_constraint=(
-            priors.map_constraint(
-                data_model.lengthscale_constraint or Positive(),
-                prior=lengthscale_prior,
-            )
-        ),
+        **_lengthscale(data_model, d=len(active_dims)),
     )
 
 
@@ -389,20 +372,9 @@ def map_WassersteinKernel(
     **kwargs,
 ) -> WassersteinKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
-    lengthscale_prior = (
-        priors.map(data_model.lengthscale_prior, d=len(active_dims))
-        if data_model.lengthscale_prior is not None
-        else None
-    )
     return WassersteinKernel(
         squared=data_model.squared,
-        lengthscale_prior=lengthscale_prior,
-        lengthscale_constraint=(
-            priors.map_constraint(
-                data_model.lengthscale_constraint or Positive(),
-                prior=lengthscale_prior,
-            )
-        ),
+        **_lengthscale(data_model, d=len(active_dims)),
         active_dims=active_dims,
     )
 
@@ -422,20 +394,9 @@ def map_ExactWassersteinKernel(
     append_x = torch.tensor(data_model.append_x, dtype=torch.double)
     append_y = torch.tensor(data_model.append_y, dtype=torch.double)
     normalize_y = torch.tensor(data_model.normalize_y, dtype=torch.double)
-    lengthscale_prior = (
-        priors.map(data_model.lengthscale_prior, d=len(active_dims))
-        if data_model.lengthscale_prior is not None
-        else None
-    )
     return ExactWassersteinKernel(
         squared=data_model.squared,
-        lengthscale_prior=lengthscale_prior,
-        lengthscale_constraint=(
-            priors.map_constraint(
-                data_model.lengthscale_constraint or Positive(),
-                prior=lengthscale_prior,
-            )
-        ),
+        **_lengthscale(data_model, d=len(active_dims)),
         idx_x=idx_x,
         idx_y=idx_y,
         prepend_x=prepend_x,
@@ -502,21 +463,10 @@ def map_WedgeKernel(
         features_to_idx_mapper=features_to_idx_mapper,
         **kwargs,
     )
-    lengthscale_prior = (
-        priors.map(data_model.lengthscale_prior, d=len(active_dims))
-        if data_model.lengthscale_prior is not None
-        else None
-    )
     return WedgeKernel(
         base_kernel,
         indicator_func,
-        lengthscale_prior=lengthscale_prior,
-        lengthscale_constraint=(
-            priors.map_constraint(
-                data_model.lengthscale_constraint or Positive(),
-                prior=lengthscale_prior,
-            )
-        ),
+        **_lengthscale(data_model, d=len(active_dims)),
         angle_prior=(
             priors.map(data_model.angle_prior, d=len(active_dims))
             if data_model.angle_prior is not None
@@ -538,22 +488,11 @@ def map_SphericalLinearKernel(
     **kwargs,
 ) -> SphericalLinearKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
-    lengthscale_prior = (
-        priors.map(data_model.lengthscale_prior, d=len(active_dims))
-        if data_model.lengthscale_prior is not None
-        else None
-    )
     return SphericalLinearKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,
-        lengthscale_prior=lengthscale_prior,
-        lengthscale_constraint=(
-            priors.map_constraint(
-                data_model.lengthscale_constraint or Positive(),
-                prior=lengthscale_prior,
-            )
-        ),
+        **_lengthscale(data_model, d=len(active_dims)),
         bounds=data_model.bounds,
     )
 

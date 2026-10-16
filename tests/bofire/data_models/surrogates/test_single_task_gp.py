@@ -29,6 +29,7 @@ from bofire.data_models.priors.api import (
     HVARFNER_NOISE_PRIOR,
     ROBUSTGP_LENGTHSCALE_CONSTRAINT,
     THREESIX_SCALE_PRIOR,
+    NonTransformedInterval,
     NormalPrior,
 )
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
@@ -86,7 +87,10 @@ def test_options_contain_a_scaled_matern_with_hvarfner_priors():
         (
             SingleTaskGPSurrogate.additive_map_saas(INPUTS, OUTPUTS, n_taus=2),
             AdditiveMapSaasKernel(n_taus=2),
-            ConstantMean(prior=NormalPrior(loc=0, scale=1), bounds=(-10, 10)),
+            ConstantMean(
+                prior=NormalPrior(loc=0, scale=1),
+                constraint=NonTransformedInterval(lower_bound=-10, upper_bound=10),
+            ),
             HVARFNER_LIKELIHOOD(),
         ),
         (
@@ -122,13 +126,9 @@ def test_factories_take_engineered_features(factory):
         features=[SumFeature(key="s", features=["x0", "x1"])]
     )
 
-    first = factory(INPUTS, OUTPUTS, engineered_features=engineered)
-    second = factory(INPUTS, OUTPUTS, engineered_features=engineered)
+    surrogate = factory(INPUTS, OUTPUTS, engineered_features=engineered)
 
-    assert first.engineered_features == engineered
-    # every surrogate gets a copy of its own
-    assert first.engineered_features is not second.engineered_features
-    assert first.engineered_features is not engineered
+    assert surrogate.engineered_features == engineered
 
 
 MIXED_INPUTS = Inputs(

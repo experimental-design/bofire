@@ -3,8 +3,7 @@ from typing import Any, Literal, Optional
 from pydantic import Field
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.priors.api import AnyPrior
-from bofire.data_models.types import StrictBounds
+from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 
 
 class Mean(BaseModel):
@@ -21,7 +20,7 @@ class Mean(BaseModel):
 class ConstantMean(Mean):
     """Mean that is one constant everywhere, fitted to the data.
 
-    With no prior and no bounds, the constant is fitted freely.
+    With no prior and no constraint, the constant is fitted freely.
     """
 
     type: Literal["ConstantMean"] = "ConstantMean"
@@ -30,8 +29,9 @@ class ConstantMean(Mean):
         description="Prior over the constant. If not provided, the constant is fitted "
         "without one.",
     )
-    bounds: Optional[StrictBounds] = Field(
+    constraint: Optional[AnyPriorConstraint] = Field(
         default=None,
-        description="Lower and upper bound the constant is restricted to during "
-        "fitting. If not provided, it is unbounded.",
+        description="Bounds the constant is restricted to during fitting, e.g. "
+        "NonTransformedInterval(lower_bound=-10, upper_bound=10). If not provided, it "
+        "is unbounded.",
     )

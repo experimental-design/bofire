@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Optional, Tuple, Type
+from typing import Callable, Dict, Type
 
 import gpytorch
 
@@ -12,30 +12,14 @@ def map_ConstantMean(
     prior = priors.map(data_model.prior, d=d) if data_model.prior is not None else None
     mean = gpytorch.means.ConstantMean(
         constant_prior=prior,
-        constant_constraint=_bounds(data_model.bounds, prior)
-        if data_model.bounds is not None
+        constant_constraint=priors.map_constraint(data_model.constraint, prior=prior)
+        if data_model.constraint is not None
         else None,
     )
-    if data_model.bounds is None and prior is not None:
-        # unbounded, so the fit starts at the prior's mode
+    if data_model.constraint is None and prior is not None:
+        # unconstrained, so the fit starts at the prior's mode
         mean.initialize(constant=priors.mode(prior))
     return mean
-
-
-def _bounds(
-    bounds: Tuple[float, float], prior: Optional[gpytorch.priors.Prior]
-) -> gpytorch.constraints.Interval:
-    """The bounds on the constant, starting at the prior's mode moved into them, or
-    at their middle without a prior."""
-    lower, upper = bounds
-    start = (
-        (lower + upper) / 2
-        if prior is None
-        else min(max(priors.mode(prior), lower), upper)
-    )
-    return gpytorch.constraints.Interval(
-        lower, upper, transform=None, initial_value=start
-    )
 
 
 MEAN_MAP: Dict[Type[data_models.Mean], Callable] = {

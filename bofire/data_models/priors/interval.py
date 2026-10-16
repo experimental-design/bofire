@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import Field, PositiveFloat, model_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.priors.constraint import PriorConstraint
 
@@ -9,8 +9,8 @@ class Interval(PriorConstraint):
     """Restricts a hyperparameter to a closed interval."""
 
     type: Literal["Interval"] = "Interval"
-    lower_bound: PositiveFloat = Field(description="Lower bound of the interval.")
-    upper_bound: PositiveFloat = Field(description="Upper bound of the interval.")
+    lower_bound: float = Field(description="Lower bound of the interval.")
+    upper_bound: float = Field(description="Upper bound of the interval.")
 
     @model_validator(mode="after")
     def validate_bounds(self):
@@ -48,3 +48,12 @@ class LogTransformedInterval(Interval):
     """
 
     type: Literal["LogTransformedInterval"] = "LogTransformedInterval"
+
+    @model_validator(mode="after")
+    def validate_positive_lower_bound(self):
+        """The interval is optimized on a log scale, which needs positive bounds."""
+        if self.lower_bound <= 0:
+            raise ValueError(
+                "The lower bound of a log-transformed interval must be positive."
+            )
+        return self
