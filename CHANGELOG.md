@@ -7,7 +7,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 ## [Unreleased]
 
 ### Added
-- The GPs fitted by maximizing the marginal likelihood (`SingleTaskGPSurrogate`, `MultiTaskGPSurrogate`, `TanimotoGPSurrogate`, `EnsembleMapSaasSingleTaskGPSurrogate`, `PairwiseGPSurrogate`) take `optimizer=LBFGSB(maxiter, ftol, gtol, max_attempts)`, so the fit budget is part of the serializable spec and can be set from a strategy. Options left at None keep BoTorch's defaults.
+- The GPs fitted by maximizing the marginal likelihood (`SingleTaskGPSurrogate`, `MultiTaskGPSurrogate`, `EnsembleMapSaasSingleTaskGPSurrogate`, `PairwiseGPSurrogate`) take `optimizer=LBFGSB(maxiter, ftol, gtol, max_attempts)`, so the fit budget is part of the serializable spec and can be set from a strategy. Options left at None keep BoTorch's defaults.
 - `AdditiveMapSaasKernel`: a sum of sparse (SAAS-prior) Matern kernels at different sparsity levels, the kernel of BoTorch's `AdditiveMapSaasSingleTaskGP`. It is usable in any single-task GP and inside `AdditiveKernel`, `MultiplicativeKernel`, `ScaleKernel` and `PolynomialFeatureInteractionKernel`, e.g. restricted to descriptor features next to a categorical kernel.
 - Factories on `SingleTaskGPSurrogate` for common models: `linear(inputs, outputs)`, `polynomial(inputs, outputs, power=2)` and `additive_map_saas(inputs, outputs, n_taus=4)`. They return ordinary single-task GPs, so they can also be options of a `SelectionSurrogate`. Like `SingleTaskGPSurrogate.options`, they take optional `engineered_features`.
 - Likelihood presets `MBO_LIKELIHOOD()`, `THREESIX_LIKELIHOOD()` and `HVARFNER_LIKELIHOOD()` in `bofire.data_models.likelihoods.api`, alongside the prior presets. `HVARFNER_LIKELIHOOD()` is BoTorch's default noise model and the default likelihood of `SingleTaskGPSurrogate`.
@@ -24,12 +24,13 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - The non-log acquisition functions `qEI`, `qNEI`, `qEHVI` and `qNEHVI` now emit a `DeprecationWarning` on construction and will be removed in a future release. Use `qLogEI`, `qLogNEI`, `qLogEHVI` and `qLogNEHVI` instead: they optimize the same quantity in log space, which keeps a usable gradient where the plain formulations underflow to zero.
 
 ### Changed
+- **Breaking**: `TanimotoKernel` computes the similarities between all molecules of a categorical input itself when given `fingerprints` (a `DescriptorEncoding`) and the input is ordinal-encoded; this replaces the pre-computed mode of the removed `TanimotoGPSurrogate`, so `tanimoto_calculation_mode` is gone. Unlike that mode, which only worked with a single input, the kernel composes with other kernels. The similarities are cached per process for a set of molecules and fingerprints. `TanimotoKernel.ard` is removed; it had no effect, as the kernel has no lengthscale. Serialized kernels carrying `ard` no longer load.
 - The interval constraints `Interval` and `NonTransformedInterval` accept bounds of any sign, e.g. for a `ConstantMean`; `LogTransformedInterval` still requires a positive lower bound.
 - **Breaking**: the `training_specs` attribute of the functional GP surrogates is removed; set `optimizer=LBFGSB(...)` on the data model instead. It was a dict shared by all instances of a class, so changing it in place (as BoTorch's relevance pursuit did) changed the fit of every other surrogate of that class.
 - A failed or non-converged hyperparameter fit is retried at most 10 times by default instead of 50 (`LBFGSB.max_attempts`); BoTorch's default is 5.
 - `GaussianLikelihood()` on its own is now plain, like the kernels: no noise prior and a noise of at least 1e-4. BoTorch's log-normal noise model moved into the `HVARFNER_LIKELIHOOD()` preset, which `SingleTaskGPSurrogate` uses as its default, so a default single-task GP is unchanged. A `GaussianLikelihood` built by hand without a `noise_prior` no longer gets the log-normal one. In `SingleTaskGPSurrogate.options`, the MBO and THREESIX options start the noise fit at GPyTorch's default value instead of the log-normal prior's mode.
 - `PolynomialKernel.power` must be at least 1; `power=0` was accepted before.
-- **Breaking**: `LinearSurrogate`, `PolynomialSurrogate`, `AdditiveMapSaasSingleTaskGPSurrogate`, `MixedSingleTaskGPSurrogate`, `RobustSingleTaskGPSurrogate` and `SingleTaskIBNNSurrogate` are **removed**; they were single-task GPs differing only in their components. Serialized surrogates of these types no longer load. The factories build the same models (the linear and polynomial ones keep the THREESIX noise prior; the additive MAP-SAAS one predicts identically to BoTorch's `AdditiveMapSaasSingleTaskGP`, but the fitted model is now a `SingleTaskGP`). `InfiniteWidthBNNKernel` stays. Migrate as follows:
+- **Breaking**: `LinearSurrogate`, `PolynomialSurrogate`, `AdditiveMapSaasSingleTaskGPSurrogate`, `MixedSingleTaskGPSurrogate`, `RobustSingleTaskGPSurrogate`, `TanimotoGPSurrogate` and `SingleTaskIBNNSurrogate` are **removed**; they were single-task GPs differing only in their components. Serialized surrogates of these types no longer load. The factories build the same models (the linear and polynomial ones keep the THREESIX noise prior; the additive MAP-SAAS one predicts identically to BoTorch's `AdditiveMapSaasSingleTaskGP`, but the fitted model is now a `SingleTaskGP`). `InfiniteWidthBNNKernel` stays. Migrate as follows:
 
   | removed | replacement |
   |---|---|
@@ -38,6 +39,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
   | `AdditiveMapSaasSingleTaskGPSurrogate(inputs=i, outputs=o, n_taus=k)` | `SingleTaskGPSurrogate.additive_map_saas(i, o, n_taus=k)` |
   | `SingleTaskIBNNSurrogate(inputs=i, outputs=o)` | `SingleTaskGPSurrogate(inputs=i, outputs=o, kernel=InfiniteWidthBNNKernel())` |
   | `MixedSingleTaskGPSurrogate(inputs=i, outputs=o)` | `SingleTaskGPSurrogate.mixed(i, o)` |
+  | `TanimotoGPSurrogate(inputs=i, outputs=o, categorical_encodings={k: enc})` | `SingleTaskGPSurrogate.tanimoto(i, o, fingerprints=enc)` |
   | `RobustSingleTaskGPSurrogate(inputs=i, outputs=o)` | `SingleTaskGPSurrogate.robust(i, o)` |
 
   Other fields (scaler, encodings, engineered features, ...) are set on the returned surrogate.

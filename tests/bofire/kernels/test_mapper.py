@@ -72,7 +72,7 @@ EQUIVALENTS = {
 def test_map(kernel_spec: Spec):
     kernel = kernel_spec.cls(**kernel_spec.typed_spec())
     if (
-        isinstance(kernel, (HammingDistanceKernel, DownsamplingKernel))
+        isinstance(kernel, (HammingDistanceKernel, DownsamplingKernel, TanimotoKernel))
         and kernel.features is not None
     ):
         return
@@ -253,12 +253,7 @@ def test_map_continuous_kernel(kernel, active_dims, expected_kernel):
     "kernel, active_dims, expected_kernel",
     [
         (
-            TanimotoKernel(ard=False),
-            list(range(5)),
-            bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
-        ),
-        (
-            TanimotoKernel(ard=True),
+            TanimotoKernel(),
             list(range(5)),
             bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
         ),
@@ -272,11 +267,6 @@ def test_map_molecular_kernel(kernel, active_dims, expected_kernel):
         features_to_idx_mapper=None,
     )
     assert isinstance(k, expected_kernel)
-
-    if kernel.ard is False:
-        assert k.ard_num_dims is None
-    else:
-        assert k.ard_num_dims == len(active_dims)
     assert torch.eq(k.active_dims, torch.tensor(active_dims, dtype=torch.int64)).all()
 
 

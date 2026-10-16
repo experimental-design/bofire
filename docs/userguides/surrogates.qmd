@@ -14,7 +14,7 @@ BoFire offers the following classes of surrogate models.
 [RandomForestSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/random\_forest.py)|a single objective|Rich data; black-box function does not have to be smooth|sklearn random forest implementation
 [MLP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mlp.py)|a single objective with real-valued inputs|Rich data and black-box function is smooth|Multi layer perceptron
 `SingleTaskGPSurrogate.mixed`|a single objective with categorical and real valued inputs|Limited data and black-box function is smooth|Gaussian process with a Hamming kernel for the categoricals, as BoTorch's `MixedSingleTaskGP`
-[TanimotoGP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed_tanimoto_gp.py)|a single objective|At least one input feature is a molecule represented as fingerprint|Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points
+`SingleTaskGPSurrogate.tanimoto`|a single objective|The input is a molecule, a categorical with structure data|Gaussian process with the Tanimoto similarity of the molecules' fingerprints as kernel
 [SelectionSurrogate](../reference/data_models.surrogates.api.html#bofire.data_models.surrogates.api.SelectionSurrogate)|a single continuous objective|Choosing between several complete surrogate configurations|Cross-validation model selection
 
 All of these are single-objective surrogate models. For optimization of multiple objectives at the same time, a suitable [Strategy](https://github.com/experimental-design/bofire/blob/main/bofire/strategies/strategy.py) has to be chosen. Then for each objective a different surrogate model can be specified. By default the SingleTaskGPSurrogate is used.
@@ -77,7 +77,7 @@ Translational invariance means that the similarity between two input points is n
 **Note:**
 
 - `SingleTaskGPSurrogate.linear(inputs, outputs)` and `SingleTaskGPSurrogate.polynomial(inputs, outputs, power=2)` build a SingleTaskGPSurrogate with a LinearKernel or PolynomialKernel.
-- SingleTaskGPSurrogate with TanimotoKernel is equivalent to TanimotoGP.
+- `TanimotoKernel(features=[key], fingerprints=...)` computes the similarities of all molecules of a categorical input once; it composes with other kernels like any kernel.
 - One can combine two Kernels by using AdditiveKernel or MultiplicativeKernel.
 
 **Example**:
