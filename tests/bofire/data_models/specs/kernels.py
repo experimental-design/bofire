@@ -1,8 +1,11 @@
+import random
+
 from pydantic import ValidationError
 
 import bofire.data_models.kernels.api as kernels
 from bofire.data_models.priors.api import (
     GammaPrior,
+    LKJPrior,
     LogNormalPrior,
     NonTransformedInterval,
     SmoothedBoxPrior,
@@ -13,6 +16,13 @@ from tests.bofire.data_models.specs.specs import Specs
 
 
 specs = Specs([])
+
+
+def _scalar_prior():
+    """A random valid prior over a single hyperparameter: anything but LKJ, which is a
+    prior over correlation matrices."""
+    return random.choice([s for s in priors.valids if s.cls is not LKJPrior]).obj()
+
 
 specs.add_valid(
     kernels.PositiveIndexKernel,
@@ -245,7 +255,7 @@ specs.add_valid(
         "ard": True,
         "nu": 2.5,
         "features": None,
-        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_prior": _scalar_prior().model_dump(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
@@ -256,7 +266,7 @@ specs.add_invalid(
     lambda: {
         "ard": True,
         "nu": 5,
-        "lengthscale_prior": priors.valid().obj(),
+        "lengthscale_prior": _scalar_prior(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
@@ -277,7 +287,7 @@ specs.add_valid(
     kernels.RBFKernel,
     lambda: {
         "ard": True,
-        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_prior": _scalar_prior().model_dump(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
@@ -288,7 +298,7 @@ specs.add_valid(
     kernels.SphericalLinearKernel,
     lambda: {
         "ard": True,
-        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_prior": _scalar_prior().model_dump(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
@@ -300,7 +310,7 @@ specs.add_invalid(
     kernels.SphericalLinearKernel,
     lambda: {
         "ard": False,
-        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_prior": _scalar_prior().model_dump(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
@@ -370,12 +380,12 @@ specs.add_valid(
     lambda: {
         "base_kernel": specs.valid(kernels.LinearKernel).obj().model_dump(),
         "ard": True,
-        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_prior": _scalar_prior().model_dump(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
-        "angle_prior": priors.valid().obj().model_dump(),
-        "radius_prior": priors.valid().obj().model_dump(),
+        "angle_prior": _scalar_prior().model_dump(),
+        "radius_prior": _scalar_prior().model_dump(),
         "conditions": [],
     },
 )
@@ -383,11 +393,11 @@ specs.add_valid(
     kernels.DownsamplingKernel,
     lambda: {
         "features": ["task_1"],
-        "offset_prior": priors.valid().obj().model_dump(),
+        "offset_prior": _scalar_prior().model_dump(),
         "offset_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
-        "power_prior": priors.valid().obj().model_dump(),
+        "power_prior": _scalar_prior().model_dump(),
         "power_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),

@@ -35,7 +35,7 @@ class LBFGSB(BaseModel):
         "gradient falls below this value. If not provided, scipy's default of 1e-5.",
     )
     max_attempts: PositiveInt = Field(
-        default=10,
+        default=50,
         description="Number of attempts in total. When an attempt fails or the "
         "optimizer warns, e.g. because it did not converge, the fit is retried from "
         "hyperparameters sampled from their priors. The first successful attempt is "
