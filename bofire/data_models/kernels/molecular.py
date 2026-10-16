@@ -2,6 +2,7 @@ from typing import Literal, Optional
 
 from pydantic import Field, model_validator
 
+from bofire.data_models.descriptor_generators.api import Fingerprints, Fragments
 from bofire.data_models.encodings.descriptors import DescriptorEncoding
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
 
@@ -44,17 +45,31 @@ class TanimotoKernel(MolecularKernel):
     fingerprints: Optional[DescriptorEncoding] = Field(
         default=None,
         description="Fingerprints of the categories of the one categorical input in "
-        "`features`, which must then be ordinal-encoded. If not provided, the kernel "
+        "`features`, which must then be ordinal-encoded; only Fingerprints and "
+        "Fragments generators, no static columns. If not provided, the kernel "
         "works on the fingerprint columns the surrogate's encoding produces.",
     )
 
     @model_validator(mode="after")
     def validate_fingerprints(self):
-        """Fingerprints describe the categories of exactly one input."""
-        if self.fingerprints is not None and (
-            self.features is None or len(self.features) != 1
-        ):
+        """Fingerprints describe the categories of exactly one input, as bit or count
+        vectors."""
+        if self.fingerprints is None:
+            return self
+        if self.features is None or len(self.features) != 1:
             raise ValueError(
                 "A Tanimoto kernel with fingerprints needs exactly one feature."
+            )
+        if (
+            self.fingerprints.columns
+            or not self.fingerprints.generators
+            or not all(
+                isinstance(generator, (Fingerprints, Fragments))
+                for generator in self.fingerprints.generators
+            )
+        ):
+            raise ValueError(
+                "The fingerprints of a Tanimoto kernel must come from Fingerprints "
+                "or Fragments generators only, without static columns."
             )
         return self
