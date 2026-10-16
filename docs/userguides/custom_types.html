@@ -616,7 +616,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Inside aggregation kernels</span></span>
 <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>additive <span class="op">=</span> AdditiveKernel(kernels<span class="op">=</span>[MyKernelDataModel(), ...])</span>
 <span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>scaled <span class="op">=</span> ScaleKernel(base_kernel<span class="op">=</span>MyKernelDataModel())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>If the custom kernel subclasses <code>ContinuousKernel</code> or <code>CategoricalKernel</code>, it is also added to the corresponding sub-union (<code>AnyContinuousKernel</code> / <code>AnyCategoricalKernel</code>) and accepted in <code>MixedSingleTaskGPSurrogate</code>.</p>
+<p>If the custom kernel subclasses <code>ContinuousKernel</code> or <code>CategoricalKernel</code>, it is also added to the corresponding sub-union (<code>AnyContinuousKernel</code> / <code>AnyCategoricalKernel</code>).</p>
 </section>
 <section id="registering-a-custom-prior" class="level2">
 <h2 class="anchored" data-anchor-id="registering-a-custom-prior">Registering a custom prior</h2>
@@ -1316,7 +1316,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-175"><a href="#cb9-175" aria-hidden="true" tabindex="-1"></a>scaled <span class="op">=</span> ScaleKernel(base_kernel<span class="op">=</span>MyKernelDataModel())</span>
 <span id="cb9-176"><a href="#cb9-176" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb9-177"><a href="#cb9-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-178"><a href="#cb9-178" aria-hidden="true" tabindex="-1"></a>If the custom kernel subclasses <span class="in">`ContinuousKernel`</span> or <span class="in">`CategoricalKernel`</span>, it is also added to the corresponding sub-union (<span class="in">`AnyContinuousKernel`</span> / <span class="in">`AnyCategoricalKernel`</span>) and accepted in <span class="in">`MixedSingleTaskGPSurrogate`</span>.</span>
+<span id="cb9-178"><a href="#cb9-178" aria-hidden="true" tabindex="-1"></a>If the custom kernel subclasses <span class="in">`ContinuousKernel`</span> or <span class="in">`CategoricalKernel`</span>, it is also added to the corresponding sub-union (<span class="in">`AnyContinuousKernel`</span> / <span class="in">`AnyCategoricalKernel`</span>).</span>
 <span id="cb9-179"><a href="#cb9-179" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-180"><a href="#cb9-180" aria-hidden="true" tabindex="-1"></a><span class="fu">## Registering a custom prior</span></span>
 <span id="cb9-181"><a href="#cb9-181" aria-hidden="true" tabindex="-1"></a></span>

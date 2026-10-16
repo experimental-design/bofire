@@ -765,7 +765,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>In this notebook the Branin benchmark from paper about local search region BO (https://www.merl.com/publications/docs/TR2023-057.pdf) is reproduced. Note that we use here by purpose <code>qEI</code> as acquisition function to reproduce the paper.</p>
 <section id="imports-and-helper-methods" class="level2">
 <h2 class="anchored" data-anchor-id="imports-and-helper-methods">Imports and helper methods</h2>
-<div id="d9082125" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.95335,&quot;end_time&quot;:&quot;2024-10-10T20:35:31.877904&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:28.924554&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="f85c1d1c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.95335,&quot;end_time&quot;:&quot;2024-10-10T20:35:31.877904&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:28.924554&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -815,7 +815,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="random-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="random-optimization">Random Optimization</h2>
 <p>Here random sampling is performed without any local search region constraints applied.</p>
-<div id="3fc2a3a1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.252447,&quot;end_time&quot;:&quot;2024-10-10T20:35:32.134765&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:35:31.882318&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="28afcaf9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.252447,&quot;end_time&quot;:&quot;2024-10-10T20:35:32.134765&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:35:31.882318&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>random_results <span class="op">=</span> [</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    run(</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>        Branin(locality_factor<span class="op">=</span><span class="fl">0.5</span>),</span>
@@ -829,14 +829,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span> <span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST <span class="cf">else</span> <span class="dv">1</span>)</span>
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=0.490]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 141.61it/s, Current Best:=0.490]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=4.265]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00, 130.80it/s, Current Best:=4.265]</code></pre>
 </div>
 </div>
 </section>
 <section id="sobo-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="sobo-optimization">SOBO Optimization</h2>
 <p>Here standard bayesian optimization is performed without any local search region constraints applied using the qEI acquistion function.</p>
-<div id="a848ab3e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="8b205749" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sobo_results <span class="op">=</span> [</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    run(</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>        Branin(locality_factor<span class="op">=</span><span class="fl">0.5</span>),</span>
@@ -852,14 +852,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span> <span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST <span class="cf">else</span> <span class="dv">1</span>)</span>
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=1.712]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  3.34it/s, Current Best:=1.712]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  3.33it/s, Current Best:=1.712]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=1.078]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  2.00it/s, Current Best:=1.078]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  2.00it/s, Current Best:=1.078]</code></pre>
 </div>
 </div>
 </section>
 <section id="local-sobo-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="local-sobo-optimization">Local SOBO Optimization</h2>
 <p>Here bayesian optimization is performed with setting <code>gamma</code> parameter of the LSR-BO method to 0 which results in a pure local optimization with respect to the last random sample.</p>
-<div id="5a05d558" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="4a0a1617" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>local_results <span class="op">=</span> [</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    run(</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        Branin(locality_factor<span class="op">=</span><span class="fl">0.5</span>),</span>
@@ -881,14 +881,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span> <span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST <span class="cf">else</span> <span class="dv">1</span>)</span>
 <span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=10.656]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  2.98it/s, Current Best:=10.656]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  2.97it/s, Current Best:=10.656]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=11.066]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  1.43it/s, Current Best:=11.066]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  1.43it/s, Current Best:=11.066]</code></pre>
 </div>
 </div>
 </section>
 <section id="global-sobo-optimization-projection" class="level2">
 <h2 class="anchored" data-anchor-id="global-sobo-optimization-projection">Global SOBO Optimization (Projection)</h2>
 <p>Here bayesian optimization is performed with setting <code>gamma</code> parameter of the LSR-BO method to 500 which results in taking always the biggest step in the direction of the global candidate. In the original paper, this is called “Projection”.</p>
-<div id="169bb5c2" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="5">
+<div id="1f58754a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>global_results <span class="op">=</span> [</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    run(</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        Branin(locality_factor<span class="op">=</span><span class="fl">0.5</span>),</span>
@@ -910,14 +910,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span> <span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST <span class="cf">else</span> <span class="dv">1</span>)</span>
 <span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=3.908]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  1.75it/s, Current Best:=3.908]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  1.74it/s, Current Best:=3.908]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=9.102]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  2.74it/s, Current Best:=9.102]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  2.73it/s, Current Best:=9.102]</code></pre>
 </div>
 </div>
 </section>
 <section id="lsr-bo" class="level2">
 <h2 class="anchored" data-anchor-id="lsr-bo">LSR-BO</h2>
 <p>Here the actual method from the paper is performed with setting <code>gamma</code> to 0.1.</p>
-<div id="059280b4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="6">
+<div id="435d0794" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>lsr_results <span class="op">=</span> [</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    run(</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        Branin(locality_factor<span class="op">=</span><span class="fl">0.5</span>),</span>
@@ -939,13 +939,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span> <span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST <span class="cf">else</span> <span class="dv">1</span>)</span>
 <span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=1.538]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  2.57it/s, Current Best:=1.538]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  2.56it/s, Current Best:=1.538]</code></pre>
+<pre><code>  0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s]Run 0:   0%|          | 0/1 [00:00&lt;?, ?it/s, Current Best:=0.999]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  2.91it/s, Current Best:=0.999]Run 0: 100%|██████████| 1/1 [00:00&lt;00:00,  2.91it/s, Current Best:=0.999]</code></pre>
 </div>
 </div>
 </section>
 <section id="plot-the-results" class="level2">
 <h2 class="anchored" data-anchor-id="plot-the-results">Plot the results</h2>
-<div id="30646e39" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
+<div id="0ee0944e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> SMOKE_TEST:</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    fig, ax <span class="op">=</span> plt.subplots()</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>

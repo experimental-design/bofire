@@ -393,6 +393,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#bofire.data_models.likelihoods.api.Likelihood" id="toc-bofire.data_models.likelihoods.api.Likelihood" class="nav-link" data-scroll-target="#bofire.data_models.likelihoods.api.Likelihood">Likelihood</a></li>
   <li><a href="#bofire.data_models.likelihoods.api.GaussianLikelihood" id="toc-bofire.data_models.likelihoods.api.GaussianLikelihood" class="nav-link" data-scroll-target="#bofire.data_models.likelihoods.api.GaussianLikelihood">GaussianLikelihood</a></li>
+  <li><a href="#bofire.data_models.likelihoods.api.SparseOutlierGaussianLikelihood" id="toc-bofire.data_models.likelihoods.api.SparseOutlierGaussianLikelihood" class="nav-link" data-scroll-target="#bofire.data_models.likelihoods.api.SparseOutlierGaussianLikelihood">SparseOutlierGaussianLikelihood</a></li>
   </ul></li>
   </ul></li>
   </ul>
@@ -426,6 +427,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td><a href="#bofire.data_models.likelihoods.api.GaussianLikelihood">GaussianLikelihood</a></td>
 <td>Observations are the response plus Gaussian noise with mean zero and one</td>
 </tr>
+<tr class="odd">
+<td><a href="#bofire.data_models.likelihoods.api.SparseOutlierGaussianLikelihood">SparseOutlierGaussianLikelihood</a></td>
+<td>Gaussian noise plus an extra noise variance for observations treated as</td>
+</tr>
 </tbody>
 </table>
 <section id="bofire.data_models.likelihoods.api.Likelihood" class="level3">
@@ -438,7 +443,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="bofire.data_models.likelihoods.api.GaussianLikelihood">GaussianLikelihood</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_models.likelihoods.api.GaussianLikelihood()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Observations are the response plus Gaussian noise with mean zero and one variance shared by all points.</p>
-<p>The noise variance is fitted along with the kernel hyperparameters; <code>noise_prior</code> regularises it and <code>noise_constraint</code> bounds it. The defaults put a log-normal prior on it that favours small noise levels and start the fit at that prior’s mode, which suits outputs standardized to unit variance.</p>
+<p>The noise variance is fitted along with the kernel hyperparameters; <code>noise_prior</code> regularises it and <code>noise_constraint</code> bounds it. By default there is no prior and the noise is at least 1e-4.</p>
+<p>The noise is that of the outputs as the model sees them, after the surrogate’s output scaler (standardized by default), so priors and bounds refer to that scale and not to the raw measurements.</p>
+</section>
+<section id="bofire.data_models.likelihoods.api.SparseOutlierGaussianLikelihood" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.likelihoods.api.SparseOutlierGaussianLikelihood">SparseOutlierGaussianLikelihood</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>data_models.likelihoods.api.SparseOutlierGaussianLikelihood()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Gaussian noise plus an extra noise variance for observations treated as outliers, so that they do not distort the fit.</p>
+<p>Models with different numbers of outliers (0%, 5%, 10%, 20%, … of the observations) are fitted, and one is chosen by Bayesian model comparison, under a prior that favours few outliers (relevance pursuit, Ament et al.&nbsp;2024, https://arxiv.org/abs/2410.24222). <code>noise_prior</code> and <code>noise_constraint</code> refer to the noise shared by all observations. Works with one output only.</p>
+<p>What counts as an outlier depends on how flexible the model is: a kernel with short lengthscales can explain almost any point. Bound the lengthscales from below, e.g.&nbsp;with <code>ROBUSTGP_LENGTHSCALE_CONSTRAINT()</code>.</p>
 
 
 <!-- -->
@@ -916,43 +929,66 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
   });
   </script><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># data_models.likelihoods.api { #bofire.data_models.likelihoods.api }</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="in">`data_models.likelihoods.api`</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">## Classes</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Likelihood</span><span class="co">](#bofire.data_models.likelihoods.api.Likelihood)</span> <span class="pp">|</span> Model of how observations scatter around the underlying response. <span class="pp">|</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">GaussianLikelihood</span><span class="co">](#bofire.data_models.likelihoods.api.GaussianLikelihood)</span> <span class="pp">|</span> Observations are the response plus Gaussian noise with mean zero and one <span class="pp">|</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="fu">### Likelihood { #bofire.data_models.likelihoods.api.Likelihood }</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>data_models.likelihoods.api.Likelihood()</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>Model of how observations scatter around the underlying response.</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>It decides how much of the spread in the data is attributed to measurement noise</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>rather than to the response itself.</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="fu">### GaussianLikelihood { #bofire.data_models.likelihoods.api.GaussianLikelihood }</span></span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>data_models.likelihoods.api.GaussianLikelihood()</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>Observations are the response plus Gaussian noise with mean zero and one</span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>variance shared by all points.</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>The noise variance is fitted along with the kernel hyperparameters;</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="in">`noise_prior`</span> regularises it and <span class="in">`noise_constraint`</span> bounds it. The defaults put a</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>log-normal prior on it that favours small noise levels and start the fit at that</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>prior's mode, which suits outputs standardized to unit variance.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># data_models.likelihoods.api { #bofire.data_models.likelihoods.api }</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="in">`data_models.likelihoods.api`</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="fu">## Classes</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Likelihood</span><span class="co">](#bofire.data_models.likelihoods.api.Likelihood)</span> <span class="pp">|</span> Model of how observations scatter around the underlying response. <span class="pp">|</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">GaussianLikelihood</span><span class="co">](#bofire.data_models.likelihoods.api.GaussianLikelihood)</span> <span class="pp">|</span> Observations are the response plus Gaussian noise with mean zero and one <span class="pp">|</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">SparseOutlierGaussianLikelihood</span><span class="co">](#bofire.data_models.likelihoods.api.SparseOutlierGaussianLikelihood)</span> <span class="pp">|</span> Gaussian noise plus an extra noise variance for observations treated as <span class="pp">|</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="fu">### Likelihood { #bofire.data_models.likelihoods.api.Likelihood }</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>data_models.likelihoods.api.Likelihood()</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>Model of how observations scatter around the underlying response.</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>It decides how much of the spread in the data is attributed to measurement noise</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>rather than to the response itself.</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="fu">### GaussianLikelihood { #bofire.data_models.likelihoods.api.GaussianLikelihood }</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>data_models.likelihoods.api.GaussianLikelihood()</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>Observations are the response plus Gaussian noise with mean zero and one</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>variance shared by all points.</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>The noise variance is fitted along with the kernel hyperparameters;</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="in">`noise_prior`</span> regularises it and <span class="in">`noise_constraint`</span> bounds it. By default there is</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>no prior and the noise is at least 1e-4.</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>The noise is that of the outputs as the model sees them, after the surrogate's</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>output scaler (standardized by default), so priors and bounds refer to that scale</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>and not to the raw measurements.</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="fu">### SparseOutlierGaussianLikelihood { #bofire.data_models.likelihoods.api.SparseOutlierGaussianLikelihood }</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>data_models.likelihoods.api.SparseOutlierGaussianLikelihood()</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>Gaussian noise plus an extra noise variance for observations treated as</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>outliers, so that they do not distort the fit.</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>Models with different numbers of outliers (0%, 5%, 10%, 20%, ... of the</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>observations) are fitted, and one is chosen by Bayesian model comparison, under a</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>prior that favours few outliers (relevance pursuit, Ament et al. 2024,</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>https://arxiv.org/abs/2410.24222). <span class="in">`noise_prior`</span> and <span class="in">`noise_constraint`</span> refer to</span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>the noise shared by all observations. Works with one output only.</span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>What counts as an outlier depends on how flexible the model is: a kernel with</span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>short lengthscales can explain almost any point. Bound the lengthscales from</span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>below, e.g. with <span class="in">`ROBUSTGP_LENGTHSCALE_CONSTRAINT()`</span>.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

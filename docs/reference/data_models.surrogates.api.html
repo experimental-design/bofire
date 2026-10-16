@@ -393,15 +393,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#bofire.data_models.surrogates.api.Surrogate" id="toc-bofire.data_models.surrogates.api.Surrogate" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.Surrogate">Surrogate</a></li>
   <li><a href="#bofire.data_models.surrogates.api.SingleTaskGPSurrogate" id="toc-bofire.data_models.surrogates.api.SingleTaskGPSurrogate" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.SingleTaskGPSurrogate">SingleTaskGPSurrogate</a></li>
-  <li><a href="#bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate" id="toc-bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate">MixedSingleTaskGPSurrogate</a></li>
   <li><a href="#bofire.data_models.surrogates.api.MultiTaskGPSurrogate" id="toc-bofire.data_models.surrogates.api.MultiTaskGPSurrogate" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.MultiTaskGPSurrogate">MultiTaskGPSurrogate</a></li>
-  <li><a href="#bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate" id="toc-bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate">RobustSingleTaskGPSurrogate</a></li>
   <li><a href="#bofire.data_models.surrogates.api.TanimotoGPSurrogate" id="toc-bofire.data_models.surrogates.api.TanimotoGPSurrogate" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.TanimotoGPSurrogate">TanimotoGPSurrogate</a></li>
-  <li><a href="#bofire.data_models.surrogates.api.LinearSurrogate" id="toc-bofire.data_models.surrogates.api.LinearSurrogate" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.LinearSurrogate">LinearSurrogate</a></li>
-  <li><a href="#bofire.data_models.surrogates.api.PolynomialSurrogate" id="toc-bofire.data_models.surrogates.api.PolynomialSurrogate" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.PolynomialSurrogate">PolynomialSurrogate</a></li>
   <li><a href="#bofire.data_models.surrogates.api.RandomForestSurrogate" id="toc-bofire.data_models.surrogates.api.RandomForestSurrogate" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.RandomForestSurrogate">RandomForestSurrogate</a></li>
   <li><a href="#bofire.data_models.surrogates.api.MLPEnsemble" id="toc-bofire.data_models.surrogates.api.MLPEnsemble" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.MLPEnsemble">MLPEnsemble</a></li>
   <li><a href="#bofire.data_models.surrogates.api.SelectionSurrogate" id="toc-bofire.data_models.surrogates.api.SelectionSurrogate" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.SelectionSurrogate">SelectionSurrogate</a></li>
+  <li><a href="#bofire.data_models.surrogates.api.LBFGSB" id="toc-bofire.data_models.surrogates.api.LBFGSB" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.LBFGSB">LBFGSB</a></li>
   <li><a href="#bofire.data_models.surrogates.api.BotorchSurrogates" id="toc-bofire.data_models.surrogates.api.BotorchSurrogates" class="nav-link" data-scroll-target="#bofire.data_models.surrogates.api.BotorchSurrogates">BotorchSurrogates</a></li>
   </ul></li>
   </ul></li>
@@ -437,27 +434,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td></td>
 </tr>
 <tr class="odd">
-<td><a href="#bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate">MixedSingleTaskGPSurrogate</a></td>
-<td></td>
-</tr>
-<tr class="even">
 <td><a href="#bofire.data_models.surrogates.api.MultiTaskGPSurrogate">MultiTaskGPSurrogate</a></td>
 <td></td>
 </tr>
-<tr class="odd">
-<td><a href="#bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate">RobustSingleTaskGPSurrogate</a></td>
-<td>Robust Relevance Pursuit Single Task Gaussian Process Surrogate.</td>
-</tr>
 <tr class="even">
 <td><a href="#bofire.data_models.surrogates.api.TanimotoGPSurrogate">TanimotoGPSurrogate</a></td>
-<td></td>
-</tr>
-<tr class="odd">
-<td><a href="#bofire.data_models.surrogates.api.LinearSurrogate">LinearSurrogate</a></td>
-<td></td>
-</tr>
-<tr class="even">
-<td><a href="#bofire.data_models.surrogates.api.PolynomialSurrogate">PolynomialSurrogate</a></td>
 <td></td>
 </tr>
 <tr class="odd">
@@ -473,6 +454,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>Surrogate that chooses one of several complete surrogates by cross-validation.</td>
 </tr>
 <tr class="even">
+<td><a href="#bofire.data_models.surrogates.api.LBFGSB">LBFGSB</a></td>
+<td>L-BFGS-B, the optimizer that fits a Gaussian process’s hyperparameters by</td>
+</tr>
+<tr class="odd">
 <td><a href="#bofire.data_models.surrogates.api.BotorchSurrogates">BotorchSurrogates</a></td>
 <td>“List of botorch surrogates.</td>
 </tr>
@@ -535,28 +520,311 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
+<td><a href="#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.additive_map_saas">additive_map_saas</a></td>
+<td>Single-task GP for many inputs of which only a few are expected to matter.</td>
+</tr>
+<tr class="even">
 <td><a href="#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented">is_output_implemented</a></td>
 <td>Abstract method to check output type for surrogate models</td>
 </tr>
+<tr class="odd">
+<td><a href="#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.linear">linear</a></td>
+<td>Single-task GP whose response is linear in the inputs.</td>
+</tr>
 <tr class="even">
+<td><a href="#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.mixed">mixed</a></td>
+<td>Single-task GP for continuous and categorical inputs, as BoTorch’s</td>
+</tr>
+<tr class="odd">
 <td><a href="#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.options">options</a></td>
 <td>Single-task GPs that differ in kernel and priors, as options to choose from.</td>
 </tr>
+<tr class="even">
+<td><a href="#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.polynomial">polynomial</a></td>
+<td>Single-task GP whose response is a polynomial in the inputs.</td>
+</tr>
+<tr class="odd">
+<td><a href="#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.robust">robust</a></td>
+<td>Single-task GP that detects outliers and discounts them: BoTorch’s</td>
+</tr>
+<tr class="even">
+<td><a href="#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.validate_sparse_outlier_likelihood">validate_sparse_outlier_likelihood</a></td>
+<td>Outlier noise levels are fitted for one output only.</td>
+</tr>
 </tbody>
 </table>
-<section id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented">is_output_implemented</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented(my_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Abstract method to check output type for surrogate models Args: my_type: continuous or categorical output Returns: bool: True if the output type is valid for the surrogate chosen, False otherwise</p>
-</section>
-<section id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.options" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.options">options</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.options(inputs, outputs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Single-task GPs that differ in kernel and priors, as options to choose from.</p>
-<p>One for each combination of base kernel (RBF, Matern 1.5, Matern 2.5), set of noise, lengthscale and outputscale priors (MBO, THREESIX, HVARFNER), with and without a scale kernel, and with and without ARD: 36 in all. Every other field keeps its default.</p>
+<section id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.additive_map_saas" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.additive_map_saas">additive_map_saas</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.additive_map_saas(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    inputs,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    outputs,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    n_taus<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    engineered_features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Single-task GP for many inputs of which only a few are expected to matter.</p>
+<p>The maximum-a-posteriori approximation of the fully Bayesian SAAS model, as BoTorch’s <code>AdditiveMapSaasSingleTaskGP</code> builds it: an additive sparse kernel, a constant mean with a standard normal prior bounded to [-10, 10], and the default likelihood.</p>
 <section id="parameters" class="level6 doc-section doc-section-parameters">
 <h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters">Parameters</h6>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 17%">
+<col style="width: 64%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>inputs</td>
+<td>Inputs</td>
+<td>The input features.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>outputs</td>
+<td>Outputs</td>
+<td>The output feature.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>engineered_features</td>
+<td>Optional[EngineeredFeatures]</td>
+<td>Quantities derived from the inputs that the model sees as well; the kernel works on them too. If not provided, none.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>n_taus</td>
+<td>int</td>
+<td>Number of sparse kernels summed up, each at its own sparsity level.</td>
+<td><code>4</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 9%">
+<col style="width: 28%">
+<col style="width: 61%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>SingleTaskGPSurrogate</td>
+<td>The surrogate, with an additive MAP-SAAS kernel.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented">is_output_implemented</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented(my_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Abstract method to check output type for surrogate models Args: my_type: continuous or categorical output Returns: bool: True if the output type is valid for the surrogate chosen, False otherwise</p>
+</section>
+<section id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.linear" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.linear">linear</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.linear(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    inputs,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    outputs,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    engineered_features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Single-task GP whose response is linear in the inputs.</p>
+<p>Equivalent to Bayesian linear regression. The noise has a THREESIX prior with a lower bound of 1e-4; every other field keeps its default.</p>
+<section id="parameters-1" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-1">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 17%">
+<col style="width: 64%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>inputs</td>
+<td>Inputs</td>
+<td>The input features.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>outputs</td>
+<td>Outputs</td>
+<td>The output feature.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>engineered_features</td>
+<td>Optional[EngineeredFeatures]</td>
+<td>Quantities derived from the inputs that the model sees as well; the kernel works on them too. If not provided, none.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-1" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-1">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 33%">
+<col style="width: 55%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>SingleTaskGPSurrogate</td>
+<td>The surrogate, with a linear kernel.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.mixed" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.mixed">mixed</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.mixed(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    inputs,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    outputs,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    engineered_features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Single-task GP for continuous and categorical inputs, as BoTorch’s <code>MixedSingleTaskGP</code> builds it.</p>
+<p>Categorical inputs without descriptor data are encoded as ordinal codes and compared by a Hamming kernel; all other inputs and the engineered features by an RBF kernel with the HVARFNER prior. The kernel is the sum of the two plus their product, each scaled; without other inputs, the scaled Hamming kernel.</p>
+<section id="parameters-2" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-2">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 17%">
+<col style="width: 64%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>inputs</td>
+<td>Inputs</td>
+<td>The input features, at least one of them categorical without descriptor data.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>outputs</td>
+<td>Outputs</td>
+<td>The output feature.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>engineered_features</td>
+<td>Optional[EngineeredFeatures]</td>
+<td>Quantities derived from the inputs that the model sees as well; the RBF kernel works on them. If not provided, none.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-2" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-2">Returns</h6>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>SingleTaskGPSurrogate</td>
+<td>The surrogate.</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="raises" class="level6 doc-section doc-section-raises">
+<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 5%">
+<col style="width: 8%">
+<col style="width: 85%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>ValueError</td>
+<td>If no categorical input lacks descriptor data, or if an engineered feature replaces the features it is computed from.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.options" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.options">options</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.options(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    inputs,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    outputs,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    engineered_features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Single-task GPs that differ in kernel and priors, as options to choose from.</p>
+<p>One for each combination of base kernel (RBF, Matern 1.5, Matern 2.5), set of noise, lengthscale and outputscale priors (MBO, THREESIX, HVARFNER), with and without a scale kernel, and with and without ARD: 36 in all. Every other field keeps its default.</p>
+<section id="parameters-3" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-3">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 17%">
+<col style="width: 65%">
+<col style="width: 6%">
+</colgroup>
 <thead>
 <tr class="header">
 <th>Name</th>
@@ -578,11 +846,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td>The output feature of every option.</td>
 <td><em>required</em></td>
 </tr>
+<tr class="odd">
+<td>engineered_features</td>
+<td>Optional[EngineeredFeatures]</td>
+<td>Quantities derived from the inputs that every option sees as well; the kernel works on them too. If not provided, none.</td>
+<td><code>None</code></td>
+</tr>
 </tbody>
 </table>
 </section>
-<section id="returns" class="level6 doc-section doc-section-returns">
-<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns">Returns</h6>
+<section id="returns-3" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-3">Returns</h6>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 8%">
@@ -606,41 +880,174 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 </section>
 </section>
-</section>
-</section>
-<section id="bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate">MixedSingleTaskGPSurrogate</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MixedSingleTaskGPSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<section id="methods-2" class="level4">
-<h4 class="anchored" data-anchor-id="methods-2">Methods</h4>
+<section id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.polynomial" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.polynomial">polynomial</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.polynomial(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    inputs,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    outputs,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    power<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    engineered_features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Single-task GP whose response is a polynomial in the inputs.</p>
+<p>The noise has a THREESIX prior with a lower bound of 1e-4; every other field keeps its default.</p>
+<section id="parameters-4" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-4">Parameters</h6>
 <table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 17%">
+<col style="width: 64%">
+<col style="width: 6%">
+</colgroup>
 <thead>
 <tr class="header">
 <th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>inputs</td>
+<td>Inputs</td>
+<td>The input features.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>outputs</td>
+<td>Outputs</td>
+<td>The output feature.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>engineered_features</td>
+<td>Optional[EngineeredFeatures]</td>
+<td>Quantities derived from the inputs that the model sees as well; the kernel works on them too. If not provided, none.</td>
+<td><code>None</code></td>
+</tr>
+<tr class="even">
+<td>power</td>
+<td>int</td>
+<td>Degree of the polynomial.</td>
+<td><code>2</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-4" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-4">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 25%">
+<col style="width: 66%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td><a href="#bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented">is_output_implemented</a></td>
-<td>Abstract method to check output type for surrogate models</td>
+<td></td>
+<td>SingleTaskGPSurrogate</td>
+<td>The surrogate, with a polynomial kernel of the given power.</td>
 </tr>
 </tbody>
 </table>
-<section id="bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented">is_output_implemented</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented(</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    my_type,</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Abstract method to check output type for surrogate models Args: my_type: continuous or categorical output Returns: bool: True if the output type is valid for the surrogate chosen, False otherwise</p>
+</section>
+</section>
+<section id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.robust" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.robust">robust</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.robust(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    inputs,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    outputs,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    engineered_features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Single-task GP that detects outliers and discounts them: BoTorch’s <code>RobustRelevancePursuitSingleTaskGP</code>, with the lengthscales bounded at 0.05 instead of 0.025.</p>
+<p>The likelihood adds an extra noise variance for observations treated as outliers to the HVARFNER noise model. The kernel is an RBF kernel with the HVARFNER prior whose lengthscales are at least 0.05, so that the model cannot simply explain the outliers.</p>
+<section id="parameters-5" class="level6 doc-section doc-section-parameters">
+<h6 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-5">Parameters</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 11%">
+<col style="width: 17%">
+<col style="width: 64%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>inputs</td>
+<td>Inputs</td>
+<td>The input features.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="even">
+<td>outputs</td>
+<td>Outputs</td>
+<td>The output feature, exactly one.</td>
+<td><em>required</em></td>
+</tr>
+<tr class="odd">
+<td>engineered_features</td>
+<td>Optional[EngineeredFeatures]</td>
+<td>Quantities derived from the inputs that the model sees as well; the kernel works on them too. If not provided, none.</td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="returns-5" class="level6 doc-section doc-section-returns">
+<h6 class="doc-section doc-section-returns anchored" data-anchor-id="returns-5">Returns</h6>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 25%">
+<col style="width: 65%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td></td>
+<td>SingleTaskGPSurrogate</td>
+<td>The surrogate, with a <code>SparseOutlierGaussianLikelihood</code>.</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.validate_sparse_outlier_likelihood" class="level5">
+<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.SingleTaskGPSurrogate.validate_sparse_outlier_likelihood">validate_sparse_outlier_likelihood</h5>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.validate_sparse_outlier_likelihood(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Outlier noise levels are fitted for one output only.</p>
 </section>
 </section>
 </section>
 <section id="bofire.data_models.surrogates.api.MultiTaskGPSurrogate" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.MultiTaskGPSurrogate">MultiTaskGPSurrogate</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MultiTaskGPSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<section id="methods-3" class="level4">
-<h4 class="anchored" data-anchor-id="methods-3">Methods</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MultiTaskGPSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="methods-2" class="level4">
+<h4 class="anchored" data-anchor-id="methods-2">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -657,84 +1064,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <section id="bofire.data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented" class="level5">
 <h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented">is_output_implemented</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented(my_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Abstract method to check output type for surrogate models Args: my_type: continuous or categorical output Returns: bool: True if the output type is valid for the surrogate chosen, False otherwise</p>
-</section>
-</section>
-</section>
-<section id="bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate">RobustSingleTaskGPSurrogate</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RobustSingleTaskGPSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Robust Relevance Pursuit Single Task Gaussian Process Surrogate.</p>
-<p>A robust single-task GP that learns a data-point specific noise level and is therefore more robust to outliers. See: https://botorch.org/docs/tutorials/relevance_pursuit_robust_regression/ Paper: https://arxiv.org/pdf/2410.24222</p>
-<section id="attributes-1" class="level4 doc-section doc-section-attributes">
-<h4 class="doc-section doc-section-attributes anchored" data-anchor-id="attributes-1">Attributes</h4>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 14%">
-<col style="width: 10%">
-<col style="width: 74%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>prior_mean_of_support</td>
-<td>Optional[int]</td>
-<td>The prior mean of the support.</td>
-</tr>
-<tr class="even">
-<td>convex_parametrization</td>
-<td>bool</td>
-<td>Whether to use convex parametrization of the sparse noise model.</td>
-</tr>
-<tr class="odd">
-<td>cache_model_trace</td>
-<td>bool</td>
-<td>Whether to cache the model trace. This needs no be set to True if you want to view the model trace after optimization.</td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="note" class="level4 doc-section doc-section-note">
-<h4 class="doc-section doc-section-note anchored" data-anchor-id="note">Note</h4>
-<p>The definition of “outliers” depends on the model capacity, so what is an outlier with respect to a simple model might not be an outlier with respect to a complex model. For this reason, it is necessary to bound the lengthscale of the GP kernel from below.</p>
-</section>
-<section id="methods-4" class="level4">
-<h4 class="anchored" data-anchor-id="methods-4">Methods</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="#bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented">is_output_implemented</a></td>
-<td>Abstract method to check output type for surrogate models</td>
-</tr>
-</tbody>
-</table>
-<section id="bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented">is_output_implemented</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented(</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    my_type,</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented(my_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Abstract method to check output type for surrogate models Args: my_type: continuous or categorical output Returns: bool: True if the output type is valid for the surrogate chosen, False otherwise</p>
 </section>
 </section>
 </section>
 <section id="bofire.data_models.surrogates.api.TanimotoGPSurrogate" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.TanimotoGPSurrogate">TanimotoGPSurrogate</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<section id="methods-5" class="level4">
-<h4 class="anchored" data-anchor-id="methods-5">Methods</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="methods-3" class="level4">
+<h4 class="anchored" data-anchor-id="methods-3">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -755,73 +1094,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <section id="bofire.data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented" class="level5">
 <h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented">is_output_implemented</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented(my_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented(my_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Abstract method to check output type for surrogate models Args: my_type: continuous or categorical output Returns: bool: True if the output type is valid for the surrogate chosen, False otherwise</p>
 </section>
 <section id="bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars" class="level5">
 <h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars">validate_moleculars</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Checks that at least one fingerprint/fragment descriptor encoding is present.</p>
-</section>
-</section>
-</section>
-<section id="bofire.data_models.surrogates.api.LinearSurrogate" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.LinearSurrogate">LinearSurrogate</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.LinearSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<section id="methods-6" class="level4">
-<h4 class="anchored" data-anchor-id="methods-6">Methods</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="#bofire.data_models.surrogates.api.LinearSurrogate.is_output_implemented">is_output_implemented</a></td>
-<td>Abstract method to check output type for surrogate models</td>
-</tr>
-</tbody>
-</table>
-<section id="bofire.data_models.surrogates.api.LinearSurrogate.is_output_implemented" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.LinearSurrogate.is_output_implemented">is_output_implemented</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.LinearSurrogate.is_output_implemented(my_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Abstract method to check output type for surrogate models Args: my_type: continuous or categorical output Returns: bool: True if the output type is valid for the surrogate chosen, False otherwise</p>
-</section>
-</section>
-</section>
-<section id="bofire.data_models.surrogates.api.PolynomialSurrogate" class="level3">
-<h3 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.PolynomialSurrogate">PolynomialSurrogate</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.PolynomialSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<section id="methods-7" class="level4">
-<h4 class="anchored" data-anchor-id="methods-7">Methods</h4>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Name</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td><a href="#bofire.data_models.surrogates.api.PolynomialSurrogate.is_output_implemented">is_output_implemented</a></td>
-<td>Abstract method to check output type for surrogate models</td>
-</tr>
-</tbody>
-</table>
-<section id="bofire.data_models.surrogates.api.PolynomialSurrogate.is_output_implemented" class="level5">
-<h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.PolynomialSurrogate.is_output_implemented">is_output_implemented</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.PolynomialSurrogate.is_output_implemented(my_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Abstract method to check output type for surrogate models Args: my_type: continuous or categorical output Returns: bool: True if the output type is valid for the surrogate chosen, False otherwise</p>
 </section>
 </section>
 </section>
 <section id="bofire.data_models.surrogates.api.RandomForestSurrogate" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.RandomForestSurrogate">RandomForestSurrogate</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RandomForestSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<section id="methods-8" class="level4">
-<h4 class="anchored" data-anchor-id="methods-8">Methods</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RandomForestSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="methods-4" class="level4">
+<h4 class="anchored" data-anchor-id="methods-4">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -838,30 +1125,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <section id="bofire.data_models.surrogates.api.RandomForestSurrogate.is_output_implemented" class="level5">
 <h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.RandomForestSurrogate.is_output_implemented">is_output_implemented</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RandomForestSurrogate.is_output_implemented(my_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RandomForestSurrogate.is_output_implemented(my_type)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Abstract method to check output type for surrogate models Args: my_type: continuous or categorical output Returns: bool: True if the output type is valid for the surrogate chosen, False otherwise</p>
 </section>
 </section>
 </section>
 <section id="bofire.data_models.surrogates.api.MLPEnsemble" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.MLPEnsemble">MLPEnsemble</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MLPEnsemble()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MLPEnsemble()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="bofire.data_models.surrogates.api.SelectionSurrogate" class="level3">
 <h3 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.SelectionSurrogate">SelectionSurrogate</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SelectionSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SelectionSurrogate()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Surrogate that chooses one of several complete surrogates by cross-validation.</p>
 <p>When fitted, every option is cross-validated on the data, and the one with the best score in <code>metric</code> is fitted on all of the data and makes the predictions. Every option has the inputs and the single continuous output of this surrogate.</p>
 <section id="examples" class="level4 doc-section doc-section-examples">
 <h4 class="doc-section doc-section-examples anchored" data-anchor-id="examples">Examples</h4>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> SelectionSurrogate(</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>...     inputs<span class="op">=</span>inputs,</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>...     outputs<span class="op">=</span>outputs,</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>...     options<span class="op">=</span>SingleTaskGPSurrogate.options(inputs, outputs),</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>... )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> SelectionSurrogate(</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>...     inputs<span class="op">=</span>inputs,</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>...     outputs<span class="op">=</span>outputs,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>...     options<span class="op">=</span>SingleTaskGPSurrogate.options(inputs, outputs),</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>... )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
-<section id="methods-9" class="level4">
-<h4 class="anchored" data-anchor-id="methods-9">Methods</h4>
+<section id="methods-5" class="level4">
+<h4 class="anchored" data-anchor-id="methods-5">Methods</h4>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -878,10 +1165,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 <section id="bofire.data_models.surrogates.api.SelectionSurrogate.validate_options" class="level5">
 <h5 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.SelectionSurrogate.validate_options">validate_options</h5>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SelectionSurrogate.validate_options()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SelectionSurrogate.validate_options()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Check that every option has the inputs and output of this surrogate.</p>
-<section id="raises" class="level6 doc-section doc-section-raises">
-<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises">Raises</h6>
+<section id="raises-1" class="level6 doc-section doc-section-raises">
+<h6 class="doc-section doc-section-raises anchored" data-anchor-id="raises-1">Raises</h6>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 6%">
@@ -905,6 +1192,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </table>
 </section>
 </section>
+</section>
+</section>
+<section id="bofire.data_models.surrogates.api.LBFGSB" class="level3">
+<h3 class="anchored" data-anchor-id="bofire.data_models.surrogates.api.LBFGSB">LBFGSB</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.LBFGSB()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>L-BFGS-B, the optimizer that fits a Gaussian process’s hyperparameters by maximizing the marginal likelihood.</p>
+<p>Options left at None keep BoTorch’s defaults: scipy’s for an ordinary fit, and its own (at most 10000 iterations, tolerances of 1e-8) for the relevance pursuit of a GP with a <code>SparseOutlierGaussianLikelihood</code>.</p>
+<section id="examples-1" class="level4 doc-section doc-section-examples">
+<h4 class="doc-section doc-section-examples anchored" data-anchor-id="examples-1">Examples</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> LBFGSB(maxiter<span class="op">=</span><span class="dv">200</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 </section>
 <section id="bofire.data_models.surrogates.api.BotorchSurrogates" class="level3">
@@ -1401,294 +1698,294 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
 <span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">Surrogate</span><span class="co">](#bofire.data_models.surrogates.api.Surrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
 <span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">SingleTaskGPSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MixedSingleTaskGPSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MultiTaskGPSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.MultiTaskGPSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">RobustSingleTaskGPSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate)</span> <span class="pp">|</span> Robust Relevance Pursuit Single Task Gaussian Process Surrogate. <span class="pp">|</span></span>
-<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">TanimotoGPSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.TanimotoGPSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">LinearSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.LinearSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">PolynomialSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.PolynomialSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">RandomForestSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.RandomForestSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MLPEnsemble</span><span class="co">](#bofire.data_models.surrogates.api.MLPEnsemble)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
-<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">SelectionSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.SelectionSurrogate)</span> <span class="pp">|</span> Surrogate that chooses one of several complete surrogates by cross-validation. <span class="pp">|</span></span>
-<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">BotorchSurrogates</span><span class="co">](#bofire.data_models.surrogates.api.BotorchSurrogates)</span> <span class="pp">|</span> "List of botorch surrogates. <span class="pp">|</span></span>
-<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a><span class="fu">### Surrogate { #bofire.data_models.surrogates.api.Surrogate }</span></span>
-<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.Surrogate()</span>
-<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MultiTaskGPSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.MultiTaskGPSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">TanimotoGPSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.TanimotoGPSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">RandomForestSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.RandomForestSurrogate)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">MLPEnsemble</span><span class="co">](#bofire.data_models.surrogates.api.MLPEnsemble)</span> <span class="pp">|</span>  <span class="pp">|</span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">SelectionSurrogate</span><span class="co">](#bofire.data_models.surrogates.api.SelectionSurrogate)</span> <span class="pp">|</span> Surrogate that chooses one of several complete surrogates by cross-validation. <span class="pp">|</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">LBFGSB</span><span class="co">](#bofire.data_models.surrogates.api.LBFGSB)</span> <span class="pp">|</span> L-BFGS-B, the optimizer that fits a Gaussian process's hyperparameters by <span class="pp">|</span></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">BotorchSurrogates</span><span class="co">](#bofire.data_models.surrogates.api.BotorchSurrogates)</span> <span class="pp">|</span> "List of botorch surrogates. <span class="pp">|</span></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a><span class="fu">### Surrogate { #bofire.data_models.surrogates.api.Surrogate }</span></span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.Surrogate()</span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes</span></span>
 <span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes</span></span>
-<span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-34"><a href="#cb26-34" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb26-36"><a href="#cb26-36" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">input_preprocessing_specs</span><span class="co">](#bofire.data_models.surrogates.api.Surrogate.input_preprocessing_specs)</span> <span class="pp">|</span> Pre-model tensorization: every categorical is ordinal-encoded (the in-model <span class="pp">|</span></span>
-<span id="cb26-37"><a href="#cb26-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-38"><a href="#cb26-38" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb26-39"><a href="#cb26-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-40"><a href="#cb26-40" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb26-41"><a href="#cb26-41" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb26-42"><a href="#cb26-42" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.Surrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
-<span id="cb26-43"><a href="#cb26-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-44"><a href="#cb26-44" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.Surrogate.is_output_implemented }</span></span>
-<span id="cb26-45"><a href="#cb26-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-46"><a href="#cb26-46" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-47"><a href="#cb26-47" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.Surrogate.is_output_implemented(my_type)</span>
-<span id="cb26-48"><a href="#cb26-48" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-49"><a href="#cb26-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-50"><a href="#cb26-50" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb26-51"><a href="#cb26-51" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb26-52"><a href="#cb26-52" aria-hidden="true" tabindex="-1"></a>    outputs: objective functions for the surrogate</span>
-<span id="cb26-53"><a href="#cb26-53" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb26-54"><a href="#cb26-54" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb26-55"><a href="#cb26-55" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
-<span id="cb26-56"><a href="#cb26-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-57"><a href="#cb26-57" aria-hidden="true" tabindex="-1"></a><span class="fu">### SingleTaskGPSurrogate { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate }</span></span>
-<span id="cb26-58"><a href="#cb26-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-59"><a href="#cb26-59" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-60"><a href="#cb26-60" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate()</span>
-<span id="cb26-61"><a href="#cb26-61" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-62"><a href="#cb26-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">input_preprocessing_specs</span><span class="co">](#bofire.data_models.surrogates.api.Surrogate.input_preprocessing_specs)</span> <span class="pp">|</span> Pre-model tensorization: every categorical is ordinal-encoded (the in-model <span class="pp">|</span></span>
+<span id="cb26-34"><a href="#cb26-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb26-36"><a href="#cb26-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-37"><a href="#cb26-37" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb26-38"><a href="#cb26-38" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb26-39"><a href="#cb26-39" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.Surrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb26-40"><a href="#cb26-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-41"><a href="#cb26-41" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.Surrogate.is_output_implemented }</span></span>
+<span id="cb26-42"><a href="#cb26-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-43"><a href="#cb26-43" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-44"><a href="#cb26-44" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.Surrogate.is_output_implemented(my_type)</span>
+<span id="cb26-45"><a href="#cb26-45" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-46"><a href="#cb26-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-47"><a href="#cb26-47" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb26-48"><a href="#cb26-48" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb26-49"><a href="#cb26-49" aria-hidden="true" tabindex="-1"></a>    outputs: objective functions for the surrogate</span>
+<span id="cb26-50"><a href="#cb26-50" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb26-51"><a href="#cb26-51" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb26-52"><a href="#cb26-52" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb26-53"><a href="#cb26-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-54"><a href="#cb26-54" aria-hidden="true" tabindex="-1"></a><span class="fu">### SingleTaskGPSurrogate { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate }</span></span>
+<span id="cb26-55"><a href="#cb26-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-56"><a href="#cb26-56" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-57"><a href="#cb26-57" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate()</span>
+<span id="cb26-58"><a href="#cb26-58" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-59"><a href="#cb26-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-60"><a href="#cb26-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-61"><a href="#cb26-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-62"><a href="#cb26-62" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
 <span id="cb26-63"><a href="#cb26-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-64"><a href="#cb26-64" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-65"><a href="#cb26-65" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb26-66"><a href="#cb26-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-67"><a href="#cb26-67" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb26-68"><a href="#cb26-68" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb26-69"><a href="#cb26-69" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb26-64"><a href="#cb26-64" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb26-65"><a href="#cb26-65" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb26-66"><a href="#cb26-66" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">additive_map_saas</span><span class="co">](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.additive_map_saas)</span> <span class="pp">|</span> Single-task GP for many inputs of which only a few are expected to matter. <span class="pp">|</span></span>
+<span id="cb26-67"><a href="#cb26-67" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb26-68"><a href="#cb26-68" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">linear</span><span class="co">](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.linear)</span> <span class="pp">|</span> Single-task GP whose response is linear in the inputs. <span class="pp">|</span></span>
+<span id="cb26-69"><a href="#cb26-69" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">mixed</span><span class="co">](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.mixed)</span> <span class="pp">|</span> Single-task GP for continuous and categorical inputs, as BoTorch's <span class="pp">|</span></span>
 <span id="cb26-70"><a href="#cb26-70" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">options</span><span class="co">](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.options)</span> <span class="pp">|</span> Single-task GPs that differ in kernel and priors, as options to choose from. <span class="pp">|</span></span>
-<span id="cb26-71"><a href="#cb26-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-72"><a href="#cb26-72" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented }</span></span>
-<span id="cb26-73"><a href="#cb26-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-74"><a href="#cb26-74" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-75"><a href="#cb26-75" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented(my_type)</span>
-<span id="cb26-76"><a href="#cb26-76" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-77"><a href="#cb26-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-78"><a href="#cb26-78" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb26-79"><a href="#cb26-79" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb26-80"><a href="#cb26-80" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb26-81"><a href="#cb26-81" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb26-82"><a href="#cb26-82" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
-<span id="cb26-83"><a href="#cb26-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-84"><a href="#cb26-84" aria-hidden="true" tabindex="-1"></a><span class="fu">##### options { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.options }</span></span>
-<span id="cb26-85"><a href="#cb26-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-86"><a href="#cb26-86" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-87"><a href="#cb26-87" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.options(inputs, outputs)</span>
-<span id="cb26-88"><a href="#cb26-88" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-89"><a href="#cb26-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-90"><a href="#cb26-90" aria-hidden="true" tabindex="-1"></a>Single-task GPs that differ in kernel and priors, as options to choose from.</span>
-<span id="cb26-91"><a href="#cb26-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-92"><a href="#cb26-92" aria-hidden="true" tabindex="-1"></a>One for each combination of base kernel (RBF, Matern 1.5, Matern 2.5), set of</span>
-<span id="cb26-93"><a href="#cb26-93" aria-hidden="true" tabindex="-1"></a>noise, lengthscale and outputscale priors (MBO, THREESIX, HVARFNER), with and</span>
-<span id="cb26-94"><a href="#cb26-94" aria-hidden="true" tabindex="-1"></a>without a scale kernel, and with and without ARD: 36 in all. Every other field</span>
-<span id="cb26-95"><a href="#cb26-95" aria-hidden="true" tabindex="-1"></a>keeps its default.</span>
-<span id="cb26-96"><a href="#cb26-96" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-97"><a href="#cb26-97" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
-<span id="cb26-98"><a href="#cb26-98" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-99"><a href="#cb26-99" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name    <span class="pp">|</span> Type    <span class="pp">|</span> Description                         <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb26-100"><a href="#cb26-100" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------|---------|-------------------------------------|------------|</span></span>
-<span id="cb26-101"><a href="#cb26-101" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> inputs  <span class="pp">|</span> Inputs  <span class="pp">|</span> The input features of every option. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb26-102"><a href="#cb26-102" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> outputs <span class="pp">|</span> Outputs <span class="pp">|</span> The output feature of every option. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb26-103"><a href="#cb26-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-104"><a href="#cb26-104" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb26-105"><a href="#cb26-105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-106"><a href="#cb26-106" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                          <span class="pp">|</span> Description                                           <span class="pp">|</span></span>
-<span id="cb26-107"><a href="#cb26-107" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-------------------------------|-------------------------------------------------------|</span></span>
-<span id="cb26-108"><a href="#cb26-108" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> List<span class="sc">\[</span>SingleTaskGPSurrogate<span class="sc">\]</span> <span class="pp">|</span> The options, each with its own kernel and likelihood. <span class="pp">|</span></span>
-<span id="cb26-109"><a href="#cb26-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-110"><a href="#cb26-110" aria-hidden="true" tabindex="-1"></a><span class="fu">### MixedSingleTaskGPSurrogate { #bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate }</span></span>
-<span id="cb26-111"><a href="#cb26-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-112"><a href="#cb26-112" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-113"><a href="#cb26-113" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MixedSingleTaskGPSurrogate()</span>
-<span id="cb26-114"><a href="#cb26-114" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-115"><a href="#cb26-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-116"><a href="#cb26-116" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-117"><a href="#cb26-117" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-118"><a href="#cb26-118" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb26-119"><a href="#cb26-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-120"><a href="#cb26-120" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb26-121"><a href="#cb26-121" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb26-122"><a href="#cb26-122" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
-<span id="cb26-123"><a href="#cb26-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-124"><a href="#cb26-124" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented }</span></span>
-<span id="cb26-125"><a href="#cb26-125" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-126"><a href="#cb26-126" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-127"><a href="#cb26-127" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MixedSingleTaskGPSurrogate.is_output_implemented(</span>
-<span id="cb26-128"><a href="#cb26-128" aria-hidden="true" tabindex="-1"></a>    my_type,</span>
+<span id="cb26-71"><a href="#cb26-71" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">polynomial</span><span class="co">](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.polynomial)</span> <span class="pp">|</span> Single-task GP whose response is a polynomial in the inputs. <span class="pp">|</span></span>
+<span id="cb26-72"><a href="#cb26-72" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">robust</span><span class="co">](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.robust)</span> <span class="pp">|</span> Single-task GP that detects outliers and discounts them: BoTorch's <span class="pp">|</span></span>
+<span id="cb26-73"><a href="#cb26-73" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_sparse_outlier_likelihood</span><span class="co">](#bofire.data_models.surrogates.api.SingleTaskGPSurrogate.validate_sparse_outlier_likelihood)</span> <span class="pp">|</span> Outlier noise levels are fitted for one output only. <span class="pp">|</span></span>
+<span id="cb26-74"><a href="#cb26-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-75"><a href="#cb26-75" aria-hidden="true" tabindex="-1"></a><span class="fu">##### additive_map_saas { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.additive_map_saas }</span></span>
+<span id="cb26-76"><a href="#cb26-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-77"><a href="#cb26-77" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-78"><a href="#cb26-78" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.additive_map_saas(</span>
+<span id="cb26-79"><a href="#cb26-79" aria-hidden="true" tabindex="-1"></a>    inputs,</span>
+<span id="cb26-80"><a href="#cb26-80" aria-hidden="true" tabindex="-1"></a>    outputs,</span>
+<span id="cb26-81"><a href="#cb26-81" aria-hidden="true" tabindex="-1"></a>    n_taus<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb26-82"><a href="#cb26-82" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>,</span>
+<span id="cb26-83"><a href="#cb26-83" aria-hidden="true" tabindex="-1"></a>    engineered_features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-84"><a href="#cb26-84" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-85"><a href="#cb26-85" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-86"><a href="#cb26-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-87"><a href="#cb26-87" aria-hidden="true" tabindex="-1"></a>Single-task GP for many inputs of which only a few are expected to matter.</span>
+<span id="cb26-88"><a href="#cb26-88" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-89"><a href="#cb26-89" aria-hidden="true" tabindex="-1"></a>The maximum-a-posteriori approximation of the fully Bayesian SAAS model, as</span>
+<span id="cb26-90"><a href="#cb26-90" aria-hidden="true" tabindex="-1"></a>BoTorch's <span class="in">`AdditiveMapSaasSingleTaskGP`</span> builds it: an additive sparse kernel, a</span>
+<span id="cb26-91"><a href="#cb26-91" aria-hidden="true" tabindex="-1"></a>constant mean with a standard normal prior bounded to <span class="co">[</span><span class="ot">-10, 10</span><span class="co">]</span>, and the default</span>
+<span id="cb26-92"><a href="#cb26-92" aria-hidden="true" tabindex="-1"></a>likelihood.</span>
+<span id="cb26-93"><a href="#cb26-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-94"><a href="#cb26-94" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb26-95"><a href="#cb26-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-96"><a href="#cb26-96" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                <span class="pp">|</span> Type                           <span class="pp">|</span> Description                                                                                                          <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb26-97"><a href="#cb26-97" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------------------|--------------------------------|----------------------------------------------------------------------------------------------------------------------|------------|</span></span>
+<span id="cb26-98"><a href="#cb26-98" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> inputs              <span class="pp">|</span> Inputs                         <span class="pp">|</span> The input features.                                                                                                  <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb26-99"><a href="#cb26-99" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> outputs             <span class="pp">|</span> Outputs                        <span class="pp">|</span> The output feature.                                                                                                  <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb26-100"><a href="#cb26-100" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> engineered_features <span class="pp">|</span> Optional<span class="sc">\[</span>EngineeredFeatures<span class="sc">\]</span> <span class="pp">|</span> Quantities derived from the inputs that the model sees as well; the kernel works on them too. If not provided, none. <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
+<span id="cb26-101"><a href="#cb26-101" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> n_taus              <span class="pp">|</span> int                            <span class="pp">|</span> Number of sparse kernels summed up, each at its own sparsity level.                                                  <span class="pp">|</span> <span class="in">`4`</span>        <span class="pp">|</span></span>
+<span id="cb26-102"><a href="#cb26-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-103"><a href="#cb26-103" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb26-104"><a href="#cb26-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-105"><a href="#cb26-105" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                  <span class="pp">|</span> Description                                      <span class="pp">|</span></span>
+<span id="cb26-106"><a href="#cb26-106" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-----------------------|--------------------------------------------------|</span></span>
+<span id="cb26-107"><a href="#cb26-107" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> SingleTaskGPSurrogate <span class="pp">|</span> The surrogate, with an additive MAP-SAAS kernel. <span class="pp">|</span></span>
+<span id="cb26-108"><a href="#cb26-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-109"><a href="#cb26-109" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented }</span></span>
+<span id="cb26-110"><a href="#cb26-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-111"><a href="#cb26-111" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-112"><a href="#cb26-112" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.is_output_implemented(my_type)</span>
+<span id="cb26-113"><a href="#cb26-113" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-114"><a href="#cb26-114" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-115"><a href="#cb26-115" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb26-116"><a href="#cb26-116" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb26-117"><a href="#cb26-117" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb26-118"><a href="#cb26-118" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb26-119"><a href="#cb26-119" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb26-120"><a href="#cb26-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-121"><a href="#cb26-121" aria-hidden="true" tabindex="-1"></a><span class="fu">##### linear { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.linear }</span></span>
+<span id="cb26-122"><a href="#cb26-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-123"><a href="#cb26-123" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-124"><a href="#cb26-124" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.linear(</span>
+<span id="cb26-125"><a href="#cb26-125" aria-hidden="true" tabindex="-1"></a>    inputs,</span>
+<span id="cb26-126"><a href="#cb26-126" aria-hidden="true" tabindex="-1"></a>    outputs,</span>
+<span id="cb26-127"><a href="#cb26-127" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>,</span>
+<span id="cb26-128"><a href="#cb26-128" aria-hidden="true" tabindex="-1"></a>    engineered_features<span class="op">=</span><span class="va">None</span>,</span>
 <span id="cb26-129"><a href="#cb26-129" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb26-130"><a href="#cb26-130" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb26-131"><a href="#cb26-131" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-132"><a href="#cb26-132" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb26-133"><a href="#cb26-133" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb26-134"><a href="#cb26-134" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb26-135"><a href="#cb26-135" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb26-136"><a href="#cb26-136" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
-<span id="cb26-137"><a href="#cb26-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-138"><a href="#cb26-138" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiTaskGPSurrogate { #bofire.data_models.surrogates.api.MultiTaskGPSurrogate }</span></span>
-<span id="cb26-139"><a href="#cb26-139" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-140"><a href="#cb26-140" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-141"><a href="#cb26-141" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MultiTaskGPSurrogate()</span>
-<span id="cb26-142"><a href="#cb26-142" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-143"><a href="#cb26-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-132"><a href="#cb26-132" aria-hidden="true" tabindex="-1"></a>Single-task GP whose response is linear in the inputs.</span>
+<span id="cb26-133"><a href="#cb26-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-134"><a href="#cb26-134" aria-hidden="true" tabindex="-1"></a>Equivalent to Bayesian linear regression. The noise has a THREESIX prior with a</span>
+<span id="cb26-135"><a href="#cb26-135" aria-hidden="true" tabindex="-1"></a>lower bound of 1e-4; every other field keeps its default.</span>
+<span id="cb26-136"><a href="#cb26-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-137"><a href="#cb26-137" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb26-138"><a href="#cb26-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-139"><a href="#cb26-139" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                <span class="pp">|</span> Type                           <span class="pp">|</span> Description                                                                                                          <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb26-140"><a href="#cb26-140" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------------------|--------------------------------|----------------------------------------------------------------------------------------------------------------------|------------|</span></span>
+<span id="cb26-141"><a href="#cb26-141" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> inputs              <span class="pp">|</span> Inputs                         <span class="pp">|</span> The input features.                                                                                                  <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb26-142"><a href="#cb26-142" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> outputs             <span class="pp">|</span> Outputs                        <span class="pp">|</span> The output feature.                                                                                                  <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb26-143"><a href="#cb26-143" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> engineered_features <span class="pp">|</span> Optional<span class="sc">\[</span>EngineeredFeatures<span class="sc">\]</span> <span class="pp">|</span> Quantities derived from the inputs that the model sees as well; the kernel works on them too. If not provided, none. <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
 <span id="cb26-144"><a href="#cb26-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-145"><a href="#cb26-145" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-146"><a href="#cb26-146" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb26-147"><a href="#cb26-147" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-148"><a href="#cb26-148" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb26-149"><a href="#cb26-149" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb26-150"><a href="#cb26-150" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
-<span id="cb26-151"><a href="#cb26-151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-152"><a href="#cb26-152" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented }</span></span>
-<span id="cb26-153"><a href="#cb26-153" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-154"><a href="#cb26-154" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-155"><a href="#cb26-155" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented(my_type)</span>
-<span id="cb26-156"><a href="#cb26-156" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-157"><a href="#cb26-157" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-158"><a href="#cb26-158" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb26-159"><a href="#cb26-159" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb26-160"><a href="#cb26-160" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb26-161"><a href="#cb26-161" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb26-162"><a href="#cb26-162" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
-<span id="cb26-163"><a href="#cb26-163" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-164"><a href="#cb26-164" aria-hidden="true" tabindex="-1"></a><span class="fu">### RobustSingleTaskGPSurrogate { #bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate }</span></span>
-<span id="cb26-165"><a href="#cb26-165" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-166"><a href="#cb26-166" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-167"><a href="#cb26-167" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RobustSingleTaskGPSurrogate()</span>
-<span id="cb26-168"><a href="#cb26-168" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-145"><a href="#cb26-145" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb26-146"><a href="#cb26-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-147"><a href="#cb26-147" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                  <span class="pp">|</span> Description                          <span class="pp">|</span></span>
+<span id="cb26-148"><a href="#cb26-148" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-----------------------|--------------------------------------|</span></span>
+<span id="cb26-149"><a href="#cb26-149" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> SingleTaskGPSurrogate <span class="pp">|</span> The surrogate, with a linear kernel. <span class="pp">|</span></span>
+<span id="cb26-150"><a href="#cb26-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-151"><a href="#cb26-151" aria-hidden="true" tabindex="-1"></a><span class="fu">##### mixed { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.mixed }</span></span>
+<span id="cb26-152"><a href="#cb26-152" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-153"><a href="#cb26-153" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-154"><a href="#cb26-154" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.mixed(</span>
+<span id="cb26-155"><a href="#cb26-155" aria-hidden="true" tabindex="-1"></a>    inputs,</span>
+<span id="cb26-156"><a href="#cb26-156" aria-hidden="true" tabindex="-1"></a>    outputs,</span>
+<span id="cb26-157"><a href="#cb26-157" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>,</span>
+<span id="cb26-158"><a href="#cb26-158" aria-hidden="true" tabindex="-1"></a>    engineered_features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-159"><a href="#cb26-159" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-160"><a href="#cb26-160" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-161"><a href="#cb26-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-162"><a href="#cb26-162" aria-hidden="true" tabindex="-1"></a>Single-task GP for continuous and categorical inputs, as BoTorch's</span>
+<span id="cb26-163"><a href="#cb26-163" aria-hidden="true" tabindex="-1"></a><span class="in">`MixedSingleTaskGP`</span> builds it.</span>
+<span id="cb26-164"><a href="#cb26-164" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-165"><a href="#cb26-165" aria-hidden="true" tabindex="-1"></a>Categorical inputs without descriptor data are encoded as ordinal codes and</span>
+<span id="cb26-166"><a href="#cb26-166" aria-hidden="true" tabindex="-1"></a>compared by a Hamming kernel; all other inputs and the engineered features by</span>
+<span id="cb26-167"><a href="#cb26-167" aria-hidden="true" tabindex="-1"></a>an RBF kernel with the HVARFNER prior. The kernel is the sum of the two plus</span>
+<span id="cb26-168"><a href="#cb26-168" aria-hidden="true" tabindex="-1"></a>their product, each scaled; without other inputs, the scaled Hamming kernel.</span>
 <span id="cb26-169"><a href="#cb26-169" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-170"><a href="#cb26-170" aria-hidden="true" tabindex="-1"></a>Robust Relevance Pursuit Single Task Gaussian Process Surrogate.</span>
+<span id="cb26-170"><a href="#cb26-170" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
 <span id="cb26-171"><a href="#cb26-171" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-172"><a href="#cb26-172" aria-hidden="true" tabindex="-1"></a>A robust single-task GP that learns a data-point specific noise level and is therefore more robust to outliers.</span>
-<span id="cb26-173"><a href="#cb26-173" aria-hidden="true" tabindex="-1"></a>See: https://botorch.org/docs/tutorials/relevance_pursuit_robust_regression/</span>
-<span id="cb26-174"><a href="#cb26-174" aria-hidden="true" tabindex="-1"></a>Paper: https://arxiv.org/pdf/2410.24222</span>
-<span id="cb26-175"><a href="#cb26-175" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-176"><a href="#cb26-176" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Attributes {.doc-section .doc-section-attributes}</span></span>
+<span id="cb26-172"><a href="#cb26-172" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                <span class="pp">|</span> Type                           <span class="pp">|</span> Description                                                                                                          <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb26-173"><a href="#cb26-173" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------------------|--------------------------------|----------------------------------------------------------------------------------------------------------------------|------------|</span></span>
+<span id="cb26-174"><a href="#cb26-174" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> inputs              <span class="pp">|</span> Inputs                         <span class="pp">|</span> The input features, at least one of them categorical without descriptor data.                                        <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb26-175"><a href="#cb26-175" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> outputs             <span class="pp">|</span> Outputs                        <span class="pp">|</span> The output feature.                                                                                                  <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb26-176"><a href="#cb26-176" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> engineered_features <span class="pp">|</span> Optional<span class="sc">\[</span>EngineeredFeatures<span class="sc">\]</span> <span class="pp">|</span> Quantities derived from the inputs that the model sees as well; the RBF kernel works on them. If not provided, none. <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
 <span id="cb26-177"><a href="#cb26-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-178"><a href="#cb26-178" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                   <span class="pp">|</span> Type            <span class="pp">|</span> Description                                                                                                            <span class="pp">|</span></span>
-<span id="cb26-179"><a href="#cb26-179" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------------------|-----------------|------------------------------------------------------------------------------------------------------------------------|</span></span>
-<span id="cb26-180"><a href="#cb26-180" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> prior_mean_of_support  <span class="pp">|</span> Optional<span class="sc">\[</span>int<span class="sc">\]</span> <span class="pp">|</span> The prior mean of the support.                                                                                         <span class="pp">|</span></span>
-<span id="cb26-181"><a href="#cb26-181" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> convex_parametrization <span class="pp">|</span> bool            <span class="pp">|</span> Whether to use convex parametrization of the sparse noise model.                                                       <span class="pp">|</span></span>
-<span id="cb26-182"><a href="#cb26-182" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> cache_model_trace      <span class="pp">|</span> bool            <span class="pp">|</span> Whether to cache the model trace. This needs no be set to True if you want to view the model trace after optimization. <span class="pp">|</span></span>
+<span id="cb26-178"><a href="#cb26-178" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb26-179"><a href="#cb26-179" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-180"><a href="#cb26-180" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                  <span class="pp">|</span> Description    <span class="pp">|</span></span>
+<span id="cb26-181"><a href="#cb26-181" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-----------------------|----------------|</span></span>
+<span id="cb26-182"><a href="#cb26-182" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> SingleTaskGPSurrogate <span class="pp">|</span> The surrogate. <span class="pp">|</span></span>
 <span id="cb26-183"><a href="#cb26-183" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-184"><a href="#cb26-184" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Note {.doc-section .doc-section-note}</span></span>
+<span id="cb26-184"><a href="#cb26-184" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Raises {.doc-section .doc-section-raises}</span></span>
 <span id="cb26-185"><a href="#cb26-185" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-186"><a href="#cb26-186" aria-hidden="true" tabindex="-1"></a>The definition of "outliers" depends on the model capacity, so what is an outlier</span>
-<span id="cb26-187"><a href="#cb26-187" aria-hidden="true" tabindex="-1"></a>with respect to a simple model might not be an outlier with respect to a complex model.</span>
-<span id="cb26-188"><a href="#cb26-188" aria-hidden="true" tabindex="-1"></a>For this reason, it is necessary to bound the lengthscale of the GP kernel from below.</span>
+<span id="cb26-186"><a href="#cb26-186" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                                                                                           <span class="pp">|</span></span>
+<span id="cb26-187"><a href="#cb26-187" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|-----------------------------------------------------------------------------------------------------------------------|</span></span>
+<span id="cb26-188"><a href="#cb26-188" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> If no categorical input lacks descriptor data, or if an engineered feature replaces the features it is computed from. <span class="pp">|</span></span>
 <span id="cb26-189"><a href="#cb26-189" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-190"><a href="#cb26-190" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb26-190"><a href="#cb26-190" aria-hidden="true" tabindex="-1"></a><span class="fu">##### options { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.options }</span></span>
 <span id="cb26-191"><a href="#cb26-191" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-192"><a href="#cb26-192" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb26-193"><a href="#cb26-193" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb26-194"><a href="#cb26-194" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
-<span id="cb26-195"><a href="#cb26-195" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-196"><a href="#cb26-196" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented }</span></span>
-<span id="cb26-197"><a href="#cb26-197" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-198"><a href="#cb26-198" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-199"><a href="#cb26-199" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RobustSingleTaskGPSurrogate.is_output_implemented(</span>
-<span id="cb26-200"><a href="#cb26-200" aria-hidden="true" tabindex="-1"></a>    my_type,</span>
-<span id="cb26-201"><a href="#cb26-201" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb26-202"><a href="#cb26-202" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-203"><a href="#cb26-203" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-204"><a href="#cb26-204" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb26-205"><a href="#cb26-205" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb26-206"><a href="#cb26-206" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb26-207"><a href="#cb26-207" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb26-208"><a href="#cb26-208" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb26-192"><a href="#cb26-192" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-193"><a href="#cb26-193" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.options(</span>
+<span id="cb26-194"><a href="#cb26-194" aria-hidden="true" tabindex="-1"></a>    inputs,</span>
+<span id="cb26-195"><a href="#cb26-195" aria-hidden="true" tabindex="-1"></a>    outputs,</span>
+<span id="cb26-196"><a href="#cb26-196" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>,</span>
+<span id="cb26-197"><a href="#cb26-197" aria-hidden="true" tabindex="-1"></a>    engineered_features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-198"><a href="#cb26-198" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-199"><a href="#cb26-199" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-200"><a href="#cb26-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-201"><a href="#cb26-201" aria-hidden="true" tabindex="-1"></a>Single-task GPs that differ in kernel and priors, as options to choose from.</span>
+<span id="cb26-202"><a href="#cb26-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-203"><a href="#cb26-203" aria-hidden="true" tabindex="-1"></a>One for each combination of base kernel (RBF, Matern 1.5, Matern 2.5), set of</span>
+<span id="cb26-204"><a href="#cb26-204" aria-hidden="true" tabindex="-1"></a>noise, lengthscale and outputscale priors (MBO, THREESIX, HVARFNER), with and</span>
+<span id="cb26-205"><a href="#cb26-205" aria-hidden="true" tabindex="-1"></a>without a scale kernel, and with and without ARD: 36 in all. Every other field</span>
+<span id="cb26-206"><a href="#cb26-206" aria-hidden="true" tabindex="-1"></a>keeps its default.</span>
+<span id="cb26-207"><a href="#cb26-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-208"><a href="#cb26-208" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
 <span id="cb26-209"><a href="#cb26-209" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-210"><a href="#cb26-210" aria-hidden="true" tabindex="-1"></a><span class="fu">### TanimotoGPSurrogate { #bofire.data_models.surrogates.api.TanimotoGPSurrogate }</span></span>
-<span id="cb26-211"><a href="#cb26-211" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-212"><a href="#cb26-212" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-213"><a href="#cb26-213" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate()</span>
-<span id="cb26-214"><a href="#cb26-214" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-210"><a href="#cb26-210" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                <span class="pp">|</span> Type                           <span class="pp">|</span> Description                                                                                                             <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb26-211"><a href="#cb26-211" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------------------|--------------------------------|-------------------------------------------------------------------------------------------------------------------------|------------|</span></span>
+<span id="cb26-212"><a href="#cb26-212" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> inputs              <span class="pp">|</span> Inputs                         <span class="pp">|</span> The input features of every option.                                                                                     <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb26-213"><a href="#cb26-213" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> outputs             <span class="pp">|</span> Outputs                        <span class="pp">|</span> The output feature of every option.                                                                                     <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb26-214"><a href="#cb26-214" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> engineered_features <span class="pp">|</span> Optional<span class="sc">\[</span>EngineeredFeatures<span class="sc">\]</span> <span class="pp">|</span> Quantities derived from the inputs that every option sees as well; the kernel works on them too. If not provided, none. <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
 <span id="cb26-215"><a href="#cb26-215" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-216"><a href="#cb26-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-216"><a href="#cb26-216" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
 <span id="cb26-217"><a href="#cb26-217" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-218"><a href="#cb26-218" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb26-219"><a href="#cb26-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-220"><a href="#cb26-220" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb26-221"><a href="#cb26-221" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb26-222"><a href="#cb26-222" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
-<span id="cb26-223"><a href="#cb26-223" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_moleculars</span><span class="co">](#bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars)</span> <span class="pp">|</span> Checks that at least one fingerprint/fragment descriptor encoding is present. <span class="pp">|</span></span>
-<span id="cb26-224"><a href="#cb26-224" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-225"><a href="#cb26-225" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented }</span></span>
-<span id="cb26-226"><a href="#cb26-226" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-227"><a href="#cb26-227" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-228"><a href="#cb26-228" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented(my_type)</span>
-<span id="cb26-229"><a href="#cb26-229" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-230"><a href="#cb26-230" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-231"><a href="#cb26-231" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb26-232"><a href="#cb26-232" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb26-233"><a href="#cb26-233" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb26-234"><a href="#cb26-234" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb26-235"><a href="#cb26-235" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
-<span id="cb26-236"><a href="#cb26-236" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-237"><a href="#cb26-237" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_moleculars { #bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars }</span></span>
+<span id="cb26-218"><a href="#cb26-218" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                          <span class="pp">|</span> Description                                           <span class="pp">|</span></span>
+<span id="cb26-219"><a href="#cb26-219" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-------------------------------|-------------------------------------------------------|</span></span>
+<span id="cb26-220"><a href="#cb26-220" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> List<span class="sc">\[</span>SingleTaskGPSurrogate<span class="sc">\]</span> <span class="pp">|</span> The options, each with its own kernel and likelihood. <span class="pp">|</span></span>
+<span id="cb26-221"><a href="#cb26-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-222"><a href="#cb26-222" aria-hidden="true" tabindex="-1"></a><span class="fu">##### polynomial { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.polynomial }</span></span>
+<span id="cb26-223"><a href="#cb26-223" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-224"><a href="#cb26-224" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-225"><a href="#cb26-225" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.polynomial(</span>
+<span id="cb26-226"><a href="#cb26-226" aria-hidden="true" tabindex="-1"></a>    inputs,</span>
+<span id="cb26-227"><a href="#cb26-227" aria-hidden="true" tabindex="-1"></a>    outputs,</span>
+<span id="cb26-228"><a href="#cb26-228" aria-hidden="true" tabindex="-1"></a>    power<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb26-229"><a href="#cb26-229" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>,</span>
+<span id="cb26-230"><a href="#cb26-230" aria-hidden="true" tabindex="-1"></a>    engineered_features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-231"><a href="#cb26-231" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-232"><a href="#cb26-232" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-233"><a href="#cb26-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-234"><a href="#cb26-234" aria-hidden="true" tabindex="-1"></a>Single-task GP whose response is a polynomial in the inputs.</span>
+<span id="cb26-235"><a href="#cb26-235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-236"><a href="#cb26-236" aria-hidden="true" tabindex="-1"></a>The noise has a THREESIX prior with a lower bound of 1e-4; every other field</span>
+<span id="cb26-237"><a href="#cb26-237" aria-hidden="true" tabindex="-1"></a>keeps its default.</span>
 <span id="cb26-238"><a href="#cb26-238" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-239"><a href="#cb26-239" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-240"><a href="#cb26-240" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars()</span>
-<span id="cb26-241"><a href="#cb26-241" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-242"><a href="#cb26-242" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-243"><a href="#cb26-243" aria-hidden="true" tabindex="-1"></a>Checks that at least one fingerprint/fragment descriptor encoding is present.</span>
-<span id="cb26-244"><a href="#cb26-244" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-245"><a href="#cb26-245" aria-hidden="true" tabindex="-1"></a><span class="fu">### LinearSurrogate { #bofire.data_models.surrogates.api.LinearSurrogate }</span></span>
-<span id="cb26-246"><a href="#cb26-246" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-247"><a href="#cb26-247" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-248"><a href="#cb26-248" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.LinearSurrogate()</span>
-<span id="cb26-249"><a href="#cb26-249" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-250"><a href="#cb26-250" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-251"><a href="#cb26-251" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-252"><a href="#cb26-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-253"><a href="#cb26-253" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb26-254"><a href="#cb26-254" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-255"><a href="#cb26-255" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb26-256"><a href="#cb26-256" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb26-257"><a href="#cb26-257" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.LinearSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
-<span id="cb26-258"><a href="#cb26-258" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-259"><a href="#cb26-259" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.LinearSurrogate.is_output_implemented }</span></span>
-<span id="cb26-260"><a href="#cb26-260" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-261"><a href="#cb26-261" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-262"><a href="#cb26-262" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.LinearSurrogate.is_output_implemented(my_type)</span>
+<span id="cb26-239"><a href="#cb26-239" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb26-240"><a href="#cb26-240" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-241"><a href="#cb26-241" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                <span class="pp">|</span> Type                           <span class="pp">|</span> Description                                                                                                          <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb26-242"><a href="#cb26-242" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------------------|--------------------------------|----------------------------------------------------------------------------------------------------------------------|------------|</span></span>
+<span id="cb26-243"><a href="#cb26-243" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> inputs              <span class="pp">|</span> Inputs                         <span class="pp">|</span> The input features.                                                                                                  <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb26-244"><a href="#cb26-244" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> outputs             <span class="pp">|</span> Outputs                        <span class="pp">|</span> The output feature.                                                                                                  <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb26-245"><a href="#cb26-245" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> engineered_features <span class="pp">|</span> Optional<span class="sc">\[</span>EngineeredFeatures<span class="sc">\]</span> <span class="pp">|</span> Quantities derived from the inputs that the model sees as well; the kernel works on them too. If not provided, none. <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
+<span id="cb26-246"><a href="#cb26-246" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> power               <span class="pp">|</span> int                            <span class="pp">|</span> Degree of the polynomial.                                                                                            <span class="pp">|</span> <span class="in">`2`</span>        <span class="pp">|</span></span>
+<span id="cb26-247"><a href="#cb26-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-248"><a href="#cb26-248" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb26-249"><a href="#cb26-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-250"><a href="#cb26-250" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                  <span class="pp">|</span> Description                                                 <span class="pp">|</span></span>
+<span id="cb26-251"><a href="#cb26-251" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-----------------------|-------------------------------------------------------------|</span></span>
+<span id="cb26-252"><a href="#cb26-252" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> SingleTaskGPSurrogate <span class="pp">|</span> The surrogate, with a polynomial kernel of the given power. <span class="pp">|</span></span>
+<span id="cb26-253"><a href="#cb26-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-254"><a href="#cb26-254" aria-hidden="true" tabindex="-1"></a><span class="fu">##### robust { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.robust }</span></span>
+<span id="cb26-255"><a href="#cb26-255" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-256"><a href="#cb26-256" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-257"><a href="#cb26-257" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.robust(</span>
+<span id="cb26-258"><a href="#cb26-258" aria-hidden="true" tabindex="-1"></a>    inputs,</span>
+<span id="cb26-259"><a href="#cb26-259" aria-hidden="true" tabindex="-1"></a>    outputs,</span>
+<span id="cb26-260"><a href="#cb26-260" aria-hidden="true" tabindex="-1"></a>    <span class="op">*</span>,</span>
+<span id="cb26-261"><a href="#cb26-261" aria-hidden="true" tabindex="-1"></a>    engineered_features<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb26-262"><a href="#cb26-262" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb26-263"><a href="#cb26-263" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb26-264"><a href="#cb26-264" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-265"><a href="#cb26-265" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb26-266"><a href="#cb26-266" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb26-267"><a href="#cb26-267" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb26-268"><a href="#cb26-268" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb26-269"><a href="#cb26-269" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
-<span id="cb26-270"><a href="#cb26-270" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-271"><a href="#cb26-271" aria-hidden="true" tabindex="-1"></a><span class="fu">### PolynomialSurrogate { #bofire.data_models.surrogates.api.PolynomialSurrogate }</span></span>
-<span id="cb26-272"><a href="#cb26-272" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-273"><a href="#cb26-273" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-274"><a href="#cb26-274" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.PolynomialSurrogate()</span>
-<span id="cb26-275"><a href="#cb26-275" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-276"><a href="#cb26-276" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-277"><a href="#cb26-277" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-278"><a href="#cb26-278" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-279"><a href="#cb26-279" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb26-280"><a href="#cb26-280" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-281"><a href="#cb26-281" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb26-282"><a href="#cb26-282" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb26-283"><a href="#cb26-283" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.PolynomialSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
-<span id="cb26-284"><a href="#cb26-284" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-285"><a href="#cb26-285" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.PolynomialSurrogate.is_output_implemented }</span></span>
-<span id="cb26-286"><a href="#cb26-286" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-287"><a href="#cb26-287" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-288"><a href="#cb26-288" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.PolynomialSurrogate.is_output_implemented(my_type)</span>
-<span id="cb26-289"><a href="#cb26-289" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-290"><a href="#cb26-290" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-291"><a href="#cb26-291" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
-<span id="cb26-292"><a href="#cb26-292" aria-hidden="true" tabindex="-1"></a>Args:</span>
-<span id="cb26-293"><a href="#cb26-293" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
-<span id="cb26-294"><a href="#cb26-294" aria-hidden="true" tabindex="-1"></a>Returns:</span>
-<span id="cb26-295"><a href="#cb26-295" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb26-265"><a href="#cb26-265" aria-hidden="true" tabindex="-1"></a>Single-task GP that detects outliers and discounts them: BoTorch's</span>
+<span id="cb26-266"><a href="#cb26-266" aria-hidden="true" tabindex="-1"></a><span class="in">`RobustRelevancePursuitSingleTaskGP`</span>, with the lengthscales bounded at 0.05</span>
+<span id="cb26-267"><a href="#cb26-267" aria-hidden="true" tabindex="-1"></a>instead of 0.025.</span>
+<span id="cb26-268"><a href="#cb26-268" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-269"><a href="#cb26-269" aria-hidden="true" tabindex="-1"></a>The likelihood adds an extra noise variance for observations treated as</span>
+<span id="cb26-270"><a href="#cb26-270" aria-hidden="true" tabindex="-1"></a>outliers to the HVARFNER noise model. The kernel is an RBF kernel with the</span>
+<span id="cb26-271"><a href="#cb26-271" aria-hidden="true" tabindex="-1"></a>HVARFNER prior whose lengthscales are at least 0.05, so that the model cannot</span>
+<span id="cb26-272"><a href="#cb26-272" aria-hidden="true" tabindex="-1"></a>simply explain the outliers.</span>
+<span id="cb26-273"><a href="#cb26-273" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-274"><a href="#cb26-274" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb26-275"><a href="#cb26-275" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-276"><a href="#cb26-276" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name                <span class="pp">|</span> Type                           <span class="pp">|</span> Description                                                                                                          <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb26-277"><a href="#cb26-277" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------------------|--------------------------------|----------------------------------------------------------------------------------------------------------------------|------------|</span></span>
+<span id="cb26-278"><a href="#cb26-278" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> inputs              <span class="pp">|</span> Inputs                         <span class="pp">|</span> The input features.                                                                                                  <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb26-279"><a href="#cb26-279" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> outputs             <span class="pp">|</span> Outputs                        <span class="pp">|</span> The output feature, exactly one.                                                                                     <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb26-280"><a href="#cb26-280" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> engineered_features <span class="pp">|</span> Optional<span class="sc">\[</span>EngineeredFeatures<span class="sc">\]</span> <span class="pp">|</span> Quantities derived from the inputs that the model sees as well; the kernel works on them too. If not provided, none. <span class="pp">|</span> <span class="in">`None`</span>     <span class="pp">|</span></span>
+<span id="cb26-281"><a href="#cb26-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-282"><a href="#cb26-282" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Returns {.doc-section .doc-section-returns}</span></span>
+<span id="cb26-283"><a href="#cb26-283" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-284"><a href="#cb26-284" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type                  <span class="pp">|</span> Description                                              <span class="pp">|</span></span>
+<span id="cb26-285"><a href="#cb26-285" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|-----------------------|----------------------------------------------------------|</span></span>
+<span id="cb26-286"><a href="#cb26-286" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> SingleTaskGPSurrogate <span class="pp">|</span> The surrogate, with a <span class="in">`SparseOutlierGaussianLikelihood`</span>. <span class="pp">|</span></span>
+<span id="cb26-287"><a href="#cb26-287" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-288"><a href="#cb26-288" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_sparse_outlier_likelihood { #bofire.data_models.surrogates.api.SingleTaskGPSurrogate.validate_sparse_outlier_likelihood }</span></span>
+<span id="cb26-289"><a href="#cb26-289" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-290"><a href="#cb26-290" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-291"><a href="#cb26-291" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SingleTaskGPSurrogate.validate_sparse_outlier_likelihood(</span>
+<span id="cb26-292"><a href="#cb26-292" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-293"><a href="#cb26-293" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-294"><a href="#cb26-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-295"><a href="#cb26-295" aria-hidden="true" tabindex="-1"></a>Outlier noise levels are fitted for one output only.</span>
 <span id="cb26-296"><a href="#cb26-296" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-297"><a href="#cb26-297" aria-hidden="true" tabindex="-1"></a><span class="fu">### RandomForestSurrogate { #bofire.data_models.surrogates.api.RandomForestSurrogate }</span></span>
+<span id="cb26-297"><a href="#cb26-297" aria-hidden="true" tabindex="-1"></a><span class="fu">### MultiTaskGPSurrogate { #bofire.data_models.surrogates.api.MultiTaskGPSurrogate }</span></span>
 <span id="cb26-298"><a href="#cb26-298" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-299"><a href="#cb26-299" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-300"><a href="#cb26-300" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RandomForestSurrogate()</span>
+<span id="cb26-300"><a href="#cb26-300" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MultiTaskGPSurrogate()</span>
 <span id="cb26-301"><a href="#cb26-301" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb26-302"><a href="#cb26-302" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-303"><a href="#cb26-303" aria-hidden="true" tabindex="-1"></a></span>
@@ -1697,12 +1994,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb26-306"><a href="#cb26-306" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-307"><a href="#cb26-307" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
 <span id="cb26-308"><a href="#cb26-308" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb26-309"><a href="#cb26-309" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.RandomForestSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb26-309"><a href="#cb26-309" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
 <span id="cb26-310"><a href="#cb26-310" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-311"><a href="#cb26-311" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.RandomForestSurrogate.is_output_implemented }</span></span>
+<span id="cb26-311"><a href="#cb26-311" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented }</span></span>
 <span id="cb26-312"><a href="#cb26-312" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-313"><a href="#cb26-313" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-314"><a href="#cb26-314" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RandomForestSurrogate.is_output_implemented(my_type)</span>
+<span id="cb26-314"><a href="#cb26-314" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MultiTaskGPSurrogate.is_output_implemented(my_type)</span>
 <span id="cb26-315"><a href="#cb26-315" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb26-316"><a href="#cb26-316" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-317"><a href="#cb26-317" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
@@ -1711,65 +2008,145 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb26-320"><a href="#cb26-320" aria-hidden="true" tabindex="-1"></a>Returns:</span>
 <span id="cb26-321"><a href="#cb26-321" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
 <span id="cb26-322"><a href="#cb26-322" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-323"><a href="#cb26-323" aria-hidden="true" tabindex="-1"></a><span class="fu">### MLPEnsemble { #bofire.data_models.surrogates.api.MLPEnsemble }</span></span>
+<span id="cb26-323"><a href="#cb26-323" aria-hidden="true" tabindex="-1"></a><span class="fu">### TanimotoGPSurrogate { #bofire.data_models.surrogates.api.TanimotoGPSurrogate }</span></span>
 <span id="cb26-324"><a href="#cb26-324" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-325"><a href="#cb26-325" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-326"><a href="#cb26-326" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MLPEnsemble()</span>
+<span id="cb26-326"><a href="#cb26-326" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate()</span>
 <span id="cb26-327"><a href="#cb26-327" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb26-328"><a href="#cb26-328" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-329"><a href="#cb26-329" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-330"><a href="#cb26-330" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-331"><a href="#cb26-331" aria-hidden="true" tabindex="-1"></a><span class="fu">### SelectionSurrogate { #bofire.data_models.surrogates.api.SelectionSurrogate }</span></span>
+<span id="cb26-331"><a href="#cb26-331" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
 <span id="cb26-332"><a href="#cb26-332" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-333"><a href="#cb26-333" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-334"><a href="#cb26-334" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SelectionSurrogate()</span>
-<span id="cb26-335"><a href="#cb26-335" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-336"><a href="#cb26-336" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-337"><a href="#cb26-337" aria-hidden="true" tabindex="-1"></a>Surrogate that chooses one of several complete surrogates by cross-validation.</span>
-<span id="cb26-338"><a href="#cb26-338" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-339"><a href="#cb26-339" aria-hidden="true" tabindex="-1"></a>When fitted, every option is cross-validated on the data, and the one with the</span>
-<span id="cb26-340"><a href="#cb26-340" aria-hidden="true" tabindex="-1"></a>best score in <span class="in">`metric`</span> is fitted on all of the data and makes the predictions.</span>
-<span id="cb26-341"><a href="#cb26-341" aria-hidden="true" tabindex="-1"></a>Every option has the inputs and the single continuous output of this surrogate.</span>
-<span id="cb26-342"><a href="#cb26-342" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-343"><a href="#cb26-343" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Examples {.doc-section .doc-section-examples}</span></span>
-<span id="cb26-344"><a href="#cb26-344" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-345"><a href="#cb26-345" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-346"><a href="#cb26-346" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> SelectionSurrogate(</span>
-<span id="cb26-347"><a href="#cb26-347" aria-hidden="true" tabindex="-1"></a>...     inputs<span class="op">=</span>inputs,</span>
-<span id="cb26-348"><a href="#cb26-348" aria-hidden="true" tabindex="-1"></a>...     outputs<span class="op">=</span>outputs,</span>
-<span id="cb26-349"><a href="#cb26-349" aria-hidden="true" tabindex="-1"></a>...     options<span class="op">=</span>SingleTaskGPSurrogate.options(inputs, outputs),</span>
-<span id="cb26-350"><a href="#cb26-350" aria-hidden="true" tabindex="-1"></a>... )</span>
-<span id="cb26-351"><a href="#cb26-351" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-352"><a href="#cb26-352" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-353"><a href="#cb26-353" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
-<span id="cb26-354"><a href="#cb26-354" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-355"><a href="#cb26-355" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
-<span id="cb26-356"><a href="#cb26-356" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
-<span id="cb26-357"><a href="#cb26-357" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_options</span><span class="co">](#bofire.data_models.surrogates.api.SelectionSurrogate.validate_options)</span> <span class="pp">|</span> Check that every option has the inputs and output of this surrogate. <span class="pp">|</span></span>
-<span id="cb26-358"><a href="#cb26-358" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-359"><a href="#cb26-359" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_options { #bofire.data_models.surrogates.api.SelectionSurrogate.validate_options }</span></span>
-<span id="cb26-360"><a href="#cb26-360" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-361"><a href="#cb26-361" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-362"><a href="#cb26-362" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SelectionSurrogate.validate_options()</span>
-<span id="cb26-363"><a href="#cb26-363" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-333"><a href="#cb26-333" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb26-334"><a href="#cb26-334" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb26-335"><a href="#cb26-335" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb26-336"><a href="#cb26-336" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_moleculars</span><span class="co">](#bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars)</span> <span class="pp">|</span> Checks that at least one fingerprint/fragment descriptor encoding is present. <span class="pp">|</span></span>
+<span id="cb26-337"><a href="#cb26-337" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-338"><a href="#cb26-338" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented }</span></span>
+<span id="cb26-339"><a href="#cb26-339" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-340"><a href="#cb26-340" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-341"><a href="#cb26-341" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.is_output_implemented(my_type)</span>
+<span id="cb26-342"><a href="#cb26-342" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-343"><a href="#cb26-343" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-344"><a href="#cb26-344" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb26-345"><a href="#cb26-345" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb26-346"><a href="#cb26-346" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb26-347"><a href="#cb26-347" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb26-348"><a href="#cb26-348" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb26-349"><a href="#cb26-349" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-350"><a href="#cb26-350" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_moleculars { #bofire.data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars }</span></span>
+<span id="cb26-351"><a href="#cb26-351" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-352"><a href="#cb26-352" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-353"><a href="#cb26-353" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.TanimotoGPSurrogate.validate_moleculars()</span>
+<span id="cb26-354"><a href="#cb26-354" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-355"><a href="#cb26-355" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-356"><a href="#cb26-356" aria-hidden="true" tabindex="-1"></a>Checks that at least one fingerprint/fragment descriptor encoding is present.</span>
+<span id="cb26-357"><a href="#cb26-357" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-358"><a href="#cb26-358" aria-hidden="true" tabindex="-1"></a><span class="fu">### RandomForestSurrogate { #bofire.data_models.surrogates.api.RandomForestSurrogate }</span></span>
+<span id="cb26-359"><a href="#cb26-359" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-360"><a href="#cb26-360" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-361"><a href="#cb26-361" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RandomForestSurrogate()</span>
+<span id="cb26-362"><a href="#cb26-362" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-363"><a href="#cb26-363" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-364"><a href="#cb26-364" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-365"><a href="#cb26-365" aria-hidden="true" tabindex="-1"></a>Check that every option has the inputs and output of this surrogate.</span>
-<span id="cb26-366"><a href="#cb26-366" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-367"><a href="#cb26-367" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Raises {.doc-section .doc-section-raises}</span></span>
-<span id="cb26-368"><a href="#cb26-368" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-369"><a href="#cb26-369" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                                                                         <span class="pp">|</span></span>
-<span id="cb26-370"><a href="#cb26-370" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|-----------------------------------------------------------------------------------------------------|</span></span>
-<span id="cb26-371"><a href="#cb26-371" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> If an option's inputs or outputs differ from this surrogate's, or if there is more than one output. <span class="pp">|</span></span>
-<span id="cb26-372"><a href="#cb26-372" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-373"><a href="#cb26-373" aria-hidden="true" tabindex="-1"></a><span class="fu">### BotorchSurrogates { #bofire.data_models.surrogates.api.BotorchSurrogates }</span></span>
-<span id="cb26-374"><a href="#cb26-374" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-375"><a href="#cb26-375" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb26-376"><a href="#cb26-376" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.BotorchSurrogates()</span>
-<span id="cb26-377"><a href="#cb26-377" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb26-378"><a href="#cb26-378" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-379"><a href="#cb26-379" aria-hidden="true" tabindex="-1"></a>"List of botorch surrogates.</span>
-<span id="cb26-380"><a href="#cb26-380" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-381"><a href="#cb26-381" aria-hidden="true" tabindex="-1"></a>Behaves similar to a Surrogate.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb26-365"><a href="#cb26-365" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-366"><a href="#cb26-366" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb26-367"><a href="#cb26-367" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-368"><a href="#cb26-368" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb26-369"><a href="#cb26-369" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb26-370"><a href="#cb26-370" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_output_implemented</span><span class="co">](#bofire.data_models.surrogates.api.RandomForestSurrogate.is_output_implemented)</span> <span class="pp">|</span> Abstract method to check output type for surrogate models <span class="pp">|</span></span>
+<span id="cb26-371"><a href="#cb26-371" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-372"><a href="#cb26-372" aria-hidden="true" tabindex="-1"></a><span class="fu">##### is_output_implemented { #bofire.data_models.surrogates.api.RandomForestSurrogate.is_output_implemented }</span></span>
+<span id="cb26-373"><a href="#cb26-373" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-374"><a href="#cb26-374" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-375"><a href="#cb26-375" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.RandomForestSurrogate.is_output_implemented(my_type)</span>
+<span id="cb26-376"><a href="#cb26-376" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-377"><a href="#cb26-377" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-378"><a href="#cb26-378" aria-hidden="true" tabindex="-1"></a>Abstract method to check output type for surrogate models</span>
+<span id="cb26-379"><a href="#cb26-379" aria-hidden="true" tabindex="-1"></a>Args:</span>
+<span id="cb26-380"><a href="#cb26-380" aria-hidden="true" tabindex="-1"></a>    my_type: continuous or categorical output</span>
+<span id="cb26-381"><a href="#cb26-381" aria-hidden="true" tabindex="-1"></a>Returns:</span>
+<span id="cb26-382"><a href="#cb26-382" aria-hidden="true" tabindex="-1"></a>    bool: True if the output type is valid for the surrogate chosen, False otherwise</span>
+<span id="cb26-383"><a href="#cb26-383" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-384"><a href="#cb26-384" aria-hidden="true" tabindex="-1"></a><span class="fu">### MLPEnsemble { #bofire.data_models.surrogates.api.MLPEnsemble }</span></span>
+<span id="cb26-385"><a href="#cb26-385" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-386"><a href="#cb26-386" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-387"><a href="#cb26-387" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.MLPEnsemble()</span>
+<span id="cb26-388"><a href="#cb26-388" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-389"><a href="#cb26-389" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-390"><a href="#cb26-390" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-391"><a href="#cb26-391" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-392"><a href="#cb26-392" aria-hidden="true" tabindex="-1"></a><span class="fu">### SelectionSurrogate { #bofire.data_models.surrogates.api.SelectionSurrogate }</span></span>
+<span id="cb26-393"><a href="#cb26-393" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-394"><a href="#cb26-394" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-395"><a href="#cb26-395" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SelectionSurrogate()</span>
+<span id="cb26-396"><a href="#cb26-396" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-397"><a href="#cb26-397" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-398"><a href="#cb26-398" aria-hidden="true" tabindex="-1"></a>Surrogate that chooses one of several complete surrogates by cross-validation.</span>
+<span id="cb26-399"><a href="#cb26-399" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-400"><a href="#cb26-400" aria-hidden="true" tabindex="-1"></a>When fitted, every option is cross-validated on the data, and the one with the</span>
+<span id="cb26-401"><a href="#cb26-401" aria-hidden="true" tabindex="-1"></a>best score in <span class="in">`metric`</span> is fitted on all of the data and makes the predictions.</span>
+<span id="cb26-402"><a href="#cb26-402" aria-hidden="true" tabindex="-1"></a>Every option has the inputs and the single continuous output of this surrogate.</span>
+<span id="cb26-403"><a href="#cb26-403" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-404"><a href="#cb26-404" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Examples {.doc-section .doc-section-examples}</span></span>
+<span id="cb26-405"><a href="#cb26-405" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-406"><a href="#cb26-406" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-407"><a href="#cb26-407" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> SelectionSurrogate(</span>
+<span id="cb26-408"><a href="#cb26-408" aria-hidden="true" tabindex="-1"></a>...     inputs<span class="op">=</span>inputs,</span>
+<span id="cb26-409"><a href="#cb26-409" aria-hidden="true" tabindex="-1"></a>...     outputs<span class="op">=</span>outputs,</span>
+<span id="cb26-410"><a href="#cb26-410" aria-hidden="true" tabindex="-1"></a>...     options<span class="op">=</span>SingleTaskGPSurrogate.options(inputs, outputs),</span>
+<span id="cb26-411"><a href="#cb26-411" aria-hidden="true" tabindex="-1"></a>... )</span>
+<span id="cb26-412"><a href="#cb26-412" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-413"><a href="#cb26-413" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-414"><a href="#cb26-414" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Methods</span></span>
+<span id="cb26-415"><a href="#cb26-415" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-416"><a href="#cb26-416" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name <span class="pp">|</span> Description <span class="pp">|</span></span>
+<span id="cb26-417"><a href="#cb26-417" aria-hidden="true" tabindex="-1"></a><span class="pp">| ---</span> <span class="pp">| ---</span> <span class="pp">|</span></span>
+<span id="cb26-418"><a href="#cb26-418" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_options</span><span class="co">](#bofire.data_models.surrogates.api.SelectionSurrogate.validate_options)</span> <span class="pp">|</span> Check that every option has the inputs and output of this surrogate. <span class="pp">|</span></span>
+<span id="cb26-419"><a href="#cb26-419" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-420"><a href="#cb26-420" aria-hidden="true" tabindex="-1"></a><span class="fu">##### validate_options { #bofire.data_models.surrogates.api.SelectionSurrogate.validate_options }</span></span>
+<span id="cb26-421"><a href="#cb26-421" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-422"><a href="#cb26-422" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-423"><a href="#cb26-423" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.SelectionSurrogate.validate_options()</span>
+<span id="cb26-424"><a href="#cb26-424" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-425"><a href="#cb26-425" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-426"><a href="#cb26-426" aria-hidden="true" tabindex="-1"></a>Check that every option has the inputs and output of this surrogate.</span>
+<span id="cb26-427"><a href="#cb26-427" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-428"><a href="#cb26-428" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Raises {.doc-section .doc-section-raises}</span></span>
+<span id="cb26-429"><a href="#cb26-429" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-430"><a href="#cb26-430" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                                                                         <span class="pp">|</span></span>
+<span id="cb26-431"><a href="#cb26-431" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|-----------------------------------------------------------------------------------------------------|</span></span>
+<span id="cb26-432"><a href="#cb26-432" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> If an option's inputs or outputs differ from this surrogate's, or if there is more than one output. <span class="pp">|</span></span>
+<span id="cb26-433"><a href="#cb26-433" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-434"><a href="#cb26-434" aria-hidden="true" tabindex="-1"></a><span class="fu">### LBFGSB { #bofire.data_models.surrogates.api.LBFGSB }</span></span>
+<span id="cb26-435"><a href="#cb26-435" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-436"><a href="#cb26-436" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-437"><a href="#cb26-437" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.LBFGSB()</span>
+<span id="cb26-438"><a href="#cb26-438" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-439"><a href="#cb26-439" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-440"><a href="#cb26-440" aria-hidden="true" tabindex="-1"></a>L-BFGS-B, the optimizer that fits a Gaussian process's hyperparameters by</span>
+<span id="cb26-441"><a href="#cb26-441" aria-hidden="true" tabindex="-1"></a>maximizing the marginal likelihood.</span>
+<span id="cb26-442"><a href="#cb26-442" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-443"><a href="#cb26-443" aria-hidden="true" tabindex="-1"></a>Options left at None keep BoTorch's defaults: scipy's for an ordinary fit, and</span>
+<span id="cb26-444"><a href="#cb26-444" aria-hidden="true" tabindex="-1"></a>its own (at most 10000 iterations, tolerances of 1e-8) for the relevance pursuit</span>
+<span id="cb26-445"><a href="#cb26-445" aria-hidden="true" tabindex="-1"></a>of a GP with a <span class="in">`SparseOutlierGaussianLikelihood`</span>.</span>
+<span id="cb26-446"><a href="#cb26-446" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-447"><a href="#cb26-447" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Examples {.doc-section .doc-section-examples}</span></span>
+<span id="cb26-448"><a href="#cb26-448" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-449"><a href="#cb26-449" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-450"><a href="#cb26-450" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> LBFGSB(maxiter<span class="op">=</span><span class="dv">200</span>)</span>
+<span id="cb26-451"><a href="#cb26-451" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-452"><a href="#cb26-452" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-453"><a href="#cb26-453" aria-hidden="true" tabindex="-1"></a><span class="fu">### BotorchSurrogates { #bofire.data_models.surrogates.api.BotorchSurrogates }</span></span>
+<span id="cb26-454"><a href="#cb26-454" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-455"><a href="#cb26-455" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb26-456"><a href="#cb26-456" aria-hidden="true" tabindex="-1"></a>data_models.surrogates.api.BotorchSurrogates()</span>
+<span id="cb26-457"><a href="#cb26-457" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb26-458"><a href="#cb26-458" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-459"><a href="#cb26-459" aria-hidden="true" tabindex="-1"></a>"List of botorch surrogates.</span>
+<span id="cb26-460"><a href="#cb26-460" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-461"><a href="#cb26-461" aria-hidden="true" tabindex="-1"></a>Behaves similar to a Surrogate.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
