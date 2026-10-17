@@ -65,7 +65,6 @@ def _rebuild_dependent_models() -> None:
         (ExactWassersteinKernel, "lengthscale_prior"),
         (ConstantMean, "prior"),
         (GaussianLikelihood, "noise_prior"),
-        (MultiTaskGPSurrogate, "noise_prior"),
         (SparseOutlierGaussianLikelihood, "noise_prior"),
     ]:
         patch_field(model_cls, field_name, AnyPrior)
@@ -81,7 +80,6 @@ def _rebuild_dependent_models() -> None:
         (WedgeKernel, "lengthscale_constraint"),
         (ScaleKernel, "outputscale_constraint"),
         (GaussianLikelihood, "noise_constraint"),
-        (MultiTaskGPSurrogate, "noise_constraint"),
         (SparseOutlierGaussianLikelihood, "noise_constraint"),
     ]:
         patch_field(model_cls, field_name, AnyPriorConstraint)
