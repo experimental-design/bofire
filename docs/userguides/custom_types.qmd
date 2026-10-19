@@ -38,7 +38,7 @@ class MyStrategyDataModel(StrategyDataModel):
 
 # 2. Functional class — implements ask/tell
 class MyStrategy(Strategy):
-    def _ask(self, candidate_count):
+    def _ask(self, candidate_count, progress_callback=None):
         return pd.DataFrame()
 
     def has_sufficient_experiments(self) -> bool:

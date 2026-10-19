@@ -29,6 +29,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     DiscreteInput,
 )
+from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.strategy import Strategy, make_strategy
 from bofire.utils.torch_tools import (
     get_interpoint_constraints,
@@ -75,7 +76,11 @@ class RandomStrategy(Strategy):
         """
         return True
 
-    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
+    def _ask(
+        self,
+        candidate_count: PositiveInt,
+        progress_callback: Optional[AskProgressCallback] = None,
+    ) -> pd.DataFrame:
         """Generate candidate samples using the random strategy.
 
         If the domain is compatible with polytope sampling, it uses the polytope sampling to generate

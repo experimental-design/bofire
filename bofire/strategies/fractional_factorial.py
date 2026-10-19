@@ -12,6 +12,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.data_models.strategies.api import FractionalFactorialStrategy as DataModel
+from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.strategy import Strategy, make_strategy
 from bofire.utils.doe import (
     apply_block_generator,
@@ -182,7 +183,11 @@ class FractionalFactorialStrategy(Strategy):
             ],
         )
 
-    def _ask(self, candidate_count: Optional[int] = None) -> pd.DataFrame:
+    def _ask(
+        self,
+        candidate_count: Optional[int] = None,
+        progress_callback: Optional[AskProgressCallback] = None,
+    ) -> pd.DataFrame:
         if candidate_count is not None:
             warnings.warn(
                 "FractionalFactorialStrategy will ignore the specified value of candidate_count. "

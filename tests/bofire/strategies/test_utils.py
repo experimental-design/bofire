@@ -375,3 +375,28 @@ def test_run_ga_progress_csv_path_from_data_model(
     assert not callback_path.exists()
     assert x_opt.shape == (1, 1)
     assert f_opt.shape == (1,)
+
+
+def test_run_ga_callback_and_csv_both_run(
+    tmp_path,
+    ga_domain,
+    ga_objective,
+    ga_optimizer_factory,
+):
+    csv_path = tmp_path / "ga_progress.csv"
+    optimizer = ga_optimizer_factory(ga_progress_csv_path=str(csv_path))
+    calls = []
+
+    run_ga(
+        data_model=optimizer,
+        domain=ga_domain,
+        objective_callables=[ga_objective],
+        q=1,
+        callable_format="torch",
+        callback=calls.append,
+    )
+
+    assert len(calls) >= 1
+    lines = csv_path.read_text(encoding="utf-8").strip().splitlines()
+    assert lines[0] == "generation,n_eval,best_f"
+    assert len(lines) >= 2

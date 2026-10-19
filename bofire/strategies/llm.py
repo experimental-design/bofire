@@ -16,6 +16,7 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousOutput
 from bofire.data_models.llm.api import AnyLLMProvider
 from bofire.data_models.objectives.api import MinimizeObjective
+from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.strategy import Strategy, make_strategy
 
 
@@ -217,7 +218,11 @@ class LLMStrategy(Strategy):
         """LLM can propose candidates with zero experiments (cold start)."""
         return True
 
-    def _ask(self, candidate_count: Optional[PositiveInt] = None) -> pd.DataFrame:
+    def _ask(
+        self,
+        candidate_count: Optional[PositiveInt] = None,
+        progress_callback: Optional[AskProgressCallback] = None,
+    ) -> pd.DataFrame:
         """Generate candidates by calling the LLM.
 
         Bridges async pydantic-ai into sync BoFire via asyncio.run().

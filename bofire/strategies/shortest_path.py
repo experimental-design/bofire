@@ -15,6 +15,7 @@ from bofire.data_models.domain.api import Constraints, Inputs
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import ShortestPathStrategy as DataModel
+from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.strategy import Strategy, make_strategy
 
 
@@ -115,7 +116,11 @@ class ShortestPathStrategy(Strategy):
             step[key] = self.end[key]
         return step
 
-    def _ask(self, candidate_count: Optional[int] = None) -> pd.DataFrame:
+    def _ask(
+        self,
+        candidate_count: Optional[int] = None,
+        progress_callback: Optional[AskProgressCallback] = None,
+    ) -> pd.DataFrame:
         """Perform the shortest path strategy to determine the optimal path from the start point to the end point.
 
         Args:

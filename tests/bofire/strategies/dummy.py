@@ -71,6 +71,7 @@ class DummyStrategy(Strategy):
     def _ask(  # type: ignore
         self,
         candidate_count: int,
+        progress_callback=None,
     ) -> Tuple[pd.DataFrame, List[dict]]:
         raise NotImplementedError(
             f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}",
@@ -154,6 +155,7 @@ class DummyPredictiveStrategy(PredictiveStrategy):
     def _ask(  # type: ignore
         self,
         candidate_count: int,
+        progress_callback=None,
     ) -> Tuple[pd.DataFrame, List[dict]]:
         raise NotImplementedError(
             f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}",
@@ -203,6 +205,7 @@ class DummyBotorchPredictiveStrategy(BotorchStrategy):
     def _ask(  # type: ignore
         self,
         candidate_count: int,
+        progress_callback=None,
     ) -> Tuple[pd.DataFrame, List[dict]]:
         raise NotImplementedError(
             f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}",
