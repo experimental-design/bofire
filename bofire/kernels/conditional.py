@@ -22,6 +22,31 @@ from bofire.data_models.kernels.conditional import (
 IndicatorFunction = Callable[[Tensor], Tensor]
 
 
+def _localize_features_to_idx_mapper(
+    features_to_idx_mapper: Callable[[list[str]], list[int]],
+    active_dims: list[int],
+) -> Callable[[list[str]], list[int]]:
+    """Wrap `features_to_idx_mapper` to return positions within `active_dims`.
+
+    A kernel with `active_dims` sees only those columns of its inputs, in that order,
+    so these positions index the inputs the kernel receives.
+
+    Raises:
+        ValueError: If a feature lies outside `active_dims`.
+    """
+
+    def mapper(feature_keys: list[str]) -> list[int]:
+        idcs = features_to_idx_mapper(feature_keys)
+        if not set(idcs).issubset(active_dims):
+            raise ValueError(
+                f"Features {feature_keys} must lie within the kernel's active "
+                f"dimensions {active_dims}."
+            )
+        return [active_dims.index(i) for i in idcs]
+
+    return mapper
+
+
 def _conditional_feature_to_indicator(
     cond_tuple: tuple[str, str, Condition],
     features_to_idx_mapper: Callable[[list[str]], list[int]],
@@ -58,8 +83,10 @@ def _conditional_feature_to_indicator(
 
 def build_indicator_func(
     conditions: Sequence[tuple[str, str, Condition]],
+    active_dims: list[int],
     features_to_idx_mapper: Callable[[list[str]], list[int]] | None,
 ) -> IndicatorFunction:
+    """Build the indicator function of a conditional kernel over `active_dims`."""
     if not conditions:
         return lambda X: torch.ones_like(X, dtype=torch.bool)
 
@@ -68,8 +95,9 @@ def build_indicator_func(
             "features_to_idx_mapper must be defined when using a conditional kernel"
         )
 
+    mapper = _localize_features_to_idx_mapper(features_to_idx_mapper, active_dims)
     thresholds = [
-        _conditional_feature_to_indicator(cond_tuple, features_to_idx_mapper)
+        _conditional_feature_to_indicator(cond_tuple, mapper)
         for cond_tuple in conditions
     ]
 
@@ -90,38 +118,35 @@ def compute_base_kernel_active_dims(
 ) -> list[int]:
     """Compute the active dimensions for the base_kernel of a conditional kernel.
 
-    The conditional kernel expands the input space by a factor of 2, by embedding each
-    input to a point in 2D. We therefore must drop any of the new dimensions that are
-    appended but not
+    The conditional kernel sees only the columns in `active_dims`, and embeds each
+    in 2D. The base kernel takes the first coordinate
+    of each of its features, and the second coordinate only of conditional features
+    (since it is always zero for the others). By default the base kernel uses every
+    column; `base_kernel.features` restricts it, e.g. to drop indicator features.
 
-    This also removes any variables that were used as indicators."""
+    Returns:
+        Column indices into the embedded inputs, which are positions relative to
+        `active_dims` rather than indices into the full inputs.
+    """
     if not active_dims:
-        # since we append the embedded features on the right of the input features,
-        # we need to know the number of features passed to the kernel
         raise ValueError(
             "`active_dims` must not be empty when using conditional kernels."
         )
-    if not data_model.conditions:
-        # if there are no conditions, then no embedding takes place - simply return
-        # the active dimensions; this check prevents raising an error if there are
-        # no conditions, and `feature_to_idx_mapper` is None
-        return active_dims
+    d = len(active_dims)
+    base_features = data_model.base_kernel.features
+    if not data_model.conditions and not base_features:
+        # there are no features to look up, so `features_to_idx_mapper` may be None
+        return list(range(d))
 
     if features_to_idx_mapper is None:
         raise ValueError(
             "features_to_idx_mapper must be defined when using conditional kernels."
         )
 
-    base_kernel_data_model = data_model.base_kernel
-    embedded_idcs = features_to_idx_mapper([tup[0] for tup in data_model.conditions])
-
-    d = len(active_dims)
-
-    if base_kernel_data_model.features:
-        active_dims = features_to_idx_mapper(base_kernel_data_model.features)
-
-    embedded_dims = [i + d for i in active_dims if i in embedded_idcs]
-    return active_dims + embedded_dims
+    mapper = _localize_features_to_idx_mapper(features_to_idx_mapper, active_dims)
+    base_dims = mapper(base_features) if base_features else list(range(d))
+    embedded_idcs = mapper([tup[0] for tup in data_model.conditions])
+    return base_dims + [i + d for i in base_dims if i in embedded_idcs]
 
 
 class WedgeKernel(Kernel):
@@ -154,6 +179,7 @@ class WedgeKernel(Kernel):
                 `batch_shape x n x d` binary tensor mask, indicating which features
                 are active.
         """
+        # kwargs includes ard_num_dims and lengthscale prior
         super().__init__(has_lengthscale=True, **kwargs)
 
         if self.ard_num_dims is None:
@@ -235,7 +261,7 @@ class WedgeKernel(Kernel):
         mask = self.indicator_func(x)
         x_ = x.div(self.lengthscale)
         midpoint = 0.5 / self.lengthscale
-        ell = self.radius[..., 0]
+        ell = self.radius
 
         x_1 = torch.where(
             mask.bool(), x_, midpoint + torch.cos(math.pi * self.angle) * ell
