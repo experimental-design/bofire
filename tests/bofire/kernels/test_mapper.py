@@ -533,6 +533,29 @@ def test_map_WedgeKernel():
     assert isinstance(k, conditionalKernels.WedgeKernel)
     assert k.base_kernel.active_dims.tolist() == [0, 1, 2, 4]
 
+    feats_dummy = ["dummy"] + feats
+    data_model = WedgeKernel(
+        base_kernel=RBFKernel(features=["x1", "x2"]), conditions=conditions, ard=True
+    )
+
+    k = kernels.map(
+        data_model,
+        active_dims=[1, 2, 3],
+        batch_shape=torch.Size(),
+        features_to_idx_mapper=lambda ks: list(map(feats_dummy.index, ks)),
+    )
+    k_sliced = kernels.map(
+        data_model,
+        active_dims=[0, 1, 2],
+        batch_shape=torch.Size(),
+        features_to_idx_mapper=lambda ks: list(map(feats.index, ks)),
+    )
+
+    assert k.ard_num_dims == 3
+    X = torch.rand(6, 4)
+    # the task column must not affect the covariance
+    assert torch.allclose(k(X).to_dense(), k_sliced(X[:, 1:]).to_dense())
+
 
 def test_map_spherical_linear_kernel():
     kernel = SphericalLinearKernel(ard=True)
