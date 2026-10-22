@@ -264,10 +264,10 @@ class WedgeKernel(Kernel):
         ell = self.radius
 
         x_1 = torch.where(
-            mask.bool(), x_, midpoint + torch.cos(math.pi * self.angle) * ell
+            mask.bool(), x_, midpoint + torch.cos(math.pi * self.angle).div(ell)
         )
         x_2 = torch.where(
-            mask.bool(), torch.zeros_like(x_), torch.sin(math.pi * self.angle) * ell
+            mask.bool(), torch.zeros_like(x_), torch.sin(math.pi * self.angle).div(ell)
         )
 
         x_ = torch.cat((x_1, x_2), dim=-1)
