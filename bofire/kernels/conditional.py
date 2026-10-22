@@ -144,7 +144,6 @@ class WedgeKernel(Kernel):
         indicator_func: Callable[[Tensor], Tensor],
         angle_prior: Prior | None = None,
         radius_prior: Prior | None = None,
-        use_rotated_embedding: bool = True,
         **kwargs,
     ):
         """
@@ -185,12 +184,10 @@ class WedgeKernel(Kernel):
 
         self.register_constraint("raw_angle", Interval(1e-4, 1 - 1e-4))
 
-        radii_per_dim = 1 if use_rotated_embedding else 2
-        self.use_rotated_embedding = use_rotated_embedding
         self.register_parameter(
             name="raw_radius",
             parameter=torch.nn.Parameter(
-                torch.zeros(*self.batch_shape, 1, radii_per_dim * self.last_dim)
+                torch.zeros(*self.batch_shape, 1, self.last_dim)
             ),
         )
 
@@ -235,22 +232,6 @@ class WedgeKernel(Kernel):
         self.initialize(raw_radius=self.raw_radius_constraint.inverse_transform(value))
 
     def embedding(self, x):
-        # this assumes that x has been normalized to [0, 1]
-        mask = self.indicator_func(x)
-        x_ = x.div(self.lengthscale)
-        l_1 = self.radius[..., 0]
-        l_2 = self.radius[..., 1]
-
-        x_1 = (l_1 + x * (l_2 * torch.cos(math.pi * self.angle) - l_1)) * mask
-        x_2 = (x * l_2 * torch.sin(math.pi * self.angle)) * mask
-
-        x_ = torch.cat((x_1, x_2), dim=-1)
-        return x_
-
-    def rotated_embedding(self, x):
-        # we rotate the embedding, which means we can place a prior directly
-        # on the lengthscale
-        # this assumes that x has been normalized to [0, 1]
         mask = self.indicator_func(x)
         x_ = x.div(self.lengthscale)
         midpoint = 0.5 / self.lengthscale
@@ -269,10 +250,7 @@ class WedgeKernel(Kernel):
     def forward(
         self, x1, x2, diag: bool = False, last_dim_is_batch: bool = False, **params
     ):
-        if self.use_rotated_embedding:
-            x1_, x2_ = self.rotated_embedding(x1), self.rotated_embedding(x2)
-        else:
-            x1_, x2_ = self.embedding(x1), self.embedding(x2)
+        x1_, x2_ = self.embedding(x1), self.embedding(x2)
         return self.base_kernel(
             x1_, x2_, diag=diag, last_dim_is_batch=last_dim_is_batch
         )
