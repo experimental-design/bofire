@@ -464,8 +464,9 @@ def map_WedgeKernel(
         **kwargs,
     )
     return WedgeKernel(
-        base_kernel,
-        indicator_func,
+        base_kernel=base_kernel,
+        indicator_func=indicator_func,
+        ard_num_dims=len(active_dims) if data_model.ard else None,
         **_lengthscale(data_model, d=len(active_dims)),
         angle_prior=(
             priors.map(data_model.angle_prior, d=len(active_dims))
