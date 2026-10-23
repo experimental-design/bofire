@@ -31,7 +31,6 @@ from bofire.data_models.surrogates.scaler import (
 from bofire.data_models.surrogates.selection import SelectionSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.surrogate import Surrogate
-from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 from bofire.data_models.unions import tagged_union
 
@@ -43,7 +42,6 @@ AnySurrogate = tagged_union(
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
-    TanimotoGPSurrogate,
     LinearDeterministicSurrogate,
     CategoricalDeterministicSurrogate,
     MultiTaskGPSurrogate,
@@ -58,7 +56,6 @@ AnyTrainableSurrogate = tagged_union(
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
-    TanimotoGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
     SelectionSurrogate,
 )
@@ -69,7 +66,6 @@ AnyRegressionSurrogate = tagged_union(
     SingleTaskGPSurrogate,
     RegressionMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
-    TanimotoGPSurrogate,
     LinearDeterministicSurrogate,
     MultiTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,

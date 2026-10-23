@@ -40,7 +40,6 @@ def _rebuild_dependent_models() -> None:
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
     from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
     from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
-    from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 
     AnyPrior = priors_api.AnyPrior
     AnyPriorConstraint = priors_api.AnyPriorConstraint
@@ -67,7 +66,6 @@ def _rebuild_dependent_models() -> None:
         (ConstantMean, "prior"),
         (GaussianLikelihood, "noise_prior"),
         (MultiTaskGPSurrogate, "noise_prior"),
-        (TanimotoGPSurrogate, "noise_prior"),
         (SparseOutlierGaussianLikelihood, "noise_prior"),
     ]:
         patch_field(model_cls, field_name, AnyPrior)
@@ -84,7 +82,6 @@ def _rebuild_dependent_models() -> None:
         (ScaleKernel, "outputscale_constraint"),
         (GaussianLikelihood, "noise_constraint"),
         (MultiTaskGPSurrogate, "noise_constraint"),
-        (TanimotoGPSurrogate, "noise_constraint"),
         (SparseOutlierGaussianLikelihood, "noise_constraint"),
     ]:
         patch_field(model_cls, field_name, AnyPriorConstraint)
@@ -125,7 +122,6 @@ def _rebuild_dependent_models() -> None:
     for cls in [
         SingleTaskGPSurrogate,
         MultiTaskGPSurrogate,
-        TanimotoGPSurrogate,
     ]:
         cls.model_rebuild(force=True)
 

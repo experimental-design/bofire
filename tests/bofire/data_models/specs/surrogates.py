@@ -26,6 +26,7 @@ from bofire.data_models.kernels.api import (
     TanimotoKernel,
 )
 from bofire.data_models.likelihoods.api import (
+    THREESIX_LIKELIHOOD,
     GaussianLikelihood,
     SparseOutlierGaussianLikelihood,
 )
@@ -547,7 +548,7 @@ specs.add_invalid(
 )
 
 specs.add_valid(
-    models.TanimotoGPSurrogate,
+    models.SingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
             features=[
@@ -565,24 +566,22 @@ specs.add_valid(
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=TanimotoKernel(
-                ard=True,
+                features=["mol1"],
+                fingerprints=DescriptorEncoding(
+                    columns=[],
+                    generators=[Fingerprints(n_bits=32, bond_radius=3)],
+                ),
             ),
             outputscale_prior=THREESIX_SCALE_PRIOR(),
         ).model_dump(),
+        "mean": ConstantMean().model_dump(),
+        "likelihood": THREESIX_LIKELIHOOD().model_dump(),
         "engineered_features": EngineeredFeatures().model_dump(),
         "scaler": None,
         "output_scaler": ScalerEnum.IDENTITY,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "categorical_encodings": {
-            "mol1": DescriptorEncoding(
-                columns=[],
-                generators=[Fingerprints(n_bits=32, bond_radius=3)],
-            ).model_dump(),
-        },
+        "categorical_encodings": {"mol1": OrdinalEncoding().model_dump()},
         "optimizer": LBFGSB().model_dump(),
         "dump": None,
-        "tanimoto_calculation_mode": "pre_computed",
     },
 )
 
