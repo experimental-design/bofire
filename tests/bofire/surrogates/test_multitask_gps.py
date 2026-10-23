@@ -7,6 +7,7 @@ import torch
 from botorch.models import MultiTaskGP
 from botorch.models.transforms.input import InputStandardize, Normalize
 from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
+from gpytorch.likelihoods.hadamard_gaussian_likelihood import HadamardGaussianLikelihood
 from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
@@ -20,12 +21,8 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
 )
 from bofire.data_models.kernels.api import RBFKernel
-from bofire.data_models.priors.api import (
-    LKJ_PRIOR,
-    GammaPrior,
-    GreaterThan,
-    LogNormalPrior,
-)
+from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.priors.api import GammaPrior, GreaterThan, LogNormalPrior
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate, ScalerEnum
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
@@ -64,21 +61,16 @@ def test_MultiTask_input_preprocessing():
 
 
 @pytest.mark.parametrize(
-    "kernel, scaler, output_scaler, task_prior",
+    "kernel, scaler, output_scaler",
     [
-        (RBFKernel(ard=True), NormalizeScaler(), ScalerEnum.STANDARDIZE, None),
-        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.STANDARDIZE, None),
-        (RBFKernel(ard=False), None, ScalerEnum.IDENTITY, LKJ_PRIOR()),
-        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.LOG, None),
-        (
-            RBFKernel(ard=False),
-            StandardizeScaler(),
-            ScalerEnum.CHAINED_LOG_STANDARDIZE,
-            None,
-        ),
+        (RBFKernel(ard=True), NormalizeScaler(), ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), None, ScalerEnum.IDENTITY),
+        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.LOG),
+        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.CHAINED_LOG_STANDARDIZE),
     ],
 )
-def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
+def test_MultiTaskGPModel(kernel, scaler, output_scaler):
     benchmark = MultiTaskHimmelblau()
     inputs = benchmark.domain.inputs
     outputs = benchmark.domain.outputs
@@ -97,18 +89,16 @@ def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
         scaler=scaler,
         output_scaler=output_scaler,
         kernel=kernel,
-        task_prior=task_prior,
     )
 
     model = surrogates.map(model)
     with pytest.raises(ValueError):
         model.dumps()
-    # if task_prior is not None, a warning should be raised
-    if task_prior is not None:
-        with pytest.warns(UserWarning):
-            model.fit(experiments)
-    else:
-        model.fit(experiments)
+    model.fit(experiments)
+    # every task has a noise level and a mean of its own
+    assert isinstance(model.model.likelihood, HadamardGaussianLikelihood)
+    assert model.model.likelihood.noise_covar.noise.shape[-1] == 2
+    assert len(model.model.mean_module.base_means) == 2
     # check that the active_dims are set correctly
     assert torch.allclose(
         model.model.covar_module.kernels[0].active_dims,
@@ -174,7 +164,7 @@ def test_MultiTaskGPModel_noise_constraint():
     model = MultiTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
-        noise_constraint=GreaterThan(lower_bound=5e-4),
+        likelihood=GaussianLikelihood(noise_constraint=GreaterThan(lower_bound=5e-4)),
     )
     model = surrogates.map(model)
     model.fit(experiments)
@@ -216,7 +206,9 @@ def test_noise_prior_registered_for_multi_task_gp():
         MultiTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=GammaPrior(concentration=1.1, rate=0.001),
+            likelihood=GaussianLikelihood(
+                noise_prior=GammaPrior(concentration=1.1, rate=0.001)
+            ),
         )
     )
     surrogate.fit(experiments)
@@ -240,20 +232,27 @@ def test_noise_prior_directional_effect_on_multi_task_gp():
         MultiTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=LogNormalPrior(loc=-8.0, scale=0.1),  # mode ~ 3e-4
+            # mode ~ 3e-4
+            likelihood=GaussianLikelihood(
+                noise_prior=LogNormalPrior(loc=-8.0, scale=0.1)
+            ),
         )
     )
     large_noise = surrogates.map(
         MultiTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=GammaPrior(concentration=1.1, rate=0.001),  # mode = 100
+            # mode = 100
+            likelihood=GaussianLikelihood(
+                noise_prior=GammaPrior(concentration=1.1, rate=0.001)
+            ),
         )
     )
     small_noise.fit(experiments)
     large_noise.fit(experiments)
 
+    # one noise level per task, each pulled in the direction of its prior
     assert (
-        large_noise.model.likelihood.noise.item()
-        > small_noise.model.likelihood.noise.item()
-    )
+        large_noise.model.likelihood.noise_covar.noise
+        > small_noise.model.likelihood.noise_covar.noise
+    ).all()

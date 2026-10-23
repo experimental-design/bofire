@@ -1,4 +1,3 @@
-import warnings
 from typing import Optional
 
 import botorch
@@ -8,16 +7,14 @@ import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from gpytorch.means import MultitaskMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
 import bofire.likelihoods.api as likelihoods
+import bofire.means.api as means
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import CategoricalTaskInput
-from bofire.data_models.likelihoods.api import (
-    GaussianLikelihood as GaussianLikelihoodDataModel,
-)
-from bofire.data_models.priors.api import LKJPrior
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.surrogates.utils import scipy_options
@@ -37,12 +34,8 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         self.optimizer = data_model.optimizer
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
-        self.noise_prior = data_model.noise_prior
-        self.noise_constraint = data_model.noise_constraint
-        self.task_prior = data_model.task_prior
-        if isinstance(self.task_prior, LKJPrior):
-            # set the number of tasks in the prior
-            self.task_prior.n_tasks = self.n_tasks
+        self.mean = data_model.mean
+        self.likelihood = data_model.likelihood
         # obtain the name of the task feature
         self.task_feature_key = data_model.inputs.get_keys(CategoricalTaskInput)[0]
 
@@ -60,17 +53,12 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         **kwargs,
     ) -> None:
         n_dim = tX.shape[-1]
-        likelihood = likelihoods.map(
-            GaussianLikelihoodDataModel(
-                noise_prior=self.noise_prior, noise_constraint=self.noise_constraint
-            ),
-            d=n_dim,
-        )
+        task_feature = self.get_feature_indices([self.task_feature_key])[0]
 
         self.model = botorch.models.MultiTaskGP(
             train_X=tX,
             train_Y=tY,
-            task_feature=self.get_feature_indices([self.task_feature_key])[0],
+            task_feature=task_feature,
             covar_module=kernels.map(
                 self.kernel,
                 batch_shape=torch.Size(),
@@ -84,7 +72,15 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
                 ),
                 features_to_idx_mapper=self.get_feature_indices,
             ),
-            likelihood=likelihood,
+            mean_module=MultitaskMean(
+                means.map(self.mean, d=n_dim), num_tasks=self.n_tasks
+            ),
+            likelihood=likelihoods.map(
+                self.likelihood,
+                d=n_dim,
+                num_tasks=self.n_tasks,
+                task_feature_index=task_feature,
+            ),
             outcome_transform=outcome_transform,
             input_transform=input_transform,
             # Pass None explicitly to avoid the default BetaPrior introduced in
@@ -92,16 +88,6 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             # (PR #3267) and breaks torch.save-based serialization.
             task_covar_prior=None,
         )
-
-        if isinstance(self.task_prior, LKJPrior):
-            warnings.warn(
-                "The LKJ prior has issues when sampling from the prior, prior has been defaulted to None.",
-                UserWarning,
-            )
-            # once the issue is fixed, the following line should be uncommented
-            # self.model.task_covar_module.register_prior(
-            #     "IndexKernelPrior", priors.map(self.lkj_prior), _index_kernel_prior_closure
-            # )
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(
@@ -122,7 +108,3 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             stds = np.sqrt(posterior.variance.cpu().detach().numpy())
 
         return preds, stds
-
-
-def _index_kernel_prior_closure(m):
-    return m._eval_covar_matrix()
