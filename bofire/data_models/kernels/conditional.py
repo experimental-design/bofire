@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Sequence, Union
+from typing import List, Literal, Optional, Sequence, Union
 
 from pydantic import Field, field_validator
 
@@ -10,7 +10,12 @@ from bofire.data_models.kernels.continuous import (
     RBFKernel,
     SphericalLinearKernel,
 )
-from bofire.data_models.kernels.kernel import ARDKernel, Kernel, LengthscaleKernel
+from bofire.data_models.kernels.kernel import (
+    ARDKernel,
+    Kernel,
+    KernelInputs,
+    LengthscaleKernel,
+)
 from bofire.data_models.priors.api import AnyPrior
 
 
@@ -62,6 +67,29 @@ class ConditionalEmbeddingKernel(Kernel):
         "hold. A feature may depend on itself, which expresses that it is only relevant "
         "to the model under some conditions, e.g. if it is positive.",
     )
+
+    def children(self) -> List[Kernel]:
+        return [self.base_kernel]
+
+    def validate_inputs(self, context: KernelInputs) -> None:
+        """Check that every feature a condition names exists, then the base kernel.
+
+        Raises:
+            ValueError: If a condition names a key that is neither an input nor an
+                engineered feature, or the base kernel cannot work on its features.
+        """
+        known = set(context.keys())
+        named = {
+            key
+            for dependent, indicator, _ in self.conditions
+            for key in (dependent, indicator)
+        }
+        if unknown := sorted(named - known):
+            raise ValueError(
+                f"{type(self).__name__} has conditions on {unknown}, which are "
+                f"neither inputs nor engineered features."
+            )
+        super().validate_inputs(context)
 
 
 class WedgeKernel(ARDKernel, LengthscaleKernel, ConditionalEmbeddingKernel):

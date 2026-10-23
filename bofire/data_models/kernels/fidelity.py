@@ -2,6 +2,7 @@ from typing import Any, Literal
 
 from pydantic import Field, field_validator
 
+from bofire.data_models.features.api import ContinuousTaskInput
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
 from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
 
@@ -18,6 +19,10 @@ class FidelityKernel(FeatureSpecificKernel):
     """
 
     type: Any
+
+    @classmethod
+    def can_consume(cls, feat, encoding=None) -> bool:
+        return isinstance(feat, ContinuousTaskInput)
 
 
 class DownsamplingKernel(FidelityKernel):

@@ -11,7 +11,12 @@ from bofire.data_models.priors.api import AnyPrior
 
 
 class ContinuousKernel(FeatureSpecificKernel):
-    """Kernel acting on continuous inputs."""
+    """Kernel comparing inputs by numeric distance.
+
+    Every feature is numeric once encoded, so it can work on any of them. On a
+    categorical, the encoding decides what the distance means: one-hot makes all
+    categories equally far apart, ordinal codes make neighbouring categories closer.
+    """
 
     pass
 
