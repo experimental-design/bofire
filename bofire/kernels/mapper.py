@@ -447,7 +447,9 @@ def map_WedgeKernel(
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
     **kwargs,
 ) -> WedgeKernel:
-    indicator_func = build_indicator_func(data_model.conditions, features_to_idx_mapper)
+    indicator_func = build_indicator_func(
+        data_model.conditions, active_dims, features_to_idx_mapper
+    )
     base_kernel_active_dims = compute_base_kernel_active_dims(
         data_model, active_dims, features_to_idx_mapper
     )
@@ -464,8 +466,10 @@ def map_WedgeKernel(
         **kwargs,
     )
     return WedgeKernel(
-        base_kernel,
-        indicator_func,
+        base_kernel=base_kernel,
+        indicator_func=indicator_func,
+        active_dims=active_dims,
+        ard_num_dims=len(active_dims) if data_model.ard else None,
         **_lengthscale(data_model, d=len(active_dims)),
         angle_prior=(
             priors.map(data_model.angle_prior, d=len(active_dims))

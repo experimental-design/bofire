@@ -81,7 +81,7 @@ class WedgeKernel(ARDKernel, LengthscaleKernel, ConditionalEmbeddingKernel):
     )
     radius_prior: Optional[AnyPrior] = Field(
         default=None,
-        description="Prior over the wedge's radius, which sets the distance between "
+        description="Prior over the wedge's inverse radius, which sets the distance between "
         "the inactive point and the active points in the embedded space.",
     )
 
