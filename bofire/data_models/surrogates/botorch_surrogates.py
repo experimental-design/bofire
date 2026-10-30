@@ -24,7 +24,6 @@ from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.selection import SelectionSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.surrogate import Surrogate
-from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.types import InputTransformSpecs
 from bofire.data_models.unions import tagged_union
 
@@ -36,7 +35,6 @@ _BOTORCH_SURROGATE_TYPES: List[Type[Surrogate]] = [
     RegressionMLPEnsemble,
     ClassificationMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
-    TanimotoGPSurrogate,
     LinearDeterministicSurrogate,
     CategoricalDeterministicSurrogate,
     MultiTaskGPSurrogate,
