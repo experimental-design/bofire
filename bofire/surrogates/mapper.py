@@ -15,7 +15,6 @@ from bofire.surrogates.random_forest import RandomForestSurrogate
 from bofire.surrogates.selection import SelectionSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
-from bofire.surrogates.tanimoto_gp_surrogate import TanimotoGPSurrogate
 
 
 DATA_MODEL_MAP: Dict[
@@ -31,7 +30,6 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.RegressionMLPEnsemble: RegressionMLPEnsemble,
     data_models.ClassificationMLPEnsemble: ClassificationMLPEnsemble,
     data_models.FullyBayesianSingleTaskGPSurrogate: FullyBayesianSingleTaskGPSurrogate,
-    data_models.TanimotoGPSurrogate: TanimotoGPSurrogate,
     data_models.LinearDeterministicSurrogate: LinearDeterministicSurrogate,
     data_models.MultiTaskGPSurrogate: MultiTaskGPSurrogate,
     data_models.CategoricalDeterministicSurrogate: CategoricalDeterministicSurrogate,

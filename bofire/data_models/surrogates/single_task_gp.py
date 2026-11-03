@@ -3,8 +3,9 @@ from typing import List, Literal, Optional, Type
 
 from pydantic import Field, model_validator
 
+from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
-from bofire.data_models.encodings.api import OrdinalEncoding
+from bofire.data_models.encodings.api import DescriptorEncoding, OrdinalEncoding
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
@@ -21,6 +22,7 @@ from bofire.data_models.kernels.api import (
     PolynomialKernel,
     RBFKernel,
     ScaleKernel,
+    TanimotoKernel,
 )
 from bofire.data_models.likelihoods.api import (
     HVARFNER_LIKELIHOOD,
@@ -349,6 +351,70 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
             likelihood=SparseOutlierGaussianLikelihood(
                 noise_prior=HVARFNER_NOISE_PRIOR()
             ),
+        )
+
+    @staticmethod
+    def tanimoto(
+        inputs: Inputs,
+        outputs: Outputs,
+        fingerprints: Optional[DescriptorEncoding] = None,
+    ) -> "SingleTaskGPSurrogate":
+        """Single-task GP over molecular inputs, with the Tanimoto similarity of the
+        molecules' fingerprints as kernel.
+
+        Every input is a categorical whose categories have structure data; the
+        similarities between all categories of an input are computed once. With one
+        input the kernel is a scaled Tanimoto kernel. With several, it is the scaled
+        product of one Tanimoto kernel per input: two points are similar if each of
+        their molecules is. The THREESIX outputscale prior and the THREESIX likelihood
+        are used.
+
+        For other combinations (a sum of the molecules' kernels, different
+        fingerprints per molecule, further continuous inputs) build the kernel from
+        `TanimotoKernel`s directly.
+
+        Args:
+            inputs: The input features: one or more categoricals with structure data.
+            outputs: The output feature.
+            fingerprints: How the fingerprints are computed from the structures, the
+                same for every input. If not provided, Morgan fingerprints of 2048
+                bits.
+
+        Returns:
+            The surrogate.
+
+        Raises:
+            ValueError: If an input is not a categorical with structure data.
+        """
+        features = inputs.get()
+        if not all(
+            isinstance(feature, CategoricalInput)
+            and feature.descriptors is not None
+            and feature.descriptors.structure is not None
+            for feature in features
+        ):
+            raise ValueError(
+                "The Tanimoto GP needs every input to be a categorical with structure "
+                "data."
+            )
+        fingerprints = fingerprints or DescriptorEncoding(
+            columns=[], generators=[Fingerprints()]
+        )
+        keys = [feature.key for feature in features]
+        kernels = [
+            TanimotoKernel(features=[key], fingerprints=fingerprints) for key in keys
+        ]
+        return SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            categorical_encodings={key: OrdinalEncoding() for key in keys},
+            kernel=ScaleKernel(
+                base_kernel=kernels[0]
+                if len(kernels) == 1
+                else MultiplicativeKernel(kernels=kernels),
+                outputscale_prior=THREESIX_SCALE_PRIOR(),
+            ),
+            likelihood=THREESIX_LIKELIHOOD(),
         )
 
     @model_validator(mode="after")

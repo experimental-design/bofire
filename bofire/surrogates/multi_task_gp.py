@@ -83,6 +83,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
                     + self.engineered_features.get_keys(),
                 ),
                 features_to_idx_mapper=self.get_feature_indices,
+                inputs=self.inputs,
             ),
             likelihood=likelihood,
             outcome_transform=outcome_transform,

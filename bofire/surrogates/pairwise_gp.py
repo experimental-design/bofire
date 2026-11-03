@@ -59,6 +59,7 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
                 batch_shape=torch.Size(),
                 active_dims=list(range(n_dim)),
                 features_to_idx_mapper=self.get_feature_indices,
+                inputs=self.inputs,
             ),
             input_transform=input_transform,
         )

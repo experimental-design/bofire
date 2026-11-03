@@ -20,7 +20,6 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
     from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
     from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
-    from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 
     # Add new kernel type to aggregation kernel inline unions
     # (handles both Sequence[Union[...]] and plain Union[...])
@@ -49,7 +48,6 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
     for model_cls, field_name in [
         (SingleTaskGPSurrogate, "kernel"),
         (MultiTaskGPSurrogate, "kernel"),
-        (TanimotoGPSurrogate, "kernel"),
     ]:
         patch_field(model_cls, field_name, kernels_api.AnyKernel)
 
@@ -57,7 +55,6 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
     for cls in [
         SingleTaskGPSurrogate,
         MultiTaskGPSurrogate,
-        TanimotoGPSurrogate,
     ]:
         cls.model_rebuild(force=True)
 

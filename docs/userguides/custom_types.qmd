@@ -106,7 +106,7 @@ specs = BotorchSurrogates(surrogates=[
 
 ### Data model transforms
 
-Some surrogates are conceptually a special case of another. For example, `TanimotoGPSurrogate` is converted to a `SingleTaskGPSurrogate` before instantiation. You can do the same with the `data_model_transform` argument:
+A custom surrogate can be a special case of another, converted to it before instantiation, with the `data_model_transform` argument:
 
 ```python
 def my_transform(data_model):
@@ -149,7 +149,8 @@ class MyKernelDataModel(Kernel):
 
 # 2. Mapping function — returns a gpytorch kernel
 @kernels.register(MyKernelDataModel)
-def map_my_kernel(data_model, batch_shape, active_dims, features_to_idx_mapper):
+def map_my_kernel(data_model, batch_shape, active_dims, features_to_idx_mapper, **kwargs):
+    # **kwargs: further context such as `inputs`; pass it on to any kernels mapped here
     k = gpytorch.kernels.RBFKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,

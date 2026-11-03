@@ -479,7 +479,9 @@ class TestRegisterKernel:
 
         sentinel = MagicMock(name="gpytorch_kernel")
 
-        def my_map_fn(data_model, batch_shape, active_dims, features_to_idx_mapper):
+        def my_map_fn(
+            data_model, batch_shape, active_dims, features_to_idx_mapper, **kwargs
+        ):
             return sentinel
 
         kernels_api.register(_CustomKernelDataModel, my_map_fn)
@@ -503,7 +505,9 @@ class TestRegisterKernel:
         sentinel = MagicMock(name="gpytorch_kernel")
 
         @kernels_api.register(_CustomKernelDataModel)
-        def my_map_fn(data_model, batch_shape, active_dims, features_to_idx_mapper):
+        def my_map_fn(
+            data_model, batch_shape, active_dims, features_to_idx_mapper, **kwargs
+        ):
             return sentinel
 
         assert KERNEL_MAP[_CustomKernelDataModel] is my_map_fn
