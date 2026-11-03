@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Optional, Type
+from typing import Callable, Dict, Optional, Tuple, Type
 
 import gpytorch
 from gpytorch.likelihoods.hadamard_gaussian_likelihood import HadamardGaussianLikelihood
@@ -7,13 +7,10 @@ import bofire.data_models.likelihoods.api as data_models
 import bofire.priors.api as priors
 
 
-def map_GaussianLikelihood(
-    data_model: data_models.GaussianLikelihood,
-    d: int,
-    num_tasks: Optional[int] = None,
-    task_feature_index: Optional[int] = None,
-    **kwargs,
-) -> gpytorch.likelihoods.GaussianLikelihood:
+def _noise(
+    data_model: data_models.GaussianLikelihood, d: int
+) -> Tuple[Optional[gpytorch.priors.Prior], Optional[gpytorch.constraints.Interval]]:
+    """The noise prior and constraint of a Gaussian likelihood, as gpytorch objects."""
     noise_prior = (
         priors.map(data_model.noise_prior, d=d)
         if data_model.noise_prior is not None
@@ -24,11 +21,39 @@ def map_GaussianLikelihood(
         if data_model.noise_constraint is not None
         else None
     )
-    if num_tasks is None:
-        return gpytorch.likelihoods.GaussianLikelihood(
-            noise_prior=noise_prior, noise_constraint=noise_constraint
-        )
-    # one noise level per task, read from the task column of the inputs
+    return noise_prior, noise_constraint
+
+
+def map_GaussianLikelihood(
+    data_model: data_models.GaussianLikelihood, d: int, **kwargs
+) -> gpytorch.likelihoods.GaussianLikelihood:
+    noise_prior, noise_constraint = _noise(data_model, d=d)
+    return gpytorch.likelihoods.GaussianLikelihood(
+        noise_prior=noise_prior, noise_constraint=noise_constraint
+    )
+
+
+def map_HadamardGaussianLikelihood(
+    data_model: data_models.GaussianLikelihood,
+    d: int,
+    num_tasks: int,
+    task_feature_index: int,
+) -> HadamardGaussianLikelihood:
+    """Build a likelihood with one noise level per task, for a multi-task GP.
+
+    Every task's noise level gets the prior and the bounds of the data model.
+
+    Args:
+        data_model: The likelihood to build.
+        d: Number of input dimensions the model sees, without the task column; used
+            by dimensionality-scaled priors.
+        num_tasks: Number of tasks.
+        task_feature_index: Column of the inputs that holds the task.
+
+    Returns:
+        The gpytorch likelihood.
+    """
+    noise_prior, noise_constraint = _noise(data_model, d=d)
     return HadamardGaussianLikelihood(
         num_tasks=num_tasks,
         noise_prior=noise_prior,
@@ -54,8 +79,6 @@ def map(
         data_model: The likelihood to build.
         d: Number of input dimensions the model sees, used by dimensionality-scaled
             priors.
-        **kwargs: For a Gaussian likelihood, `num_tasks` and `task_feature_index`
-            give every task a noise level of its own, read from that input column.
 
     Returns:
         The gpytorch likelihood.

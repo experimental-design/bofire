@@ -28,6 +28,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
   - every task gets a noise level of its own (gpytorch's `HadamardGaussianLikelihood`), each with the likelihood's prior and bounds; before, all tasks shared one;
   - a new `mean` field sets the mean, applied per task;
   - the default kernel gets BoTorch's lower bound of 0.025 on its lengthscales.
+  - dimension-scaled priors on the mean and the noise use the number of inputs the model sees without the task column; before, the task column was counted and categoricals were counted before encoding.
 
   A default multi-task GP now fits exactly as BoTorch's default `MultiTaskGP` with `task_covar_prior=None`. BoFire keeps passing no task-correlation prior, because BoTorch registers it in a way that breaks `dumps()`. Fitted models change.
 - **Breaking**: kernel mappers must accept `**kwargs`. The GP surrogates pass the input features to every kernel mapper (`inputs=`), which a `TanimotoKernel` with `fingerprints` needs, and the aggregation kernels pass them on to the kernels they contain. Custom mappers registered with `bofire.kernels.api.register` must therefore have the signature `(data_model, batch_shape, active_dims, features_to_idx_mapper, **kwargs)`, and pass `**kwargs` on to any kernels they map themselves.

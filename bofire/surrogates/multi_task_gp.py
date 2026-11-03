@@ -52,7 +52,11 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         outcome_transform: Optional[OutcomeTransform] = None,
         **kwargs,
     ) -> None:
-        n_dim = tX.shape[-1]
+        if input_transform is not None:
+            n_dim = input_transform(tX).shape[-1]
+        else:
+            n_dim = tX.shape[-1]
+        d = n_dim - 1  # the inputs the model sees, without the task column
         task_feature = self.get_feature_indices([self.task_feature_key])[0]
 
         self.model = botorch.models.MultiTaskGP(
@@ -74,11 +78,11 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
                 inputs=self.inputs,
             ),
             mean_module=MultitaskMean(
-                means.map(self.mean, d=n_dim), num_tasks=self.n_tasks
+                means.map(self.mean, d=d), num_tasks=self.n_tasks
             ),
-            likelihood=likelihoods.map(
+            likelihood=likelihoods.map_HadamardGaussianLikelihood(
                 self.likelihood,
-                d=n_dim,
+                d=d,
                 num_tasks=self.n_tasks,
                 task_feature_index=task_feature,
             ),

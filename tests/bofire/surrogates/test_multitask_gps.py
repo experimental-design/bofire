@@ -1,4 +1,5 @@
 import importlib
+import math
 
 import gpytorch
 import pandas as pd
@@ -22,7 +23,12 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.kernels.api import RBFKernel
 from bofire.data_models.likelihoods.api import GaussianLikelihood
-from bofire.data_models.priors.api import GammaPrior, GreaterThan, LogNormalPrior
+from bofire.data_models.priors.api import (
+    DimensionalityScaledLogNormalPrior,
+    GammaPrior,
+    GreaterThan,
+    LogNormalPrior,
+)
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate, ScalerEnum
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
@@ -256,3 +262,22 @@ def test_noise_prior_directional_effect_on_multi_task_gp():
         large_noise.model.likelihood.noise_covar.noise
         > small_noise.model.likelihood.noise_covar.noise
     ).all()
+
+
+def test_dimension_scaled_priors_count_the_inputs_without_the_task():
+    benchmark, experiments = _multi_task_experiments()
+    prior = DimensionalityScaledLogNormalPrior(
+        loc=1.0, loc_scaling=0.5, scale=1.0, scale_scaling=0.5
+    )
+    surrogate = surrogates.map(
+        MultiTaskGPSurrogate(
+            inputs=benchmark.domain.inputs,
+            outputs=benchmark.domain.outputs,
+            likelihood=GaussianLikelihood(noise_prior=prior, noise_constraint=None),
+        )
+    )
+    surrogate.fit(experiments)
+
+    # two continuous inputs next to the task: d = 2
+    registered = _get_registered_noise_prior(surrogate.model)
+    assert float(registered.loc) == pytest.approx(1.0 + math.log(2) * 0.5)
