@@ -78,9 +78,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-7561831fb1fffae48fe87faf229caa8d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-dark-59f2f614c175794b874a379a1f748911.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-7561831fb1fffae48fe87faf229caa8d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-c77036355c3dc66c851e81dd48be6785.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-1e9dd14f8cee45cff9b5e223c555214c.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-c77036355c3dc66c851e81dd48be6785.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -557,7 +557,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <section id="data-model-transforms" class="level3">
 <h3 class="anchored" data-anchor-id="data-model-transforms">Data model transforms</h3>
-<p>Some surrogates are conceptually a special case of another. For example, <code>TanimotoGPSurrogate</code> is converted to a <code>SingleTaskGPSurrogate</code> before instantiation. You can do the same with the <code>data_model_transform</code> argument:</p>
+<p>A custom surrogate can be a special case of another, converted to it before instantiation, with the <code>data_model_transform</code> argument:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> my_transform(data_model):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Convert MySurrogateDataModel to SingleTaskGPSurrogate."""</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="im">from</span> bofire.data_models.likelihoods.api <span class="im">import</span> GaussianLikelihood</span>
@@ -596,13 +596,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Mapping function — returns a gpytorch kernel</span></span>
 <span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="at">@kernels.register</span>(MyKernelDataModel)</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> map_my_kernel(data_model, batch_shape, active_dims, features_to_idx_mapper):</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> gpytorch.kernels.RBFKernel(</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        batch_shape<span class="op">=</span>batch_shape,</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        active_dims<span class="op">=</span>active_dims,</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    k.lengthscale <span class="op">=</span> torch.tensor(data_model.lengthscale)</span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> k</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> map_my_kernel(data_model, batch_shape, active_dims, features_to_idx_mapper, <span class="op">**</span>kwargs):</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># **kwargs: further context such as `inputs`; pass it on to any kernels mapped here</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> gpytorch.kernels.RBFKernel(</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        batch_shape<span class="op">=</span>batch_shape,</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>        active_dims<span class="op">=</span>active_dims,</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    k.lengthscale <span class="op">=</span> torch.tensor(data_model.lengthscale)</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> k</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>After registration the custom kernel is accepted anywhere a built-in kernel is accepted:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.single_task_gp <span class="im">import</span> SingleTaskGPSurrogate</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.aggregation <span class="im">import</span> ScaleKernel, AdditiveKernel</span>
@@ -1247,7 +1248,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-106"><a href="#cb9-106" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a><span class="fu">### Data model transforms</span></span>
 <span id="cb9-108"><a href="#cb9-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-109"><a href="#cb9-109" aria-hidden="true" tabindex="-1"></a>Some surrogates are conceptually a special case of another. For example, <span class="in">`TanimotoGPSurrogate`</span> is converted to a <span class="in">`SingleTaskGPSurrogate`</span> before instantiation. You can do the same with the <span class="in">`data_model_transform`</span> argument:</span>
+<span id="cb9-109"><a href="#cb9-109" aria-hidden="true" tabindex="-1"></a>A custom surrogate can be a special case of another, converted to it before instantiation, with the <span class="in">`data_model_transform`</span> argument:</span>
 <span id="cb9-110"><a href="#cb9-110" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-111"><a href="#cb9-111" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
 <span id="cb9-112"><a href="#cb9-112" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> my_transform(data_model):</span>
@@ -1290,75 +1291,76 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-149"><a href="#cb9-149" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-150"><a href="#cb9-150" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Mapping function — returns a gpytorch kernel</span></span>
 <span id="cb9-151"><a href="#cb9-151" aria-hidden="true" tabindex="-1"></a><span class="at">@kernels.register</span>(MyKernelDataModel)</span>
-<span id="cb9-152"><a href="#cb9-152" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> map_my_kernel(data_model, batch_shape, active_dims, features_to_idx_mapper):</span>
-<span id="cb9-153"><a href="#cb9-153" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> gpytorch.kernels.RBFKernel(</span>
-<span id="cb9-154"><a href="#cb9-154" aria-hidden="true" tabindex="-1"></a>        batch_shape<span class="op">=</span>batch_shape,</span>
-<span id="cb9-155"><a href="#cb9-155" aria-hidden="true" tabindex="-1"></a>        active_dims<span class="op">=</span>active_dims,</span>
-<span id="cb9-156"><a href="#cb9-156" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb9-157"><a href="#cb9-157" aria-hidden="true" tabindex="-1"></a>    k.lengthscale <span class="op">=</span> torch.tensor(data_model.lengthscale)</span>
-<span id="cb9-158"><a href="#cb9-158" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> k</span>
-<span id="cb9-159"><a href="#cb9-159" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb9-160"><a href="#cb9-160" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-161"><a href="#cb9-161" aria-hidden="true" tabindex="-1"></a>After registration the custom kernel is accepted anywhere a built-in kernel is accepted:</span>
-<span id="cb9-162"><a href="#cb9-162" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-163"><a href="#cb9-163" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb9-164"><a href="#cb9-164" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.single_task_gp <span class="im">import</span> SingleTaskGPSurrogate</span>
-<span id="cb9-165"><a href="#cb9-165" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.aggregation <span class="im">import</span> ScaleKernel, AdditiveKernel</span>
-<span id="cb9-166"><a href="#cb9-166" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-167"><a href="#cb9-167" aria-hidden="true" tabindex="-1"></a><span class="co"># As the main kernel of a GP</span></span>
-<span id="cb9-168"><a href="#cb9-168" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> SingleTaskGPSurrogate(</span>
-<span id="cb9-169"><a href="#cb9-169" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>..., outputs<span class="op">=</span>...,</span>
-<span id="cb9-170"><a href="#cb9-170" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>MyKernelDataModel(lengthscale<span class="op">=</span><span class="fl">2.0</span>),</span>
-<span id="cb9-171"><a href="#cb9-171" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb9-172"><a href="#cb9-172" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-173"><a href="#cb9-173" aria-hidden="true" tabindex="-1"></a><span class="co"># Inside aggregation kernels</span></span>
-<span id="cb9-174"><a href="#cb9-174" aria-hidden="true" tabindex="-1"></a>additive <span class="op">=</span> AdditiveKernel(kernels<span class="op">=</span>[MyKernelDataModel(), ...])</span>
-<span id="cb9-175"><a href="#cb9-175" aria-hidden="true" tabindex="-1"></a>scaled <span class="op">=</span> ScaleKernel(base_kernel<span class="op">=</span>MyKernelDataModel())</span>
-<span id="cb9-176"><a href="#cb9-176" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb9-177"><a href="#cb9-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-178"><a href="#cb9-178" aria-hidden="true" tabindex="-1"></a>If the custom kernel subclasses <span class="in">`ContinuousKernel`</span> or <span class="in">`CategoricalKernel`</span>, it is also added to the corresponding sub-union (<span class="in">`AnyContinuousKernel`</span> / <span class="in">`AnyCategoricalKernel`</span>).</span>
-<span id="cb9-179"><a href="#cb9-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-180"><a href="#cb9-180" aria-hidden="true" tabindex="-1"></a><span class="fu">## Registering a custom prior</span></span>
-<span id="cb9-181"><a href="#cb9-181" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-182"><a href="#cb9-182" aria-hidden="true" tabindex="-1"></a>Custom GP priors work the same way:</span>
-<span id="cb9-183"><a href="#cb9-183" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-184"><a href="#cb9-184" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb9-185"><a href="#cb9-185" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Literal</span>
-<span id="cb9-186"><a href="#cb9-186" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-187"><a href="#cb9-187" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gpytorch</span>
-<span id="cb9-188"><a href="#cb9-188" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-189"><a href="#cb9-189" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.priors.api <span class="im">as</span> priors</span>
-<span id="cb9-190"><a href="#cb9-190" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.priors.prior <span class="im">import</span> Prior</span>
-<span id="cb9-191"><a href="#cb9-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-152"><a href="#cb9-152" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> map_my_kernel(data_model, batch_shape, active_dims, features_to_idx_mapper, <span class="op">**</span>kwargs):</span>
+<span id="cb9-153"><a href="#cb9-153" aria-hidden="true" tabindex="-1"></a>    <span class="co"># **kwargs: further context such as `inputs`; pass it on to any kernels mapped here</span></span>
+<span id="cb9-154"><a href="#cb9-154" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> gpytorch.kernels.RBFKernel(</span>
+<span id="cb9-155"><a href="#cb9-155" aria-hidden="true" tabindex="-1"></a>        batch_shape<span class="op">=</span>batch_shape,</span>
+<span id="cb9-156"><a href="#cb9-156" aria-hidden="true" tabindex="-1"></a>        active_dims<span class="op">=</span>active_dims,</span>
+<span id="cb9-157"><a href="#cb9-157" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-158"><a href="#cb9-158" aria-hidden="true" tabindex="-1"></a>    k.lengthscale <span class="op">=</span> torch.tensor(data_model.lengthscale)</span>
+<span id="cb9-159"><a href="#cb9-159" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> k</span>
+<span id="cb9-160"><a href="#cb9-160" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-161"><a href="#cb9-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-162"><a href="#cb9-162" aria-hidden="true" tabindex="-1"></a>After registration the custom kernel is accepted anywhere a built-in kernel is accepted:</span>
+<span id="cb9-163"><a href="#cb9-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-164"><a href="#cb9-164" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb9-165"><a href="#cb9-165" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.single_task_gp <span class="im">import</span> SingleTaskGPSurrogate</span>
+<span id="cb9-166"><a href="#cb9-166" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.aggregation <span class="im">import</span> ScaleKernel, AdditiveKernel</span>
+<span id="cb9-167"><a href="#cb9-167" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-168"><a href="#cb9-168" aria-hidden="true" tabindex="-1"></a><span class="co"># As the main kernel of a GP</span></span>
+<span id="cb9-169"><a href="#cb9-169" aria-hidden="true" tabindex="-1"></a>surrogate <span class="op">=</span> SingleTaskGPSurrogate(</span>
+<span id="cb9-170"><a href="#cb9-170" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>..., outputs<span class="op">=</span>...,</span>
+<span id="cb9-171"><a href="#cb9-171" aria-hidden="true" tabindex="-1"></a>    kernel<span class="op">=</span>MyKernelDataModel(lengthscale<span class="op">=</span><span class="fl">2.0</span>),</span>
+<span id="cb9-172"><a href="#cb9-172" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-173"><a href="#cb9-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-174"><a href="#cb9-174" aria-hidden="true" tabindex="-1"></a><span class="co"># Inside aggregation kernels</span></span>
+<span id="cb9-175"><a href="#cb9-175" aria-hidden="true" tabindex="-1"></a>additive <span class="op">=</span> AdditiveKernel(kernels<span class="op">=</span>[MyKernelDataModel(), ...])</span>
+<span id="cb9-176"><a href="#cb9-176" aria-hidden="true" tabindex="-1"></a>scaled <span class="op">=</span> ScaleKernel(base_kernel<span class="op">=</span>MyKernelDataModel())</span>
+<span id="cb9-177"><a href="#cb9-177" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-178"><a href="#cb9-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-179"><a href="#cb9-179" aria-hidden="true" tabindex="-1"></a>If the custom kernel subclasses <span class="in">`ContinuousKernel`</span> or <span class="in">`CategoricalKernel`</span>, it is also added to the corresponding sub-union (<span class="in">`AnyContinuousKernel`</span> / <span class="in">`AnyCategoricalKernel`</span>).</span>
+<span id="cb9-180"><a href="#cb9-180" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-181"><a href="#cb9-181" aria-hidden="true" tabindex="-1"></a><span class="fu">## Registering a custom prior</span></span>
+<span id="cb9-182"><a href="#cb9-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-183"><a href="#cb9-183" aria-hidden="true" tabindex="-1"></a>Custom GP priors work the same way:</span>
+<span id="cb9-184"><a href="#cb9-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-185"><a href="#cb9-185" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb9-186"><a href="#cb9-186" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Literal</span>
+<span id="cb9-187"><a href="#cb9-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-188"><a href="#cb9-188" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gpytorch</span>
+<span id="cb9-189"><a href="#cb9-189" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-190"><a href="#cb9-190" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.priors.api <span class="im">as</span> priors</span>
+<span id="cb9-191"><a href="#cb9-191" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.priors.prior <span class="im">import</span> Prior</span>
 <span id="cb9-192"><a href="#cb9-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-193"><a href="#cb9-193" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MyPriorDataModel(Prior):</span>
-<span id="cb9-194"><a href="#cb9-194" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span>: Literal[<span class="st">"MyPrior"</span>] <span class="op">=</span> <span class="st">"MyPrior"</span></span>
-<span id="cb9-195"><a href="#cb9-195" aria-hidden="true" tabindex="-1"></a>    loc: <span class="bu">float</span> <span class="op">=</span> <span class="fl">0.0</span></span>
-<span id="cb9-196"><a href="#cb9-196" aria-hidden="true" tabindex="-1"></a>    scale: <span class="bu">float</span> <span class="op">=</span> <span class="fl">1.0</span></span>
-<span id="cb9-197"><a href="#cb9-197" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-193"><a href="#cb9-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-194"><a href="#cb9-194" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MyPriorDataModel(Prior):</span>
+<span id="cb9-195"><a href="#cb9-195" aria-hidden="true" tabindex="-1"></a>    <span class="bu">type</span>: Literal[<span class="st">"MyPrior"</span>] <span class="op">=</span> <span class="st">"MyPrior"</span></span>
+<span id="cb9-196"><a href="#cb9-196" aria-hidden="true" tabindex="-1"></a>    loc: <span class="bu">float</span> <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb9-197"><a href="#cb9-197" aria-hidden="true" tabindex="-1"></a>    scale: <span class="bu">float</span> <span class="op">=</span> <span class="fl">1.0</span></span>
 <span id="cb9-198"><a href="#cb9-198" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-199"><a href="#cb9-199" aria-hidden="true" tabindex="-1"></a><span class="at">@priors.register</span>(MyPriorDataModel)</span>
-<span id="cb9-200"><a href="#cb9-200" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> map_my_prior(data_model, <span class="op">**</span>kwargs):</span>
-<span id="cb9-201"><a href="#cb9-201" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> gpytorch.priors.NormalPrior(</span>
-<span id="cb9-202"><a href="#cb9-202" aria-hidden="true" tabindex="-1"></a>        loc<span class="op">=</span>data_model.loc,</span>
-<span id="cb9-203"><a href="#cb9-203" aria-hidden="true" tabindex="-1"></a>        scale<span class="op">=</span>data_model.scale,</span>
-<span id="cb9-204"><a href="#cb9-204" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb9-205"><a href="#cb9-205" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb9-206"><a href="#cb9-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-207"><a href="#cb9-207" aria-hidden="true" tabindex="-1"></a>After registration the custom prior is accepted in all prior fields (<span class="in">`noise_prior`</span>, <span class="in">`lengthscale_prior`</span>, etc.) across all surrogate and kernel data models.</span>
-<span id="cb9-208"><a href="#cb9-208" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-209"><a href="#cb9-209" aria-hidden="true" tabindex="-1"></a><span class="fu">## How it works</span></span>
-<span id="cb9-210"><a href="#cb9-210" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-211"><a href="#cb9-211" aria-hidden="true" tabindex="-1"></a>BoFire uses <span class="co">[</span><span class="ot">Pydantic discriminated unions</span><span class="co">](https://docs.pydantic.dev/latest/concepts/unions/)</span> to validate fields such as <span class="in">`SingleTaskGPSurrogate.kernel`</span> or <span class="in">`BotorchSurrogates.surrogates`</span>. These unions are defined as module-level type aliases (e.g. <span class="in">`AnyKernel`</span>, <span class="in">`AnyPrior`</span>, <span class="in">`AnyBotorchSurrogate`</span>).</span>
-<span id="cb9-212"><a href="#cb9-212" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-213"><a href="#cb9-213" aria-hidden="true" tabindex="-1"></a>When you call a <span class="in">`register`</span> function, BoFire:</span>
-<span id="cb9-214"><a href="#cb9-214" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-215"><a href="#cb9-215" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Appends your type to the internal type list backing the union.</span>
-<span id="cb9-216"><a href="#cb9-216" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Rebuilds the <span class="in">`Union`</span> type alias.</span>
-<span id="cb9-217"><a href="#cb9-217" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Patches the annotation on every Pydantic model field that references that union.</span>
-<span id="cb9-218"><a href="#cb9-218" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Calls <span class="in">`model_rebuild(force=True)`</span> on affected models so Pydantic picks up the new validator.</span>
-<span id="cb9-219"><a href="#cb9-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-220"><a href="#cb9-220" aria-hidden="true" tabindex="-1"></a>This means registration has a small one-time cost at import time and should be done early — ideally at module level, before creating any data model instances.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb9-199"><a href="#cb9-199" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-200"><a href="#cb9-200" aria-hidden="true" tabindex="-1"></a><span class="at">@priors.register</span>(MyPriorDataModel)</span>
+<span id="cb9-201"><a href="#cb9-201" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> map_my_prior(data_model, <span class="op">**</span>kwargs):</span>
+<span id="cb9-202"><a href="#cb9-202" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> gpytorch.priors.NormalPrior(</span>
+<span id="cb9-203"><a href="#cb9-203" aria-hidden="true" tabindex="-1"></a>        loc<span class="op">=</span>data_model.loc,</span>
+<span id="cb9-204"><a href="#cb9-204" aria-hidden="true" tabindex="-1"></a>        scale<span class="op">=</span>data_model.scale,</span>
+<span id="cb9-205"><a href="#cb9-205" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-206"><a href="#cb9-206" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb9-207"><a href="#cb9-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-208"><a href="#cb9-208" aria-hidden="true" tabindex="-1"></a>After registration the custom prior is accepted in all prior fields (<span class="in">`noise_prior`</span>, <span class="in">`lengthscale_prior`</span>, etc.) across all surrogate and kernel data models.</span>
+<span id="cb9-209"><a href="#cb9-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-210"><a href="#cb9-210" aria-hidden="true" tabindex="-1"></a><span class="fu">## How it works</span></span>
+<span id="cb9-211"><a href="#cb9-211" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-212"><a href="#cb9-212" aria-hidden="true" tabindex="-1"></a>BoFire uses <span class="co">[</span><span class="ot">Pydantic discriminated unions</span><span class="co">](https://docs.pydantic.dev/latest/concepts/unions/)</span> to validate fields such as <span class="in">`SingleTaskGPSurrogate.kernel`</span> or <span class="in">`BotorchSurrogates.surrogates`</span>. These unions are defined as module-level type aliases (e.g. <span class="in">`AnyKernel`</span>, <span class="in">`AnyPrior`</span>, <span class="in">`AnyBotorchSurrogate`</span>).</span>
+<span id="cb9-213"><a href="#cb9-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-214"><a href="#cb9-214" aria-hidden="true" tabindex="-1"></a>When you call a <span class="in">`register`</span> function, BoFire:</span>
+<span id="cb9-215"><a href="#cb9-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-216"><a href="#cb9-216" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>Appends your type to the internal type list backing the union.</span>
+<span id="cb9-217"><a href="#cb9-217" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>Rebuilds the <span class="in">`Union`</span> type alias.</span>
+<span id="cb9-218"><a href="#cb9-218" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>Patches the annotation on every Pydantic model field that references that union.</span>
+<span id="cb9-219"><a href="#cb9-219" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>Calls <span class="in">`model_rebuild(force=True)`</span> on affected models so Pydantic picks up the new validator.</span>
+<span id="cb9-220"><a href="#cb9-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-221"><a href="#cb9-221" aria-hidden="true" tabindex="-1"></a>This means registration has a small one-time cost at import time and should be done early — ideally at module level, before creating any data model instances.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

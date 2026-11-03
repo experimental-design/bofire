@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-7561831fb1fffae48fe87faf229caa8d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-dark-59f2f614c175794b874a379a1f748911.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-7561831fb1fffae48fe87faf229caa8d.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-c77036355c3dc66c851e81dd48be6785.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-1e9dd14f8cee45cff9b5e223c555214c.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-c77036355c3dc66c851e81dd48be6785.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -510,10 +510,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td style="text-align: center;">Gaussian process with a Hamming kernel for the categoricals, as BoTorch’s <code>MixedSingleTaskGP</code></td>
 </tr>
 <tr class="odd">
-<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed_tanimoto_gp.py">TanimotoGP</a></td>
+<td style="text-align: center;"><code>SingleTaskGPSurrogate.tanimoto</code></td>
 <td style="text-align: center;">a single objective</td>
-<td style="text-align: center;">At least one input feature is a molecule represented as fingerprint</td>
-<td style="text-align: center;">Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points</td>
+<td style="text-align: center;">The input is a molecule, a categorical with structure data</td>
+<td style="text-align: center;">Gaussian process with the Tanimoto similarity of the molecules’ fingerprints as kernel</td>
 </tr>
 <tr class="even">
 <td style="text-align: center;"><a href="../reference/data_models.surrogates.api.html#bofire.data_models.surrogates.api.SelectionSurrogate">SelectionSurrogate</a></td>
@@ -609,7 +609,7 @@ qparego_data_model = QparegoStrategy(
 <p><strong>Note:</strong></p>
 <ul>
 <li><code>SingleTaskGPSurrogate.linear(inputs, outputs)</code> and <code>SingleTaskGPSurrogate.polynomial(inputs, outputs, power=2)</code> build a SingleTaskGPSurrogate with a LinearKernel or PolynomialKernel.</li>
-<li>SingleTaskGPSurrogate with TanimotoKernel is equivalent to TanimotoGP.</li>
+<li><code>TanimotoKernel(features=[key], fingerprints=...)</code> computes the similarities of all molecules of a categorical input once; it composes with other kernels like any kernel.</li>
 <li>One can combine two Kernels by using AdditiveKernel or MultiplicativeKernel.</li>
 </ul>
 <p><strong>Example</strong>:</p>
@@ -1193,7 +1193,7 @@ qparego_data_model = QparegoStrategy(
 <span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">RandomForestSurrogate</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/random\_forest.py)</span>|a single objective|Rich data; black-box function does not have to be smooth|sklearn random forest implementation</span>
 <span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">MLP</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mlp.py)</span>|a single objective with real-valued inputs|Rich data and black-box function is smooth|Multi layer perceptron</span>
 <span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="in">`SingleTaskGPSurrogate.mixed`</span>|a single objective with categorical and real valued inputs|Limited data and black-box function is smooth|Gaussian process with a Hamming kernel for the categoricals, as BoTorch's <span class="in">`MixedSingleTaskGP`</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">TanimotoGP</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed_tanimoto_gp.py)</span>|a single objective|At least one input feature is a molecule represented as fingerprint|Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="in">`SingleTaskGPSurrogate.tanimoto`</span>|a single objective|The input is a molecule, a categorical with structure data|Gaussian process with the Tanimoto similarity of the molecules' fingerprints as kernel</span>
 <span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">SelectionSurrogate</span><span class="co">](../reference/data_models.surrogates.api.html#bofire.data_models.surrogates.api.SelectionSurrogate)</span>|a single continuous objective|Choosing between several complete surrogate configurations|Cross-validation model selection</span>
 <span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>All of these are single-objective surrogate models. For optimization of multiple objectives at the same time, a suitable <span class="co">[</span><span class="ot">Strategy</span><span class="co">](https://github.com/experimental-design/bofire/blob/main/bofire/strategies/strategy.py)</span> has to be chosen. Then for each objective a different surrogate model can be specified. By default the SingleTaskGPSurrogate is used.</span>
@@ -1256,7 +1256,7 @@ qparego_data_model = QparegoStrategy(
 <span id="cb6-77"><a href="#cb6-77" aria-hidden="true" tabindex="-1"></a>**Note:**</span>
 <span id="cb6-78"><a href="#cb6-78" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-79"><a href="#cb6-79" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`SingleTaskGPSurrogate.linear(inputs, outputs)`</span> and <span class="in">`SingleTaskGPSurrogate.polynomial(inputs, outputs, power=2)`</span> build a SingleTaskGPSurrogate with a LinearKernel or PolynomialKernel.</span>
-<span id="cb6-80"><a href="#cb6-80" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>SingleTaskGPSurrogate with TanimotoKernel is equivalent to TanimotoGP.</span>
+<span id="cb6-80"><a href="#cb6-80" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`TanimotoKernel(features=[key], fingerprints=...)`</span> computes the similarities of all molecules of a categorical input once; it composes with other kernels like any kernel.</span>
 <span id="cb6-81"><a href="#cb6-81" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>One can combine two Kernels by using AdditiveKernel or MultiplicativeKernel.</span>
 <span id="cb6-82"><a href="#cb6-82" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-83"><a href="#cb6-83" aria-hidden="true" tabindex="-1"></a>**Example**:</span>
