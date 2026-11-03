@@ -15,6 +15,7 @@ from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
     LinearKernel,
     MaternKernel,
+    MultiplicativeKernel,
     PolynomialKernel,
     RBFKernel,
     ScaleKernel,
@@ -225,6 +226,33 @@ def test_tanimoto_precomputes_the_similarities_of_the_molecular_input():
     assert surrogate.likelihood == THREESIX_LIKELIHOOD()
 
 
+def test_tanimoto_multiplies_the_kernels_of_several_molecular_inputs():
+    catalyst = CategoricalInput(
+        key="cat",
+        categories=["CO", "CCO"],
+        descriptors=Descriptors(structure=["CO", "CCO"]),
+    )
+    fingerprints = DescriptorEncoding(columns=[], generators=[Fingerprints(n_bits=64)])
+
+    surrogate = SingleTaskGPSurrogate.tanimoto(
+        Inputs(features=[MOLECULES, catalyst]), OUTPUTS, fingerprints=fingerprints
+    )
+
+    assert surrogate.kernel == ScaleKernel(
+        base_kernel=MultiplicativeKernel(
+            kernels=[
+                TanimotoKernel(features=["cat"], fingerprints=fingerprints),
+                TanimotoKernel(features=["mol"], fingerprints=fingerprints),
+            ]
+        ),
+        outputscale_prior=THREESIX_SCALE_PRIOR(),
+    )
+    assert surrogate.categorical_encodings == {
+        "cat": OrdinalEncoding(),
+        "mol": OrdinalEncoding(),
+    }
+
+
 @pytest.mark.parametrize(
     "inputs",
     [
@@ -233,5 +261,5 @@ def test_tanimoto_precomputes_the_similarities_of_the_molecular_input():
     ],
 )
 def test_tanimoto_rejects(inputs):
-    with pytest.raises(ValueError, match="exactly one input"):
+    with pytest.raises(ValueError, match="every input to be a categorical"):
         SingleTaskGPSurrogate.tanimoto(inputs, OUTPUTS)

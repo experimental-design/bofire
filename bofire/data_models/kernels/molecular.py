@@ -32,6 +32,13 @@ class TanimotoKernel(MolecularKernel):
     Without, it works on fingerprint columns that the surrogate's `DescriptorEncoding`
     produces, computing the similarities as needed.
 
+    For several molecular inputs, use one kernel with `fingerprints` per input, each
+    with fingerprints of its own if needed, and combine them with a
+    `MultiplicativeKernel` or an `AdditiveKernel`. Every factor then stays between 0
+    and 1, so no molecule dominates because its fingerprint has more bits. A single
+    kernel without `fingerprints` over several inputs instead compares their
+    concatenated fingerprint columns as a whole.
+
     Examples:
         >>> TanimotoKernel(
         ...     features=["solvent"],

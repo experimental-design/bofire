@@ -359,48 +359,59 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
         outputs: Outputs,
         fingerprints: Optional[DescriptorEncoding] = None,
     ) -> "SingleTaskGPSurrogate":
-        """Single-task GP over one molecular input, with the Tanimoto similarity of
-        the molecules' fingerprints as kernel.
+        """Single-task GP over molecular inputs, with the Tanimoto similarity of the
+        molecules' fingerprints as kernel.
 
-        The input is a categorical whose categories have structure data; the
-        similarities between all of them are computed once. A scaled Tanimoto kernel
-        with the THREESIX outputscale prior and the THREESIX likelihood.
+        Every input is a categorical whose categories have structure data; the
+        similarities between all categories of an input are computed once. With one
+        input the kernel is a scaled Tanimoto kernel. With several, it is the scaled
+        product of one Tanimoto kernel per input: two points are similar if each of
+        their molecules is. The THREESIX outputscale prior and the THREESIX likelihood
+        are used.
+
+        For other combinations (a sum of the molecules' kernels, different
+        fingerprints per molecule, further continuous inputs) build the kernel from
+        `TanimotoKernel`s directly.
 
         Args:
-            inputs: The input features: exactly one categorical with structure data.
+            inputs: The input features: one or more categoricals with structure data.
             outputs: The output feature.
-            fingerprints: How the fingerprints are computed from the structures. If
-                not provided, Morgan fingerprints of 2048 bits.
+            fingerprints: How the fingerprints are computed from the structures, the
+                same for every input. If not provided, Morgan fingerprints of 2048
+                bits.
 
         Returns:
             The surrogate.
 
         Raises:
-            ValueError: If the inputs are not exactly one categorical with structure
-                data.
+            ValueError: If an input is not a categorical with structure data.
         """
         features = inputs.get()
-        if not (
-            len(features) == 1
-            and isinstance(features[0], CategoricalInput)
-            and features[0].descriptors is not None
-            and features[0].descriptors.structure is not None
+        if not all(
+            isinstance(feature, CategoricalInput)
+            and feature.descriptors is not None
+            and feature.descriptors.structure is not None
+            for feature in features
         ):
             raise ValueError(
-                "The Tanimoto GP needs exactly one input: a categorical with "
-                "structure data."
+                "The Tanimoto GP needs every input to be a categorical with structure "
+                "data."
             )
-        key = features[0].key
+        fingerprints = fingerprints or DescriptorEncoding(
+            columns=[], generators=[Fingerprints()]
+        )
+        keys = [feature.key for feature in features]
+        kernels = [
+            TanimotoKernel(features=[key], fingerprints=fingerprints) for key in keys
+        ]
         return SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            categorical_encodings={key: OrdinalEncoding()},
+            categorical_encodings={key: OrdinalEncoding() for key in keys},
             kernel=ScaleKernel(
-                base_kernel=TanimotoKernel(
-                    features=[key],
-                    fingerprints=fingerprints
-                    or DescriptorEncoding(columns=[], generators=[Fingerprints()]),
-                ),
+                base_kernel=kernels[0]
+                if len(kernels) == 1
+                else MultiplicativeKernel(kernels=kernels),
                 outputscale_prior=THREESIX_SCALE_PRIOR(),
             ),
             likelihood=THREESIX_LIKELIHOOD(),
