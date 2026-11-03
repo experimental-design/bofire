@@ -29,8 +29,9 @@ from bofire.data_models.likelihoods.api import (
     THREESIX_LIKELIHOOD,
     GaussianLikelihood,
     SparseOutlierGaussianLikelihood,
+    TaskwiseLikelihood,
 )
-from bofire.data_models.means.api import ConstantMean
+from bofire.data_models.means.api import ConstantMean, TaskwiseMean
 from bofire.data_models.priors.api import (
     PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
     PAIRWISEGP_LENGTHSCALE_PRIOR,
@@ -756,6 +757,45 @@ specs.add_invalid(
     message="Only numerical inputs are supported for the `LinearDeterministicSurrogate`",
 )
 
+specs.add_valid(
+    models.MultiTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+            + [CategoricalTaskInput(key="task", categories=["a", "b", "c"])],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
+            ),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
+        ).model_dump(),
+        "engineered_features": EngineeredFeatures().model_dump(),
+        "scaler": Normalize().model_dump(),
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "mean": TaskwiseMean(mean=ConstantMean()).model_dump(),
+        "likelihood": TaskwiseLikelihood(
+            likelihood=GaussianLikelihood(
+                noise_prior=THREESIX_NOISE_PRIOR(),
+                noise_constraint=GreaterThan(lower_bound=1e-4),
+            )
+        ).model_dump(),
+        "categorical_encodings": {
+            "task": OrdinalEncoding().model_dump(),
+        },
+        "optimizer": LBFGSB().model_dump(),
+        "dump": None,
+    },
+)
+
+# all tasks share one mean and one noise level
 specs.add_valid(
     models.MultiTaskGPSurrogate,
     lambda: {

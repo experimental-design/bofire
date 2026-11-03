@@ -35,3 +35,19 @@ class ConstantMean(Mean):
         "NonTransformedInterval(lower_bound=-10, upper_bound=10). If not provided, it "
         "is unbounded.",
     )
+
+
+class TaskwiseMean(Mean):
+    """One mean per task of a multi-task Gaussian process, so tasks may differ in
+    offset.
+
+    Every task gets a copy of `mean` with parameters of its own, each with its prior
+    and bounds. A plain mean instead is shared by all tasks.
+    """
+
+    type: Literal["TaskwiseMean"] = "TaskwiseMean"
+    mean: ConstantMean = Field(
+        default=ConstantMean(),
+        description="The mean every task gets a copy of; each copy is fitted "
+        "separately.",
+    )

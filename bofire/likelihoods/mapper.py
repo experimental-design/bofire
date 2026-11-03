@@ -33,27 +33,15 @@ def map_GaussianLikelihood(
     )
 
 
-def map_HadamardGaussianLikelihood(
-    data_model: data_models.GaussianLikelihood,
+def map_TaskwiseLikelihood(
+    data_model: data_models.TaskwiseLikelihood,
     d: int,
     num_tasks: int,
     task_feature_index: int,
+    **kwargs,
 ) -> HadamardGaussianLikelihood:
-    """Build a likelihood with one noise level per task, for a multi-task GP.
-
-    Every task's noise level gets the prior and the bounds of the data model.
-
-    Args:
-        data_model: The likelihood to build.
-        d: Number of input dimensions the model sees, without the task column; used
-            by dimensionality-scaled priors.
-        num_tasks: Number of tasks.
-        task_feature_index: Column of the inputs that holds the task.
-
-    Returns:
-        The gpytorch likelihood.
-    """
-    noise_prior, noise_constraint = _noise(data_model, d=d)
+    noise_prior, noise_constraint = _noise(data_model.likelihood, d=d)
+    # one noise level per task, read from the task column of the inputs
     return HadamardGaussianLikelihood(
         num_tasks=num_tasks,
         noise_prior=noise_prior,
@@ -67,11 +55,12 @@ LIKELIHOOD_MAP: Dict[Type[data_models.Likelihood], Callable] = {
     # the base likelihood: BoTorch's RobustRelevancePursuitSingleTaskGP wraps it into
     # its SparseOutlierGaussianLikelihood, which needs the number of training points
     data_models.SparseOutlierGaussianLikelihood: map_GaussianLikelihood,
+    data_models.TaskwiseLikelihood: map_TaskwiseLikelihood,
 }
 
 
 def map(
-    data_model: data_models.AnyLikelihood, d: int, **kwargs
+    data_model: data_models.Likelihood, d: int, **kwargs
 ) -> gpytorch.likelihoods.Likelihood:
     """Build the gpytorch likelihood for a likelihood data model.
 
@@ -79,6 +68,8 @@ def map(
         data_model: The likelihood to build.
         d: Number of input dimensions the model sees, used by dimensionality-scaled
             priors.
+        **kwargs: Context a likelihood may need: a `TaskwiseLikelihood` needs
+            `num_tasks` and `task_feature_index`, the column holding the task.
 
     Returns:
         The gpytorch likelihood.

@@ -22,7 +22,8 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
 )
 from bofire.data_models.kernels.api import RBFKernel
-from bofire.data_models.likelihoods.api import GaussianLikelihood
+from bofire.data_models.likelihoods.api import GaussianLikelihood, TaskwiseLikelihood
+from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     DimensionalityScaledLogNormalPrior,
     GammaPrior,
@@ -170,7 +171,11 @@ def test_MultiTaskGPModel_noise_constraint():
     model = MultiTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
-        likelihood=GaussianLikelihood(noise_constraint=GreaterThan(lower_bound=5e-4)),
+        likelihood=TaskwiseLikelihood(
+            likelihood=GaussianLikelihood(
+                noise_constraint=GreaterThan(lower_bound=5e-4)
+            )
+        ),
     )
     model = surrogates.map(model)
     model.fit(experiments)
@@ -212,8 +217,10 @@ def test_noise_prior_registered_for_multi_task_gp():
         MultiTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            likelihood=GaussianLikelihood(
-                noise_prior=GammaPrior(concentration=1.1, rate=0.001)
+            likelihood=TaskwiseLikelihood(
+                likelihood=GaussianLikelihood(
+                    noise_prior=GammaPrior(concentration=1.1, rate=0.001)
+                )
             ),
         )
     )
@@ -239,8 +246,10 @@ def test_noise_prior_directional_effect_on_multi_task_gp():
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
             # mode ~ 3e-4
-            likelihood=GaussianLikelihood(
-                noise_prior=LogNormalPrior(loc=-8.0, scale=0.1)
+            likelihood=TaskwiseLikelihood(
+                likelihood=GaussianLikelihood(
+                    noise_prior=LogNormalPrior(loc=-8.0, scale=0.1)
+                )
             ),
         )
     )
@@ -249,8 +258,10 @@ def test_noise_prior_directional_effect_on_multi_task_gp():
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
             # mode = 100
-            likelihood=GaussianLikelihood(
-                noise_prior=GammaPrior(concentration=1.1, rate=0.001)
+            likelihood=TaskwiseLikelihood(
+                likelihood=GaussianLikelihood(
+                    noise_prior=GammaPrior(concentration=1.1, rate=0.001)
+                )
             ),
         )
     )
@@ -273,7 +284,9 @@ def test_dimension_scaled_priors_count_the_inputs_without_the_task():
         MultiTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            likelihood=GaussianLikelihood(noise_prior=prior, noise_constraint=None),
+            likelihood=TaskwiseLikelihood(
+                likelihood=GaussianLikelihood(noise_prior=prior, noise_constraint=None)
+            ),
         )
     )
     surrogate.fit(experiments)
@@ -281,3 +294,20 @@ def test_dimension_scaled_priors_count_the_inputs_without_the_task():
     # two continuous inputs next to the task: d = 2
     registered = _get_registered_noise_prior(surrogate.model)
     assert float(registered.loc) == pytest.approx(1.0 + math.log(2) * 0.5)
+
+
+def test_plain_mean_and_likelihood_are_shared_by_all_tasks():
+    benchmark, experiments = _multi_task_experiments()
+    surrogate = surrogates.map(
+        MultiTaskGPSurrogate(
+            inputs=benchmark.domain.inputs,
+            outputs=benchmark.domain.outputs,
+            mean=ConstantMean(),
+            likelihood=GaussianLikelihood(),
+        )
+    )
+    surrogate.fit(experiments)
+
+    assert type(surrogate.model.likelihood) is gpytorch.likelihoods.GaussianLikelihood
+    assert surrogate.model.likelihood.noise.numel() == 1
+    assert type(surrogate.model.mean_module) is gpytorch.means.ConstantMean

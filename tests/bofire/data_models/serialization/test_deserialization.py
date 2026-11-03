@@ -21,8 +21,13 @@ from bofire.data_models.api import (
     Inputs,
     Outputs,
 )
-from bofire.data_models.likelihoods.api import AnyLikelihood
-from bofire.data_models.means.api import AnyMean
+from bofire.data_models.likelihoods.api import (
+    GaussianLikelihood,
+    SparseOutlierGaussianLikelihood,
+    TaskwiseLikelihood,
+)
+from bofire.data_models.means.api import AnyMultiTaskMean
+from bofire.data_models.unions import tagged_union
 from tests.bofire.data_models.specs.api import Spec
 
 
@@ -52,13 +57,17 @@ def test_kernel_should_be_deserializable(kernel_spec: Spec):
 
 def test_mean_should_be_deserializable(mean_spec: Spec):
     obj = mean_spec.obj()
-    deserialized = TypeAdapter(AnyMean).validate_python(obj.model_dump())
+    # the multi-task union holds every mean type
+    deserialized = TypeAdapter(AnyMultiTaskMean).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_likelihood_should_be_deserializable(likelihood_spec: Spec):
     obj = likelihood_spec.obj()
-    deserialized = TypeAdapter(AnyLikelihood).validate_python(obj.model_dump())
+    any_likelihood = tagged_union(
+        GaussianLikelihood, SparseOutlierGaussianLikelihood, TaskwiseLikelihood
+    )
+    deserialized = TypeAdapter(any_likelihood).validate_python(obj.model_dump())
     assert obj == deserialized
 
 

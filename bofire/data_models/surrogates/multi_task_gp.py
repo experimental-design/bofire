@@ -10,8 +10,12 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
 )
 from bofire.data_models.kernels.api import AnyKernel, RBFKernel
-from bofire.data_models.likelihoods.api import HVARFNER_LIKELIHOOD, GaussianLikelihood
-from bofire.data_models.means.api import AnyMean, ConstantMean
+from bofire.data_models.likelihoods.api import (
+    HVARFNER_LIKELIHOOD,
+    AnyMultiTaskLikelihood,
+    TaskwiseLikelihood,
+)
+from bofire.data_models.means.api import AnyMultiTaskMean, ConstantMean, TaskwiseMean
 from bofire.data_models.priors.api import HVARFNER_LENGTHSCALE_PRIOR, GreaterThan
 from bofire.data_models.surrogates.optimizer import LBFGSBFitted
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
@@ -24,10 +28,11 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
     The tasks are the categories of the one `CategoricalTaskInput`, e.g. a cheap
     simulation and the real experiment, or a previous and the current campaign. The
     covariance is the kernel over the other inputs times a learned correlation between
-    the tasks (intrinsic coregionalization). Every task has a mean and a noise level of
-    its own, so tasks may differ in offset and in measurement precision. Predictions
-    for a task use the data of all tasks, weighted by how strongly they correlate with
-    it.
+    the tasks (intrinsic coregionalization). By default every task has a mean and a
+    noise level of its own, so tasks may differ in offset and in measurement
+    precision; with a plain mean or Gaussian likelihood, all tasks share one.
+    Predictions for a task use the data of all tasks, weighted by how strongly they
+    correlate with it.
 
     Examples:
         >>> MultiTaskGPSurrogate(
@@ -49,15 +54,16 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
         description="Kernel over all inputs except the task input; the correlation "
         "between the tasks is learned separately.",
     )
-    mean: AnyMean = Field(
-        default=ConstantMean(),
-        description="Prior mean function, applied per task: every task gets a mean "
-        "of its own, each with this prior and these bounds.",
+    mean: AnyMultiTaskMean = Field(
+        default=TaskwiseMean(mean=ConstantMean()),
+        description="Prior mean function. A `TaskwiseMean` gives every task a mean "
+        "of its own; a plain mean is shared by all tasks.",
     )
-    likelihood: GaussianLikelihood = Field(
-        default=HVARFNER_LIKELIHOOD(),
-        description="Model of the measurement noise, applied per task: every task "
-        "gets a noise level of its own, each with this prior and these bounds.",
+    likelihood: AnyMultiTaskLikelihood = Field(
+        default=TaskwiseLikelihood(likelihood=HVARFNER_LIKELIHOOD()),
+        description="Model of the measurement noise. A `TaskwiseLikelihood` gives "
+        "every task a noise level of its own; a plain Gaussian likelihood is one "
+        "noise level for all tasks.",
     )
 
     @classmethod

@@ -75,3 +75,20 @@ class SparseOutlierGaussianLikelihood(GaussianLikelihood):
         description="Whether to keep every model fitted along the way, one per number "
         "of outliers, on the fitted model for inspection.",
     )
+
+
+class TaskwiseLikelihood(Likelihood):
+    """One noise level per task of a multi-task Gaussian process, so tasks may differ
+    in measurement precision.
+
+    Every task's noise variance is fitted separately, each with the prior and the
+    bounds of `likelihood`. A plain Gaussian likelihood instead has one noise level
+    for all tasks.
+    """
+
+    type: Literal["TaskwiseLikelihood"] = "TaskwiseLikelihood"
+    likelihood: GaussianLikelihood = Field(
+        default=GaussianLikelihood(),
+        description="The noise model every task gets a copy of; each copy is "
+        "fitted separately.",
+    )

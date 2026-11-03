@@ -22,18 +22,26 @@ def map_ConstantMean(
     return mean
 
 
+def map_TaskwiseMean(
+    data_model: data_models.TaskwiseMean, d: int, num_tasks: int, **kwargs
+) -> gpytorch.means.MultitaskMean:
+    return gpytorch.means.MultitaskMean(map(data_model.mean, d=d), num_tasks=num_tasks)
+
+
 MEAN_MAP: Dict[Type[data_models.Mean], Callable] = {
     data_models.ConstantMean: map_ConstantMean,
+    data_models.TaskwiseMean: map_TaskwiseMean,
 }
 
 
-def map(data_model: data_models.AnyMean, d: int, **kwargs) -> gpytorch.means.Mean:
+def map(data_model: data_models.Mean, d: int, **kwargs) -> gpytorch.means.Mean:
     """Build the gpytorch mean module for a mean data model.
 
     Args:
         data_model: The mean to build.
         d: Number of input dimensions the model sees, used by dimensionality-scaled
             priors.
+        **kwargs: Context a mean may need: a `TaskwiseMean` needs `num_tasks`.
 
     Returns:
         The gpytorch mean module.

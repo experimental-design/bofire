@@ -7,7 +7,6 @@ import torch
 from botorch.fit import fit_gpytorch_mll
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
-from gpytorch.means import MultitaskMean
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
@@ -77,10 +76,8 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
                 features_to_idx_mapper=self.get_feature_indices,
                 inputs=self.inputs,
             ),
-            mean_module=MultitaskMean(
-                means.map(self.mean, d=d), num_tasks=self.n_tasks
-            ),
-            likelihood=likelihoods.map_HadamardGaussianLikelihood(
+            mean_module=means.map(self.mean, d=d, num_tasks=self.n_tasks),
+            likelihood=likelihoods.map(
                 self.likelihood,
                 d=d,
                 num_tasks=self.n_tasks,

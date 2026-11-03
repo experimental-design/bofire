@@ -37,3 +37,11 @@ specs.add_valid(
         "cache_model_trace": True,
     },
 )
+specs.add_valid(
+    likelihoods.TaskwiseLikelihood,
+    lambda: {
+        "likelihood": likelihoods.GaussianLikelihood(
+            noise_prior=HVARFNER_NOISE_PRIOR()
+        ).model_dump(),
+    },
+)

@@ -35,8 +35,9 @@ def _rebuild_dependent_models() -> None:
     from bofire.data_models.likelihoods.likelihood import (
         GaussianLikelihood,
         SparseOutlierGaussianLikelihood,
+        TaskwiseLikelihood,
     )
-    from bofire.data_models.means.mean import ConstantMean
+    from bofire.data_models.means.mean import ConstantMean, TaskwiseMean
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
     from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
     from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
@@ -114,6 +115,10 @@ def _rebuild_dependent_models() -> None:
 
     # 4. Means and likelihoods, which surrogates hold
     for cls in [ConstantMean, GaussianLikelihood, SparseOutlierGaussianLikelihood]:
+        cls.model_rebuild(force=True)
+
+    # 4b. Taskwise wrappers, which embed means and likelihoods
+    for cls in [TaskwiseMean, TaskwiseLikelihood]:
         cls.model_rebuild(force=True)
 
     # 5. Surrogate models
