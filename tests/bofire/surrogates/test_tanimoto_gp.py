@@ -1,13 +1,21 @@
 import importlib
 
+import numpy as np
 import pandas as pd
 import pytest
 import torch
 from pandas.testing import assert_frame_equal
 
 from bofire.data_models.descriptor_generators.api import Fingerprints, Fragments
-from bofire.data_models.encodings.api import DescriptorEncoding
-from bofire.data_models.kernels.api import ScaleKernel, TanimotoKernel
+from bofire.data_models.domain.api import Inputs
+from bofire.data_models.encodings.api import DescriptorEncoding, OrdinalEncoding
+from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.kernels.api import (
+    MultiplicativeKernel,
+    RBFKernel,
+    ScaleKernel,
+    TanimotoKernel,
+)
 from bofire.data_models.likelihoods.api import THREESIX_LIKELIHOOD
 from bofire.data_models.priors.api import THREESIX_SCALE_PRIOR
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
@@ -74,3 +82,34 @@ def test_precomputed_similarities_need_ordinal_encoding(chem_domain_simple):
 
     with pytest.raises(ValueError, match="encoded as ordinal codes"):
         surrogate.fit(_experiments(X, Y))
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_precomputed_similarities_combine_with_other_kernels(chem_domain_simple):
+    domain, X, Y = chem_domain_simple
+    inputs = Inputs(
+        features=[*domain.inputs.get(), ContinuousInput(key="x", bounds=(0, 1))]
+    )
+    X = X.assign(x=np.linspace(0, 1, len(X)))
+    fingerprints = DescriptorEncoding(columns=[], generators=[Fingerprints()])
+    surrogate = map(
+        SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=domain.outputs,
+            categorical_encodings={"molecules": OrdinalEncoding()},
+            kernel=MultiplicativeKernel(
+                kernels=[
+                    TanimotoKernel(features=["molecules"], fingerprints=fingerprints),
+                    RBFKernel(features=["x"]),
+                ]
+            ),
+        )
+    )
+
+    surrogate.fit(_experiments(X, Y))
+
+    tanimoto, rbf = surrogate.model.covar_module.kernels
+    assert tanimoto.tanimoto_similarity_matrix.shape == (len(X), len(X))
+    assert tanimoto.active_dims.tolist() == surrogate.get_feature_indices(["molecules"])
+    assert rbf.active_dims.tolist() == surrogate.get_feature_indices(["x"])
+    assert surrogate.predict(X).shape == (len(X), 2)

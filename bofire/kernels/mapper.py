@@ -41,7 +41,9 @@ def register(
 
         # Decorator form
         @register(MyKernelDataModel)
-        def map_my_kernel(data_model, batch_shape, active_dims, features_to_idx_mapper):
+        def map_my_kernel(
+            data_model, batch_shape, active_dims, features_to_idx_mapper, **kwargs
+        ):
             return MyGpytorchKernel(...)
 
         # Direct call form
@@ -50,8 +52,10 @@ def register(
     Args:
         data_model_cls: The Pydantic data model class.
         map_fn: A callable that takes ``(data_model, batch_shape, active_dims,
-            features_to_idx_mapper)`` and returns a gpytorch kernel. If not
-            provided, returns a decorator.
+            features_to_idx_mapper, **kwargs)`` and returns a gpytorch kernel. It
+            must accept further keyword arguments, such as ``inputs``, and pass
+            them on to the kernels it maps itself. If not provided, returns a
+            decorator.
 
     Returns:
         The mapping function (unchanged) when used as a decorator, None otherwise.
@@ -537,6 +541,7 @@ def map_DownsamplingKernel(
     batch_shape: torch.Size,
     active_dims: List[int],
     features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+    **kwargs,
 ) -> DownsamplingKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     offset_prior = (
