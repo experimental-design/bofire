@@ -15,9 +15,17 @@ from bofire.data_models.priors.api import (
 from bofire.data_models.unions import tagged_union
 
 
-AnyLikelihood = tagged_union(GaussianLikelihood, SparseOutlierGaussianLikelihood)
+AnyLikelihood = tagged_union(
+    GaussianLikelihood, SparseOutlierGaussianLikelihood, TaskwiseLikelihood
+)
 
-# likelihoods of a multi-task GP: a plain Gaussian likelihood is shared by all tasks
+# the likelihoods a single-task GP takes
+AnySingleTaskLikelihood = tagged_union(
+    GaussianLikelihood, SparseOutlierGaussianLikelihood
+)
+
+# the likelihoods a multi-task GP takes: a plain Gaussian likelihood is shared by all
+# tasks
 AnyMultiTaskLikelihood = tagged_union(GaussianLikelihood, TaskwiseLikelihood)
 
 
