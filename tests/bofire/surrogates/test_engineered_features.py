@@ -1,11 +1,15 @@
 import importlib
+import io
 
 import numpy as np
 import pandas as pd
 import pytest
 import torch
 
-from bofire.data_models.descriptor_generators.api import MordredDescriptors
+from bofire.data_models.descriptor_generators.api import (
+    Fingerprints,
+    MordredDescriptors,
+)
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import (
     CloneFeature,
@@ -249,6 +253,179 @@ def test_map_weighted_mean_feature_zero_weight_sum():
         result[:, -2:],
         torch.tensor([[0.0, 0.0], [1.0, 2.0]]).to(**tkwargs),
     )
+
+
+def _power_mean_aggregator(power, normalize, d2=(4.0, 1.0, 2.0)):
+    """Three components with the descriptors d1 = [1, 2, 4] and d2, blended by `power`."""
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x{i}",
+                bounds=[0, 1],
+                descriptors=Descriptors(columns={"d1": [d1_i], "d2": [d2_i]}),
+            )
+            for i, (d1_i, d2_i) in enumerate(zip([1.0, 2.0, 4.0], d2), start=1)
+        ]
+    )
+    feature = WeightedSumFeature(
+        key="agg1",
+        features=["x1", "x2", "x3"],
+        columns=["d1", "d2"],
+        normalize=normalize,
+        power=power,
+    )
+    return map_weighted_feature(inputs=inputs, transform_specs={}, feature=feature)
+
+
+# the second row mixes the first two components in equal parts, at a total amount of 2
+POWER_MEAN_AMOUNTS = [[0.25, 0.25, 0.5], [1.0, 1.0, 0.0]]
+
+
+@pytest.mark.parametrize("normalize", [True, False])
+@pytest.mark.parametrize(
+    "power, means",
+    [
+        # geometric: d1 = 1^0.25 · 2^0.25 · 4^0.5 = 2^1.25, d2 = 4^0.25 · 1^0.25 · 2^0.5
+        (0.0, [[2**1.25, 2.0], [2**0.5, 2.0]]),
+        # harmonic: d1 = 1 / (0.25/1 + 0.25/2 + 0.5/4), d2 = 1 / (0.25/4 + 0.25/1 + 0.5/2)
+        (-1.0, [[2.0, 16 / 9], [4 / 3, 1.6]]),
+    ],
+)
+def test_map_weighted_power_mean(power, means, normalize):
+    aggregator = _power_mean_aggregator(power, normalize)
+
+    orig = torch.tensor(POWER_MEAN_AMOUNTS).to(**tkwargs)
+    result = aggregator(orig)
+
+    expected = torch.tensor(means).to(**tkwargs)
+    if not normalize:
+        expected = orig.sum(dim=-1, keepdim=True) * expected
+    assert result.shape == (2, 5)
+    assert torch.allclose(result[:, :-2], orig)
+    assert torch.allclose(result[:, -2:], expected)
+
+
+@pytest.mark.parametrize("normalize", [True, False])
+def test_map_weighted_power_mean_van_der_waals(normalize):
+    aggregator = _power_mean_aggregator(0.5, normalize)
+
+    orig = torch.tensor(POWER_MEAN_AMOUNTS).to(**tkwargs)
+    result = aggregator(orig)
+
+    total = orig.sum(dim=-1, keepdim=True)
+    descriptors = torch.tensor([[1.0, 4.0], [2.0, 1.0], [4.0, 2.0]]).to(**tkwargs)
+    expected = torch.matmul(orig / total, descriptors.sqrt()) ** 2
+    if not normalize:
+        expected = total * expected
+    assert torch.allclose(result[:, -2:], expected)
+
+
+@pytest.mark.parametrize("normalize", [True, False])
+@pytest.mark.parametrize("power", [0.0, 1.0])
+def test_map_weighted_power_mean_is_continuous_in_power(power, normalize):
+    """The arithmetic and the geometric mean are computed separately from other powers.
+
+    Both must be the limit of the general power mean, which for the arithmetic mean
+    also checks that it scales by the total amount as the weighted sum does.
+    """
+    orig = torch.tensor(POWER_MEAN_AMOUNTS).to(**tkwargs)
+    exact = _power_mean_aggregator(power, normalize)(orig)
+    nearby = _power_mean_aggregator(power + 1e-7, normalize)(orig)
+    assert torch.allclose(exact, nearby, rtol=1e-5)
+
+
+@pytest.mark.parametrize("normalize", [True, False])
+@pytest.mark.parametrize(
+    "power, d2",
+    [
+        (0.0, [4.0, 1.0, 2.0]),
+        (-1.0, [4.0, 1.0, 2.0]),
+        # with a zero descriptor, the root is taken of 0 where only x1 is present
+        (0.5, [0.0, 1.0, 2.0]),
+        (2.0, [0.0, 1.0, 2.0]),
+    ],
+)
+def test_map_weighted_power_mean_gradients_are_finite(power, d2, normalize):
+    aggregator = _power_mean_aggregator(power, normalize, d2=d2)
+
+    orig = torch.tensor(
+        POWER_MEAN_AMOUNTS + [[1.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+        **tkwargs,
+        requires_grad=True,
+    )
+    result = aggregator(orig)
+    result[:, -2:].sum().backward()
+
+    assert torch.isfinite(result).all()
+    assert orig.grad is not None
+    assert torch.isfinite(orig.grad).all()
+    # without any amount, the feature is 0
+    assert torch.equal(result[-1, -2:], torch.zeros(2, **tkwargs))
+
+
+@pytest.mark.parametrize(
+    "power, d2, error",
+    [
+        (1.0, [-1.0, 0.0, 2.0], None),
+        (0.5, [0.0, 1.0, 2.0], None),
+        (0.5, [-1.0, 1.0, 2.0], "non-negative descriptor values"),
+        # integer powers as well: an even one drops the sign of negative values, and
+        # for an odd one torch has no root of a negative weighted sum
+        (2.0, [-1.0, 1.0, 2.0], "non-negative descriptor values"),
+        (3.0, [-1.0, 1.0, 2.0], "non-negative descriptor values"),
+        (0.0, [0.0, 1.0, 2.0], "strictly positive descriptor values"),
+        (-1.0, [-1.0, 1.0, 2.0], "strictly positive descriptor values"),
+    ],
+)
+def test_map_weighted_power_mean_descriptor_signs(power, d2, error):
+    if error is None:
+        _power_mean_aggregator(power, True, d2=d2)
+    else:
+        with pytest.raises(ValueError, match=rf"{error}, but \['d2'\]"):
+            _power_mean_aggregator(power, True, d2=d2)
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_map_weighted_power_mean_checks_generated_descriptors():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key="m1", bounds=[0, 1], descriptors=Descriptors(structure=["C"])
+            ),
+            ContinuousInput(
+                key="m2", bounds=[0, 1], descriptors=Descriptors(structure=["CC"])
+            ),
+        ]
+    )
+    # fingerprint bits are 0 or 1, so a geometric mean over them is undefined
+    feature = WeightedSumFeature(
+        key="agg1",
+        features=["m1", "m2"],
+        columns=[],
+        generators=[Fingerprints(n_bits=8)],
+        power=0.0,
+    )
+    feature.validate_features(inputs)
+    with pytest.raises(ValueError, match="strictly positive descriptor values"):
+        map_weighted_feature(inputs=inputs, transform_specs={}, feature=feature)
+
+
+def test_map_weighted_feature_pickled_without_power():
+    """A fitted surrogate dumped before `power` existed pickles this transform with
+    arguments that lack it. Loaded again, it must compute what it did before."""
+    aggregator = _power_mean_aggregator(1.0, normalize=True)
+    orig = torch.tensor(POWER_MEAN_AMOUNTS).to(**tkwargs)
+    expected = aggregator(orig)
+
+    del aggregator.fkwargs["power"]
+    # pickled the way `BotorchSurrogate.dumps` pickles the model
+    buffer = io.BytesIO()
+    torch.save(aggregator, buffer)
+    buffer.seek(0)
+    loaded = torch.load(buffer, weights_only=False)
+
+    assert "power" not in loaded.fkwargs
+    assert torch.equal(loaded(orig), expected)
 
 
 @pytest.mark.skipif(
