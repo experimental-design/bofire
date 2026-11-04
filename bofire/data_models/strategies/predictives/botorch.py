@@ -1,6 +1,6 @@
-from typing import Annotated, Optional, Type
+from typing import Type
 
-from pydantic import Field, PositiveInt, model_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.constraints.api import Constraint, InterpointConstraint
 from bofire.data_models.domain.api import Domain, Outputs
@@ -9,7 +9,6 @@ from bofire.data_models.features.api import (
     CategoricalTaskInput,
     ContinuousInput,
 )
-from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.strategies.predictives.acqf_optimization import (
     AnyAcqfOptimizer,
     BotorchOptimizer,
@@ -18,7 +17,6 @@ from bofire.data_models.strategies.predictives.predictive import PredictiveStrat
 from bofire.data_models.surrogates.api import (
     AnyBotorchSurrogate,
     BotorchSurrogates,
-    MixedSingleTaskGPSurrogate,
     MultiTaskGPSurrogate,
     SingleTaskGPSurrogate,
 )
@@ -34,13 +32,6 @@ class BotorchStrategy(PredictiveStrategy):
         default_factory=lambda: BotorchSurrogates(surrogates=[]),
         validate_default=True,
     )
-    # outlier detection params
-    outlier_detection_specs: Optional[OutlierDetections] = None
-    min_experiments_before_outlier_check: PositiveInt = 1
-    frequency_check: PositiveInt = 1
-    # hyperopt params
-    frequency_hyperopt: Annotated[int, Field(ge=0)] = 0  # 0 indicates no hyperopt
-    folds: int = 5
     include_infeasible_exps_in_acqf_calc: bool = Field(
         default=False,
         description="Whether infeasible experiments should be included in the set "
@@ -85,16 +76,6 @@ class BotorchStrategy(PredictiveStrategy):
 
         self.acquisition_optimizer.validate_surrogate_specs(self.surrogate_specs)
 
-        return self
-
-    @model_validator(mode="after")
-    def validate_outlier_detection_specs_for_domain(self):
-        """Ensures that a outlier_detection model is specified for each output feature"""
-        if self.outlier_detection_specs is not None:
-            self.outlier_detection_specs._check_compability(
-                inputs=self.domain.inputs,
-                outputs=self.domain.outputs,
-            )
         return self
 
     @classmethod
@@ -142,12 +123,17 @@ class BotorchStrategy(PredictiveStrategy):
             AnyBotorchSurrogate: Spec for the surrogate for the given output feature.
         """
 
-        if len(domain.inputs.get(CategoricalInput, exact=True)):
-            return MixedSingleTaskGPSurrogate(
-                inputs=domain.inputs,
-                outputs=Outputs(
-                    features=[domain.outputs.get_by_key(output_feature)],
-                ),
+        # A categorical needs the mixed GP only if it is *not* descriptor-encoded: with
+        # descriptor data it turns into continuous columns a plain GP handles. Keyed on
+        # the data the feature carries, not on its type.
+        if any(
+            feat.descriptors is None
+            for feat in domain.inputs.get(CategoricalInput, exact=False)
+            if not isinstance(feat, CategoricalTaskInput)
+        ):
+            return SingleTaskGPSurrogate.mixed(
+                domain.inputs,
+                Outputs(features=[domain.outputs.get_by_key(output_feature)]),
             )
 
         return SingleTaskGPSurrogate(

@@ -13,8 +13,9 @@ BoFire offers the following classes of surrogate models.
 [SingleTaskGPSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/single\_task\_gp.py)|a single objective with real valued inputs|Limited data and black-box function is smooth|Gaussian process
 [RandomForestSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/random\_forest.py)|a single objective|Rich data; black-box function does not have to be smooth|sklearn random forest implementation
 [MLP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mlp.py)|a single objective with real-valued inputs|Rich data and black-box function is smooth|Multi layer perceptron
-[MixedSingleTaskGPSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed\_single\_task\_gp.py)|a single objective with categorical and real valued inputs|Limited data and black-box function is smooth|Gaussian process
-[TanimotoGP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed_tanimoto_gp.py)|a single objective|At least one input feature is a molecule represented as fingerprint|Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points
+`SingleTaskGPSurrogate.mixed`|a single objective with categorical and real valued inputs|Limited data and black-box function is smooth|Gaussian process with a Hamming kernel for the categoricals, as BoTorch's `MixedSingleTaskGP`
+`SingleTaskGPSurrogate.tanimoto`|a single objective|The input is a molecule, a categorical with structure data|Gaussian process with the Tanimoto similarity of the molecules' fingerprints as kernel
+[SelectionSurrogate](../reference/data_models.surrogates.api.html#bofire.data_models.surrogates.api.SelectionSurrogate)|a single continuous objective|Choosing between several complete surrogate configurations|Cross-validation model selection
 
 All of these are single-objective surrogate models. For optimization of multiple objectives at the same time, a suitable [Strategy](https://github.com/experimental-design/bofire/blob/main/bofire/strategies/strategy.py) has to be chosen. Then for each objective a different surrogate model can be specified. By default the SingleTaskGPSurrogate is used.
 
@@ -41,6 +42,21 @@ All of these are single-objective surrogate models. For optimization of multiple
 - The RandomForestSurrogate does not have kernels but quantifies uncertainty using the standard deviation of the predictions of its individual trees.
 - MLP quantifies uncertainty using the standard deviation of multiple predictions that come from different dropout rates (randomly setting neural network weights to zero).
 
+## Model selection by cross-validation
+
+`SelectionSurrogate` chooses between two or more complete surrogate configurations.
+Whenever it is fitted, it cross-validates every option, ranks them using the
+configured regression metric, and then fits the winning option on all available
+experiments. The list of options can mix model families, for example a Gaussian
+process and a random forest, or contain several differently configured Gaussian
+processes.
+
+See [Model Building with BoFire](../tutorials/basic_examples/Model_Fitting_and_analysis.qmd#select-a-surrogate-by-cross-validation)
+for a worked example. `SingleTaskGPSurrogate.options(inputs, outputs)` provides the
+36 GP configurations comprising different kernels, priors, scale-kernel settings,
+and ARD settings. Filtering that list or constructing a smaller list of options
+reduces the number of cross-validation fits performed during each model fit.
+
 ## Customization
 BoFire also offers the option to customize surrogate models. In particular, it is possible to customize the SingleTaskGPSurrogate in the following ways.
 
@@ -53,16 +69,15 @@ Specify the [Kernel](https://github.com/experimental-design/bofire/blob/main/bof
 [MaternKernel](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)|Based on Gamma function; allows setting a smoothness parameter|Yes|Continuous
 [PolynomialKernel](https://scikit-learn.org/stable/modules/metrics.html)|Based on dot-product of two vectors of input points|No|Continuous
 [LinearKernel](https://scikit-learn.org/stable/modules/metrics.html)|Equal to dot-product of two vectors of input points|No|Continuous
-TanimotoKernel|Measures similarities between binary vectors using [Tanimoto Similarity](https://en.wikipedia.org/wiki/Jaccard_index)|Not applicable|[CategoricalMolecularInput](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py)
+TanimotoKernel|Measures similarities between binary vectors using [Tanimoto Similarity](https://en.wikipedia.org/wiki/Jaccard_index)|Not applicable|[CategoricalInput](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py) with a `structure` column
 HammingDistanceKernel|Similarity is defined by the [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance) which considers the number of equal entries between two vectors (e.g., in One-Hot-encoding)|Not applicable|[Categorical](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py)
 
 Translational invariance means that the similarity between two input points is not affected by shifting both points by the same amount but only determined by their distance. Example: with a translationally invariant kernel, the values 10 and 20 are equally similar to each other as the values 20 and 30, while with a polynomial kernel the latter pair has potentially higher similarity. Polynomial kernels are often suitable for high-dimensional inputs while for low-dimensional inputs an RBF or Matérn kernel is recommended.
 
 **Note:**
 
-- SingleTaskGPSurrogate with PolynomialKernel is equivalent to PolynomialSurrogate.
-- SingleTaskGPSurrogate with LinearKernel is equivalent to LinearSurrogate.
-- SingleTaskGPSurrogate with TanimotoKernel is equivalent to TanimotoGP.
+- `SingleTaskGPSurrogate.linear(inputs, outputs)` and `SingleTaskGPSurrogate.polynomial(inputs, outputs, power=2)` build a SingleTaskGPSurrogate with a LinearKernel or PolynomialKernel.
+- `TanimotoKernel(features=[key], fingerprints=...)` computes the similarities of all molecules of a categorical input once; it composes with other kernels like any kernel.
 - One can combine two Kernels by using AdditiveKernel or MultiplicativeKernel.
 
 **Example**:
@@ -88,5 +103,39 @@ For experimental data subject to noise, one can specify the distribution of this
             inputs=domain.inputs,
             outputs=Outputs(features=[domain.outputs[0]]),
             kernel=PolynomialKernel(power=2),
-            noise_prior=NormalPrior(loc=0, scale=1)
+            likelihood=GaussianLikelihood(noise_prior=NormalPrior(loc=0, scale=1))
     )
+
+### Categorical encoding customization
+
+A categorical input has to be turned into numeric columns before a surrogate can use it.
+The feature carries the *data* — its categories, and optionally a `Descriptors` block with
+numeric columns and/or SMILES structures — while the surrogate chooses the *encoding*. Two
+surrogates over the same domain can therefore encode the same feature differently.
+
+Each surrogate picks a sensible default per feature: a categorical carrying descriptor data
+is encoded by its descriptors, otherwise one-hot (or ordinal, where the surrogate requires
+it). Override per feature with `categorical_encodings`:
+
+**Encoding**|**Description**|**Requires**
+:-----:|:-----:|:-----:
+[OneHotEncoding](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/onehot.py)|One binary column per category|Nothing
+[OrdinalEncoding](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/ordinal.py)|A single integer column|Nothing
+[DescriptorEncoding](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/encodings/descriptors.py)|One column per descriptor, taken from the category's row|A `Descriptors` block on the feature
+
+**Example**:
+
+    surrogate_data_0 = SingleTaskGPSurrogate(
+            inputs=domain.inputs,
+            outputs=Outputs(features=[domain.outputs[0]]),
+            categorical_encodings={"solvent": OneHotEncoding()}
+    )
+
+`DescriptorEncoding` additionally selects *which* descriptors to use: `columns` picks from
+the numeric columns the feature carries (all of them by default), and `generators` computes
+further ones from the feature's `structure`, e.g. `Fingerprints()`. Setting
+`filter_descriptors=True` drops correlated columns across the assembled block.
+
+    categorical_encodings={
+        "solvent": DescriptorEncoding(columns=["logP"], generators=[Fingerprints()])
+    }

@@ -1,6 +1,14 @@
+import pytest
+
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.strategies.api import BotorchOptimizer, SoboStrategy
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 
 
 def test_botorch_strategy():
@@ -13,3 +21,44 @@ def test_botorch_strategy():
         acquisition_optimizer=BotorchOptimizer(),
     )
     assert isinstance(sobo.acquisition_optimizer, BotorchOptimizer)
+
+
+@pytest.mark.parametrize(
+    "categorical, mixed",
+    [
+        # a plain categorical is encoded as levels and needs the categorical kernel
+        (
+            CategoricalInput(key="c", categories=["a", "b"]),
+            True,
+        ),
+        # descriptor data makes it continuous columns, so a plain GP suffices. This is
+        # the canonical form of a descriptor-carrying categorical; selecting
+        # on the type alone used to miss it.
+        (
+            CategoricalInput(
+                key="c",
+                categories=["a", "b"],
+                descriptors=Descriptors(columns={"d": [1.0, 2.0]}),
+            ),
+            False,
+        ),
+        (
+            CategoricalInput(
+                key="c",
+                categories=["CCO", "CC"],
+                descriptors=Descriptors(structure=["CCO", "CC"]),
+            ),
+            False,
+        ),
+    ],
+    ids=["plain", "descriptors", "structure"],
+)
+def test_default_surrogate_selection_is_data_driven(categorical, mixed):
+    domain = Domain(
+        inputs=[ContinuousInput(key="x", bounds=(0, 1)), categorical],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    spec = SoboStrategy(domain=domain).surrogate_specs.surrogates[0]
+    assert isinstance(spec, SingleTaskGPSurrogate)
+    # the mixed GP compares plain categoricals with a Hamming kernel
+    assert ("HammingDistanceKernel" in spec.kernel.model_dump_json()) == mixed

@@ -3,6 +3,7 @@ from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
+from pydantic import Field
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.features import Inputs
@@ -13,8 +14,18 @@ class Constraint(BaseModel):
     """Abstract base class to define constraints on the optimization space."""
 
     type: Any
-    features: FeatureKeys
-    context: Optional[str] = None
+    features: FeatureKeys = Field(
+        description="Keys of the input features the constraint acts on. The order is "
+        "significant for subclasses that pair each feature with a per-feature value, "
+        "such as the coefficients of a LinearConstraint or the exponents of a "
+        "ProductConstraint.",
+    )
+    context: Optional[str] = Field(
+        default=None,
+        description="Free-text context providing additional information about the "
+        "constraint, such as why it exists. Useful for agentic optimization where an "
+        "LLM agent can leverage this description to better understand the constraint.",
+    )
 
     @abstractmethod
     def to_description(self) -> str:
@@ -80,6 +91,13 @@ class IntrapointConstraint(Constraint):
 
 
 class EqualityConstraint(IntrapointConstraint):
+    """Abstract base class for constraints fulfilled at a constraint value of zero.
+
+    What is evaluated is defined by the `__call__` of the implementing subclass. This
+    class only fixes how that value is interpreted: a candidate fulfills the constraint
+    if the value is within `tol` of zero.
+    """
+
     type: Any
 
     def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
@@ -90,6 +108,13 @@ class EqualityConstraint(IntrapointConstraint):
 
 
 class InequalityConstraint(IntrapointConstraint):
+    """Abstract base class for constraints fulfilled at a non-positive constraint value.
+
+    What is evaluated is defined by the `__call__` of the implementing subclass. This
+    class only fixes how that value is interpreted: a candidate fulfills the constraint
+    if the value does not exceed `tol`.
+    """
+
     type: Any
 
     def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:

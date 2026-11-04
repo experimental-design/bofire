@@ -7,7 +7,6 @@ from botorch.acquisition.multi_objective.objective import (
     GenericMCMultiOutputObjective,
     MCMultiOutputObjective,
 )
-from pydantic import PositiveInt
 from typing_extensions import Self
 
 from bofire.data_models.acquisition_functions.api import (
@@ -17,9 +16,11 @@ from bofire.data_models.acquisition_functions.api import (
 )
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective
-from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
 from bofire.data_models.strategies.api import ExplicitReferencePoint
 from bofire.data_models.strategies.api import MoboStrategy as DataModel
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.strategies.predictives.botorch import BotorchStrategy
@@ -28,6 +29,7 @@ from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
 from bofire.utils.torch_tools import (
     get_multiobjective_objective,
     get_output_constraints,
+    pandas2torch,
     tkwargs,
 )
 
@@ -65,11 +67,11 @@ class MoboStrategy(BotorchStrategy):
         objective = self._get_objective()
         # in case that qehvi, qlogehvi is used we need also y
         if isinstance(self.acquisition_function, (qLogEHVI, qEHVI)):
-            Y = torch.from_numpy(
+            Y = pandas2torch(
                 self.domain.outputs.preprocess_experiments_all_valid_outputs(
                     self.experiments,
-                )[self.domain.outputs.get_keys()].values,
-            ).to(**tkwargs)
+                )[self.domain.outputs.get_keys()],
+            )
         else:
             Y = None
 
@@ -137,13 +139,9 @@ class MoboStrategy(BotorchStrategy):
         acquisition_function: AnyMultiObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ):
         """
         Creates an instance of a multi-objective strategy based on expected hypervolume improvement.
@@ -158,11 +156,6 @@ class MoboStrategy(BotorchStrategy):
             acquisition_function: Acquisition function.
             acquisition_optimizer: Optimizer for the acquisition function.
             surrogate_specs: Surrogate model specifications.
-            outlier_detection_specs: Outlier detection configuration.
-            min_experiments_before_outlier_check: Minimum number of experiments before performing outlier detection.
-            frequency_check: Frequency at which to perform outlier checks.
-            frequency_hyperopt: Frequency at which to perform hyperparameter optimization.
-            folds: Number of folds for cross-validation for hyperparameter optimization.
             seed: Random seed for reproducibility.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.

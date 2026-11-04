@@ -32,7 +32,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.constraints.nonlinear import NONLINEAR_EQUALITY_TOLERANCE
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import OrdinalEncoding
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -173,7 +173,7 @@ class AcquisitionOptimizer(ABC):
         domain: Domain,
     ) -> InputTransformSpecs:
         return dict.fromkeys(
-            domain.inputs.get_keys(CategoricalInput), CategoricalEncodingEnum.ORDINAL
+            domain.inputs.get_keys(CategoricalInput), OrdinalEncoding()
         )
 
     @staticmethod
@@ -1025,7 +1025,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 fixed_features_list=self.get_categorical_combinations(domain),
             )
         elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_LIST:
-            n_combos = domain.inputs.get_number_of_categorical_combinations()
+            n_combos = domain.inputs.get_number_of_categorical_combinations(
+                include_semicontinuous=not is_pruning_applicable(domain),
+            )
             return _OptimizeAcqfListInput(
                 acq_function_list=acqfs,
                 bounds=bounds,
@@ -1061,9 +1063,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     for feat in domain.inputs.get(DiscreteInput)
                 },
                 cat_dims={
-                    features2idx[feat.key][0]: feat.to_ordinal_encoding(
-                        pd.Series(feat.get_allowed_categories())
-                    ).tolist()
+                    features2idx[feat.key][0]: feat.to_encoding(
+                        OrdinalEncoding(), pd.Series(feat.get_allowed_categories())
+                    )[feat.key].tolist()
                     for feat in domain.inputs.get(CategoricalInput)
                     if feat.key not in fixed_keys
                 },
@@ -1082,7 +1084,17 @@ class BotorchOptimizer(AcquisitionOptimizer):
         """
         fixed_basis = self.get_fixed_features(domain=domain)
 
-        combos = domain.inputs.get_categorical_combinations()
+        # Must use the same `include_semicontinuous` value as
+        # `_determine_optimizer`: when pruning is applicable, semi-continuous
+        # features are resolved by the post-AF pruning step, so enumerating
+        # their on/off states here would handle them twice. It would also
+        # produce a `fixed_features_list` in which some entries pin *every*
+        # tensor column while others do not -- `optimize_acqf_mixed` stacks
+        # the per-entry acqf values and the all-fixed shortcut in botorch
+        # collapses the restart dimension, so the stack fails.
+        combos = domain.inputs.get_categorical_combinations(
+            include_semicontinuous=not is_pruning_applicable(domain),
+        )
         # now build up the fixed feature list
         if len(combos) == 1:
             return [fixed_basis]
@@ -1119,7 +1131,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
     and selection.
 
     - `CategoricalInput` variables, which are treated as one-hot-encoded columns by the model and the acquisition functions, are turned into categorical variables for the GA optimization. In the objective function, these categorical variables are transformed to one-hot-encoded tensors. The object `BofireDomainMixedVars` handles this conversion.
-    - `CategoricalDescriptorInput` is also transformed in to a categorical pymoo variable, but transformed into the descriptor space
+    - A `CategoricalInput` carrying descriptor data is also transformed into a categorical pymoo variable, but transformed into the descriptor space
     - `DiscreteInput` will be converted to an pymoo Integer.
 
     All transformations are handled in the helper class `BofireDomainMixedVars`

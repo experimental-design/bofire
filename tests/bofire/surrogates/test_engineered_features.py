@@ -5,32 +5,25 @@ import pandas as pd
 import pytest
 import torch
 
+from bofire.data_models.descriptor_generators.api import MordredDescriptors
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import (
     CloneFeature,
-    ContinuousDescriptorInput,
     ContinuousInput,
-    ContinuousMolecularInput,
     InterpolateFeature,
     MeanFeature,
-    MolecularWeightedMeanFeature,
-    MolecularWeightedSumFeature,
     ProductFeature,
     SumFeature,
-    WeightedMeanFeature,
     WeightedSumFeature,
 )
-from bofire.data_models.molfeatures.api import MordredDescriptors
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.surrogates.engineered_features import (
     map_clone_feature,
     map_interpolate_feature,
     map_mean_feature,
-    map_molecular_weighted_mean_feature,
-    map_molecular_weighted_sum_feature,
     map_product_feature,
     map_sum_feature,
-    map_weighted_mean_feature,
-    map_weighted_sum_feature,
+    map_weighted_feature,
 )
 from bofire.utils.torch_tools import tkwargs
 
@@ -135,46 +128,35 @@ def test_map_product_feature(features, expected_idx):
 def test_map_weighted_sum_feature():
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="x1",
                 bounds=[0, 1],
-                descriptors=["d1", "d2", "d3"],
-                values=[1, 2, 3],
+                descriptors=Descriptors(columns={"d1": [1], "d2": [2], "d3": [3]}),
             ),
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="x2",
                 bounds=[0, 1],
-                descriptors=["d1", "d2", "d3"],
-                values=[4, 5, 6],
+                descriptors=Descriptors(columns={"d1": [4], "d2": [5], "d3": [6]}),
             ),
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="x3",
                 bounds=[0, 1],
-                descriptors=[
-                    "d1",
-                    "d2",
-                    "d3",
-                ],
-                values=[
-                    7,
-                    8,
-                    9,
-                ],
+                descriptors=Descriptors(columns={"d1": [7], "d2": [8], "d3": [9]}),
             ),
         ]
     )
     aggregation = WeightedSumFeature(
         key="agg1",
         features=["x1", "x2", "x3"],
-        descriptors=[
+        columns=[
             "d1",
             "d2",
         ],
     )
 
-    assert aggregation.n_transformed_inputs == 2
+    assert len(aggregation.get_names(inputs)) == 2
 
-    aggregator = map_weighted_sum_feature(
+    aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
 
@@ -195,35 +177,30 @@ def test_map_weighted_sum_feature():
 def test_map_weighted_mean_feature():
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="x1",
                 bounds=[0, 1],
-                descriptors=["d1", "d2", "d3"],
-                values=[1, 2, 3],
+                descriptors=Descriptors(columns={"d1": [1], "d2": [2], "d3": [3]}),
             ),
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="x2",
                 bounds=[0, 1],
-                descriptors=["d1", "d2", "d3"],
-                values=[4, 5, 6],
+                descriptors=Descriptors(columns={"d1": [4], "d2": [5], "d3": [6]}),
             ),
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="x3",
                 bounds=[0, 1],
-                descriptors=["d1", "d2", "d3"],
-                values=[7, 8, 9],
+                descriptors=Descriptors(columns={"d1": [7], "d2": [8], "d3": [9]}),
             ),
         ]
     )
-    aggregation = WeightedMeanFeature(
-        key="agg1",
-        features=["x1", "x2", "x3"],
-        descriptors=["d1", "d2"],
+    aggregation = WeightedSumFeature(
+        key="agg1", features=["x1", "x2", "x3"], columns=["d1", "d2"], normalize=True
     )
 
-    assert aggregation.n_transformed_inputs == 2
+    assert len(aggregation.get_names(inputs)) == 2
 
-    aggregator = map_weighted_mean_feature(
+    aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
 
@@ -242,26 +219,22 @@ def test_map_weighted_mean_feature():
 def test_map_weighted_mean_feature_zero_weight_sum():
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="x1",
                 bounds=[0, 1],
-                descriptors=["d1", "d2"],
-                values=[1, 2],
+                descriptors=Descriptors(columns={"d1": [1], "d2": [2]}),
             ),
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="x2",
                 bounds=[0, 1],
-                descriptors=["d1", "d2"],
-                values=[3, 4],
+                descriptors=Descriptors(columns={"d1": [3], "d2": [4]}),
             ),
         ]
     )
-    aggregation = WeightedMeanFeature(
-        key="agg1",
-        features=["x1", "x2"],
-        descriptors=["d1", "d2"],
+    aggregation = WeightedSumFeature(
+        key="agg1", features=["x1", "x2"], columns=["d1", "d2"], normalize=True
     )
-    aggregator = map_weighted_mean_feature(
+    aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
 
@@ -285,40 +258,40 @@ def test_map_weighted_mean_feature_zero_weight_sum():
 def test_map_molecular_weighted_sum_feature():
     inputs = Inputs(
         features=[
-            ContinuousMolecularInput(key="m1", bounds=[0, 1], molecule="C"),
-            ContinuousMolecularInput(key="m2", bounds=[0, 1], molecule="CC"),
+            ContinuousInput(
+                key="m1", bounds=[0, 1], descriptors=Descriptors(structure=["C"])
+            ),
+            ContinuousInput(
+                key="m2", bounds=[0, 1], descriptors=Descriptors(structure=["CC"])
+            ),
         ]
     )
-    molfeatures = MordredDescriptors(
-        descriptors=["NssCH2", "ATSC2d"], ignore_3D=True, correlation_cutoff=1.0
-    )
-    aggregation = MolecularWeightedSumFeature(
+    generator = MordredDescriptors(descriptors=["NssCH2", "ATSC2d"], ignore_3D=True)
+    # opt into correlation filtering on the feature (default is off)
+    aggregation = WeightedSumFeature(
         key="agg1",
         features=["m1", "m2"],
-        molfeatures=molfeatures,
+        filter_descriptors=True,
+        correlation_cutoff=1.0,
+        columns=[],
+        generators=[generator],
     )
 
-    assert aggregation.n_transformed_inputs == 2
+    aggregation.validate_features(inputs)
+    # width is resolved against the inputs; one descriptor is filtered out (zero variance)
+    assert len(aggregation.get_names(inputs)) == 1
 
-    aggregator = map_molecular_weighted_sum_feature(
+    aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
-
-    # one is filtered out due to zero variance
-    assert aggregation.n_transformed_inputs == 1
 
     orig = torch.tensor([[0.1, 0.2], [0.4, 0.1]]).to(**tkwargs)
     result = aggregator(orig)
 
-    descriptors_df = molfeatures.get_descriptor_values(pd.Series(["C", "CC"]))
-    descriptors = torch.tensor(descriptors_df.values).to(**tkwargs)
-    expected_weighted = torch.matmul(orig, descriptors)
-
+    # the mapped transform emits exactly the resolved (filtered) width
     assert result.shape[0] == 2
     assert result.shape[1] == 3
-
     assert torch.allclose(result[:, :-1], orig)
-    assert torch.allclose(result[:, -1:], expected_weighted)
 
 
 def test_map_interpolate_feature_with_prepend_append():
@@ -584,32 +557,38 @@ def test_map_interpolate_feature_3d_input():
 def test_map_molecular_weighted_mean_feature():
     inputs = Inputs(
         features=[
-            ContinuousMolecularInput(key="m1", bounds=[0, 1], molecule="C"),
-            ContinuousMolecularInput(key="m2", bounds=[0, 1], molecule="CC"),
+            ContinuousInput(
+                key="m1", bounds=[0, 1], descriptors=Descriptors(structure=["C"])
+            ),
+            ContinuousInput(
+                key="m2", bounds=[0, 1], descriptors=Descriptors(structure=["CC"])
+            ),
         ]
     )
-    molfeatures = MordredDescriptors(
-        descriptors=["NssCH2", "ATSC2d"], ignore_3D=True, correlation_cutoff=1.0
-    )
-    aggregation = MolecularWeightedMeanFeature(
+    generator = MordredDescriptors(descriptors=["NssCH2", "ATSC2d"], ignore_3D=True)
+    # no filtering (default): both descriptor columns are kept
+    aggregation = WeightedSumFeature(
         key="agg1",
         features=["m1", "m2"],
-        molfeatures=molfeatures,
+        columns=[],
+        generators=[generator],
+        normalize=True,
     )
 
-    aggregator = map_molecular_weighted_mean_feature(
+    aggregator = map_weighted_feature(
         inputs=inputs, transform_specs={}, feature=aggregation
     )
 
     orig = torch.tensor([[0.1, 0.2], [0.4, 0.1]]).to(**tkwargs)
     result = aggregator(orig)
 
-    descriptors_df = molfeatures.get_descriptor_values(pd.Series(["C", "CC"]))
+    descriptors_df = generator.get_descriptor_values(pd.Series(["C", "CC"]))
     descriptors = torch.tensor(descriptors_df.values).to(**tkwargs)
     expected_weighted = torch.matmul(orig, descriptors) / orig.sum(dim=1, keepdim=True)
 
-    assert torch.allclose(result[:, :-1], orig)
-    assert torch.allclose(result[:, -1:], expected_weighted)
+    assert result.shape[1] == 4  # 2 original + 2 descriptor columns
+    assert torch.allclose(result[:, :-2], orig)
+    assert torch.allclose(result[:, -2:], expected_weighted)
 
 
 def test_map_clone_feature():

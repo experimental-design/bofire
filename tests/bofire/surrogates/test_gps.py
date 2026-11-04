@@ -17,55 +17,50 @@ from botorch.models.transforms.input import (
     NumericToCategoricalEncoding,
 )
 from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
-from gpytorch.constraints import GreaterThan
+from gpytorch.constraints import GreaterThan, Interval
 from pandas.testing import assert_frame_equal
 from torch.nn import Module
 
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.api import Hartmann, Himmelblau
+from bofire.data_models.descriptor_generators.api import (
+    Fingerprints,
+    MordredDescriptors,
+)
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
+from bofire.data_models.encodings.api import DescriptorEncoding, OrdinalEncoding
 from bofire.data_models.features.api import (
     CategoricalInput,
-    CategoricalMolecularInput,
     ContinuousInput,
     ContinuousOutput,
     SumFeature,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
     HammingDistanceKernel,
-    MaternKernel,
     RBFKernel,
     ScaleKernel,
     SphericalLinearKernel,
     TanimotoKernel,
 )
-from bofire.data_models.molfeatures.api import Fingerprints, MordredDescriptors
+from bofire.data_models.likelihoods.api import (
+    GaussianLikelihood,
+    SparseOutlierGaussianLikelihood,
+)
+from bofire.data_models.means.api import ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
-    MBO_LENGTHSCALE_PRIOR,
-    MBO_NOISE_PRIOR,
-    MBO_OUTPUTSCALE_PRIOR,
-    ROBUSTGP_LENGTHSCALE_CONSTRAINT,
-    THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_NOISE_PRIOR,
-    THREESIX_SCALE_PRIOR,
     GammaPrior,
     LogNormalPrior,
+    NormalPrior,
 )
 from bofire.data_models.priors.api import GreaterThan as BoFireGreaterThan
-from bofire.data_models.surrogates.api import (
-    MixedSingleTaskGPSurrogate,
-    RobustSingleTaskGPSurrogate,
-    ScalerEnum,
-    SingleTaskGPHyperconfig,
-    SingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.api import ScalerEnum, SingleTaskGPSurrogate
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
-from bofire.data_models.surrogates.trainable import metrics2objectives
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -130,10 +125,14 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
         engine="python",
     )
     experiments["valid_y"] = 1
+    mean = ConstantMean(prior=NormalPrior(loc=0.0, scale=1.0))
+    likelihood = GaussianLikelihood(noise_prior=THREESIX_NOISE_PRIOR())
     model = SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
+        mean=mean,
+        likelihood=likelihood,
         scaler=scaler,
         output_scaler=output_scaler,
     )
@@ -152,6 +151,11 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, SingleTaskGP)
+    ((_, _, mean_prior, *_),) = model.model.mean_module.named_priors()
+    assert isinstance(mean_prior, gpytorch.priors.NormalPrior)
+    noise_prior = _get_registered_noise_prior(model.model)
+    assert isinstance(noise_prior, gpytorch.priors.GammaPrior)
+    assert float(noise_prior.concentration) == pytest.approx(1.1)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
     elif output_scaler == ScalerEnum.LOG:
@@ -173,6 +177,8 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
+        mean=mean,
+        likelihood=likelihood,
         scaler=scaler,
     )
     model2 = surrogates.map(model2)
@@ -259,7 +265,7 @@ def test_SingleTaskGPModel_with_engineered_features():
 def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     inputs = Inputs(
         features=[
-            CategoricalMolecularInput(
+            CategoricalInput(
                 key="x_mol",
                 categories=[
                     "CC(=O)Oc1ccccc1C(=O)O",
@@ -267,6 +273,14 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             )
         ]
     )
@@ -286,10 +300,13 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         categorical_encodings={
-            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            "x_mol": DescriptorEncoding(
+                columns=[],
+                generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
+            ),
         },
         # input_preprocessing_specs={
-        #     "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+        #     "x_mol": DescriptorEncoding(columns=[], generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])]),
         # },
     )
     model = surrogates.map(model)
@@ -324,7 +341,10 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         categorical_encodings={
-            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            "x_mol": DescriptorEncoding(
+                columns=[],
+                generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
+            ),
         },
     )
     model2 = surrogates.map(model2)
@@ -360,85 +380,6 @@ def test_SingleTaskGP_bound_relearning():
     surrogate.fit(experiments2)
     bounds2 = engineered_scaler.bounds.clone()
     assert not torch.equal(bounds1, bounds2)
-
-
-@pytest.mark.parametrize("target_metric", list(RegressionMetricsEnum))
-def test_hyperconfig_domain(target_metric: RegressionMetricsEnum):
-    # we test here also the abstract methods from the corresponding base class
-    # should be move somewhere else when tidying up all tests
-    hy = SingleTaskGPHyperconfig(target_metric=target_metric)
-    assert hy.domain.inputs == hy.inputs
-    assert hy.domain.outputs.get_keys() == [target_metric.name]
-    assert hy.domain.outputs[0].objective == metrics2objectives[target_metric]()
-
-
-def test_hyperconfig_invalid():
-    with pytest.raises(
-        ValueError,
-        match="It is not allowed to specify the number of its for FractionalFactorialStrategy",
-    ):
-        SingleTaskGPHyperconfig(n_iterations=5)
-    with pytest.raises(
-        ValueError,
-        match="At least number of hyperparams plus 2 iterations has to be specified",
-    ):
-        SingleTaskGPHyperconfig(n_iterations=3, hyperstrategy="RandomStrategy")
-    hy = SingleTaskGPHyperconfig(n_iterations=None, hyperstrategy="RandomStrategy")
-    assert hy.n_iterations == 14
-
-
-def test_SingleTaskGPHyperconfig():
-    # we test here also the basic trainable
-    benchmark = Himmelblau()
-    surrogate_data_no_hy = SingleTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-        hyperconfig=None,
-    )
-    with pytest.raises(ValueError, match="No hyperconfig available."):
-        surrogate_data_no_hy.update_hyperparameters(
-            benchmark.domain.inputs.sample(1).loc[0],
-        )
-    # test that correct stuff is written
-    surrogate_data = SingleTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-    )
-    candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
-    surrogate_data.update_hyperparameters(candidate)
-    # if hasattr(surrogate_data.kernel, "base_kernel"):
-    base_kernel = (
-        surrogate_data.kernel.base_kernel
-        if hasattr(surrogate_data.kernel, "base_kernel")
-        else surrogate_data.kernel
-    )
-    if candidate.scalekernel == "True":
-        assert hasattr(surrogate_data.kernel, "base_kernel")
-    else:
-        assert not hasattr(surrogate_data.kernel, "base_kernel")
-    if candidate.kernel == "matern_1.5":
-        assert isinstance(base_kernel, MaternKernel)
-        assert base_kernel.nu == 1.5
-    elif candidate.kernel == "matern_2.5":
-        assert isinstance(base_kernel, MaternKernel)
-        assert base_kernel.nu == 2.5
-    else:
-        assert isinstance(base_kernel, RBFKernel)
-    if candidate.prior == "mbo":
-        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
-        if candidate.scalekernel == "True":
-            assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
-        assert base_kernel.lengthscale_prior == MBO_LENGTHSCALE_PRIOR()
-    elif candidate.prior == "threesix":
-        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
-        if candidate.scalekernel == "True":
-            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
-        assert base_kernel.lengthscale_prior == THREESIX_LENGTHSCALE_PRIOR()
-    else:
-        assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
-        if candidate.scalekernel == "True":
-            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
-        assert base_kernel.lengthscale_prior == HVARFNER_LENGTHSCALE_PRIOR()
 
 
 def test_SingleTaskGPModel_feature_subsets():
@@ -491,7 +432,7 @@ def test_SingleTaskGPModel_mixed_features():
             ContinuousInput(key="x_2", bounds=(-4, 4)),
             CategoricalInput(key="x_cat_1", categories=["mama", "papa"]),
             CategoricalInput(key="x_cat_2", categories=["cat", "dog"]),
-            CategoricalMolecularInput(
+            CategoricalInput(
                 key="x_mol",
                 categories=[
                     "CC(=O)Oc1ccccc1C(=O)O",
@@ -499,6 +440,14 @@ def test_SingleTaskGPModel_mixed_features():
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             ),
         ],
     )
@@ -533,9 +482,14 @@ def test_SingleTaskGPModel_mixed_features():
             ]
         ),
         categorical_encodings={
-            "x_cat_1": CategoricalEncodingEnum.ORDINAL,
-            "x_cat_2": CategoricalEncodingEnum.ORDINAL,
-            "x_mol": Fingerprints(n_bits=2048, correlation_cutoff=1.0),
+            "x_cat_1": OrdinalEncoding(),
+            "x_cat_2": OrdinalEncoding(),
+            "x_mol": DescriptorEncoding(
+                columns=[],
+                generators=[Fingerprints(n_bits=2048)],
+                filter_descriptors=True,
+                correlation_cutoff=1.0,
+            ),
         },
     )
 
@@ -543,16 +497,17 @@ def test_SingleTaskGPModel_mixed_features():
     gp_mapped.fit(experiments)
     pred = gp_mapped.predict(experiments)
     n_descriptors_after_filtering = len(
-        gp_data.categorical_encodings["x_mol"].get_descriptor_names()
+        gp_data.categorical_encodings["x_mol"].get_names(
+            gp_data.inputs.get_by_key("x_mol")
+        )
     )
     assert pred.shape == (4, 2)
-    assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [
-        2 + n_descriptors_after_filtering,
-        3 + n_descriptors_after_filtering,
-    ]
+    # x_mol is a plain CategoricalInput now, so it sorts after x_cat_1/x_cat_2:
+    # layout is x_1, x_2, x_cat_1, x_cat_2, then the molecular descriptors.
+    assert gp_mapped.model.covar_module.kernels[0].active_dims.tolist() == [2, 3]
     assert gp_mapped.model.covar_module.kernels[1].active_dims.tolist() == [0, 1]
     assert gp_mapped.model.covar_module.kernels[2].active_dims.tolist() == list(
-        range(2, 2 + n_descriptors_after_filtering)
+        range(4, 4 + n_descriptors_after_filtering)
     )
     # assert (pred['y_pred'] - experiments['y']).abs().mean() < 0.4
 
@@ -565,10 +520,7 @@ def test_MixedSingleTaskGP_only_categorical():
         ]
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
-    surrogate_data = MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-    )
+    surrogate_data = SingleTaskGPSurrogate.mixed(inputs, outputs)
     experiments = [
         ["mama", "cat", 1.0],
         ["papa", "dog", 2.0],
@@ -578,8 +530,8 @@ def test_MixedSingleTaskGP_only_categorical():
     experiments = pd.DataFrame(experiments, columns=["x_cat_1", "x_cat_2", "y"])
     experiments["valid_y"] = 1
 
-    assert surrogate_data.categorical_kernel.features == ["x_cat_1", "x_cat_2"]
-    assert surrogate_data.continuous_kernel.features == []
+    assert isinstance(surrogate_data.kernel, ScaleKernel)
+    assert surrogate_data.kernel.base_kernel.features == ["x_cat_1", "x_cat_2"]
     surrogate = surrogates.map(surrogate_data)
     assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
     assert isinstance(surrogate.kernel, ScaleKernel)
@@ -588,53 +540,6 @@ def test_MixedSingleTaskGP_only_categorical():
     surrogate.fit(experiments)
     assert surrogate.model.covar_module.base_kernel.active_dims.tolist() == [0, 1]
     assert surrogate.model.covar_module.base_kernel.ard_num_dims == 2
-
-
-def test_MixedSingleTaskGPHyperconfig():
-    inputs = Inputs(
-        features=[
-            ContinuousInput(
-                key=f"x_{i + 1}",
-                bounds=(-4, 4),
-            )
-            for i in range(2)
-        ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
-    )
-    outputs = Outputs(features=[ContinuousOutput(key="y")])
-    surrogate_data = MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-    )
-    candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
-    surrogate_data.update_hyperparameters(candidate)
-    assert surrogate_data.continuous_kernel.ard == (candidate["ard"] == "True")
-    if candidate.continuous_kernel == "matern_1.5":
-        assert isinstance(surrogate_data.continuous_kernel, MaternKernel)
-        assert surrogate_data.continuous_kernel.nu == 1.5
-    elif candidate.continuous_kernel == "matern_2.5":
-        assert isinstance(surrogate_data.continuous_kernel, MaternKernel)
-        assert surrogate_data.continuous_kernel.nu == 2.5
-    else:
-        assert isinstance(surrogate_data.continuous_kernel, RBFKernel)
-    if candidate.prior == "mbo":
-        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
-        assert (
-            surrogate_data.continuous_kernel.lengthscale_prior
-            == MBO_LENGTHSCALE_PRIOR()
-        )
-    if candidate.prior == "threesix":
-        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
-        assert (
-            surrogate_data.continuous_kernel.lengthscale_prior
-            == THREESIX_LENGTHSCALE_PRIOR()
-        )
-    if candidate.prior == "hvarfner":
-        assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
-        assert (
-            surrogate_data.continuous_kernel.lengthscale_prior
-            == HVARFNER_LENGTHSCALE_PRIOR()
-        )
 
 
 def test_MixedSingletaskGPModel_with_botorch():
@@ -658,10 +563,7 @@ def test_MixedSingletaskGPModel_with_botorch():
     experiments.loc[experiments.x_cat == "mama", "y"] *= 5.0
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1
-    surrogate_data = MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-    )
+    surrogate_data = SingleTaskGPSurrogate.mixed(inputs, outputs)
     model = surrogates.map(surrogate_data)
     assert isinstance(model, surrogates.SingleTaskGPSurrogate)
     model.fit(experiments)
@@ -685,6 +587,10 @@ def test_MixedSingletaskGPModel_with_botorch():
     )
 
     def compare_modules(module1: Module, module2: Module) -> bool:
+        # BoTorch bounds the categorical lengthscale by a softplus GreaterThan(1e-6),
+        # which BoFire cannot express; its softplus Positive() differs only by 1e-6
+        if isinstance(module1, Interval) and isinstance(module2, Interval):
+            return True
         if type(module1) is not type(module2):
             return False
         if isinstance(module1, RBFKernel) or isinstance(module1, CategoricalKernel):
@@ -709,19 +615,15 @@ def test_MixedSingletaskGPModel_with_botorch():
 
 
 @pytest.mark.parametrize(
-    "kernel, scaler, output_scaler",
+    "scaler, output_scaler",
     [
-        (RBFKernel(ard=True), NormalizeScaler(), ScalerEnum.STANDARDIZE),
-        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.STANDARDIZE),
-        (RBFKernel(ard=False), None, ScalerEnum.IDENTITY),
-        (
-            RBFKernel(ard=False),
-            StandardizeScaler(),
-            ScalerEnum.CHAINED_LOG_STANDARDIZE,
-        ),
+        (NormalizeScaler(), ScalerEnum.STANDARDIZE),
+        (StandardizeScaler(), ScalerEnum.STANDARDIZE),
+        (None, ScalerEnum.IDENTITY),
+        (StandardizeScaler(), ScalerEnum.CHAINED_LOG_STANDARDIZE),
     ],
 )
-def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
+def test_MixedSingleTaskGPModel(scaler, output_scaler):
     inputs = Inputs(
         features=[
             ContinuousInput(
@@ -743,15 +645,9 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1
 
-    surrogate_data = MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        # input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
-        scaler=scaler,
-        output_scaler=output_scaler,
-        continuous_kernel=kernel,
-        categorical_kernel=HammingDistanceKernel(),
-    )
+    surrogate_data = SingleTaskGPSurrogate.mixed(inputs, outputs)
+    surrogate_data.scaler = scaler
+    surrogate_data.output_scaler = output_scaler
     model = surrogates.map(surrogate_data)
     assert isinstance(model, surrogates.SingleTaskGPSurrogate)
     with pytest.raises(ValueError):
@@ -793,14 +689,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
         # assert isinstance(model.model.input_transform, OneHotToNumeric)
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
-    model2 = MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        continuous_kernel=kernel,
-        scaler=scaler,
-        output_scaler=output_scaler,
-    )
-    model2 = surrogates.map(model2)
+    model2 = surrogates.map(surrogate_data)
     model2.loads(dump)
     preds2 = model2.predict(samples)
     assert_frame_equal(preds, preds2)
@@ -808,18 +697,18 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
-    "kernel, scaler, output_scaler",
+    "scaler, output_scaler",
     [
-        (RBFKernel(ard=True), NormalizeScaler(), ScalerEnum.STANDARDIZE),
-        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.STANDARDIZE),
-        (RBFKernel(ard=False), None, ScalerEnum.IDENTITY),
-        (RBFKernel(ard=True), NormalizeScaler(), ScalerEnum.CHAINED_LOG_STANDARDIZE),
+        (NormalizeScaler(), ScalerEnum.STANDARDIZE),
+        (StandardizeScaler(), ScalerEnum.STANDARDIZE),
+        (None, ScalerEnum.IDENTITY),
+        (NormalizeScaler(), ScalerEnum.CHAINED_LOG_STANDARDIZE),
     ],
 )
-def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
+def test_MixedSingleTaskGPModel_mordred(scaler, output_scaler):
     inputs = Inputs(
         features=[
-            CategoricalMolecularInput(
+            CategoricalInput(
                 key="x_mol",
                 categories=[
                     "CC(=O)Oc1ccccc1C(=O)O",
@@ -827,6 +716,14 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
                     "[CH3][CH2][OH]",
                     "N[C@](C)(F)C(=O)O",
                 ],
+                descriptors=Descriptors(
+                    structure=[
+                        "CC(=O)Oc1ccccc1C(=O)O",
+                        "c1ccccc1",
+                        "[CH3][CH2][OH]",
+                        "N[C@](C)(F)C(=O)O",
+                    ]
+                ),
             ),
             CategoricalInput(key="x_cat", categories=["a", "b"]),
         ],
@@ -840,17 +737,17 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     ]
     experiments = pd.DataFrame(experiments, columns=["x_mol", "x_cat", "y"])
     experiments["valid_y"] = 1
-    model = MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        scaler=scaler,
-        output_scaler=output_scaler,
-        continuous_kernel=kernel,
-        categorical_encodings={
-            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
-        },
-    )
-    model = surrogates.map(model)
+    data_model = SingleTaskGPSurrogate.mixed(inputs, outputs)
+    data_model.scaler = scaler
+    data_model.output_scaler = output_scaler
+    data_model.categorical_encodings = {
+        **data_model.categorical_encodings,
+        "x_mol": DescriptorEncoding(
+            columns=[],
+            generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
+        ),
+    }
+    model = surrogates.map(data_model)
     model.fit(experiments)
     # dump the model
     dump = model.dumps()
@@ -871,7 +768,7 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         assert isinstance(model.model.input_transform.scaler, Normalize)
         assert torch.eq(
             model.model.input_transform.scaler.indices,
-            torch.tensor([0, 1], dtype=torch.int64),
+            torch.tensor([1, 2], dtype=torch.int64),
         ).all()
         assert isinstance(model.model.input_transform.cat, NumericToCategoricalEncoding)
     elif isinstance(scaler, StandardizeScaler):
@@ -879,7 +776,7 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         assert isinstance(model.model.input_transform.scaler, InputStandardize)
         assert torch.eq(
             model.model.input_transform.scaler.indices,
-            torch.tensor([0, 1], dtype=torch.int64),
+            torch.tensor([1, 2], dtype=torch.int64),
         ).all()
         assert isinstance(model.model.input_transform.cat, NumericToCategoricalEncoding)
     else:
@@ -888,29 +785,19 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     # check correct indices
     assert torch.allclose(
         model.model.covar_module.kernels[0].base_kernel.kernels[0].active_dims,
-        torch.tensor([0, 1]),
+        torch.tensor([1, 2]),
     )
 
     assert torch.allclose(
         model.model.covar_module.kernels[0]
         .base_kernel.kernels[1]
         .base_kernel.active_dims,
-        torch.tensor([2]),
+        torch.tensor([0]),
     )
 
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
-    model2 = MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        continuous_kernel=kernel,
-        scaler=scaler,
-        output_scaler=output_scaler,
-        categorical_encodings={
-            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
-        },
-    )
-    model2 = surrogates.map(model2)
+    model2 = surrogates.map(data_model)
     model2.loads(dump)
     preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
@@ -959,10 +846,11 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
         engine="python",
     )
     experiments["valid_y"] = 1
-    model = RobustSingleTaskGPSurrogate(
+    model = SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
+        likelihood=SparseOutlierGaussianLikelihood(noise_prior=HVARFNER_NOISE_PRIOR()),
         scaler=scaler,
         output_scaler=output_scaler,
     )
@@ -996,10 +884,11 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
             assert model.model.input_transform is None
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
-    model2 = RobustSingleTaskGPSurrogate(
+    model2 = SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
+        likelihood=SparseOutlierGaussianLikelihood(noise_prior=HVARFNER_NOISE_PRIOR()),
         scaler=scaler,
         output_scaler=output_scaler,
     )
@@ -1009,10 +898,11 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
 
     assert_frame_equal(preds, preds2)
 
-    model3 = RobustSingleTaskGPSurrogate(
+    model3 = SingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
+        likelihood=SparseOutlierGaussianLikelihood(noise_prior=HVARFNER_NOISE_PRIOR()),
         scaler=scaler,
     )
 
@@ -1027,66 +917,13 @@ def test_RobustSingleTaskGPModel(kernel, scaler, output_scaler):
     assert set(preds_outliers.columns) == {"y_pred", "y_sd", "y_rho"}
 
 
-def test_RobustSingleTaskGPHyperconfig():
-    # we test here also the basic trainable
-    benchmark = Himmelblau()
-    surrogate_data_no_hy = RobustSingleTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-        hyperconfig=None,
+def test_predict_outliers_needs_sparse_outlier_likelihood():
+    bench = Himmelblau()
+    surrogate = surrogates.map(
+        SingleTaskGPSurrogate(inputs=bench.domain.inputs, outputs=bench.domain.outputs)
     )
-    with pytest.raises(ValueError, match="No hyperconfig available."):
-        surrogate_data_no_hy.update_hyperparameters(
-            benchmark.domain.inputs.sample(1).loc[0],
-        )
-    # test that correct stuff is written
-    surrogate_data = RobustSingleTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-    )
-
-    assert (
-        surrogate_data.kernel.lengthscale_constraint
-        == ROBUSTGP_LENGTHSCALE_CONSTRAINT()
-    )
-
-    candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
-    # surrogate_data.update_hyperparameters(candidate, lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(), outputscale_constraint=ROBUSTGP_OUTPUTSCALE_CONSTRAINT())
-    surrogate_data.update_hyperparameters(candidate)
-    if hasattr(surrogate_data.kernel, "base_kernel"):
-        # if surrogate_data.kernel == ScaleKernel():
-        #     assert surrogate_data.kernel.outputscale_constraint == ROBUSTGP_OUTPUTSCALE_CONSTRAINT()
-        assert surrogate_data.kernel.base_kernel.ard == (candidate["ard"] == "True")
-        # assert surrogate_data.kernel.base_kernel.lengthscale_constraint == ROBUSTGP_LENGTHSCALE_CONSTRAINT()
-        if candidate.kernel == "matern_1.5":
-            assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
-            assert surrogate_data.kernel.base_kernel.nu == 1.5
-        elif candidate.kernel == "matern_2.5":
-            assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
-            assert surrogate_data.kernel.base_kernel.nu == 2.5
-        else:
-            assert isinstance(surrogate_data.kernel.base_kernel, RBFKernel)
-        if candidate.prior == "mbo":
-            assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
-            assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
-            assert (
-                surrogate_data.kernel.base_kernel.lengthscale_prior
-                == MBO_LENGTHSCALE_PRIOR()
-            )
-        elif candidate.prior == "threesix":
-            assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
-            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
-            assert (
-                surrogate_data.kernel.base_kernel.lengthscale_prior
-                == THREESIX_LENGTHSCALE_PRIOR()
-            )
-        else:
-            assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
-            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
-            assert (
-                surrogate_data.kernel.base_kernel.lengthscale_prior
-                == HVARFNER_LENGTHSCALE_PRIOR()
-            )
+    with pytest.raises(ValueError, match="SparseOutlierGaussianLikelihood"):
+        surrogate.predict_outliers(pd.DataFrame())
 
 
 @pytest.mark.parametrize(
@@ -1188,7 +1025,9 @@ def test_noise_prior_affects_single_task_gp():
         SingleTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=LogNormalPrior(loc=0.0, scale=0.25),
+            likelihood=GaussianLikelihood(
+                noise_prior=LogNormalPrior(loc=0.0, scale=0.25)
+            ),
         )
     )
     surrogate_large.fit(experiments)
@@ -1244,7 +1083,9 @@ def test_noise_constraint_enforced_for_single_task_gp():
         SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            noise_constraint=BoFireGreaterThan(lower_bound=0.5),
+            likelihood=GaussianLikelihood(
+                noise_constraint=BoFireGreaterThan(lower_bound=0.5)
+            ),
         )
     )
     surrogate.fit(experiments)
@@ -1265,10 +1106,12 @@ def test_noise_prior_registered_for_robust_single_task_gp():
     )
 
     surrogate = surrogates.map(
-        RobustSingleTaskGPSurrogate(
+        SingleTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=GammaPrior(concentration=1.1, rate=0.001),
+            likelihood=SparseOutlierGaussianLikelihood(
+                noise_prior=GammaPrior(concentration=1.1, rate=0.001)
+            ),
         )
     )
     surrogate.fit(experiments)

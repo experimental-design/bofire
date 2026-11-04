@@ -45,9 +45,14 @@ pre-commit run --all-files
 ruff check .
 ruff format .
 
-# Type checking
-ty check bofire
+# Type checking — use the version CI pins, not whatever `uvx ty` resolves to.
+# Look up the pin in .github/workflows/lint.yaml (the `ty==` install), then:
+uvx --from ty==<pinned-version> ty check bofire
 ```
+
+ty is pre-1.0 and its rules tighten fast, so an unpinned run reports a substantially
+different set of diagnostics than CI and will not tell you whether Lint passes. Rule
+configuration lives in `pyproject.toml` under `[tool.ty.rules]` / `[tool.ty.analysis]`.
 
 ## Architecture
 
@@ -89,6 +94,24 @@ from bofire.data_models.features.api import ContinuousInput, CategoricalOutput
 from bofire.strategies.api import SoboStrategy
 from bofire.data_models.acquisition_functions.api import qLogEI
 ```
+
+## Test Style
+
+**Prefer plain test functions over test classes.** Roughly 85% of BoFire's tests are
+module-level `def test_*` functions (~815 functions vs ~150 methods in classes); only
+four files use classes at all (`tests/bofire/test_register.py`,
+`tests/bofire/strategies/test_utils.py`, `tests/bofire/strategies/test_nchoosek_pruning.py`,
+`tests/bofire/utils/test_domain_repair.py`).
+
+Use a function unless you need a shared `pytest.fixture` for setup that several tests
+in the group depend on. When adding to a file that is already consistently class-based,
+follow that file's convention instead — consistency within a file beats the global default.
+
+Prefer `@pytest.mark.parametrize` over near-duplicate test bodies.
+
+**Put tests in the module that matches the code under test.** Tests for feature
+containers belong in `tests/bofire/data_models/domain/test_features.py`, not in
+`tests/bofire/test_register.py` — the latter is for the registration machinery itself.
 
 ## Data Model Testing
 
@@ -177,9 +200,29 @@ def feature_spec(request) -> Spec:
     return request.param
 ```
 
+### Documentation Ratchet
+
+`tests/bofire/data_models/test_documentation.py` requires every field declared on a data
+model class to carry `Field(description=...)`, and every class to carry a docstring. It
+enumerates classes by walking `bofire.data_models` with `pkgutil`, so a new package is
+covered the moment it exists.
+
+Two things about how it is written matter if you touch it:
+
+- It checks **own** fields (those in `cls.__annotations__`), not all of
+  `cls.model_fields`. Inherited fields are documented on the class that declares them;
+  checking them again would report one undocumented base field once per subclass.
+- The two `UNDOCUMENTED_*` sets record what predates the convention and **may only
+  shrink**. `test_field_allowlist_has_no_stale_entries` fails once an entry is
+  documented but not deleted, so documenting a package and pruning its entries happen in
+  the same commit. Never add to these sets.
+
+The migration is running package by package; `constraints` is done.
+
 ### Checklist: Adding a Field to a Base Data Model Class
 
-1. Add the field to the class (e.g., `Feature`, `Constraint`, `Domain`)
+1. Add the field to the class (e.g., `Feature`, `Constraint`, `Domain`) with
+   `Field(description=...)`
 2. Add `"field_name": default_value` to every `add_valid()` spec for that class and all subclasses
 3. Invalid specs and container specs using `.model_dump()` don't need changes
 4. Run `pytest tests/bofire/data_models` to verify
@@ -195,11 +238,14 @@ Create a new file or add to an existing one in `bofire/data_models/{domain}/`. E
 ```python
 # bofire/data_models/kernels/my_kernel.py
 from typing import Literal
+from pydantic import Field
 from bofire.data_models.kernels.kernel import ContinuousKernel
 
 class MyCustomKernel(ContinuousKernel):
+    """One line on what this kernel is, and when to pick it over its siblings."""
+
     type: Literal["MyCustomKernel"] = "MyCustomKernel"
-    my_param: float
+    my_param: float = Field(description="What this parameter controls.")
 ```
 
 #### 2. Register in the type union
@@ -276,6 +322,48 @@ The spec is automatically picked up by `tests/bofire/conftest.py` which imports 
 - **Docstrings**: Google-style
 - **Type Checking**: Pydantic for runtime, ty for static analysis
 - **Python**: 3.10+
+- **Pydantic validators**: public methods named `validate_*`, no leading underscore
+  (111 validators in `bofire/`, 104 use the `validate_` prefix). Module-level helper
+  functions they call may still be private. No linter enforces this.
+- **Don't restate the annotation in a validator.** A `field_validator` defaults to
+  `mode="after"`, so pydantic has already validated *and coerced* the value: re-checking
+  or re-coercing it there is unreachable code, and its error message can never surface.
+  Validate only what the type cannot express — cross-field consistency, or domain
+  semantics such as "is this string a parseable SMILES". Use `mode="before"` when you
+  genuinely need the raw input.
+- **Docstrings** state what the code does now: arguments, returns, raises, invariants
+  callers may rely on. Design history, migration rationale ("rather than stored",
+  "this is why X asserts") and enumerated call sites belong in the commit message and
+  CHANGELOG — in a docstring they go stale and crowd out the contract.
+- **Data model field prose goes in `Field(description=...)`, never an `Attributes:`
+  block.** Only the former reaches `model_json_schema()`, which is the API surface
+  agents read. The class docstring says what the model does, how it behaves and what a
+  sensible value looks like — not how it relates to the rest of the codebase. Compare
+  with a sibling only where the two are genuinely easy to confuse and the names do not
+  reveal the difference (`TargetObjective` vs `CloseToTargetObjective`); a pointer like
+  "use instead of X" that only restates the class name is noise, and goes stale as
+  siblings come and go. Skip notes that matter only to someone reading the source, such
+  as which class something inherits from. **Describe only what a caller can set or
+  observe** — never a BoFire-internal artefact such as the naming scheme of generated
+  columns, which a caller cannot address and will only be tempted to try. State the
+  consequence instead: not "produces `{key}_{feature}` columns" but "a kernel can only
+  select them as a group". An `Examples:` block is encouraged on concrete
+  types but is optional and not executed; keep it to the fields a caller actually needs
+  to set, leaving the rest at their defaults. Write examples as a Google `Examples:`
+  section with `>>>`, never as a reStructuredText `Example::` literal block — the whole
+  docstring is copied verbatim into the schema's `description`, where a bare `::` is a
+  stray artifact. The `type` discriminator needs no description.
+  `tests/bofire/data_models/test_documentation.py` enforces this — see
+  [Documentation Ratchet](#documentation-ratchet).
+- **Prefer a literal default over `default_factory` for empty containers.** Pydantic deep
+  copies defaults, so `Field(default=[])` is safe, and unlike `default_factory` it puts
+  the default into `model_json_schema()` where a caller can see it.
+- **Declare a shared field once, on the class that owns it.** Redeclaring a field in a
+  subclass silently drops the inherited `description`, so a field common to every
+  subclass belongs on the base (`Objective.w`, `PriorConstraint.initial_value`). Only
+  reinterpretations that the base description cannot express — such as
+  `MovingMaximizeSigmoidObjective` treating `tp` as relative — belong in the subclass
+  docstring.
 
 ## Documentation
 

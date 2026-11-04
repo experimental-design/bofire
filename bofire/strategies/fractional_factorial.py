@@ -45,14 +45,60 @@ class FractionalFactorialStrategy(Strategy):
         else:
             self.n_blocks = 1
 
-    def _get_continuous_design(self) -> pd.DataFrame:
-        # that is used to store the block information before it is converted to the block_feature_key
+    def _get_continuous_factorial_design(self) -> np.ndarray:
         continuous_inputs = self.domain.inputs.get(ContinuousInput)
         gen = self.generator or get_generator(
             n_factors=len(continuous_inputs),
             n_generators=self.n_generators,
         )
-        design = pd.DataFrame(fracfact(gen=gen), columns=continuous_inputs.get_keys())
+        return fracfact(gen=gen)
+
+    def get_required_number_of_experiments(self) -> int:
+        """Return the exact number of experiments produced by this strategy.
+                It will be the exact number of points for the configured factorial design
+                (full or fractional) with the given parameters.
+
+        The design is the cartesian product of the continuous part and the
+        discrete/categorical part
+                - Continuous inputs form a two-level factorial design from `fracfact(gen)`.
+                    This is full factorial when no generators are used, and fractional
+                    factorial when generators are used. The design is repeated
+                    `n_repetitions` times plus `n_center` center points.
+        - Every discrete/categorical combination repeats that continuous design.
+        If there are no continuous inputs, only the discrete/categorical grid is
+        returned (no center points are added).
+        """
+
+        continuous_inputs = self.domain.inputs.get(ContinuousInput)
+
+        categorical_keys = [
+            key
+            for key in self.domain.inputs.get_keys([CategoricalInput, DiscreteInput])
+            if key != self.block_feature_key
+        ]
+        categorical_inputs = self.domain.inputs.get_by_keys(categorical_keys)
+        n_categorical_combinations = (
+            categorical_inputs.get_number_of_categorical_combinations(
+                include_semicontinuous=False,
+            )
+        )
+
+        if len(continuous_inputs) == 0:
+            return n_categorical_combinations
+
+        n_corners = len(self._get_continuous_factorial_design())
+        n_continuous_points = n_corners * self.n_repetitions + (
+            self.n_center * self.n_blocks
+        )
+        return n_continuous_points * n_categorical_combinations
+
+    def _get_continuous_design(self) -> pd.DataFrame:
+        # that is used to store the block information before it is converted to the block_feature_key
+        continuous_inputs = self.domain.inputs.get(ContinuousInput)
+        design = pd.DataFrame(
+            self._get_continuous_factorial_design(),
+            columns=continuous_inputs.get_keys(),
+        )
 
         if self.n_blocks > 1:
             if self.n_repetitions % self.n_blocks != 0:

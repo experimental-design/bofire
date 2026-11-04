@@ -17,6 +17,7 @@ import bofire.kernels.shape as shapeKernels
 from bofire.data_models.constraints.condition import ThresholdCondition
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
+    AdditiveMapSaasKernel,
     DownsamplingKernel,
     ExactWassersteinKernel,
     FeatureSpecificKernel,
@@ -61,6 +62,7 @@ EQUIVALENTS = {
     WassersteinKernel: shapeKernels.WassersteinKernel,
     ExactWassersteinKernel: shapeKernels.ExactWassersteinKernel,
     InfiniteWidthBNNKernel: BNNKernel,
+    AdditiveMapSaasKernel: gpytorch.kernels.AdditiveKernel,
     PolynomialFeatureInteractionKernel: aggregationKernels.PolynomialFeatureInteractionKernel,
     WedgeKernel: conditionalKernels.WedgeKernel,
     SphericalLinearKernel: bofire.kernels.spherical_kernels.SphericalLinearKernel,
@@ -70,7 +72,7 @@ EQUIVALENTS = {
 def test_map(kernel_spec: Spec):
     kernel = kernel_spec.cls(**kernel_spec.typed_spec())
     if (
-        isinstance(kernel, (HammingDistanceKernel, DownsamplingKernel))
+        isinstance(kernel, (HammingDistanceKernel, DownsamplingKernel, TanimotoKernel))
         and kernel.features is not None
     ):
         return
@@ -251,12 +253,7 @@ def test_map_continuous_kernel(kernel, active_dims, expected_kernel):
     "kernel, active_dims, expected_kernel",
     [
         (
-            TanimotoKernel(ard=False),
-            list(range(5)),
-            bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
-        ),
-        (
-            TanimotoKernel(ard=True),
+            TanimotoKernel(),
             list(range(5)),
             bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
         ),
@@ -270,11 +267,6 @@ def test_map_molecular_kernel(kernel, active_dims, expected_kernel):
         features_to_idx_mapper=None,
     )
     assert isinstance(k, expected_kernel)
-
-    if kernel.ard is False:
-        assert k.ard_num_dims is None
-    else:
-        assert k.ard_num_dims == len(active_dims)
     assert torch.eq(k.active_dims, torch.tensor(active_dims, dtype=torch.int64)).all()
 
 
@@ -530,6 +522,29 @@ def test_map_WedgeKernel():
 
     assert isinstance(k, conditionalKernels.WedgeKernel)
     assert k.base_kernel.active_dims.tolist() == [0, 1, 2, 4]
+
+    feats_dummy = ["dummy"] + feats
+    data_model = WedgeKernel(
+        base_kernel=RBFKernel(features=["x1", "x2"]), conditions=conditions, ard=True
+    )
+
+    k = kernels.map(
+        data_model,
+        active_dims=[1, 2, 3],
+        batch_shape=torch.Size(),
+        features_to_idx_mapper=lambda ks: list(map(feats_dummy.index, ks)),
+    )
+    k_sliced = kernels.map(
+        data_model,
+        active_dims=[0, 1, 2],
+        batch_shape=torch.Size(),
+        features_to_idx_mapper=lambda ks: list(map(feats.index, ks)),
+    )
+
+    assert k.ard_num_dims == 3
+    X = torch.rand(6, 4)
+    # the task column must not affect the covariance
+    assert torch.allclose(k(X).to_dense(), k_sliced(X[:, 1:]).to_dense())
 
 
 def test_map_spherical_linear_kernel():

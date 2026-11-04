@@ -4,13 +4,13 @@ from sklearn.model_selection import GroupShuffleSplit, KFold, StratifiedKFold
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import DescriptorEncoding, OneHotEncoding
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 
 
@@ -56,11 +56,12 @@ def test_model_cross_validate_descriptor():
             for i in range(2)
         ]
         + [
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="x_3",
                 categories=["a", "b", "c"],
-                descriptors=["alpha", "beta"],
-                values=[[1, 3], [2, 2], [3, 1]],
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 2, 3], "beta": [3, 2, 1]}
+                ),
             ),
         ],
     )
@@ -76,13 +77,12 @@ def test_model_cross_validate_descriptor():
     experiments["valid_y"] = 1
     experiments = experiments.sample(10)
     for encoding in [
-        CategoricalEncodingEnum.ONE_HOT,
-        CategoricalEncodingEnum.DESCRIPTOR,
+        OneHotEncoding(),
+        DescriptorEncoding(),
     ]:
         model = SingleTaskGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            input_preprocessing_specs={"x_3": CategoricalEncodingEnum.ORDINAL},
             categorical_encodings={"x_3": encoding},
         )
         model = surrogates.map(model)
@@ -312,11 +312,12 @@ def test_model_cross_validate_stratified(random_state):
         ]
         + [
             CategoricalInput(key="cat_x_3", categories=["category1", "category2"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors=["alpha", "beta"],
-                values=[[1, 3], [2, 2], [3, 1]],
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 2, 3], "beta": [3, 2, 1]}
+                ),
             ),
         ],
     )
@@ -397,11 +398,12 @@ def test_model_cross_validate_stratified_invalid_feature_name():
         ]
         + [
             CategoricalInput(key="cat_x_3", categories=["category1", "category2"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors=["alpha", "beta"],
-                values=[[1, 3], [2, 2], [3, 1]],
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 2, 3], "beta": [3, 2, 1]}
+                ),
             ),
         ],
     )
@@ -453,11 +455,12 @@ def test_model_cross_validate_stratified_invalid_feature_type(key):
         ]
         + [
             CategoricalInput(key="cat_x_3", categories=["category1", "category2"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors=["alpha", "beta"],
-                values=[[1, 3], [2, 2], [3, 1]],
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 2, 3], "beta": [3, 2, 1]}
+                ),
             ),
         ],
     )
@@ -510,11 +513,12 @@ def test_model_cross_validate_groupfold(random_state):
         ]
         + [
             CategoricalInput(key="cat_x_3", categories=["category1", "category2"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
-                descriptors=["alpha", "beta"],
-                values=[[1, 3], [2, 2], [3, 1]],
+                descriptors=Descriptors(
+                    columns={"alpha": [1, 2, 3], "beta": [3, 2, 1]}
+                ),
             ),
         ],
     )

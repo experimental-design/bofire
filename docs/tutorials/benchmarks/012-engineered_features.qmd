@@ -1,10 +1,10 @@
 ---
-title: Optimization with `ContinuousDescriptorInput`s and engineered Features
+title: Optimization with descriptor-carrying inputs and engineered Features
 jupyter: python3
 ---
 
 
-Continuous descriptor inputs can be used in combination with engineered features to incorporate more domain knowledge into an optimization. Example could be a solvent of formulation optimization where per continuous input feature additional information about its properties is available.
+Continuous inputs carrying descriptors can be used in combination with engineered features to incorporate more domain knowledge into an optimization. Example could be a solvent of formulation optimization where per continuous input feature additional information about its properties is available.
 
 For examples in the literature have a look at this [paper](https://arxiv.org/abs/2506.07619).
 
@@ -17,7 +17,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bofire.data_models.features.api import ContinuousInput, ContinuousDescriptorInput, SumFeature, WeightedSumFeature, ContinuousOutput
+from bofire.data_models.features.api import ContinuousInput, SumFeature, WeightedSumFeature, ContinuousOutput
 from bofire.data_models.domain.api import Inputs, EngineeredFeatures, Outputs, Domain, Constraints
 from bofire.benchmarks.api import Himmelblau, FormulationWrapper
 from bofire.runners.api import run
@@ -41,7 +41,13 @@ bench = FormulationWrapper(benchmark=Himmelblau(), n_features_per_original_featu
 The continuos descriptor features have the following descriptor values for the descriptors `x_1` and `x_2`:
 
 ```{python}
-pd.concat([feat.to_df() for feat in bench.domain.inputs.get(ContinuousDescriptorInput)])
+pd.concat(
+    [
+        feat.descriptors.table([feat.key])
+        for feat in bench.domain.inputs.get()
+        if feat.descriptors is not None
+    ]
+)
 ```
 
 ## Benchmarks
@@ -110,8 +116,12 @@ def create_strategy(domain):
             features=[
                 WeightedSumFeature(
                     key="WeightedSum",
-                    features=bench.domain.inputs.get_keys(ContinuousDescriptorInput),
-                    descriptors=["x_1", "x_2"]
+                    features=[
+                        f.key
+                        for f in bench.domain.inputs.get()
+                        if f.descriptors is not None
+                    ],
+                    columns=["x_1", "x_2"],
                     )]),
         #kernel=RBFKernel(features=["x_1", "x_2"], lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR())
     )

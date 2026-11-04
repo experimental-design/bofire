@@ -35,6 +35,20 @@ from bofire.data_models.priors.api import (
         (GammaPrior(concentration=2.0, rate=0.2), gpytorch.priors.GammaPrior),
         (NormalPrior(loc=0, scale=0.5), gpytorch.priors.NormalPrior),
         (LogNormalPrior(loc=0, scale=0.5), gpytorch.priors.LogNormalPrior),
+    ],
+)
+def test_map(prior, expected_prior):
+    gprior = priors.map(prior)
+    assert isinstance(gprior, expected_prior)
+    for key, value in prior.model_dump().items():
+        if key == "type":
+            continue
+        assert value == getattr(gprior, key)
+
+
+@pytest.mark.parametrize(
+    "constraint, expected_constraint",
+    [
         (
             NonTransformedInterval(lower_bound=0.1, upper_bound=1.0, initial_value=0.5),
             BotorchNonTransformedInterval,
@@ -48,14 +62,16 @@ from bofire.data_models.priors.api import (
         (LessThan(upper_bound=0), gpytorch.constraints.LessThan),
     ],
 )
-def test_map(prior, expected_prior):
-    gprior = priors.map(prior)
-    assert isinstance(gprior, expected_prior)
-    for key, value in prior.model_dump().items():
-        if key == "type":
-            continue
-        if not isinstance(prior, LogTransformedInterval):
-            assert value == getattr(gprior, key)
+def test_map_constraint(constraint, expected_constraint):
+    gconstraint = priors.map_constraint(constraint)
+    assert isinstance(gconstraint, expected_constraint)
+    for key in ("lower_bound", "upper_bound"):
+        if key in type(constraint).model_fields:
+            assert getattr(constraint, key) == getattr(gconstraint, key)
+    if constraint.initial_value is not None and not isinstance(
+        constraint, LogTransformedInterval
+    ):
+        assert constraint.initial_value == gconstraint.initial_value
 
 
 def test_lkj_map():

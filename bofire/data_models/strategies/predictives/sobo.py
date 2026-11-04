@@ -10,6 +10,7 @@ from bofire.data_models.acquisition_functions.api import (
 )
 from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
+from bofire.data_models.strategies.convergence_criteria.api import ConvergenceCriterion
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
@@ -43,6 +44,22 @@ class SoboBaseStrategy(BotorchStrategy):
 
         """
         return True
+
+    @classmethod
+    def is_criterion_implemented(cls, my_type: Type[ConvergenceCriterion]) -> bool:
+        """Method to check if a convergence criterion type is applicable for the strategy.
+
+        SOBO strategies are single-objective, so they accept criteria that are
+        applicable to single-objective optimization.
+
+        Args:
+            my_type: ConvergenceCriterion class
+
+        Returns:
+            bool: True if the convergence criterion type is valid for the strategy chosen, False otherwise
+
+        """
+        return my_type.is_applicable_to_singleobjective()
 
 
 class SoboStrategy(SoboBaseStrategy):

@@ -1,5 +1,5 @@
 ---
-title: Introduction to index kernel and positive index kernel.
+title: Introduction to Index Kernel and Positive Index Kernel
 jupyter: python3
 ---
 

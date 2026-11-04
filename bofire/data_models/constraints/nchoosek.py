@@ -2,7 +2,7 @@ from typing import Dict, Literal, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.constraints.constraint import IntrapointConstraint
 from bofire.data_models.domain.features import Inputs
@@ -16,19 +16,29 @@ def narrow_gaussian(x, ell=1e-3):
 class NChooseKConstraint(IntrapointConstraint):
     """NChooseK constraint that defines how many ingredients are allowed in a formulation.
 
-    Attributes:
-        features (List[str]): List of feature keys to which the constraint applies.
-        min_count (int): Minimal number of non-zero/active feature values.
-        max_count (int): Maximum number of non-zero/active feature values.
-        none_also_valid (bool): In case that min_count > 0,
-            this flag decides if zero active features are also allowed.
+    Bounds the *count* of active features rather than a weighted sum of their values,
+    which is what distinguishes it from `LinearInequalityConstraint`.
 
+    Examples:
+        >>> NChooseKConstraint(
+        ...     features=["x1", "x2", "x3"],
+        ...     min_count=1,
+        ...     max_count=2,
+        ...     none_also_valid=False,
+        ... )
     """
 
     type: Literal["NChooseKConstraint"] = "NChooseKConstraint"
-    min_count: int
-    max_count: int
-    none_also_valid: bool
+    min_count: int = Field(
+        description="Minimal number of non-zero/active feature values.",
+    )
+    max_count: int = Field(
+        description="Maximum number of non-zero/active feature values.",
+    )
+    none_also_valid: bool = Field(
+        description="In case that min_count > 0, this flag decides if zero active "
+        "features are also allowed.",
+    )
 
     def to_description(self) -> str:
         """Render as ``"Choose 1-3 active features from ['x1', 'x2', 'x3']"``.

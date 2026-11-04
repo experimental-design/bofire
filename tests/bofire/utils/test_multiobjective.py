@@ -227,6 +227,29 @@ def test_get_pareto_front(domain, experiments, expected_indices):
     assert np.allclose(df_pareto.index.values, expected_indices)
 
 
+@pytest.mark.parametrize("output_columns", [["of1", "of2"], ["of2", "of1"]])
+@pytest.mark.parametrize("output_feature_keys", [None, ["of1", "of2"]])
+def test_get_pareto_front_column_order(output_columns, output_feature_keys):
+    values = {
+        "of1": [1.0, 2.0, 1.0, 3.0, 4.0],
+        "of2": [3.0, 4.0, 4.0, 5.0, 1.0],
+    }
+    experiments = pd.DataFrame(
+        {key: values[key] for key in output_columns},
+        index=[10, 20, 30, 40, 50],
+    )
+    experiments["valid_of1"] = [1, 1, 1, 1, 0]
+    experiments["valid_of2"] = 1
+
+    # Reordering a homogeneous pandas 3 block can produce negative strides.
+    # The invalid final row would otherwise dominate every valid experiment.
+    result = get_pareto_front(
+        valid_domains[0], experiments, output_feature_keys=output_feature_keys
+    )
+
+    pd.testing.assert_frame_equal(result, experiments.loc[[10, 20, 40]])
+
+
 @pytest.mark.parametrize(
     "domain, experiments, ref_point",
     [

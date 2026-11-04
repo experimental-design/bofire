@@ -1,156 +1,433 @@
-from typing import Literal, Optional, Type, Union
+import itertools
+from typing import List, Literal, Optional, Type
 
-import pandas as pd
-from pydantic import Field
+from pydantic import Field, model_validator
 
-from bofire.data_models.domain.api import Inputs
-from bofire.data_models.enum import RegressionMetricsEnum
+from bofire.data_models.descriptor_generators.api import Fingerprints
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
+from bofire.data_models.encodings.api import DescriptorEncoding, OrdinalEncoding
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
     ContinuousOutput,
 )
 from bofire.data_models.kernels.api import (
+    AdditiveKernel,
+    AdditiveMapSaasKernel,
     AnyKernel,
+    HammingDistanceKernel,
+    LinearKernel,
     MaternKernel,
+    MultiplicativeKernel,
+    PolynomialKernel,
     RBFKernel,
     ScaleKernel,
+    TanimotoKernel,
 )
+from bofire.data_models.likelihoods.api import (
+    HVARFNER_LIKELIHOOD,
+    MBO_LIKELIHOOD,
+    THREESIX_LIKELIHOOD,
+    AnySingleTaskLikelihood,
+    SparseOutlierGaussianLikelihood,
+)
+from bofire.data_models.means.api import AnySingleTaskMean, ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
     MBO_LENGTHSCALE_PRIOR,
-    MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
+    ROBUSTGP_LENGTHSCALE_CONSTRAINT,
     THREESIX_LENGTHSCALE_PRIOR,
-    THREESIX_NOISE_PRIOR,
     THREESIX_SCALE_PRIOR,
-    AnyPrior,
-    AnyPriorConstraint,
     GreaterThan,
+    NonTransformedInterval,
+    NormalPrior,
 )
-from bofire.data_models.surrogates.trainable import Hyperconfig
+from bofire.data_models.surrogates.optimizer import LBFGSBFitted
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class SingleTaskGPHyperconfig(Hyperconfig):
-    type: Literal["SingleTaskGPHyperconfig"] = "SingleTaskGPHyperconfig"
-    inputs: Inputs = Inputs(
-        features=[
-            CategoricalInput(
-                key="kernel",
-                categories=["rbf", "matern_1.5", "matern_2.5"],
-            ),
-            CategoricalInput(key="prior", categories=["mbo", "threesix", "hvarfner"]),
-            CategoricalInput(key="scalekernel", categories=["True", "False"]),
-            CategoricalInput(key="ard", categories=["True", "False"]),
-        ],
-    )
-    lengthscale_constraint: Optional[AnyPriorConstraint] = None
-    outputscale_constraint: Optional[AnyPriorConstraint] = None
-    target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
-    hyperstrategy: Literal[
-        "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
-    ] = "FractionalFactorialStrategy"
+# base kernels tried by `SingleTaskGPSurrogate.options`, built from ARD and a
+# lengthscale prior
+_BASE_KERNELS = [
+    lambda ard, prior: RBFKernel(ard=ard, lengthscale_prior=prior),
+    lambda ard, prior: MaternKernel(nu=1.5, ard=ard, lengthscale_prior=prior),
+    lambda ard, prior: MaternKernel(nu=2.5, ard=ard, lengthscale_prior=prior),
+]
 
-    @staticmethod
-    def _update_hyperparameters(
-        surrogate_data: "SingleTaskGPSurrogate",
-        hyperparameters: pd.Series,
-        outputscale_constraint: Optional[AnyPriorConstraint] = None,
-        lengthscale_constraint: Optional[AnyPriorConstraint] = None,
-    ):
-        def matern_25(
-            ard: bool,
-            lengthscale_prior: AnyPrior,
-            lengthscale_constraint: Union[AnyPriorConstraint, None],
-        ) -> MaternKernel:
-            return MaternKernel(
-                nu=2.5,
-                lengthscale_prior=lengthscale_prior,
-                lengthscale_constraint=lengthscale_constraint,
-                ard=ard,
-            )
-
-        def matern_15(
-            ard: bool,
-            lengthscale_prior: AnyPrior,
-            lengthscale_constraint: Union[AnyPriorConstraint, None],
-        ) -> MaternKernel:
-            return MaternKernel(
-                nu=1.5,
-                lengthscale_prior=lengthscale_prior,
-                lengthscale_constraint=lengthscale_constraint,
-                ard=ard,
-            )
-
-        if hyperparameters.prior == "mbo":
-            noise_prior, lengthscale_prior, outputscale_prior = (
-                MBO_NOISE_PRIOR(),
-                MBO_LENGTHSCALE_PRIOR(),
-                MBO_OUTPUTSCALE_PRIOR(),
-            )
-        elif hyperparameters.prior == "threesix":
-            noise_prior, lengthscale_prior, outputscale_prior = (
-                THREESIX_NOISE_PRIOR(),
-                THREESIX_LENGTHSCALE_PRIOR(),
-                THREESIX_SCALE_PRIOR(),
-            )
-        else:
-            noise_prior, lengthscale_prior, outputscale_prior = (
-                HVARFNER_NOISE_PRIOR(),
-                HVARFNER_LENGTHSCALE_PRIOR(),
-                THREESIX_SCALE_PRIOR(),
-            )
-        surrogate_data.noise_prior = noise_prior
-
-        if hyperparameters.kernel == "rbf":
-            base_kernel = RBFKernel(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-                lengthscale_constraint=lengthscale_constraint,
-            )
-        elif hyperparameters.kernel == "matern_2.5":
-            base_kernel = matern_25(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-                lengthscale_constraint=lengthscale_constraint,
-            )
-        elif hyperparameters.kernel == "matern_1.5":
-            base_kernel = matern_15(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-                lengthscale_constraint=lengthscale_constraint,
-            )
-        else:
-            raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
-
-        if hyperparameters.scalekernel == "True":
-            surrogate_data.kernel = ScaleKernel(
-                base_kernel=base_kernel,
-                outputscale_prior=outputscale_prior,
-                outputscale_constraint=outputscale_constraint,
-            )
-        else:
-            surrogate_data.kernel = base_kernel
+# (likelihood, lengthscale prior, outputscale prior) tried by
+# `SingleTaskGPSurrogate.options`
+_PRIOR_SETS = [
+    (MBO_LIKELIHOOD, MBO_LENGTHSCALE_PRIOR, MBO_OUTPUTSCALE_PRIOR),
+    (THREESIX_LIKELIHOOD, THREESIX_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
+    (HVARFNER_LIKELIHOOD, HVARFNER_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
+]
 
 
-class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
+class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
     kernel: AnyKernel = Field(
         default_factory=lambda: RBFKernel(
             ard=True,
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+            lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),
         )
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
-    noise_constraint: Optional[AnyPriorConstraint] = Field(
-        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    mean: AnySingleTaskMean = Field(
+        default=ConstantMean(),
+        description="Prior mean function, what the model predicts far from any "
+        "observation.",
     )
-    hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
-        default_factory=lambda: SingleTaskGPHyperconfig(),
+    likelihood: AnySingleTaskLikelihood = Field(
+        default=HVARFNER_LIKELIHOOD(),
+        description="How observations scatter around the response, i.e. the model of "
+        "the measurement noise.",
     )
+
+    @staticmethod
+    def options(
+        inputs: Inputs,
+        outputs: Outputs,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
+    ) -> List["SingleTaskGPSurrogate"]:
+        """Single-task GPs that differ in kernel and priors, as options to choose from.
+
+        One for each combination of base kernel (RBF, Matern 1.5, Matern 2.5), set of
+        noise, lengthscale and outputscale priors (MBO, THREESIX, HVARFNER), with and
+        without a scale kernel, and with and without ARD: 36 in all. Every other field
+        keeps its default.
+
+        Args:
+            inputs: The input features of every option.
+            outputs: The output feature of every option.
+            engineered_features: Quantities derived from the inputs that every option
+                sees as well; the kernel works on them too. If not provided, none.
+
+        Returns:
+            The options, each with its own kernel and likelihood.
+        """
+        options = []
+        for base_kernel, priors, scale, ard in itertools.product(
+            _BASE_KERNELS, _PRIOR_SETS, [True, False], [True, False]
+        ):
+            likelihood, lengthscale_prior, outputscale_prior = priors
+            kernel = base_kernel(ard, lengthscale_prior())
+            if scale:
+                kernel = ScaleKernel(
+                    base_kernel=kernel, outputscale_prior=outputscale_prior()
+                )
+            options.append(
+                SingleTaskGPSurrogate(
+                    inputs=inputs,
+                    outputs=outputs,
+                    engineered_features=engineered_features or EngineeredFeatures(),
+                    kernel=kernel,
+                    likelihood=likelihood(),
+                )
+            )
+        return options
+
+    @staticmethod
+    def linear(
+        inputs: Inputs,
+        outputs: Outputs,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
+    ) -> "SingleTaskGPSurrogate":
+        """Single-task GP whose response is linear in the inputs.
+
+        Equivalent to Bayesian linear regression. The noise has a THREESIX prior with a
+        lower bound of 1e-4; every other field keeps its default.
+
+        Args:
+            inputs: The input features.
+            outputs: The output feature.
+            engineered_features: Quantities derived from the inputs that the model
+                sees as well; the kernel works on them too. If not provided, none.
+
+        Returns:
+            The surrogate, with a linear kernel.
+        """
+        return SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            engineered_features=engineered_features or EngineeredFeatures(),
+            kernel=LinearKernel(),
+            likelihood=THREESIX_LIKELIHOOD(),
+        )
+
+    @staticmethod
+    def polynomial(
+        inputs: Inputs,
+        outputs: Outputs,
+        power: int = 2,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
+    ) -> "SingleTaskGPSurrogate":
+        """Single-task GP whose response is a polynomial in the inputs.
+
+        The noise has a THREESIX prior with a lower bound of 1e-4; every other field
+        keeps its default.
+
+        Args:
+            inputs: The input features.
+            outputs: The output feature.
+            engineered_features: Quantities derived from the inputs that the model
+                sees as well; the kernel works on them too. If not provided, none.
+            power: Degree of the polynomial.
+
+        Returns:
+            The surrogate, with a polynomial kernel of the given power.
+        """
+        return SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            engineered_features=engineered_features or EngineeredFeatures(),
+            kernel=PolynomialKernel(power=power),
+            likelihood=THREESIX_LIKELIHOOD(),
+        )
+
+    @staticmethod
+    def additive_map_saas(
+        inputs: Inputs,
+        outputs: Outputs,
+        n_taus: int = 4,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
+    ) -> "SingleTaskGPSurrogate":
+        """Single-task GP for many inputs of which only a few are expected to matter.
+
+        The maximum-a-posteriori approximation of the fully Bayesian SAAS model, as
+        BoTorch's `AdditiveMapSaasSingleTaskGP` builds it: an additive sparse kernel, a
+        constant mean with a standard normal prior bounded to [-10, 10], and the default
+        likelihood.
+
+        Args:
+            inputs: The input features.
+            outputs: The output feature.
+            engineered_features: Quantities derived from the inputs that the model
+                sees as well; the kernel works on them too. If not provided, none.
+            n_taus: Number of sparse kernels summed up, each at its own sparsity level.
+
+        Returns:
+            The surrogate, with an additive MAP-SAAS kernel.
+        """
+        return SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            engineered_features=engineered_features or EngineeredFeatures(),
+            kernel=AdditiveMapSaasKernel(n_taus=n_taus),
+            mean=ConstantMean(
+                prior=NormalPrior(loc=0.0, scale=1.0),
+                constraint=NonTransformedInterval(lower_bound=-10.0, upper_bound=10.0),
+            ),
+        )
+
+    @staticmethod
+    def mixed(
+        inputs: Inputs,
+        outputs: Outputs,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
+    ) -> "SingleTaskGPSurrogate":
+        """Single-task GP for continuous and categorical inputs, as BoTorch's
+        `MixedSingleTaskGP` builds it.
+
+        Categorical inputs without descriptor data are encoded as ordinal codes and
+        compared by a Hamming kernel; all other inputs and the engineered features by
+        an RBF kernel with the HVARFNER prior. The kernel is the sum of the two plus
+        their product, each scaled; without other inputs, the scaled Hamming kernel.
+
+        Args:
+            inputs: The input features, at least one of them categorical without
+                descriptor data.
+            outputs: The output feature.
+            engineered_features: Quantities derived from the inputs that the model
+                sees as well; the RBF kernel works on them. If not provided, none.
+
+        Returns:
+            The surrogate.
+
+        Raises:
+            ValueError: If no categorical input lacks descriptor data, or if an
+                engineered feature replaces the features it is computed from.
+        """
+        engineered_features = engineered_features or EngineeredFeatures()
+        if any(not feat.keep_features for feat in engineered_features.get()):
+            raise ValueError(
+                "The mixed GP needs every engineered feature to keep the features it "
+                "is computed from (keep_features=True)."
+            )
+        categorical = [
+            feat.key
+            for feat in inputs.get(CategoricalInput, exact=False)
+            if feat.descriptors is None
+        ]
+        if not categorical:
+            raise ValueError(
+                "The mixed GP needs at least one categorical input without "
+                "descriptor data."
+            )
+        continuous = [
+            key for key in inputs.get_keys() if key not in categorical
+        ] + engineered_features.get_keys()
+
+        def continuous_kernel() -> RBFKernel:
+            return RBFKernel(
+                ard=True,
+                lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),
+                features=continuous,
+            )
+
+        def categorical_kernel() -> HammingDistanceKernel:
+            return HammingDistanceKernel(ard=True, features=categorical)
+
+        if continuous:
+            kernel = AdditiveKernel(
+                kernels=[
+                    ScaleKernel(
+                        base_kernel=AdditiveKernel(
+                            kernels=[
+                                continuous_kernel(),
+                                ScaleKernel(base_kernel=categorical_kernel()),
+                            ]
+                        )
+                    ),
+                    ScaleKernel(
+                        base_kernel=MultiplicativeKernel(
+                            kernels=[continuous_kernel(), categorical_kernel()]
+                        )
+                    ),
+                ]
+            )
+        else:
+            kernel = ScaleKernel(base_kernel=categorical_kernel())
+        return SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            engineered_features=engineered_features,
+            categorical_encodings={key: OrdinalEncoding() for key in categorical},
+            kernel=kernel,
+        )
+
+    @staticmethod
+    def robust(
+        inputs: Inputs,
+        outputs: Outputs,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
+    ) -> "SingleTaskGPSurrogate":
+        """Single-task GP that detects outliers and discounts them: BoTorch's
+        `RobustRelevancePursuitSingleTaskGP`, with the lengthscales bounded at 0.05
+        instead of 0.025.
+
+        The likelihood adds an extra noise variance for observations treated as
+        outliers to the HVARFNER noise model. The kernel is an RBF kernel with the
+        HVARFNER prior whose lengthscales are at least 0.05, so that the model cannot
+        simply explain the outliers.
+
+        Args:
+            inputs: The input features.
+            outputs: The output feature, exactly one.
+            engineered_features: Quantities derived from the inputs that the model
+                sees as well; the kernel works on them too. If not provided, none.
+
+        Returns:
+            The surrogate, with a `SparseOutlierGaussianLikelihood`.
+        """
+        return SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            engineered_features=engineered_features or EngineeredFeatures(),
+            kernel=RBFKernel(
+                ard=True,
+                lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
+                lengthscale_constraint=ROBUSTGP_LENGTHSCALE_CONSTRAINT(),
+            ),
+            likelihood=SparseOutlierGaussianLikelihood(
+                noise_prior=HVARFNER_NOISE_PRIOR()
+            ),
+        )
+
+    @staticmethod
+    def tanimoto(
+        inputs: Inputs,
+        outputs: Outputs,
+        fingerprints: Optional[DescriptorEncoding] = None,
+    ) -> "SingleTaskGPSurrogate":
+        """Single-task GP over molecular inputs, with the Tanimoto similarity of the
+        molecules' fingerprints as kernel.
+
+        Every input is a categorical whose categories have structure data; the
+        similarities between all categories of an input are computed once. With one
+        input the kernel is a scaled Tanimoto kernel. With several, it is the scaled
+        product of one Tanimoto kernel per input: two points are similar if each of
+        their molecules is. The THREESIX outputscale prior and the THREESIX likelihood
+        are used.
+
+        For other combinations (a sum of the molecules' kernels, different
+        fingerprints per molecule, further continuous inputs) build the kernel from
+        `TanimotoKernel`s directly.
+
+        Args:
+            inputs: The input features: one or more categoricals with structure data.
+            outputs: The output feature.
+            fingerprints: How the fingerprints are computed from the structures, the
+                same for every input. If not provided, Morgan fingerprints of 2048
+                bits.
+
+        Returns:
+            The surrogate.
+
+        Raises:
+            ValueError: If an input is not a categorical with structure data.
+        """
+        features = inputs.get()
+        if not all(
+            isinstance(feature, CategoricalInput)
+            and feature.descriptors is not None
+            and feature.descriptors.structure is not None
+            for feature in features
+        ):
+            raise ValueError(
+                "The Tanimoto GP needs every input to be a categorical with structure "
+                "data."
+            )
+        fingerprints = fingerprints or DescriptorEncoding(
+            columns=[], generators=[Fingerprints()]
+        )
+        keys = [feature.key for feature in features]
+        kernels = [
+            TanimotoKernel(features=[key], fingerprints=fingerprints) for key in keys
+        ]
+        return SingleTaskGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            categorical_encodings={key: OrdinalEncoding() for key in keys},
+            kernel=ScaleKernel(
+                base_kernel=kernels[0]
+                if len(kernels) == 1
+                else MultiplicativeKernel(kernels=kernels),
+                outputscale_prior=THREESIX_SCALE_PRIOR(),
+            ),
+            likelihood=THREESIX_LIKELIHOOD(),
+        )
+
+    @model_validator(mode="after")
+    def validate_sparse_outlier_likelihood(self):
+        """Outlier noise levels are fitted for one output only."""
+        if (
+            isinstance(self.likelihood, SparseOutlierGaussianLikelihood)
+            and len(self.outputs) > 1
+        ):
+            raise ValueError(
+                "A SparseOutlierGaussianLikelihood supports one output only."
+            )
+        return self
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

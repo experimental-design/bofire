@@ -22,7 +22,7 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import OneHotEncoding
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -690,16 +690,16 @@ class TestPruneNchoosekEndToEnd:
         # dense X[0].
         d = X_dense.shape[1]
         joint_calls = [c for c in rec.calls if c.dim() == 3 and c.shape[1] == 2]
-        assert joint_calls, (
-            "expected at least one (..., 2, d) AF call during the " "inner loop for i=1"
-        )
+        assert (
+            joint_calls
+        ), "expected at least one (..., 2, d) AF call during the inner loop for i=1"
         for c in joint_calls:
             assert c.shape[-1] == d
             prefix_row = c[..., 0, :]  # broadcast across the b-dim
             # Every batch-row's prefix row equals the pruned X[0].
-            assert torch.allclose(prefix_row, out[0].expand_as(prefix_row)), (
-                "prefix row must equal the pruned candidate-0, not " "any other value"
-            )
+            assert torch.allclose(
+                prefix_row, out[0].expand_as(prefix_row)
+            ), "prefix row must equal the pruned candidate-0, not any other value"
             # And it must NOT equal the dense X[0] (otherwise the
             # joint-conditioning is bypassed).
             assert not torch.allclose(prefix_row, X_dense[0].expand_as(prefix_row))
@@ -2143,7 +2143,7 @@ class TestPinnedColumns:
 
         # Force one-hot encoding so the categorical occupies multiple
         # columns — the nasty drift case.
-        specs: Dict[str, Any] = {"cat": CategoricalEncodingEnum.ONE_HOT}
+        specs: Dict[str, Any] = {"cat": OneHotEncoding()}
         features2idx, _ = domain.inputs._get_transform_info(specs)
         bounds = get_torch_bounds_from_domain(domain, specs)
         inequality_constraints = get_linear_constraints(

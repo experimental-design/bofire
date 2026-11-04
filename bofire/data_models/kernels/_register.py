@@ -13,19 +13,13 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
         PolynomialFeatureInteractionKernel,
         ScaleKernel,
     )
-    from bofire.data_models.kernels.categorical import CategoricalKernel
     from bofire.data_models.kernels.conditional import (
         ConditionalEmbeddingKernel,
         WedgeKernel,
     )
-    from bofire.data_models.kernels.continuous import ContinuousKernel
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
-    from bofire.data_models.surrogates.mixed_single_task_gp import (
-        MixedSingleTaskGPSurrogate,
-    )
     from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
     from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
-    from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 
     # Add new kernel type to aggregation kernel inline unions
     # (handles both Sequence[Union[...]] and plain Union[...])
@@ -54,30 +48,13 @@ def _rebuild_dependent_models(new_kernel_cls: type) -> None:
     for model_cls, field_name in [
         (SingleTaskGPSurrogate, "kernel"),
         (MultiTaskGPSurrogate, "kernel"),
-        (TanimotoGPSurrogate, "kernel"),
     ]:
         patch_field(model_cls, field_name, kernels_api.AnyKernel)
-
-    # Patch sub-category kernel fields if the new type is a subclass
-    if issubclass(new_kernel_cls, ContinuousKernel):
-        patch_field(
-            MixedSingleTaskGPSurrogate,
-            "continuous_kernel",
-            kernels_api.AnyContinuousKernel,
-        )
-    if issubclass(new_kernel_cls, CategoricalKernel):
-        patch_field(
-            MixedSingleTaskGPSurrogate,
-            "categorical_kernel",
-            kernels_api.AnyCategoricalKernel,
-        )
 
     # Rebuild surrogate models
     for cls in [
         SingleTaskGPSurrogate,
         MultiTaskGPSurrogate,
-        TanimotoGPSurrogate,
-        MixedSingleTaskGPSurrogate,
     ]:
         cls.model_rebuild(force=True)
 
@@ -99,14 +76,18 @@ def register_kernel(data_model_cls: type) -> None:
 
     Args:
         data_model_cls: A concrete subclass of ``Kernel``.
+
+    Raises:
+        ValueError: If a different kernel with the same ``type`` discriminator
+            is already registered.
     """
     import bofire.data_models.kernels.api as kernels_api
+    from bofire.data_models._register_utils import register_into
     from bofire.data_models.kernels.categorical import CategoricalKernel
     from bofire.data_models.kernels.continuous import ContinuousKernel
 
-    if data_model_cls in kernels_api._KERNEL_TYPES:
+    if not register_into(kernels_api._KERNEL_TYPES, data_model_cls, kind="kernel"):
         return
-    kernels_api._KERNEL_TYPES.append(data_model_cls)
     kernels_api.AnyKernel = tagged_union(*kernels_api._KERNEL_TYPES)
 
     # Auto-detect sub-category from base class

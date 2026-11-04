@@ -8,10 +8,10 @@ These notebooks showcase more specialized and advanced use cases in BoFire. Thes
 
 ## Available Tutorials
 
-### [Custom SOBO](custom_sobo.qmd)
+### [Custom SOBO Strategy](custom_sobo.qmd)
 Create custom single-objective Bayesian optimization strategies.
 
-### [Desirability Objectives](desirability_objectives.qmd)
+### [Desirability Functions for Multi-Objective Optimization](desirability_objectives.qmd)
 Working with desirability functions for multi-criteria optimization.
 
 ### [Genetic Algorithm](genetic_algorithm.qmd)
@@ -20,10 +20,13 @@ Using genetic algorithms for optimization in BoFire.
 ### [Merging Objectives](merging_objectives.qmd)
 Techniques for combining multiple objectives in optimization.
 
-### [Multifidelity Bayesian Optimization](multifidelity_bo.qmd)
+### [Multi-fidelity Bayesian Optimization](multifidelity_bo.qmd)
 Leveraging multiple fidelity levels for efficient optimization.
 
-### [Objectives on Inputs](objectives_on_inputs.qmd)
+### [Multi-Objective, Multi-Fidelity BO](multioutput_multifidelity_bo.qmd)
+Optimize multiple objectives across fidelity levels.
+
+### [Input Features as Output Objectives](objectives_on_inputs.qmd)
 Defining optimization objectives directly on input parameters.
 
 ### [Random Forest in BoFire](random_forest_in_bofire.qmd)
@@ -37,6 +40,9 @@ Nonconvex regions, physics-based constraints, and high-dimensional nonlinear con
 
 ### [Competing Reactions — Maximizing Yield](nonlinear_constraints_maximizing_yield.qmd)
 Multi-objective optimization with callable selectivity, conversion, and heat constraints.
+
+### [Predict Motor Octane Number of Hydrocarbon Mixtures](octane_number.qmd)
+Predict the motor octane number of hydrocarbon mixtures with a surrogate model.
 
 ### [Conditional Features BO](conditional_features_bo.qmd)
 Define input features that are conditionally active.

@@ -18,14 +18,14 @@ from torch import Tensor
 import bofire.data_models.surrogates.api as data_models
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import OneHotEncoding, OrdinalEncoding
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
@@ -38,74 +38,15 @@ CLOUDPICKLE_NOT_AVAILABLE = find_spec("cloudpickle") is None
 
 
 @pytest.mark.parametrize(
-    "modelclass",
-    [(data_models.SingleTaskGPSurrogate), (data_models.MixedSingleTaskGPSurrogate)],
-)
-def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
-    inputs = Inputs(
-        features=[
-            ContinuousInput(
-                key=f"x_{i + 1}",
-                bounds=(-4, 4),
-            )
-            for i in range(5)
-        ]
-        + [
-            CategoricalInput(key="x_cat", categories=["mama", "papa"]),
-            CategoricalDescriptorInput(
-                key="cat",
-                categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
-            ),
-        ],
-    )
-    outputs = Outputs(features=[ContinuousOutput(key="y")])
-    data_model = modelclass(
-        inputs=inputs,
-        outputs=outputs,
-    )
-    surrogate = surrogates.map(data_model)
-    assert surrogate.input_preprocessing_specs == {
-        "x_cat": CategoricalEncodingEnum.ORDINAL,
-        "cat": CategoricalEncodingEnum.ORDINAL,
-    }
-    # test that it can also handle incomplete specs
-    data_model = modelclass(
-        inputs=inputs,
-        outputs=outputs,
-        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
-    )
-    surrogate = surrogates.map(data_model)
-    assert surrogate.input_preprocessing_specs == {
-        "x_cat": CategoricalEncodingEnum.ORDINAL,
-        "cat": CategoricalEncodingEnum.ORDINAL,
-    }
-
-
-@pytest.mark.parametrize(
-    "modelclass, input_preprocessing_specs",
+    "build",
     [
-        (
-            data_models.SingleTaskGPSurrogate,
-            {
-                "x_cat": CategoricalEncodingEnum.DUMMY,
-                "cat": CategoricalEncodingEnum.ORDINAL,
-            },
+        lambda inputs, outputs: data_models.SingleTaskGPSurrogate(
+            inputs=inputs, outputs=outputs
         ),
-        (
-            data_models.MixedSingleTaskGPSurrogate,
-            {
-                "x_cat": CategoricalEncodingEnum.ORDINAL,
-                "cat": CategoricalEncodingEnum.ONE_HOT,
-            },
-        ),
+        data_models.SingleTaskGPSurrogate.mixed,
     ],
 )
-def test_BotorchModel_validate_invalid_input_preprocessing_steps(
-    modelclass,
-    input_preprocessing_specs,
-):
+def test_BotorchModel_validate_input_preprocessing_steps(build):
     inputs = Inputs(
         features=[
             ContinuousInput(
@@ -116,21 +57,21 @@ def test_BotorchModel_validate_invalid_input_preprocessing_steps(
         ]
         + [
             CategoricalInput(key="x_cat", categories=["mama", "papa"]),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
+                descriptors=Descriptors(columns={"length": [1, 3], "width": [2, 4]}),
             ),
         ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
-    with pytest.raises(ValueError):
-        modelclass(
-            inputs=inputs,
-            outputs=outputs,
-            input_preprocessing_specs=input_preprocessing_specs,
-        )
+    data_model = build(inputs, outputs)
+    surrogate = surrogates.map(data_model)
+    # input_preprocessing_specs is derived: every categorical is ordinal-encoded.
+    assert surrogate.input_preprocessing_specs == {
+        "x_cat": OrdinalEncoding(),
+        "cat": OrdinalEncoding(),
+    }
 
 
 def test_BotorchSurrogates_invalid_outputs():
@@ -195,17 +136,18 @@ def test_BotorchSurrogates_invalid_inputs():
                             for i in range(3)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=NormalizeScaler(),
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
                 data_models.SingleTaskGPSurrogate(
                     inputs=Inputs(
@@ -217,11 +159,12 @@ def test_BotorchSurrogates_invalid_inputs():
                             for i in range(2)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
@@ -232,7 +175,7 @@ def test_BotorchSurrogates_invalid_inputs():
                         ],
                     ),
                     scaler=NormalizeScaler(),
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
             ]
         ),
@@ -258,18 +201,19 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             for i in range(3)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=NormalizeScaler(),
                     output_scaler=ScalerEnum.STANDARDIZE,
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
                 data_models.SingleTaskGPSurrogate(
                     inputs=Inputs(
@@ -281,18 +225,19 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             for i in range(2)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y2")]),
                     scaler=NormalizeScaler(),
                     output_scaler=ScalerEnum.STANDARDIZE,
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
             ]
         ),
@@ -308,18 +253,19 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             for i in range(3)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=NormalizeScaler(),
                     output_scaler=ScalerEnum.LOG,
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
                 data_models.SingleTaskGPSurrogate(
                     inputs=Inputs(
@@ -331,18 +277,19 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             for i in range(2)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y2")]),
                     scaler=NormalizeScaler(),
                     output_scaler=ScalerEnum.LOG,
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
             ]
         ),
@@ -358,18 +305,19 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             for i in range(3)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=NormalizeScaler(),
                     output_scaler=ScalerEnum.CHAINED_LOG_STANDARDIZE,
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
                 data_models.SingleTaskGPSurrogate(
                     inputs=Inputs(
@@ -381,18 +329,19 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                             for i in range(2)
                         ]
                         + [
-                            CategoricalDescriptorInput(
+                            CategoricalInput(
                                 key="cat",
                                 categories=["apple", "banana"],
-                                descriptors=["length", "width"],
-                                values=[[1, 2], [3, 4]],
+                                descriptors=Descriptors(
+                                    columns={"length": [1, 3], "width": [2, 4]}
+                                ),
                             ),
                         ],
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y2")]),
                     scaler=NormalizeScaler(),
                     output_scaler=ScalerEnum.CHAINED_LOG_STANDARDIZE,
-                    categorical_encodings={"cat": CategoricalEncodingEnum.ONE_HOT},
+                    categorical_encodings={"cat": OneHotEncoding()},
                 ),
             ]
         ),
@@ -418,11 +367,12 @@ def test_botorch_models_check_compatibility(output_scaler):
                 for i in range(3)
             ]
             + [
-                CategoricalDescriptorInput(
+                CategoricalInput(
                     key="cat",
                     categories=["apple", "banana"],
-                    descriptors=["length", "width"],
-                    values=[[1, 2], [3, 4]],
+                    descriptors=Descriptors(
+                        columns={"length": [1, 3], "width": [2, 4]}
+                    ),
                 ),
             ],
         ),
@@ -440,11 +390,12 @@ def test_botorch_models_check_compatibility(output_scaler):
                 for i in range(2)
             ]
             + [
-                CategoricalDescriptorInput(
+                CategoricalInput(
                     key="cat",
                     categories=["apple", "banana"],
-                    descriptors=["length", "width"],
-                    values=[[1, 2], [3, 4]],
+                    descriptors=Descriptors(
+                        columns={"length": [1, 3], "width": [2, 4]}
+                    ),
                 ),
             ],
         ),
@@ -477,11 +428,10 @@ def test_botorch_models_check_compatibility(output_scaler):
             for i in range(4)
         ]
         + [
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
+                descriptors=Descriptors(columns={"length": [1, 3], "width": [2, 4]}),
             ),
         ],
     )
@@ -517,11 +467,10 @@ def test_botorch_models_check_compatibility(output_scaler):
             for i in range(3)
         ]
         + [
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
+                descriptors=Descriptors(columns={"length": [1, 3], "width": [2, 4]}),
             ),
         ],
     )
@@ -557,11 +506,10 @@ def test_botorch_models_check_compatibility(output_scaler):
             for i in range(3)
         ]
         + [
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="cat",
                 categories=["apple", "banana"],
-                descriptors=["length", "width"],
-                values=[[1, 2], [3, 4]],
+                descriptors=Descriptors(columns={"length": [1, 3], "width": [2, 4]}),
             ),
         ],
     )
@@ -580,11 +528,12 @@ def test_botorch_models_input_preprocessing_specs():
                 for i in range(3)
             ]
             + [
-                CategoricalDescriptorInput(
+                CategoricalInput(
                     key="cat",
                     categories=["apple", "banana"],
-                    descriptors=["length", "width"],
-                    values=[[1, 2], [3, 4]],
+                    descriptors=Descriptors(
+                        columns={"length": [1, 3], "width": [2, 4]}
+                    ),
                 ),
             ],
         ),
@@ -613,8 +562,8 @@ def test_botorch_models_input_preprocessing_specs():
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
     surrogate = BotorchSurrogates(data_model=data_model)
     assert surrogate.input_preprocessing_specs == {
-        "cat": CategoricalEncodingEnum.ORDINAL,
-        "cat2": CategoricalEncodingEnum.ORDINAL,
+        "cat": OrdinalEncoding(),
+        "cat2": OrdinalEncoding(),
     }
 
 
@@ -709,12 +658,8 @@ def test_botorch_models_fit_and_compatibilize():
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
     experiments2.loc[experiments2.x_cat == "papa", "y2"] /= 2.0
     experiments2["valid_y2"] = 1
-    data_model2 = data_models.MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        scaler=StandardizeScaler(),
-        output_scaler=ScalerEnum.STANDARDIZE,
-    )
+    data_model2 = data_models.SingleTaskGPSurrogate.mixed(inputs, outputs)
+    data_model2.scaler = StandardizeScaler()
     # create models
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
     botorch_surrogates = BotorchSurrogates(data_model=data_model)
@@ -761,7 +706,7 @@ def test_botorch_models_fit_and_compatibilize():
     # transform experiments to torch
     trX = inputs.transform(
         experiments=experiments,
-        specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
+        specs={"x_cat": OrdinalEncoding()},
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
     with torch.no_grad():
@@ -834,7 +779,6 @@ def test_botorch_models_rf_fit_and_compatibilize():
     data_model2 = data_models.RandomForestSurrogate(
         inputs=inputs,
         outputs=outputs,
-        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
     )
     # create models
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
@@ -881,7 +825,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
     # transform experiments to torch
     trX = inputs.transform(
         experiments=experiments,
-        specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
+        specs={"x_cat": OrdinalEncoding()},
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
     with torch.no_grad():
@@ -964,12 +908,8 @@ def test_empirical_model():
     experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
     experiments2.loc[experiments2.x_cat == "papa", "y2"] /= 2.0
     experiments2["valid_y2"] = 1
-    data_model2 = data_models.MixedSingleTaskGPSurrogate(
-        inputs=inputs,
-        outputs=outputs,
-        scaler=StandardizeScaler(),
-        output_scaler=ScalerEnum.STANDARDIZE,
-    )
+    data_model2 = data_models.SingleTaskGPSurrogate.mixed(inputs, outputs)
+    data_model2.scaler = StandardizeScaler()
     # create models
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
     botorch_surrogates = BotorchSurrogates(data_model=data_model)
@@ -1011,7 +951,7 @@ def test_empirical_model():
     # transform experiments to torch
     trX = inputs.transform(
         experiments=experiments,
-        specs={"x_cat": CategoricalEncodingEnum.ORDINAL},
+        specs={"x_cat": OrdinalEncoding()},
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
     with torch.no_grad():

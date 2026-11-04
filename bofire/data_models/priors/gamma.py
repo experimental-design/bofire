@@ -1,22 +1,24 @@
 from typing import Literal
 
-from pydantic import PositiveFloat
+from pydantic import Field, PositiveFloat
 
 from bofire.data_models.priors.prior import Prior
 
 
 class GammaPrior(Prior):
-    """Gamma prior based on the gamma distribution
+    """Gamma prior based on the gamma distribution.
 
-    Attributes:
-        concentration(PostiveFloat): concentration of the gamma distribution
-        rate(PositiveFloat): rate of the gamma prior.
-
+    Examples:
+        >>> GammaPrior(concentration=3.0, rate=6.0)
     """
 
     type: Literal["GammaPrior"] = "GammaPrior"
-    concentration: PositiveFloat
-    rate: PositiveFloat
+    concentration: PositiveFloat = Field(
+        description="Concentration (shape) of the gamma distribution.",
+    )
+    rate: PositiveFloat = Field(
+        description="Rate (inverse scale) of the gamma distribution.",
+    )
 
 
 class DimensionalityScaledGammaPrior(Prior):
@@ -35,18 +37,25 @@ class DimensionalityScaledGammaPrior(Prior):
     decaying with sqrt(d)) with a single, serializable prior. See the constants in
     ``bofire.data_models.priors.api`` (``CHEN_*``,
     ``DIMENSIONALITY_SCALED_THREESIX_LENGTHSCALE_PRIOR``).
-
-    Attributes:
-        concentration(PositiveFloat): base concentration of the gamma distribution.
-        concentration_scaling(float): factor multiplying ``sqrt(d)`` that is added to
-            the base concentration.
-        rate(PositiveFloat): base rate of the gamma distribution.
-        rate_power(float): exponent of ``d`` that the base rate is multiplied by.
-
     """
 
     type: Literal["DimensionalityScaledGammaPrior"] = "DimensionalityScaledGammaPrior"
-    concentration: PositiveFloat = 3.0
-    concentration_scaling: float = 0.0
-    rate: PositiveFloat = 6.0
-    rate_power: float = 0.0
+    concentration: PositiveFloat = Field(
+        default=3.0,
+        description="Base concentration of the gamma distribution, before the "
+        "dimensionality-dependent term is added.",
+    )
+    concentration_scaling: float = Field(
+        default=0.0,
+        description="Factor multiplying ``sqrt(d)`` that is added to the base "
+        "concentration.",
+    )
+    rate: PositiveFloat = Field(
+        default=6.0,
+        description="Base rate of the gamma distribution, before the "
+        "dimensionality-dependent scaling is applied.",
+    )
+    rate_power: float = Field(
+        default=0.0,
+        description="Exponent of ``d`` that the base rate is multiplied by.",
+    )

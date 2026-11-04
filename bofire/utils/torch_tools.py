@@ -33,6 +33,7 @@ from bofire.data_models.features.api import (
     Input,
 )
 from bofire.data_models.molfeatures.api import AnyMolFeatures
+from bofire.data_models.encodings.api import AnyCategoricalEncoding, OrdinalEncoding
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
@@ -50,7 +51,6 @@ from bofire.data_models.objectives.api import (
     TargetObjective,
 )
 from bofire.data_models.types import InputTransformSpecs
-from bofire.data_models.unions import to_list
 from bofire.strategies.strategy import Strategy
 
 
@@ -58,6 +58,11 @@ tkwargs = {
     "dtype": torch.double,
     "device": "cpu",
 }
+
+
+def pandas2torch(df: pd.DataFrame) -> torch.Tensor:
+    """Convert a pandas DataFrame to a PyTorch tensor."""
+    return torch.from_numpy(np.ascontiguousarray(df.to_numpy())).to(**tkwargs)
 
 
 def get_torch_bounds_from_domain(
@@ -216,13 +221,13 @@ def get_nchoosek_constraints(
         return torch.exp(-0.5 * (x / ell) ** 2)
 
     def max_constraint(indices: Tensor, num_features: int, max_count: int):
-        return lambda x: narrow_gaussian(x=x[..., indices]).sum(dim=-1) - (
-            num_features - max_count
+        return lambda x: (
+            narrow_gaussian(x=x[..., indices]).sum(dim=-1) - (num_features - max_count)
         )
 
     def min_constraint(indices: Tensor, num_features: int, min_count: int):
-        return lambda x: -narrow_gaussian(x=x[..., indices]).sum(dim=-1) + (
-            num_features - min_count
+        return lambda x: (
+            -narrow_gaussian(x=x[..., indices]).sum(dim=-1) + (num_features - min_count)
         )
 
     constraints = []
@@ -549,18 +554,18 @@ def constrained_objective2botorch(
         )
     if isinstance(objective, MinimizeSigmoidObjective):
         return (
-            [lambda Z: (Z[..., idx] - objective.tp)],
+            [lambda Z: Z[..., idx] - objective.tp],
             [1.0 / objective.steepness],
             idx + 1,
         )
     if isinstance(objective, TargetObjective):
         return (
             [
-                lambda Z: (Z[..., idx] - (objective.target_value - objective.tolerance))
-                * -1.0,
                 lambda Z: (
-                    Z[..., idx] - (objective.target_value + objective.tolerance)
+                    (Z[..., idx] - (objective.target_value - objective.tolerance))
+                    * -1.0
                 ),
+                lambda Z: Z[..., idx] - (objective.target_value + objective.tolerance),
             ],
             [1.0 / objective.steepness, 1.0 / objective.steepness],
             idx + 1,
@@ -681,13 +686,17 @@ def get_objective_callable(
             / (objective.upper_bound - objective.lower_bound)
         )
     if isinstance(objective, MinimizeObjective):
-        return lambda y, X=None: -1.0 * (
-            (y[..., idx] - objective.lower_bound)
-            / (objective.upper_bound - objective.lower_bound)
+        return lambda y, X=None: (
+            -1.0
+            * (
+                (y[..., idx] - objective.lower_bound)
+                / (objective.upper_bound - objective.lower_bound)
+            )
         )
     if isinstance(objective, CloseToTargetObjective):
-        return lambda y, X=None: -1.0 * (
-            torch.abs(y[..., idx] - objective.target_value) ** objective.exponent
+        return lambda y, X=None: (
+            -1.0
+            * (torch.abs(y[..., idx] - objective.target_value) ** objective.exponent)
         )
     if isinstance(objective, MinimizeSigmoidObjective):
         return lambda y, X=None: (
@@ -1222,9 +1231,8 @@ def create_supervised_dataset(
         filtered_experiments,
         input_preprocessing_specs,
     )
-    X = torch.from_numpy(transformed.values).to(**tkwargs)
-    # Todo: catch it for categoricals
-    Y = torch.from_numpy(filtered_experiments[outputs.get_keys()]).to(**tkwargs)
+    X = pandas2torch(transformed)
+    Y = pandas2torch(filtered_experiments[outputs.get_keys()])
 
     return SupervisedDataset(
         X=X,
@@ -1248,32 +1256,17 @@ class Encoder:
 
 
 def get_categorical_encoder(
-    feature: CategoricalInput, transform: Union[CategoricalEncodingEnum, AnyMolFeatures]
+    feature: CategoricalInput,
+    transform: AnyCategoricalEncoding,
 ) -> Encoder:
-    """Get the categorical transformer for a given feature."""
-    if isinstance(transform, tuple(to_list(AnyMolFeatures))):
-        assert isinstance(feature, CategoricalMolecularInput)
-        # filter out the highly-correlated descriptors
-        transform.remove_correlated_descriptors(feature.categories)
-        encodings = torch.from_numpy(
-            feature.to_descriptor_encoding(
-                transform, pd.Series(feature.categories)
-            ).values
-        ).to(**tkwargs)
-    elif transform == CategoricalEncodingEnum.ONE_HOT:
-        encodings = torch.from_numpy(
-            feature.to_onehot_encoding(pd.Series(feature.categories)).values
-        ).to(**tkwargs)
-    elif transform == CategoricalEncodingEnum.DESCRIPTOR:
-        assert isinstance(feature, CategoricalDescriptorInput)
-        encodings = torch.from_numpy(
-            feature.to_descriptor_encoding(pd.Series(feature.categories)).values
-        ).to(**tkwargs)
-    else:
-        raise ValueError(
-            f"No categorical transformer found for feature with key: {feature.key} "
-            f"and transform: {transform}"
-        )
+    """Build the in-model encoding matrix for a categorical feature.
+
+    Polymorphic: the encoding object (one-hot, descriptor, molecular, ...) knows
+    how to turn the feature's categories into the target columns.
+    """
+    encodings = torch.from_numpy(
+        transform.encode(feature, pd.Series(feature.categories)).values
+    ).to(**tkwargs)
     return Encoder(encodings)
 
 
@@ -1286,8 +1279,10 @@ def get_NumericToCategorical_input_transform(
             transform_specs[feat.key],
         )
         for feat in inputs.get(CategoricalInput)
-        if transform_specs.get(feat.key, CategoricalEncodingEnum.ORDINAL)
-        is not CategoricalEncodingEnum.ORDINAL
+        # ordinal is the pre-model passthrough; it is expanded to the target
+        # encoding inside the model, all other encodings are built here.
+        if feat.key in transform_specs
+        and not isinstance(transform_specs[feat.key], OrdinalEncoding)
     }
     if len(encoders) > 0:
         return NumericToCategoricalEncoding(

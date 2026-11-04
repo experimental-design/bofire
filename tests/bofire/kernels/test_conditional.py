@@ -29,7 +29,7 @@ def test_build_indicator_func():
     ]
 
     indicator_func = build_indicator_func(
-        conditions, _get_features_to_idx_mapper(feats)
+        conditions, list(range(len(feats))), _get_features_to_idx_mapper(feats)
     )
 
     X = torch.tensor(
@@ -83,6 +83,62 @@ def test_compute_base_kernel_active_dims(kernel_features, expected_active_dims):
     )
 
     assert expected_active_dims == base_kernel_active_dims
+
+
+def test_compute_base_kernel_active_dims_subset():
+    # the kernel only sees f1, f2 and the indicator, so indices are relative to them
+    feats = ["task", "f1", "f2", "indicator"]
+    conditions = [("f2", "indicator", ThresholdCondition(threshold=0.0, operator=">"))]
+    data_model = WedgeKernel(
+        base_kernel=LinearKernel(features=["f1", "f2"]), conditions=conditions
+    )
+
+    base_kernel_active_dims = compute_base_kernel_active_dims(
+        data_model, [1, 2, 3], _get_features_to_idx_mapper(feats)
+    )
+
+    assert base_kernel_active_dims == [0, 1, 4]
+
+
+def test_build_indicator_func_subset():
+    feats = ["task", "f1", "indicator"]
+    conditions = [("f1", "indicator", ThresholdCondition(threshold=1.0, operator=">"))]
+
+    indicator_func = build_indicator_func(
+        conditions, [1, 2], _get_features_to_idx_mapper(feats)
+    )
+
+    X = torch.tensor([[0.5, 0.0], [0.5, 1.5]])
+    expected_mask = torch.tensor([[0, 1], [1, 1]], dtype=torch.bool)
+    assert torch.equal(indicator_func(X), expected_mask)
+
+
+@pytest.mark.parametrize(
+    "active_dims",
+    [
+        [0, 1],  # the indicator lies outside
+        [0, 2],  # the conditional feature lies outside
+    ],
+)
+def test_build_indicator_func_outside_active_dims(active_dims):
+    feats = ["f1", "f2", "indicator"]
+    conditions = [("f2", "indicator", ThresholdCondition(threshold=0.0, operator=">"))]
+
+    with pytest.raises(ValueError, match="active dimensions"):
+        build_indicator_func(
+            conditions, active_dims, _get_features_to_idx_mapper(feats)
+        )
+
+
+def test_compute_base_kernel_active_dims_outside_active_dims():
+    feats = ["f1", "f2", "indicator"]
+    conditions = [("f2", "indicator", ThresholdCondition(threshold=0.0, operator=">"))]
+    data_model = WedgeKernel(base_kernel=LinearKernel(), conditions=conditions)
+
+    with pytest.raises(ValueError, match="active dimensions"):
+        compute_base_kernel_active_dims(
+            data_model, [0, 2], _get_features_to_idx_mapper(feats)
+        )
 
 
 def test_compute_base_kernel_active_dims_invalid():

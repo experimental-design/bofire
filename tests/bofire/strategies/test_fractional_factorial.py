@@ -291,3 +291,94 @@ def test_FractionalFactorialStrategy_ask_invalid():
     ):
         candidates = strategy.ask(7)
     assert len(candidates) == 5
+
+
+def test_FractionalFactorialStrategy_get_required_number_of_experiments():
+    test_cases = [
+        FractionalFactorialStrategy(
+            domain=Domain(
+                inputs=Inputs(
+                    features=[
+                        ContinuousInput(key="a", bounds=(0, 1)),
+                        ContinuousInput(key="b", bounds=(-2, 8)),
+                    ],
+                ),
+            ),
+            n_repetitions=2,
+            n_center=2,
+        ),
+        FractionalFactorialStrategy(
+            domain=Domain(
+                inputs=Inputs(
+                    features=[
+                        CategoricalInput(key="alpha", categories=["a", "b", "c"]),
+                        DiscreteInput(key="beta", values=[1.0, 2.0, 3.0, 4.0]),
+                    ],
+                ),
+            ),
+        ),
+        FractionalFactorialStrategy(
+            domain=Domain(
+                inputs=Inputs(
+                    features=[
+                        ContinuousInput(key="a", bounds=(0, 1)),
+                        ContinuousInput(key="b", bounds=(0, 1)),
+                        DiscreteInput(key="beta", values=[1.0, 2.0]),
+                        CategoricalInput(key="alpha", categories=["a", "b", "c"]),
+                    ],
+                ),
+            ),
+            n_center=1,
+        ),
+        # Fractional examples: setup by specifying the number of generators
+        FractionalFactorialStrategy(
+            domain=Domain(
+                inputs=Inputs(
+                    features=[
+                        ContinuousInput(key="a", bounds=(0, 1)),
+                        ContinuousInput(key="b", bounds=(0, 1)),
+                        ContinuousInput(key="c", bounds=(0, 1)),
+                        ContinuousInput(key="d", bounds=(0, 1)),
+                    ],
+                ),
+            ),
+            n_repetitions=2,
+            n_center=1,
+            n_generators=1,
+        ),
+        FractionalFactorialStrategy(
+            domain=Domain(
+                inputs=Inputs(
+                    features=[
+                        ContinuousInput(key="a", bounds=(0, 1)),
+                        ContinuousInput(key="b", bounds=(0, 1)),
+                        ContinuousInput(key="c", bounds=(0, 1)),
+                        ContinuousInput(key="d", bounds=(0, 1)),
+                        CategoricalInput(key="alpha", categories=["a", "b"]),
+                    ],
+                ),
+            ),
+            n_repetitions=1,
+            n_center=1,
+            n_generators=1,
+        ),
+        FractionalFactorialStrategy(
+            domain=Domain(
+                inputs=Inputs(
+                    features=[
+                        ContinuousInput(key="a", bounds=(0, 1)),
+                        ContinuousInput(key="b", bounds=(0, 1)),
+                        ContinuousInput(key="c", bounds=(0, 1)),
+                        CategoricalInput(key="alpha", categories=["a", "b"]),
+                    ],
+                ),
+            ),
+            n_center=1,
+            n_repetitions=1,
+            block_feature_key="alpha",
+        ),
+    ]
+
+    for strategy_data in test_cases:
+        strategy = strategies.map(strategy_data)
+        assert strategy.get_required_number_of_experiments() == len(strategy.ask(None))

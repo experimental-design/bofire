@@ -11,9 +11,7 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
-    ContinuousDescriptorInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
@@ -58,11 +56,10 @@ VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC = {
 }
 
 VALID_CONTINUOUS_DESCRIPTOR_INPUT_FEATURE_SPEC = {
-    "type": "ContinuousDescriptorInput",
+    "type": "ContinuousInput",
     "key": str(uuid.uuid4()),
     "bounds": (3, 5.3),
-    "descriptors": ["d1", "d2"],
-    "values": [1.0, 2.0],
+    "descriptors": {"d1": [1.0], "d2": [2.0]},
 }
 
 VALID_CATEGORICAL_INPUT_FEATURE_SPEC = {
@@ -73,30 +70,20 @@ VALID_CATEGORICAL_INPUT_FEATURE_SPEC = {
 }
 
 VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC = {
-    "type": "CategoricalDescriptorInput",
+    "type": "CategoricalInput",
     "key": str(uuid.uuid4()),
     "categories": ["c1", "c2", "c3"],
     # "allowed": [True, True, False],
-    "descriptors": ["d1", "d2"],
-    "values": [
-        [1, 2],
-        [3, 7],
-        [5, 1],
-    ],
+    "descriptors": {"d1": [1, 3, 5], "d2": [2, 7, 1]},
 }
 
 
 VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC = {
-    "type": "CategoricalDescriptorInput",
+    "type": "CategoricalInput",
     "key": str(uuid.uuid4()),
     "categories": ["c1", "c2", "c3"],
     "allowed": [False, True, True],
-    "descriptors": ["d1", "d2"],
-    "values": [
-        [1, 2],
-        [3, 7],
-        [3, 1],
-    ],
+    "descriptors": {"d1": [1, 3, 3], "d2": [2, 7, 1]},
 }
 
 VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC = {
@@ -107,16 +94,11 @@ VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC = {
 }
 
 VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC = {
-    "type": "CategoricalDescriptorInput",
+    "type": "CategoricalInput",
     "key": str(uuid.uuid4()),
     "categories": ["c1", "c2", "c3"],
     "allowed": [True, False, False],
-    "descriptors": ["d1", "d2"],
-    "values": [
-        [1, 2],
-        [3, 7],
-        [5, 1],
-    ],
+    "descriptors": {"d1": [1, 3, 5], "d2": [2, 7, 1]},
 }
 
 VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC = {
@@ -150,24 +132,6 @@ FEATURE_SPECS = {
             ],
         ],
     },
-    ContinuousDescriptorInput: {
-        "valids": [VALID_CONTINUOUS_DESCRIPTOR_INPUT_FEATURE_SPEC],
-        "invalids": [
-            *get_invalids(VALID_CONTINUOUS_DESCRIPTOR_INPUT_FEATURE_SPEC),
-            *[
-                {
-                    **VALID_CONTINUOUS_DESCRIPTOR_INPUT_FEATURE_SPEC,
-                    "descriptors": descriptors,
-                    "values": values,
-                }
-                for descriptors, values in [
-                    ([], []),
-                    (["a", "b"], [1]),
-                    (["a", "b"], [1, 2, 3]),
-                ]
-            ],
-        ],
-    },
     CategoricalInput: {
         "valids": [
             VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
@@ -195,39 +159,6 @@ FEATURE_SPECS = {
                     (["1", "2"], [True, False, True]),
                     (["1"], []),
                     (["1"], [True]),
-                ]
-            ],
-        ],
-    },
-    CategoricalDescriptorInput: {
-        "valids": [
-            VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
-            {
-                **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
-                "allowed": [True, False, True],
-            },
-            VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
-        ],
-        "invalids": [
-            *get_invalids(VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC),
-            *[
-                {
-                    **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
-                    "categories": categories,
-                    "descriptors": descriptors,
-                    "values": values,
-                }
-                for categories, descriptors, values in [
-                    (["c1", "c2"], ["d1", "d2", "d3"], []),
-                    (["c1", "c2"], ["d1", "d2", "d3"], [[1, 2, 3]]),
-                    (
-                        ["c1", "c2"],
-                        ["d1", "d2", "d3"],
-                        [[1, 2, 3], [1, 2, 3], [1, 2, 3]],
-                    ),
-                    (["c1", "c2"], ["d1", "d2", "d3"], [[1, 2, 3], [1, 2]]),
-                    (["c1", "c2"], ["d1", "d2", "d3"], [[1, 2, 3], [1, 2, 3, 4]]),
-                    (["c1", "c2"], ["d1", "d2", "d3"], [[1, 2, 3], [1, 2, 3]]),
                 ]
             ],
         ],

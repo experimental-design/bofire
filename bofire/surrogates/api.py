@@ -1,10 +1,7 @@
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.surrogates.deterministic import LinearDeterministicSurrogate
 from bofire.surrogates.empirical import EmpiricalSurrogate
-from bofire.surrogates.map_saas import (
-    AdditiveMapSaasSingleTaskGPSurrogate,
-    EnsembleMapSaasSingleTaskGPSurrogate,
-)
+from bofire.surrogates.map_saas import EnsembleMapSaasSingleTaskGPSurrogate
 from bofire.surrogates.mapper import map, register
 from bofire.surrogates.mlp import (
     ClassificationMLPEnsemble,
@@ -15,6 +12,7 @@ from bofire.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.surrogates.pairwise_gp import PairwiseGPSurrogate
 from bofire.surrogates.pairwise_trainable import PairwiseTrainableSurrogate
 from bofire.surrogates.random_forest import RandomForestSurrogate
+from bofire.surrogates.selection import SelectionSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.trainable import TrainableSurrogate

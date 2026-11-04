@@ -1,17 +1,21 @@
+import importlib
+
 import pytest
 
+from bofire.data_models.descriptor_generators.api import (
+    Fingerprints,
+    MordredDescriptors,
+)
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import (
-    ContinuousDescriptorInput,
     ContinuousInput,
-    ContinuousMolecularInput,
-    MolecularWeightedMeanFeature,
-    MolecularWeightedSumFeature,
     SumFeature,
-    WeightedMeanFeature,
     WeightedSumFeature,
 )
-from bofire.data_models.molfeatures.api import MordredDescriptors
+from bofire.data_models.features.descriptors import Descriptors
+
+
+RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
 def test_engineered_feature_validation():
@@ -30,131 +34,242 @@ def test_engineered_feature_validation():
 
 def test_weighted_sum_feature_validation():
     weighted_sum_feature = WeightedSumFeature(
-        key="w_sum1", features=["feat1", "feat2"], descriptors=["desc1", "desc2"]
+        key="w_sum1", features=["feat1", "feat2"], columns=["desc1", "desc2"]
     )
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="feat1",
                 bounds=(0, 1),
-                descriptors=["desc1", "desc2"],
-                values=[0.5, 0.5],
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc2": [0.5]}),
             ),
             ContinuousInput(key="feat2", bounds=(0, 1)),
         ]
     )
-    with pytest.raises(
-        ValueError, match="Feature 'feat2' is not a ContinuousDescriptorInput"
-    ):
+    with pytest.raises(ValueError, match="feat2: carries no descriptors"):
         weighted_sum_feature.validate_features(inputs)
 
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="feat1",
                 bounds=(0, 1),
-                descriptors=["desc1", "desc2"],
-                values=[0.5, 0.5],
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc2": [0.5]}),
             ),
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="feat2",
                 bounds=(0, 1),
-                descriptors=["desc1", "desc3"],
-                values=[0.5, 0.5],
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc3": [0.5]}),
             ),
         ]
     )
-    with pytest.raises(ValueError, match="Not all descriptors"):
+    with pytest.raises(
+        ValueError, match="feat2: descriptor columns .* are not available"
+    ):
         weighted_sum_feature.validate_features(inputs)
 
 
 def test_weighted_mean_feature_validation():
-    weighted_mean_feature = WeightedMeanFeature(
-        key="w_mean1", features=["feat1", "feat2"], descriptors=["desc1", "desc2"]
+    weighted_mean_feature = WeightedSumFeature(
+        key="w_mean1",
+        features=["feat1", "feat2"],
+        columns=["desc1", "desc2"],
+        normalize=True,
     )
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="feat1",
                 bounds=(0, 1),
-                descriptors=["desc1", "desc2"],
-                values=[0.5, 0.5],
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc2": [0.5]}),
             ),
             ContinuousInput(key="feat2", bounds=(0, 1)),
         ]
     )
-    with pytest.raises(
-        ValueError, match="Feature 'feat2' is not a ContinuousDescriptorInput"
-    ):
+    with pytest.raises(ValueError, match="feat2: carries no descriptors"):
         weighted_mean_feature.validate_features(inputs)
 
     inputs = Inputs(
         features=[
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="feat1",
                 bounds=(0, 1),
-                descriptors=["desc1", "desc2"],
-                values=[0.5, 0.5],
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc2": [0.5]}),
             ),
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="feat2",
                 bounds=(0, 1),
-                descriptors=["desc1", "desc3"],
-                values=[0.5, 0.5],
+                descriptors=Descriptors(columns={"desc1": [0.5], "desc3": [0.5]}),
             ),
         ]
     )
-    with pytest.raises(ValueError, match="Not all descriptors"):
+    with pytest.raises(
+        ValueError, match="feat2: descriptor columns .* are not available"
+    ):
         weighted_mean_feature.validate_features(inputs)
 
 
 def test_molecular_weighted_sum_feature_validation():
-    mol_feature = MolecularWeightedSumFeature(
+    mol_feature = WeightedSumFeature(
         key="mw_sum1",
         features=["m1", "m2"],
-        molfeatures=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+        columns=[],
+        generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
     )
     inputs = Inputs(
         features=[
-            ContinuousMolecularInput(key="m1", bounds=(0, 1), molecule="C"),
+            ContinuousInput(
+                key="m1", bounds=(0, 1), descriptors=Descriptors(structure=["C"])
+            ),
             ContinuousInput(key="m2", bounds=(0, 1)),
         ]
     )
     with pytest.raises(
-        ValueError, match="Feature 'm2' is not a ContinuousMolecularInput"
+        ValueError,
+        match="m2: carries no descriptors",
     ):
         mol_feature.validate_features(inputs)
 
     inputs = Inputs(
         features=[
-            ContinuousMolecularInput(key="m1", bounds=(0, 1), molecule="C"),
-            ContinuousMolecularInput(key="m2", bounds=(0, 1), molecule="CC"),
+            ContinuousInput(
+                key="m1", bounds=(0, 1), descriptors=Descriptors(structure=["C"])
+            ),
+            ContinuousInput(
+                key="m2", bounds=(0, 1), descriptors=Descriptors(structure=["CC"])
+            ),
         ]
     )
     mol_feature.validate_features(inputs)
 
 
 def test_molecular_weighted_mean_feature_validation():
-    mol_feature = MolecularWeightedMeanFeature(
+    mol_feature = WeightedSumFeature(
         key="mw_mean1",
         features=["m1", "m2"],
-        molfeatures=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+        columns=[],
+        generators=[MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])],
+        normalize=True,
     )
     inputs = Inputs(
         features=[
-            ContinuousMolecularInput(key="m1", bounds=(0, 1), molecule="C"),
+            ContinuousInput(
+                key="m1", bounds=(0, 1), descriptors=Descriptors(structure=["C"])
+            ),
             ContinuousInput(key="m2", bounds=(0, 1)),
         ]
     )
     with pytest.raises(
-        ValueError, match="Feature 'm2' is not a ContinuousMolecularInput"
+        ValueError,
+        match="m2: carries no descriptors",
     ):
         mol_feature.validate_features(inputs)
 
     inputs = Inputs(
         features=[
-            ContinuousMolecularInput(key="m1", bounds=(0, 1), molecule="C"),
-            ContinuousMolecularInput(key="m2", bounds=(0, 1), molecule="CC"),
+            ContinuousInput(
+                key="m1", bounds=(0, 1), descriptors=Descriptors(structure=["C"])
+            ),
+            ContinuousInput(
+                key="m2", bounds=(0, 1), descriptors=Descriptors(structure=["CC"])
+            ),
         ]
     )
     mol_feature.validate_features(inputs)
+
+
+@pytest.mark.parametrize(
+    "second_block, message",
+    [
+        (
+            Descriptors(columns={"desc1": [0.5]}, structure=["CC"]),
+            "all components must carry the same descriptor columns",
+        ),
+        (
+            Descriptors(columns={"desc1": [0.5], "desc2": [0.5]}),
+            "either all components carry a `structure` or none do",
+        ),
+    ],
+)
+def test_weighted_sum_feature_rejects_incompatible_components(second_block, message):
+    """Components must merge into one block, and the gate is where that is decided.
+
+    With ``columns=None`` no per-component check can notice the disagreement, so before
+    this was gated the surrogate built fine and only `component_table` raised.
+    """
+    feature = WeightedSumFeature(key="w", features=["feat1", "feat2"])
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key="feat1",
+                bounds=(0, 1),
+                descriptors=Descriptors(
+                    columns={"desc1": [0.5], "desc2": [0.5]}, structure=["C"]
+                ),
+            ),
+            ContinuousInput(key="feat2", bounds=(0, 1), descriptors=second_block),
+        ]
+    )
+    with pytest.raises(ValueError, match=message):
+        feature.validate_features(inputs)
+
+
+def _molecular_inputs() -> Inputs:
+    return Inputs(
+        features=[
+            ContinuousInput(
+                key="m1", bounds=(0, 1), descriptors=Descriptors(structure=["C"])
+            ),
+            ContinuousInput(
+                key="m2", bounds=(0, 1), descriptors=Descriptors(structure=["CC"])
+            ),
+        ]
+    )
+
+
+@pytest.mark.parametrize("filtering", [False, True])
+def test_validate_features_does_not_generate_descriptor_values(monkeypatch, filtering):
+    """Validation must stay free of descriptor generation.
+
+    Generating needs rdkit, an optional extra, and `bofire.data_models` has to stay
+    usable without it. The bare-install CI job would catch a regression too, but only
+    there; this fails in any environment, including one that has rdkit.
+    """
+
+    def fail_if_called(self, values):
+        raise AssertionError("descriptor values generated during validation")
+
+    monkeypatch.setattr(Fingerprints, "get_descriptor_values", fail_if_called)
+
+    feature = WeightedSumFeature(
+        key="w",
+        features=["m1", "m2"],
+        columns=[],
+        generators=[Fingerprints(n_bits=8)],
+        filter_descriptors=filtering,
+    )
+    feature.validate_features(_molecular_inputs())
+
+
+# unlike the test above this one has to actually build the matrix, so it needs rdkit
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_get_names_width_matches_mapped_matrix():
+    """Unfiltered, `get_names` answers from metadata -- it must still match the build.
+
+    `column_names` comes from `get_descriptor_names()` while `component_table` comes from
+    `get_descriptor_values()`; a generator whose two disagree would corrupt the offset
+    bookkeeping that uses this width. Filtered, both sides resolve through the same
+    `build` call and comparing them proves nothing -- that case is covered end-to-end
+    against the mapped tensor in `tests/bofire/surrogates/test_engineered_features.py`.
+    """
+    inputs = _molecular_inputs()
+    feature = WeightedSumFeature(
+        key="w",
+        features=["m1", "m2"],
+        columns=[],
+        generators=[Fingerprints(n_bits=8)],
+    )
+    components = [inputs.get_by_key(k) for k in feature.features]
+    assert (
+        len(feature.get_names(inputs)) == feature.component_table(components).shape[1]
+    )

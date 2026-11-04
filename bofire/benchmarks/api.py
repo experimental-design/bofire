@@ -8,7 +8,6 @@ from bofire.benchmarks.benchmark import (
     SyntheticBoTorch,
 )
 from bofire.benchmarks.detergent import Detergent
-from bofire.benchmarks.hyperopt import Hyperopt
 from bofire.benchmarks.multi import (
     BNH,
     C2DTLZ2,
@@ -21,13 +20,19 @@ from bofire.benchmarks.multi import (
 )
 from bofire.benchmarks.single import (
     Ackley,
+    Booth,
     Branin,
     Branin30,
+    CrossInTray,
+    Easom,
     Hartmann,
     Hartmann6plus,
     Himmelblau,
+    HolderTable,
     Multinormalpdfs,
     MultiTaskHimmelblau,
+    Rosenbrock,
+    SixHumpCamel,
 )
 
 
@@ -44,11 +49,17 @@ AnyMultiBenchmark = Union[
 ]
 AnySingleBenchmark = Union[
     Ackley,
+    Booth,
     Branin,
     Branin30,
+    CrossInTray,
+    Easom,
     Hartmann,
     Hartmann6plus,
     Himmelblau,
+    HolderTable,
     MultiTaskHimmelblau,
     Multinormalpdfs,
+    Rosenbrock,
+    SixHumpCamel,
 ]

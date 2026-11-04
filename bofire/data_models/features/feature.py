@@ -2,24 +2,33 @@ from abc import abstractmethod
 from typing import Any, ClassVar, List, Optional, Tuple, Union
 
 import pandas as pd
+from pydantic import Field
 from pydantic.fields import FieldInfo
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.molfeatures.api import AnyMolFeatures
+from bofire.data_models.encodings.api import AnyCategoricalEncoding
 from bofire.data_models.surrogates.scaler import ScalerEnum
 
 
-TTransform = Union[CategoricalEncodingEnum, ScalerEnum, AnyMolFeatures]
+TTransform = Union[AnyCategoricalEncoding, ScalerEnum]
 
 
 class Feature(BaseModel):
     """The base class for all features."""
 
     type: Any
-    key: str
+    key: str = Field(
+        description="Name identifying the feature. It is unique within a domain and is "
+        "used as the column name for this feature in experiment and candidate "
+        "dataframes.",
+    )
     order_id: ClassVar[int] = -1
-    context: Optional[str] = None
+    context: Optional[str] = Field(
+        default=None,
+        description="Free-text context providing additional information about the "
+        "feature, such as what it physically represents or how it is measured. Useful "
+        "for agentic optimization where an LLM agent can leverage this description.",
+    )
 
     def __lt__(self, other) -> bool:
         """Method to compare two models to get them in the desired order.
@@ -50,9 +59,8 @@ class Input(Feature):
         (e.g., ``ge``/``le`` bounds for continuous, ``Literal`` for categorical).
         """
 
-    @staticmethod
     @abstractmethod
-    def valid_transform_types() -> List[Union[CategoricalEncodingEnum, AnyMolFeatures]]:
+    def valid_transform_types(self) -> List:
         pass
 
     @abstractmethod
@@ -163,9 +171,8 @@ class Input(Feature):
 class Output(Feature):
     """Base class for all output features.
 
-    Attributes:
-        key(str): Key of the Feature.
-
+    An output is a quantity measured for a candidate rather than set by the
+    experimenter, and it is what the objectives are defined on.
     """
 
     @abstractmethod
@@ -197,8 +204,3 @@ def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
 
 def is_categorical(s: pd.Series, categories: List[str]):
     return sum(s.isin(categories)) == len(s)
-
-
-def get_encoded_name(feature_key: str, option_name: str) -> str:
-    """Get the name of the encoded column. Option could be the category or the descriptor name."""
-    return f"{feature_key}_{option_name}"

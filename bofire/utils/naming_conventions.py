@@ -17,16 +17,13 @@ def get_column_names(outputs: Outputs) -> Tuple[List[str], List[str]]:
 
     """
     pred_cols, sd_cols = [], []
-    for featkey in outputs.get_keys(CategoricalOutput):
-        pred_cols = pred_cols + [
-            f"{featkey}_{cat}_prob" for cat in outputs.get_by_key(featkey).categories
-        ]
-        sd_cols = sd_cols + [
-            f"{featkey}_{cat}_sd" for cat in outputs.get_by_key(featkey).categories
-        ]
-    for featkey in outputs.get_keys(ContinuousOutput):
-        pred_cols = pred_cols + [f"{featkey}_pred"]
-        sd_cols = sd_cols + [f"{featkey}_sd"]
+    for feat in outputs.get([CategoricalOutput, ContinuousOutput]):
+        if isinstance(feat, CategoricalOutput):
+            pred_cols += [f"{feat.key}_{cat}_prob" for cat in feat.categories]
+            sd_cols += [f"{feat.key}_{cat}_sd" for cat in feat.categories]
+        else:
+            pred_cols.append(f"{feat.key}_pred")
+            sd_cols.append(f"{feat.key}_sd")
 
     return pred_cols, sd_cols
 

@@ -12,6 +12,9 @@ project:
     - "!docs/*.md"
     - "!docs/_build/"
     - "!docs/javascripts/"
+    # `pip install .` copies the docs tree into build/lib; without this every
+    # tutorial is executed a second time from there (116 files instead of ~58)
+    - "!build/"
   resources:
     - "docs/**/*.png"
     - "docs/**/*.jpg"
@@ -45,11 +48,26 @@ quartodoc:
             - ContinuousInput
             - ContinuousOutput
             - DiscreteInput
-            - ContinuousDescriptorInput
-            - CategoricalDescriptorInput
-            - ContinuousMolecularInput
-            - CategoricalMolecularInput
+            - Descriptors
             - TaskInput
+    - title: Data Models - Encodings
+      desc: How a categorical feature's value becomes model-input columns
+      contents:
+        - name: data_models.encodings.api
+          members:
+            - CategoricalEncoding
+            - OneHotEncoding
+            - OrdinalEncoding
+            - DescriptorEncoding
+    - title: Data Models - Descriptor Generators
+      desc: Descriptor columns generated from molecular structures
+      contents:
+        - name: data_models.descriptor_generators.api
+          members:
+            - DescriptorGenerator
+            - Fingerprints
+            - Fragments
+            - MordredDescriptors
     - title: Data Models - Strategies
       desc: Strategy configuration data models
       contents:
@@ -78,11 +96,26 @@ quartodoc:
             - ScaleKernel
             - MaternKernel
             - RBFKernel
+            - AdditiveMapSaasKernel
             - LinearKernel
             - PolynomialKernel
             - HammingDistanceKernel
             - TanimotoKernel
             - WassersteinKernel
+    - title: Data Models - Means and Likelihoods
+      desc: Mean function and noise model data models of a Gaussian process
+      contents:
+        - name: data_models.means.api
+          members:
+            - Mean
+            - ConstantMean
+            - TaskwiseMean
+        - name: data_models.likelihoods.api
+          members:
+            - Likelihood
+            - GaussianLikelihood
+            - SparseOutlierGaussianLikelihood
+            - TaskwiseLikelihood
     - title: Data Models - Surrogates
       desc: Surrogate model configuration data models
       contents:
@@ -90,14 +123,11 @@ quartodoc:
           members:
             - Surrogate
             - SingleTaskGPSurrogate
-            - MixedSingleTaskGPSurrogate
             - MultiTaskGPSurrogate
-            - RobustSingleTaskGPSurrogate
-            - TanimotoGPSurrogate
-            - LinearSurrogate
-            - PolynomialSurrogate
             - RandomForestSurrogate
             - MLPEnsemble
+            - SelectionSurrogate
+            - LBFGSB
             - BotorchSurrogates
     - title: Strategies
       desc: Strategy implementations
@@ -135,6 +165,7 @@ quartodoc:
             - EmpiricalSurrogate
             - RandomForestSurrogate
             - MLPEnsemble
+            - SelectionSurrogate
 
 website:
   title: "BoFire"
@@ -157,6 +188,8 @@ website:
             href: docs/userguides/domain.qmd
           - text: "Strategies"
             href: docs/userguides/strategies.qmd
+          - text: "Convergence Criteria"
+            href: docs/userguides/convergence_criteria.qmd
           - text: "Surrogate Models"
             href: docs/userguides/surrogates.qmd
           - text: "Data Models vs Functionals"
@@ -193,6 +226,7 @@ website:
       contents:
         - docs/userguides/domain.qmd
         - docs/userguides/strategies.qmd
+        - docs/userguides/convergence_criteria.qmd
         - docs/userguides/surrogates.qmd
         - docs/userguides/data_models_functionals.qmd
         - docs/userguides/custom_types.qmd
@@ -208,6 +242,7 @@ website:
             - docs/tutorials/basic_examples/Outlier_Detection_and_Robust_GP.qmd
             - docs/tutorials/basic_examples/Unknown_Constraint_Classification.qmd
             - docs/tutorials/basic_examples/index_kernel.qmd
+            - docs/tutorials/basic_examples/pareto_front_estimation.qmd
         - section: "Advanced Examples"
           contents:
             - docs/tutorials/advanced_examples/index.qmd
@@ -217,10 +252,12 @@ website:
             - docs/tutorials/advanced_examples/enting_strategy_suzuki-miyaura_reaction.qmd
             - docs/tutorials/advanced_examples/merging_objectives.qmd
             - docs/tutorials/advanced_examples/multifidelity_bo.qmd
+            - docs/tutorials/advanced_examples/multioutput_multifidelity_bo.qmd
             - docs/tutorials/advanced_examples/objectives_on_inputs.qmd
             - docs/tutorials/advanced_examples/random_forest_in_bofire.qmd
             - docs/tutorials/advanced_examples/transfer_learning_bo.qmd
             - docs/tutorials/advanced_examples/octane_number.qmd
+            - docs/tutorials/advanced_examples/conditional_features_bo.qmd
             - docs/tutorials/advanced_examples/llm_molecular.qmd
             - docs/tutorials/advanced_examples/pairwise_gp.qmd
         - section: "Benchmarks"
@@ -230,7 +267,6 @@ website:
             - docs/tutorials/benchmarks/002-DTLZ2.qmd
             - docs/tutorials/benchmarks/003-Hartmann_with_nchoosek.qmd
             - docs/tutorials/benchmarks/004-30dimBranin.qmd
-            - docs/tutorials/benchmarks/005-Himmelblau_with_outliers.qmd
             - docs/tutorials/benchmarks/006-Bayesian_optimization_over_molecules.qmd
             - docs/tutorials/benchmarks/007-LSRBO.qmd
             - docs/tutorials/benchmarks/008-ZDT1.qmd

@@ -14,10 +14,7 @@ from bofire.data_models.constraints.nonlinear import NONLINEAR_CONSTRAINT_TOL_OV
 from bofire.data_models.features.api import Input
 from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.data_models.types import InputTransformSpecs
-from bofire.data_models.unions import to_list
-from bofire.outlier_detection.outlier_detections import OutlierDetections
 from bofire.strategies.predictives.acqf_optimization import (
     AcquisitionOptimizer,
     get_optimizer,
@@ -41,18 +38,6 @@ class BotorchStrategy(PredictiveStrategy):
         )
 
         self.surrogate_specs = data_model.surrogate_specs
-        if data_model.outlier_detection_specs is not None:
-            self.outlier_detection_specs = OutlierDetections(
-                data_model=data_model.outlier_detection_specs,
-            )
-        else:
-            self.outlier_detection_specs = None
-        self.min_experiments_before_outlier_check = (
-            data_model.min_experiments_before_outlier_check
-        )
-        self.frequency_check = data_model.frequency_check
-        self.frequency_hyperopt = data_model.frequency_hyperopt
-        self.folds = data_model.folds
         self.surrogates = None
         self.include_infeasible_exps_in_acqf_calc = (
             data_model.include_infeasible_exps_in_acqf_calc
@@ -80,33 +65,6 @@ class BotorchStrategy(PredictiveStrategy):
             transformed (pd.DataFrame): [description]
 
         """
-        # perform outlier detection
-        if self.outlier_detection_specs is not None:
-            if (
-                self.num_experiments >= self.min_experiments_before_outlier_check
-                and self.num_experiments % self.frequency_check == 0
-            ):
-                experiments = self.outlier_detection_specs.detect(experiments)
-        # perform hyperopt
-        if (self.frequency_hyperopt > 0) and (
-            self.num_experiments % self.frequency_hyperopt == 0
-        ):
-            # we have to import here to avoid circular imports
-            from bofire.runners.hyperoptimize import hyperoptimize
-
-            self.surrogate_specs.surrogates = [  # ty: ignore[invalid-assignment]
-                (
-                    hyperoptimize(
-                        surrogate_data=surrogate_data,
-                        training_data=experiments,
-                        folds=self.folds,
-                    )[0]
-                    if isinstance(surrogate_data, tuple(to_list(AnyTrainableSurrogate)))
-                    else surrogate_data
-                )
-                for surrogate_data in self.surrogate_specs.surrogates
-            ]
-
         # map the surrogate spec, we keep it here as attribute to be able to save/dump
         # the surrogate
         re_init_kwargs = (

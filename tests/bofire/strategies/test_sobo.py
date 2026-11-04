@@ -459,22 +459,6 @@ def test_sobo_get_constrained_objective2():
     assert isinstance(obj, GenericMCObjective)
 
 
-def test_sobo_hyperoptimize():
-    benchmark = Himmelblau()
-    experiments = benchmark.f(benchmark.domain.inputs.sample(3), return_complete=True)
-    strategy_data = data_models.SoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qLogEI(),
-        frequency_hyperopt=1,
-    )
-    strategy_data.surrogate_specs.surrogates[0].hyperconfig = None  # type: ignore
-    strategy = SoboStrategy(data_model=strategy_data)
-    with pytest.warns(
-        match="No hyperopt is possible as no hyperopt config is available. Returning initial config.",
-    ):
-        strategy.tell(experiments=experiments)
-
-
 def test_sobo_lsrbo():
     bench = Branin(locality_factor=0.5)
     experiments = bench.f(bench.domain.inputs.sample(3, seed=42), return_complete=True)

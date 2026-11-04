@@ -73,7 +73,7 @@ LKJ_PRIOR = partial(
     sd_prior=GammaPrior(concentration=2.0, rate=0.15),
 )
 
-# priors for RobustSingleTaskGPSurrogate
+# constraints for robust GPs, see SingleTaskGPSurrogate.robust
 ROBUSTGP_LENGTHSCALE_CONSTRAINT = partial(
     NonTransformedInterval,
     lower_bound=0.05,

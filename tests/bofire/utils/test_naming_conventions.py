@@ -46,23 +46,23 @@ predictions = pd.DataFrame(
         (
             [continuous_output, categorical_output],
             [
+                "cont_pred",
                 "cat_alpha_prob",
                 "cat_beta_prob",
-                "cont_pred",
+                "cont_sd",
                 "cat_alpha_sd",
                 "cat_beta_sd",
-                "cont_sd",
             ],
         ),
         (
             [categorical_output, continuous_output],
             [
+                "cont_pred",
                 "cat_alpha_prob",
                 "cat_beta_prob",
-                "cont_pred",
+                "cont_sd",
                 "cat_alpha_sd",
                 "cat_beta_sd",
-                "cont_sd",
             ],
         ),
     ],

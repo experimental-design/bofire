@@ -2,6 +2,7 @@ from typing import Annotated, Dict, Literal, Type
 
 from pydantic import Field, field_validator, model_validator
 
+from bofire.data_models.features._descriptor_spec import DescriptorSpec
 from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalInput,
@@ -90,8 +91,24 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
     @field_validator("engineered_features")
     @classmethod
     def validate_linear_engineered_features(cls, engineered_features, info):
+        # widths are resolved against the inputs; if those failed to validate this
+        # validator still runs, so bail out rather than raise an unrelated error.
+        if "inputs" not in info.data:
+            return engineered_features
+        inputs = info.data["inputs"]
         for feat in engineered_features.get():
-            if feat.n_transformed_inputs != 1:
+            # A linear model binds one coefficient per column, so the width has to be a
+            # property of the configuration. Correlation filtering makes it a property of
+            # the *data*, and resolving it would mean generating descriptors (rdkit) here,
+            # inside a data-model validator. Reject it rather than ask.
+            if isinstance(feat, DescriptorSpec) and feat.filter_descriptors:
+                raise ValueError(
+                    f"Invalid engineered feature {feat.key}: "
+                    "LinearDeterministicSurrogate requires a fixed number of columns per "
+                    "engineered feature, but `filter_descriptors=True` makes the width "
+                    "depend on the data."
+                )
+            if len(feat.get_names(inputs)) != 1:
                 raise ValueError(
                     "Only engineered feature that create one output are supported."
                 )

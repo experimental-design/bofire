@@ -5,13 +5,13 @@ from pandas.testing import assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
     EngineeredFeature,
 )
+from bofire.data_models.features.descriptors import Descriptors
 
 
 @pytest.mark.parametrize(
@@ -37,8 +37,12 @@ def test_sample(spec: specs.Spec, n: int):
 
 
 cont = specs.features.valid(ContinuousInput).obj()
-cat = specs.features.valid(CategoricalInput).obj()
-cat_ = specs.features.valid(CategoricalDescriptorInput).obj()
+# same class and therefore the same order_id: these two now tie-break on `key`, so give
+# them deterministic keys rather than the spec's random uuids.
+cat = specs.features.valid(CategoricalInput).obj(key="cat_a")
+cat_ = specs.features.valid(CategoricalInput).obj(
+    key="cat_b", descriptors=Descriptors(columns={"d1": [1.0, 2.0, 3.0]})
+)
 out = specs.features.valid(ContinuousOutput).obj()
 
 
@@ -47,11 +51,11 @@ out = specs.features.valid(ContinuousOutput).obj()
     [
         (
             [cont, cat_, cat, out],
-            [cont, cat_, cat, out],
+            [cont, cat, cat_, out],
         ),
         (
             [cont, cat_, cat, out, cat_, out],
-            [cont, cat_, cat_, cat, out, out],
+            [cont, cat, cat_, cat_, out, out],
         ),
         (
             [cont, out],

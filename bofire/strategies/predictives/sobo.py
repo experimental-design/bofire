@@ -2,11 +2,12 @@ import base64
 import warnings
 from typing import Callable, List, Tuple, Union, cast
 
-from pydantic import PositiveInt
 from typing_extensions import Self
 
 from bofire.data_models.api import Domain
-from bofire.data_models.outlier_detection.outlier_detections import OutlierDetections
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 from bofire.data_models.strategies.predictives.acqf_optimization import AnyAcqfOptimizer
 from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.data_models.unions import unwrap_annotated
@@ -178,13 +179,9 @@ class SoboStrategy(BotorchStrategy):
         | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         """
         Creates a single objective Bayesian optimization strategy.
@@ -193,11 +190,6 @@ class SoboStrategy(BotorchStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            outlier_detection_specs: The specifications for the outlier detection.
-            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
-            frequency_check: The frequency of checking for outliers.
-            frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation.
             seed: The random seed to use.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.
@@ -286,13 +278,9 @@ class AdditiveSoboStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ):
         """
         Creates a Bayesian optimization strategy that adds multiple objectives.
@@ -303,11 +291,6 @@ class AdditiveSoboStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            outlier_detection_specs: The specifications for the outlier detection.
-            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
-            frequency_check: The frequency of checking for outliers.
-            frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.
@@ -351,13 +334,9 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         """
         Creates Bayesian optimization strategy that multiplies multiple objectives. The weights of
@@ -367,11 +346,6 @@ class MultiplicativeSoboStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            outlier_detection_specs: The specifications for the outlier detection.
-            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
-            frequency_check: The frequency of checking for outliers.
-            frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.
@@ -419,13 +393,9 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         """
         Creates a Bayesian optimization strategy that mixes additions and multiplions of multiple objectives.
@@ -439,11 +409,6 @@ class MultiplicativeAdditiveSoboStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            outlier_detection_specs: The specifications for the outlier detection.
-            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
-            frequency_check: The frequency of checking for outliers.
-            frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation for hyperparameter optimization.
             seed: The random seed to use.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.
@@ -549,13 +514,9 @@ class CustomSoboStrategy(SoboStrategy):
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
-        outlier_detection_specs: OutlierDetections | None = None,
-        min_experiments_before_outlier_check: PositiveInt | None = None,
-        frequency_check: PositiveInt | None = None,
-        frequency_hyperopt: int | None = None,
-        folds: int | None = None,
         seed: int | None = None,
         include_infeasible_exps_in_acqf_calc: bool | None = False,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ):
         """
         The `CustomSoboStrategy` can be used to design custom objectives or objective combinations for optimizations.
@@ -569,11 +530,6 @@ class CustomSoboStrategy(SoboStrategy):
             acquisition_function: The acquisition function to use.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
-            outlier_detection_specs: The specifications for the outlier detection.
-            min_experiments_before_outlier_check: The minimum number of experiments before checking for outliers.
-            frequency_check: The frequency of checking for outliers.
-            frequency_hyperopt: The frequency of hyperparameter optimization.
-            folds: The number of folds for cross-validation.
             seed: The random seed to use.
             include_infeasible_exps_in_acqf_calc: Whether infeasible experiments should be included in the set
                 of experiments used to compute the acquisition function.

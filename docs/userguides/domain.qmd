@@ -81,10 +81,8 @@ BoFire allows for the following different user-facing input classes:
 - `ContinuousInput`
 - `DiscreteInput`
 - `CategoricalInput`
-- `CategoricalDescriptorInput`
-- `CategoricalMolecularInput`
+- `CategoricalInput` carrying descriptor data
 - `TaskInput`
-<!-- - `ContinuousDescriptorInput` not used atm -->
 
 Each of these input classes can be used for defining domains, however some strategies only support a subset of the available input types. You can call the `is_feature_implemented()` function of a given strategy and input class to check whether the input is supported by the strategy. For example, the following code checks whether the `ContinuousInput` is supported by the `RandomSearch` strategy.
 <!-- link to strategy docu shall be added once it is there -->
@@ -125,30 +123,40 @@ CategoricalInput(key="x4", categories=["A", "B", "C"])
 
 <!-- #### Continuous descriptor inputs
  -->
-#### Categorical descriptor inputs
-Via the `CategoricalDescriptorInput` one can provide continuous encodings for the different categories via so called descriptors. Imagine, for example, having a categorial input with different categories, where each category corresponds to a specific material. Such descriptors could be e.g., density and hardness. Every material/category would get assigned a number for density and hardness in the hope that these two properties describe the material properly. In the context of fitting a GP, one can then use just these two dimensional vector for describing the material instead of a ten dimensional one-hot encoding, which results in a dimensionality reduction. Of course, this makes sense under the assumption that the descriptors actually correlate with the desired quantities.
+#### Categorical inputs with descriptors
+Via a `CategoricalInput`'s `descriptors` table one can provide continuous encodings for the different categories via so called descriptors. Imagine, for example, having a categorial input with different categories, where each category corresponds to a specific material. Such descriptors could be e.g., density and hardness. Every material/category would get assigned a number for density and hardness in the hope that these two properties describe the material properly. In the context of fitting a GP, one can then use just these two dimensional vector for describing the material instead of a ten dimensional one-hot encoding, which results in a dimensionality reduction. Of course, this makes sense under the assumption that the descriptors actually correlate with the desired quantities.
 
-The `CategoricalDescriptorInput` class requires a list of permissible values as input. For example, the following code defines a new categorical descriptor input variable $x_6$ with values "A", "B", "C".
+`descriptors` is a table with one column per descriptor and one value per category, in the
+order of `categories`. For example, the following code defines a new categorical input
+variable $x_6$ with values "material_A", "material_B", "material_C".
 
 ```{python}
-from bofire.data_models.features.api import CategoricalDescriptorInput
+from bofire.data_models.features.api import CategoricalInput, Descriptors
 
-CategoricalDescriptorInput(
+CategoricalInput(
     key="x6",
     categories=["material_A", "material_B", "material_C"],
-    descriptors=["density", "hardness"],
-    values=[[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]
+    descriptors=Descriptors(
+        columns={"density": [0.1, 0.3, 0.5], "hardness": [0.2, 0.4, 0.6]}
+    ),
 )
 
 ```
 
-#### Categorical molecular inputs
-Categorical molecular inputs inherit from categorical inputs. Its list of categories has to be a list of valid SMILES strings. The following code defines a new categorical molecular input variable $x_7$ where only the values "C1CCCCC1", "O1CCOCC1" are allowed.
+#### Categorical inputs with molecular structures
+A categorical input can carry a `structure` column of valid SMILES strings, which
+descriptor generators (`Fingerprints`, `Fragments`, `MordredDescriptors`) turn into
+model columns. The following code defines a new categorical input variable $x_7$ where
+only the values "C1CCCCC1", "O1CCOCC1" are allowed.
 
 ```{python}
-from bofire.data_models.features.api import CategoricalMolecularInput
+from bofire.data_models.features.api import CategoricalInput, Descriptors
 
-CategoricalMolecularInput(key="x7", categories=["C1CCCCC1", "O1CCOCC1"])
+CategoricalInput(
+    key="x7",
+    categories=["C1CCCCC1", "O1CCOCC1"],
+    descriptors=Descriptors(structure=["C1CCCCC1", "O1CCOCC1"]),
+)
 ```
 
 <!--#### Task inputs
@@ -165,8 +173,8 @@ inputs = Inputs(
     ContinuousInput(key="x2", bounds=[0,1]),
     DiscreteInput(key="x3", values=[0, 0.1, 0.2]),
     CategoricalInput(key="x4", categories=["A", "B", "C"]),
-    CategoricalDescriptorInput(key="x6", categories=["material_A", "material_B", "material_C"], descriptors=["density", "hardness"], values=[[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]),
-    CategoricalMolecularInput(key="x7", categories=["C1CCCCC1", "O1CCOCC1"])])
+    CategoricalInput(key="x6", categories=["material_A", "material_B", "material_C"], descriptors=Descriptors(columns={"density": [0.1, 0.3, 0.5], "hardness": [0.2, 0.4, 0.6]})),
+    CategoricalInput(key="x7", categories=["C1CCCCC1", "O1CCOCC1"], descriptors=Descriptors(structure=["C1CCCCC1", "O1CCOCC1"]))])
 ```
 
 ## Outputs

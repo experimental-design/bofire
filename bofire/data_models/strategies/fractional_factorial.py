@@ -4,9 +4,7 @@ from pydantic import Field, model_validator
 
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
-    CategoricalMolecularInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
@@ -69,8 +67,6 @@ class FractionalFactorialStrategy(Strategy):
             ContinuousInput,
             CategoricalInput,
             DiscreteInput,
-            CategoricalDescriptorInput,
-            CategoricalMolecularInput,
         ]
 
     @model_validator(mode="after")

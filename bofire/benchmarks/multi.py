@@ -17,14 +17,15 @@ from bofire.benchmarks.data.aniline_cn_crosscoupling import (
     EXPERIMENTS as ANNILINE_CN_CROSSCOUPLING_EXPERIMENTS,
 )
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
+    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     ContinuousTaskInput,
     Input,
 )
+from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
@@ -513,47 +514,35 @@ class CrossCoupling(Benchmark):
     ):
         # "residence time in minutes"
         inputs = [
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="catalyst",
                 categories=["tBuXPhos", "tBuBrettPhos", "AlPhos"],
-                descriptors=[
-                    "area_cat",
-                    "M2_cat",
-                ],  # , 'M3_cat', 'Macc3_cat', 'Mdon3_cat'] #,'mol_weight', 'sol']
-                values=[
-                    [
-                        460.7543,
-                        67.2057,
-                    ],  # 30.8413, 2.3043, 0], #, 424.64, 421.25040226],
-                    [
-                        518.8408,
-                        89.8738,
-                    ],  # 39.4424, 2.5548, 0], #, 487.7, 781.11247064],
-                    [
-                        819.933,
-                        129.0808,
-                    ],  # 83.2017, 4.2959, 0], #, 815.06, 880.74916884],
-                ],
+                descriptors=Descriptors(
+                    columns={
+                        "area_cat": [460.7543, 518.8408, 819.933],
+                        "M2_cat": [67.2057, 89.8738, 129.0808],
+                        # "M3_cat": [30.8413, 39.4424, 83.2017],
+                        # "Macc3_cat": [2.3043, 2.5548, 4.2959],
+                        # "Mdon3_cat": [0, 0, 0],
+                        # "mol_weight": [424.64, 487.7, 815.06],
+                        # "sol": [421.25040226, 781.11247064, 880.74916884],
+                    }
+                ),
             ),
-            CategoricalDescriptorInput(
+            CategoricalInput(
                 key="base",
                 categories=["TEA", "TMG", "BTMG", "DBU"],
-                descriptors=[
-                    "area",
-                    "M2",
-                ],  # , 'M3', 'Macc3', 'Mdon3', 'mol_weight', 'sol'
-                values=[
-                    [162.2992, 25.8165],  # 40.9469, 3.0278, 0], #101.19, 642.2973283],
-                    [
-                        165.5447,
-                        81.4847,
-                    ],  # 107.0287, 10.215, 0.0169], # 115.18, 534.01544123],
-                    [
-                        227.3523,
-                        30.554,
-                    ],  # 14.3676, 1.1196, 0.0127], # 171.28, 839.81215],
-                    [192.4693, 59.8367],  # 82.0661, 7.42, 0], # 152.24, 1055.82799],
-                ],
+                descriptors=Descriptors(
+                    columns={
+                        "area": [162.2992, 165.5447, 227.3523, 192.4693],
+                        "M2": [25.8165, 81.4847, 30.554, 59.8367],
+                        # "M3": [40.9469, 107.0287, 14.3676, 82.0661],
+                        # "Macc3": [3.0278, 10.215, 1.1196, 7.42],
+                        # "Mdon3": [0, 0.0169, 0.0127, 0],
+                        # "mol_weight": [101.19, 115.18, 171.28, 152.24],
+                        # "sol": [642.2973283, 534.01544123, 839.81215, 1055.82799],
+                    }
+                ),
             ),
             # "base equivalents"
             ContinuousInput(key="base_eq", bounds=[1, 2.5]),
@@ -590,8 +579,8 @@ class CrossCoupling(Benchmark):
             inputs=Inputs(features=inputs),
             outputs=Outputs(features=[outputs[0]]),
             categorical_encodings={
-                "catalyst": CategoricalEncodingEnum.DESCRIPTOR,
-                "base": CategoricalEncodingEnum.DESCRIPTOR,
+                "catalyst": DescriptorEncoding(),
+                "base": DescriptorEncoding(),
             },
         )
         ground_truth_yield = surrogates.map(data_model)

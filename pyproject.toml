@@ -25,8 +25,8 @@ classifiers = [
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11.0, <3.15"
 dependencies = [
-    "numpy",
-    "pandas",
+    "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
+    "pandas>=3.0.0",
     "pydantic>=2.5",
     "scipy>=1.7",
     "typing-extensions",
@@ -36,7 +36,7 @@ dependencies = [
 [project.optional-dependencies]
 optimization = [
     "botorch[fully_bayesian]>=0.18.1",
-    "numpy",
+    "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
     "multiprocess",
     "plotly",
     "formulaic>=1.0.1,<1.1",
@@ -57,7 +57,7 @@ tests = ["pytest", "pytest-cov", "papermill"]
 docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
 all = [
     "botorch[fully_bayesian]>=0.18.1",
-    "numpy",
+    "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
     "multiprocess",
     "plotly",
     "formulaic==1.0.1",
@@ -122,12 +122,12 @@ max-complexity = 19
 
 [tool.ruff.lint.per-file-ignores]
 "bofire/surrogates/api.py" = ["F401"]
-"bofire/data_models/molfeatures/api.py" = ["F401"]
+"bofire/data_models/descriptor_generators/api.py" = ["F401"]
+"bofire/data_models/encodings/api.py" = ["F401"]
+"bofire/llm/api.py" = ["F401"]
 "bofire/data_models/priors/api.py" = ["F401"]
 "bofire/priors/api.py" = ["F401"]
 "bofire/utils/annotated.py" = ["F401"]
-"bofire/data_models/outlier_detection/api.py" = ["F401"]
-"bofire/outlier_detection/api.py" = ["F401"]
 "tests/bofire/data_models/specs/api.py" = ["F401"]
 "bofire/data_models/api.py" = ["F401"]
 "bofire/data_models/surrogates/api.py" = ["F401"]
@@ -140,6 +140,10 @@ max-complexity = 19
 "bofire/data_models/dataframes/api.py" = ["F401"]
 "bofire/data_models/constraints/api.py" = ["F401"]
 "bofire/data_models/kernels/api.py" = ["F401"]
+"bofire/data_models/means/api.py" = ["F401"]
+"bofire/data_models/likelihoods/api.py" = ["F401"]
+"bofire/means/api.py" = ["F401"]
+"bofire/likelihoods/api.py" = ["F401"]
 "bofire/data_models/acquisition_functions/api.py" = ["F401"]
 "bofire/data_models/objectives/api.py" = ["F401"]
 "bofire/plot/api.py" = ["F401"]

@@ -5,13 +5,12 @@ from bofire.data_models.api import (
     AnyCondition,
     AnyConstraint,
     AnyDataFrame,
+    AnyDescriptorGenerator,
     AnyFeature,
     AnyKernel,
     AnyLLMProvider,
     AnyLocalSearchConfig,
-    AnyMolFeatures,
     AnyObjective,
-    AnyOutlierDetection,
     AnyPrior,
     AnyPriorConstraint,
     AnyStrategy,
@@ -22,6 +21,8 @@ from bofire.data_models.api import (
     Inputs,
     Outputs,
 )
+from bofire.data_models.likelihoods.api import AnyLikelihood
+from bofire.data_models.means.api import AnyMean
 from tests.bofire.data_models.specs.api import Spec
 
 
@@ -46,6 +47,18 @@ def test_prior_constraint_should_be_deserializable(prior_constraint_spec: Spec):
 def test_kernel_should_be_deserializable(kernel_spec: Spec):
     obj = kernel_spec.obj()
     deserialized = TypeAdapter(AnyKernel).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
+def test_mean_should_be_deserializable(mean_spec: Spec):
+    obj = mean_spec.obj()
+    deserialized = TypeAdapter(AnyMean).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
+def test_likelihood_should_be_deserializable(likelihood_spec: Spec):
+    obj = likelihood_spec.obj()
+    deserialized = TypeAdapter(AnyLikelihood).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
@@ -102,15 +115,19 @@ def test_condition_should_be_deserializable(condition_spec: Spec):
     assert obj == deserialized
 
 
-def test_outlier_detection_should_be_deserializable(outlier_detection_spec: Spec):
-    obj = outlier_detection_spec.obj()
-    deserialized = TypeAdapter(AnyOutlierDetection).validate_python(obj.model_dump())
+def test_descriptor_generators_should_be_deserializable(
+    descriptor_generator_spec: Spec,
+):
+    obj = descriptor_generator_spec.obj()
+    deserialized = TypeAdapter(AnyDescriptorGenerator).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
-def test_molfeatures_should_be_deserializable(molfeatures_spec: Spec):
-    obj = molfeatures_spec.obj()
-    deserialized = TypeAdapter(AnyMolFeatures).validate_python(obj.model_dump())
+def test_encoding_should_be_deserializable(encoding_spec: Spec):
+    from bofire.data_models.encodings.api import AnyCategoricalEncoding
+
+    obj = encoding_spec.obj()
+    deserialized = TypeAdapter(AnyCategoricalEncoding).validate_python(obj.model_dump())
     assert obj == deserialized
 
 

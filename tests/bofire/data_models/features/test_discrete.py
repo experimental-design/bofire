@@ -7,6 +7,7 @@ from pandas.testing import assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.features.api import DiscreteInput
+from bofire.data_models.features.descriptors import Descriptors
 
 
 @pytest.mark.parametrize(
@@ -122,3 +123,21 @@ def test_discrete_input_to_pydantic_field():
     field_type, field_info = feat.to_pydantic_field()
     assert field_type == Literal[1.0, 2.0, 5.0]
     assert field_info.description == "Discrete, allowed values: [1.0, 2.0, 5.0]"
+
+
+def test_discrete_input_to_pydantic_field_with_descriptors():
+    """`DiscreteInput` gained descriptors in this refactor; main had none.
+
+    A restricted amount of a substance still describes one substance, so the block has a
+    single level here just as it does on `ContinuousInput`.
+    """
+    feat = DiscreteInput(
+        key="loading",
+        values=[1.0, 2.0, 5.0],
+        descriptors=Descriptors(columns={"logP": [-0.3]}, structure=["CCO"]),
+    )
+    _, field_info = feat.to_pydantic_field()
+    assert field_info.description == (
+        "Discrete, allowed values: [1.0, 2.0, 5.0] — "
+        "descriptors: {'logP': -0.3} — structure: CCO"
+    )

@@ -20,9 +20,6 @@ Hartmann function optimization with n-choose-k constraints.
 ### [004 - 30-Dimensional Branin](004-30dimBranin.qmd)
 High-dimensional optimization using an extended Branin function.
 
-### [005 - Himmelblau with Outliers](005-Himmelblau_with_outliers.qmd)
-Robust optimization in the presence of outliers.
-
 ### [006 - Bayesian Optimization over Molecules](006-Bayesian_optimization_over_molecules.qmd)
 Molecular optimization using chemical fingerprints and specialized kernels.
 

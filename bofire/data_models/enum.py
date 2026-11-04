@@ -1,21 +1,11 @@
 from enum import Enum
+from typing import Literal
 
 
 class SamplingMethodEnum(str, Enum):
     UNIFORM = "UNIFORM"
     SOBOL = "SOBOL"
     LHS = "LHS"
-
-
-class CategoricalEncodingEnum(str, Enum):
-    """Enumeration class of implemented categorical encodings
-    Currently, one-hot and ordinal encoding are implemented.
-    """
-
-    ONE_HOT = "ONE_HOT"
-    ORDINAL = "ORDINAL"
-    DUMMY = "DUMMY"
-    DESCRIPTOR = "DESCRIPTOR"  # only possible for categorical with descriptors
 
 
 class ClassificationMetricsEnum(str, Enum):
@@ -40,6 +30,19 @@ class RegressionMetricsEnum(str, Enum):
     PEARSON = "PEARSON"
     SPEARMAN = "SPEARMAN"
     FISHER = "FISHER"
+
+
+REGRESSION_METRIC_DIRECTIONS: dict[
+    RegressionMetricsEnum, Literal["MINIMIZE", "MAXIMIZE"]
+] = {
+    RegressionMetricsEnum.MAE: "MINIMIZE",
+    RegressionMetricsEnum.MSD: "MINIMIZE",
+    RegressionMetricsEnum.MAPE: "MINIMIZE",
+    RegressionMetricsEnum.FISHER: "MINIMIZE",
+    RegressionMetricsEnum.R2: "MAXIMIZE",
+    RegressionMetricsEnum.PEARSON: "MAXIMIZE",
+    RegressionMetricsEnum.SPEARMAN: "MAXIMIZE",
+}
 
 
 class UQRegressionMetricsEnum(str, Enum):

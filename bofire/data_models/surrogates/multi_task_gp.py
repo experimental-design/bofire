@@ -1,126 +1,76 @@
-from typing import Literal, Optional, Type
+from typing import Literal, Type
 
-import pandas as pd
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, model_validator
 
-from bofire.data_models.domain.api import Inputs
-from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
+from bofire.data_models.encodings.api import OneHotEncoding, OrdinalEncoding
 from bofire.data_models.features.api import (
     AnyOutput,
-    CategoricalDescriptorInput,
     CategoricalInput,
-    CategoricalMolecularInput,
     CategoricalTaskInput,
     ContinuousOutput,
 )
-from bofire.data_models.kernels.api import AnyKernel, MaternKernel, RBFKernel
-from bofire.data_models.molfeatures.api import Fingerprints
-from bofire.data_models.priors.api import (
-    HVARFNER_LENGTHSCALE_PRIOR,
-    HVARFNER_NOISE_PRIOR,
-    MBO_LENGTHSCALE_PRIOR,
-    MBO_NOISE_PRIOR,
-    THREESIX_LENGTHSCALE_PRIOR,
-    THREESIX_NOISE_PRIOR,
-    AnyPrior,
-    AnyPriorConstraint,
-    GreaterThan,
+from bofire.data_models.kernels.api import AnyKernel, RBFKernel
+from bofire.data_models.likelihoods.api import (
+    HVARFNER_LIKELIHOOD,
+    AnyMultiTaskLikelihood,
+    TaskwiseLikelihood,
 )
-from bofire.data_models.priors.lkj import LKJPrior
-from bofire.data_models.surrogates.trainable import Hyperconfig
+from bofire.data_models.means.api import AnyMultiTaskMean, ConstantMean, TaskwiseMean
+from bofire.data_models.priors.api import HVARFNER_LENGTHSCALE_PRIOR, GreaterThan
+from bofire.data_models.surrogates.optimizer import LBFGSBFitted
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class MultiTaskGPHyperconfig(Hyperconfig):
-    type: Literal["MultiTaskGPHyperconfig"] = "MultiTaskGPHyperconfig"
-    inputs: Inputs = Inputs(
-        features=[
-            CategoricalInput(
-                key="kernel",
-                categories=["rbf", "matern_1.5", "matern_2.5"],
-            ),
-            CategoricalInput(key="prior", categories=["mbo", "threesix", "hvarfner"]),
-            CategoricalInput(key="ard", categories=["True", "False"]),
-        ],
-    )
-    target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
-    hyperstrategy: Literal[
-        "FractionalFactorialStrategy", "SoboStrategy", "RandomStrategy"
-    ] = "FractionalFactorialStrategy"
+class MultiTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
+    """Gaussian process over several related tasks, which learns how strongly they are
+    correlated and transfers what it learns about one task to the others.
 
-    @staticmethod
-    def _update_hyperparameters(
-        surrogate_data: "MultiTaskGPSurrogate",
-        hyperparameters: pd.Series,
-    ):
-        def matern_25(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
-            return MaternKernel(nu=2.5, lengthscale_prior=lengthscale_prior, ard=ard)
+    The tasks are the categories of the one `CategoricalTaskInput`, e.g. a cheap
+    simulation and the real experiment, or a previous and the current campaign. The
+    covariance is the kernel over the other inputs times a learned correlation between
+    the tasks (intrinsic coregionalization). By default every task has a mean and a
+    noise level of its own, so tasks may differ in offset and in measurement
+    precision; with a plain mean or Gaussian likelihood, all tasks share one.
+    Predictions for a task use the data of all tasks, weighted by how strongly they
+    correlate with it.
 
-        def matern_15(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
-            return MaternKernel(nu=1.5, lengthscale_prior=lengthscale_prior, ard=ard)
+    Examples:
+        >>> MultiTaskGPSurrogate(
+        ...     inputs=Inputs(features=[
+        ...         ContinuousInput(key="x", bounds=(0, 1)),
+        ...         CategoricalTaskInput(key="task", categories=["simulation", "experiment"]),
+        ...     ]),
+        ...     outputs=Outputs(features=[ContinuousOutput(key="y")]),
+        ... )
+    """
 
-        if hyperparameters.prior == "mbo":
-            noise_prior, lengthscale_prior = (
-                MBO_NOISE_PRIOR(),
-                MBO_LENGTHSCALE_PRIOR(),
-            )
-        elif hyperparameters.prior == "threesix":
-            noise_prior, lengthscale_prior = (
-                THREESIX_NOISE_PRIOR(),
-                THREESIX_LENGTHSCALE_PRIOR(),
-            )
-        else:
-            noise_prior, lengthscale_prior = (
-                HVARFNER_NOISE_PRIOR(),
-                HVARFNER_LENGTHSCALE_PRIOR(),
-            )
-
-        surrogate_data.noise_prior = noise_prior
-        if hyperparameters.kernel == "rbf":
-            surrogate_data.kernel = RBFKernel(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-            )
-        elif hyperparameters.kernel == "matern_2.5":
-            surrogate_data.kernel = matern_25(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-            )
-        elif hyperparameters.kernel == "matern_1.5":
-            surrogate_data.kernel = matern_15(
-                ard=hyperparameters.ard,
-                lengthscale_prior=lengthscale_prior,
-            )
-        else:
-            raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
-
-
-class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MultiTaskGPSurrogate"] = "MultiTaskGPSurrogate"
     kernel: AnyKernel = Field(
         default_factory=lambda: RBFKernel(
             ard=True,
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-        )
+            lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),
+        ),
+        description="Kernel over all inputs except the task input; the correlation "
+        "between the tasks is learned separately.",
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
-    noise_constraint: Optional[AnyPriorConstraint] = Field(
-        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    mean: AnyMultiTaskMean = Field(
+        default=TaskwiseMean(mean=ConstantMean()),
+        description="Prior mean function. A `TaskwiseMean` gives every task a mean "
+        "of its own; a plain mean is shared by all tasks.",
     )
-    task_prior: Optional[LKJPrior] = Field(default_factory=lambda: None)
-    hyperconfig: Optional[MultiTaskGPHyperconfig] = Field(
-        default_factory=lambda: MultiTaskGPHyperconfig(),
+    likelihood: AnyMultiTaskLikelihood = Field(
+        default=TaskwiseLikelihood(likelihood=HVARFNER_LIKELIHOOD()),
+        description="Model of the measurement noise. A `TaskwiseLikelihood` gives "
+        "every task a noise level of its own; a plain Gaussian likelihood is one "
+        "noise level for all tasks.",
     )
 
     @classmethod
-    def _default_categorical_encodings(
-        cls,
-    ) -> dict[Type[CategoricalInput], CategoricalEncodingEnum | Fingerprints]:
+    def _default_plain_categorical_encodings(cls) -> dict:
         return {
-            CategoricalInput: CategoricalEncodingEnum.ONE_HOT,
-            CategoricalMolecularInput: Fingerprints(),
-            CategoricalDescriptorInput: CategoricalEncodingEnum.DESCRIPTOR,
-            CategoricalTaskInput: CategoricalEncodingEnum.ORDINAL,
+            CategoricalInput: OneHotEncoding(),
+            CategoricalTaskInput: OrdinalEncoding(),
         }
 
     @classmethod
@@ -138,31 +88,10 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         if len(self.inputs.get_keys(CategoricalTaskInput)) != 1:
             raise ValueError("Exactly one task input is required for multi-task GPs.")
         task_feature = self.inputs.get(CategoricalTaskInput)[0]
-        if (
-            not self.categorical_encodings[task_feature.key]
-            == CategoricalEncodingEnum.ORDINAL
+        if not isinstance(
+            self.categorical_encodings[task_feature.key], OrdinalEncoding
         ):
             raise ValueError(
                 f"The task feature {task_feature.key} has to be encoded as ordinal."
             )
         return self
-
-    @field_validator("input_preprocessing_specs")
-    @classmethod
-    def validate_encoding(cls, v, info):
-        # also validate that the task feature has ordinal encoding
-        if "inputs" not in info.data:
-            return v
-
-        if len(info.data["inputs"].get_keys(CategoricalTaskInput)) == 0:
-            return v
-
-        task_feature_id = info.data["inputs"].get_keys(CategoricalTaskInput)[0]
-        if v.get(task_feature_id) is None:
-            v[task_feature_id] = CategoricalEncodingEnum.ORDINAL
-        elif v[task_feature_id] != CategoricalEncodingEnum.ORDINAL:
-            raise ValueError(
-                f"The task feature {task_feature_id} has to be encoded as ordinal.",
-            )
-
-        return v

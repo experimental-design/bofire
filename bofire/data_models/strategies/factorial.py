@@ -5,7 +5,6 @@ from pydantic import model_validator
 
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousOutput,
     DiscreteInput,
@@ -30,7 +29,6 @@ class FactorialStrategy(Strategy):
         return my_type in [
             CategoricalInput,
             DiscreteInput,
-            CategoricalDescriptorInput,
             ContinuousOutput,
         ]
 

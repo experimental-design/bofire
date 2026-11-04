@@ -9,7 +9,6 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
 )
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
@@ -21,6 +20,7 @@ from bofire.data_models.objectives.api import (
     MinimizeObjective,
     Objective,
 )
+from bofire.data_models.strategies.convergence_criteria.api import ConvergenceCriterion
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 
 
@@ -67,7 +67,6 @@ class EntingStrategy(PredictiveStrategy):
         return my_type in [
             CategoricalInput,
             DiscreteInput,
-            CategoricalDescriptorInput,
             ContinuousInput,
             ContinuousOutput,
         ]
@@ -75,3 +74,22 @@ class EntingStrategy(PredictiveStrategy):
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
         return my_type in [MinimizeObjective, MaximizeObjective]
+
+    @classmethod
+    def is_criterion_implemented(cls, my_type: Type[ConvergenceCriterion]) -> bool:
+        """Method to check if a convergence criterion type is applicable for the strategy.
+
+        The Enting strategy handles both single- and multi-objective problems,
+        so it accepts criteria that are applicable to either.
+
+        Args:
+            my_type: ConvergenceCriterion class
+
+        Returns:
+            bool: True if the convergence criterion type is valid for the strategy chosen, False otherwise
+
+        """
+        return (
+            my_type.is_applicable_to_singleobjective()
+            or my_type.is_applicable_to_multiobjective()
+        )

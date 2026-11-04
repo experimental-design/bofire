@@ -22,16 +22,25 @@ class InterpointEqualityConstraint(InterpointConstraint):
     """Constraint that forces that values of a certain feature of a set/batch of
     candidates should have the same value. Currently this is only implemented for ContinuousInput features.
 
-    Attributes:
-        feature(str): The constrained feature.
-        multiplicity(int): The multiplicity of the constraint, stating how many
-            values of the feature in the batch should have always the same value.
+    Unlike the intrapoint constraints, this relates candidates to each other rather
+    than constraining each candidate on its own. Use it when a setting is physically
+    shared across a batch of experiments, such as a reactor temperature that cannot be
+    changed between runs.
 
+    Examples:
+        >>> InterpointEqualityConstraint(features=["temperature"], multiplicity=3)
     """
 
     type: Literal["InterpointEqualityConstraint"] = "InterpointEqualityConstraint"
-    features: Annotated[List[str], Field(min_length=1), Field(max_length=1)]
-    multiplicity: Optional[Annotated[int, Field(ge=2)]] = None
+    features: Annotated[List[str], Field(min_length=1), Field(max_length=1)] = Field(
+        description="Key of the single input feature that is constrained. Exactly one "
+        "key must be provided.",
+    )
+    multiplicity: Optional[Annotated[int, Field(ge=2)]] = Field(
+        default=None,
+        description="How many consecutive candidates in the batch must share the same "
+        "value. If not provided, the whole batch must share one value.",
+    )
 
     def to_description(self) -> str:
         raise NotImplementedError

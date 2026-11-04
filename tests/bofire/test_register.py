@@ -3,12 +3,12 @@ from typing import Literal, Type
 from unittest.mock import MagicMock
 
 import pandas as pd
+import pytest
 
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     AnyOutput,
-    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     EngineeredFeature,
@@ -17,6 +17,9 @@ from bofire.data_models.features.api import (
 from bofire.data_models.kernels.continuous import ContinuousKernel as _ContinuousBase
 from bofire.data_models.kernels.kernel import Kernel as KernelDataModel
 from bofire.data_models.llm.provider import LLMProvider
+from bofire.data_models.priors.constraint import (
+    PriorConstraint as PriorConstraintDataModel,
+)
 from bofire.data_models.priors.prior import Prior as PriorDataModel
 from bofire.data_models.strategies.strategy import Strategy as StrategyDataModel
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
@@ -458,6 +461,10 @@ class _CustomPriorDataModel(PriorDataModel):
     type: Literal["CustomPrior"] = "CustomPrior"
 
 
+class _CustomConstraintDataModel(PriorConstraintDataModel):
+    type: Literal["CustomConstraint"] = "CustomConstraint"
+
+
 # ---------------------------------------------------------------------------
 # Kernel registration tests
 # ---------------------------------------------------------------------------
@@ -472,7 +479,9 @@ class TestRegisterKernel:
 
         sentinel = MagicMock(name="gpytorch_kernel")
 
-        def my_map_fn(data_model, batch_shape, active_dims, features_to_idx_mapper):
+        def my_map_fn(
+            data_model, batch_shape, active_dims, features_to_idx_mapper, **kwargs
+        ):
             return sentinel
 
         kernels_api.register(_CustomKernelDataModel, my_map_fn)
@@ -496,7 +505,9 @@ class TestRegisterKernel:
         sentinel = MagicMock(name="gpytorch_kernel")
 
         @kernels_api.register(_CustomKernelDataModel)
-        def my_map_fn(data_model, batch_shape, active_dims, features_to_idx_mapper):
+        def my_map_fn(
+            data_model, batch_shape, active_dims, features_to_idx_mapper, **kwargs
+        ):
             return sentinel
 
         assert KERNEL_MAP[_CustomKernelDataModel] is my_map_fn
@@ -564,6 +575,25 @@ class TestRegisterPrior:
         # cleanup
         PRIOR_MAP.pop(_CustomPriorDataModel, None)
 
+    def test_register_constraint_is_mapped_as_a_constraint(self):
+        import bofire.priors.api as priors_api
+        from bofire.priors.mapper import CONSTRAINT_MAP, PRIOR_MAP
+
+        sentinel = MagicMock(name="gpytorch_constraint")
+
+        def my_map_fn(data_model, **kwargs):
+            return sentinel
+
+        priors_api.register(_CustomConstraintDataModel, my_map_fn)
+        assert CONSTRAINT_MAP[_CustomConstraintDataModel] is my_map_fn
+        assert _CustomConstraintDataModel not in PRIOR_MAP
+
+        dm = _CustomConstraintDataModel(initial_value=1.0)
+        assert priors_api.map_constraint(dm) is sentinel
+
+        # cleanup
+        CONSTRAINT_MAP.pop(_CustomConstraintDataModel, None)
+
     def test_register_exported_from_api(self):
         from bofire.priors.api import register
 
@@ -630,32 +660,16 @@ class TestKernelPydanticIntegration:
         sk = ScaleKernel(base_kernel=_IntegrationKernelDataModel(my_param=3.0))
         assert isinstance(sk.base_kernel, _IntegrationKernelDataModel)
 
-    def test_custom_continuous_kernel_in_mixed_surrogate(self):
+    def test_custom_continuous_kernel_is_a_continuous_kernel(self):
         """A ContinuousKernel subclass should be auto-added to AnyContinuousKernel."""
         from bofire.data_models.kernels.api import (
             _CONTINUOUS_KERNEL_TYPES,
             register_kernel,
         )
-        from bofire.data_models.surrogates.mixed_single_task_gp import (
-            MixedSingleTaskGPSurrogate,
-        )
 
         register_kernel(_IntegrationContinuousKernel)
 
         assert _IntegrationContinuousKernel in _CONTINUOUS_KERNEL_TYPES
-
-        s = MixedSingleTaskGPSurrogate(
-            inputs=Inputs(
-                features=[
-                    ContinuousInput(key="a", bounds=(0, 1)),
-                    ContinuousInput(key="b", bounds=(0, 1)),
-                    CategoricalInput(key="c", categories=["x", "y"]),
-                ]
-            ),
-            outputs=_OUTPUTS,
-            continuous_kernel=_IntegrationContinuousKernel(),
-        )
-        assert isinstance(s.continuous_kernel, _IntegrationContinuousKernel)
 
     def test_custom_kernel_in_wedge_kernel(self):
         """A registered kernel should be usable as WedgeKernel.base_kernel."""
@@ -707,15 +721,33 @@ class TestPriorPydanticIntegration:
 
         register_prior(_IntegrationPriorDataModel)
 
+        from bofire.data_models.likelihoods.api import GaussianLikelihood
         from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 
         s = SingleTaskGPSurrogate(
             inputs=_INPUTS,
             outputs=_OUTPUTS,
-            noise_prior=_IntegrationPriorDataModel(value=2.0),
+            likelihood=GaussianLikelihood(
+                noise_prior=_IntegrationPriorDataModel(value=2.0)
+            ),
         )
-        assert isinstance(s.noise_prior, _IntegrationPriorDataModel)
-        assert s.noise_prior.value == 2.0
+        assert isinstance(s.likelihood.noise_prior, _IntegrationPriorDataModel)
+        assert s.likelihood.noise_prior.value == 2.0
+
+    def test_custom_prior_as_mean_prior(self):
+        from bofire.data_models.means.api import ConstantMean
+        from bofire.data_models.priors.api import register_prior
+
+        register_prior(_IntegrationPriorDataModel)
+
+        from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+
+        s = SingleTaskGPSurrogate(
+            inputs=_INPUTS,
+            outputs=_OUTPUTS,
+            mean=ConstantMean(prior=_IntegrationPriorDataModel(value=3.0)),
+        )
+        assert isinstance(s.mean.prior, _IntegrationPriorDataModel)
 
     def test_custom_prior_as_lengthscale_prior(self):
         from bofire.data_models.kernels.continuous import RBFKernel
@@ -835,9 +867,8 @@ class _IntegrationEngineeredFeature(EngineeredFeature):
     type: Literal["_IntegrationEngineered"] = "_IntegrationEngineered"
     order_id = 99
 
-    @property
-    def n_transformed_inputs(self) -> int:
-        return 1
+    def get_names(self, inputs) -> list:
+        return [self.key]
 
 
 class TestEngineeredFeatureRegistration:
@@ -885,9 +916,8 @@ class TestEngineeredFeatureRegistration:
             type: Literal["_MapperEngineered"] = "_MapperEngineered"
             order_id = 100
 
-            @property
-            def n_transformed_inputs(self) -> int:
-                return 1
+            def get_names(self, inputs) -> list:
+                return [self.key]
 
         sentinel = MagicMock(name="append_features")
 
@@ -906,15 +936,71 @@ class TestEngineeredFeatureRegistration:
             type: Literal["_DirectEngineered"] = "_DirectEngineered"
             order_id = 101
 
-            @property
-            def n_transformed_inputs(self) -> int:
-                return 1
+            def get_names(self, inputs) -> list:
+                return [self.key]
 
         sentinel = MagicMock(name="append_features")
         register(_DirectEngineered, lambda i, t, f: sentinel)
 
         assert _DirectEngineered in AGGREGATE_MAP
         assert _DirectEngineered in _ENGINEERED_FEATURE_TYPES
+
+
+# ---------------------------------------------------------------------------
+# Regression test for issue #794: a registered engineered feature was stored
+# in the container but silently dropped by the default ``get``/``get_keys``
+# filter, which was bound to ``AnyFeature`` at import time.
+# ---------------------------------------------------------------------------
+
+
+class _VisibleEngineeredFeature(EngineeredFeature):
+    type: Literal["_VisibleEngineered"] = "_VisibleEngineered"
+    order_id = 102
+
+    def get_names(self, inputs) -> list:
+        return [self.key]
+
+
+class TestRegisteredFeatureIsVisible:
+    """A registered engineered feature must be visible to the default filter."""
+
+    @pytest.fixture
+    def container(self):
+        from bofire.data_models.domain.features import EngineeredFeatures
+        from bofire.data_models.features.api import register_engineered_feature
+
+        register_engineered_feature(_VisibleEngineeredFeature)
+        return EngineeredFeatures(
+            features=[_VisibleEngineeredFeature(key="engineered", features=["a", "b"])]
+        )
+
+    @pytest.fixture
+    def inputs(self):
+        """Widths are resolved against the original inputs, so they are needed here."""
+        from bofire.data_models.domain.api import Inputs
+        from bofire.data_models.features.api import ContinuousInput
+
+        return Inputs(
+            features=[ContinuousInput(key=k, bounds=(0, 1)) for k in ("a", "b")]
+        )
+
+    def test_get_keys_sees_registered_feature(self, container):
+        assert container.get_keys() == ["engineered"]
+
+    def test_get_sees_registered_feature(self, container):
+        assert [f.key for f in container.get()] == ["engineered"]
+
+    def test_transformed_width_counts_registered_feature(self, container, inputs):
+        assert container.transformed_width(inputs) == 1
+
+    def test_features2idx_maps_registered_feature(self, container, inputs):
+        assert container.get_features2idx(inputs) == {"engineered": (0,)}
+
+    def test_generic_features_container_accepts_registered_feature(self, container):
+        """``AnyFeature`` is a separate union and has to be kept in sync too."""
+        from bofire.data_models.domain.features import Features
+
+        assert Features(features=list(container.get())).get_keys() == ["engineered"]
 
 
 # ---------------------------------------------------------------------------
@@ -1114,3 +1200,85 @@ class TestRebuildCoverage:
                     ):
                         found.add((obj, field_name))
         return found
+
+
+# ---------------------------------------------------------------------------
+# Duplicate registration
+#
+# Re-running registration code re-defines the data model as a *new* class
+# object that keeps the same ``type`` discriminator. The identity-based guard
+# used to miss this and silently append a duplicate, which later produced a
+# cryptic ``Value '...' for discriminator 'type' mapped to multiple choices``
+# error when a dependent discriminated union was built.
+#
+# Detection lives in the shared ``register_into`` helper used by every
+# ``register_*`` function, so it is covered once here (via the strategy
+# registry as a representative end-to-end case, plus a direct unit check)
+# instead of being re-tested for every registerable.
+# ---------------------------------------------------------------------------
+
+
+def _make_strategy_dm():
+    """Build a fresh strategy data model class with a fixed ``type`` literal."""
+
+    class _DupStrategyDataModel(StrategyDataModel):
+        type: Literal["DupStrategy"] = "DupStrategy"
+
+        def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
+            return True
+
+        @classmethod
+        def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
+            return True
+
+    return _DupStrategyDataModel
+
+
+class TestDuplicateRegistration:
+    def _cleanup(self):
+        import bofire.data_models.strategies.actual_strategy_type as ast_mod
+        from bofire.strategies.mapper_actual import STRATEGY_MAP as ACTUAL_MAP
+
+        for cls in list(ast_mod._ACTUAL_STRATEGY_TYPES):
+            if getattr(cls, "__name__", "") == "_DupStrategyDataModel":
+                ast_mod._ACTUAL_STRATEGY_TYPES.remove(cls)
+        for cls in list(ACTUAL_MAP):
+            if getattr(cls, "__name__", "") == "_DupStrategyDataModel":
+                ACTUAL_MAP.pop(cls, None)
+
+    def test_same_class_is_noop(self):
+        import bofire.strategies.api as strategies_api
+
+        self._cleanup()
+        try:
+            DM = _make_strategy_dm()
+            strategies_api.register(DM, _CustomStrategy)
+            # Registering the identical class object again is a silent no-op.
+            strategies_api.register(DM, _CustomStrategy)
+            import bofire.data_models.strategies.actual_strategy_type as ast_mod
+
+            assert ast_mod._ACTUAL_STRATEGY_TYPES.count(DM) == 1
+        finally:
+            self._cleanup()
+
+    def test_conflicting_type_raises_clear_error(self):
+        import bofire.strategies.api as strategies_api
+
+        self._cleanup()
+        try:
+            strategies_api.register(_make_strategy_dm(), _CustomStrategy)
+            # A different class object with the same ``type`` must be rejected.
+            with pytest.raises(ValueError, match="already registered"):
+                strategies_api.register(_make_strategy_dm(), _CustomStrategy)
+        finally:
+            self._cleanup()
+
+    def test_class_without_fixed_type_is_rejected(self):
+        """A registerable must declare a fixed ``type`` discriminator."""
+        from bofire.data_models._register_utils import register_into
+
+        class _NoType:
+            pass
+
+        with pytest.raises(ValueError, match="fixed `type` discriminator"):
+            register_into([], _NoType, kind="strategy")

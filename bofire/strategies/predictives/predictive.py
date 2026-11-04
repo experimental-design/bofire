@@ -7,8 +7,9 @@ import shap
 from pydantic import PositiveInt
 
 from bofire.data_models.constraints.nonlinear import NONLINEAR_CONSTRAINT_TOL_OVERRIDES
+import bofire.strategies.convergence_criteria.api as convergence_criteria
 from bofire.data_models.features.task import TaskInput
-from bofire.data_models.strategies.api import Strategy as DataModel
+from bofire.data_models.strategies.api import PredictiveStrategy as DataModel
 from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue, OutputValue
@@ -26,6 +27,10 @@ class PredictiveStrategy(Strategy):
     Provides abstract scaffold for fit, predict, and calc_acquistion methods.
     """
 
+    # Narrow the base ``Strategy._data_model`` annotation to the predictive data
+    # model so type checkers know it carries e.g. ``convergence_criterion``.
+    _data_model: DataModel
+
     def __init__(
         self,
         data_model: DataModel,
@@ -38,6 +43,24 @@ class PredictiveStrategy(Strategy):
     def is_fitted(self) -> bool:
         """Check if the strategy is fitted."""
         return self._is_fitted
+
+    def has_converged(self) -> bool:
+        """Returns whether the strategy has converged according to its convergence criterion.
+
+        The convergence criterion is evaluated against the internal state and
+        data of the strategy. If the criterion needs the strategy's surrogate
+        model(s), it reads them directly from the strategy. If no convergence
+        criterion is configured, the strategy is never considered converged.
+
+        Returns:
+            bool: True if the strategy's convergence criterion is met, False otherwise.
+
+        """
+        criterion = self._data_model.convergence_criterion
+        if criterion is None:
+            return False
+        evaluator = convergence_criteria.map(criterion)
+        return evaluator(criterion, self)
 
     @property
     @abstractmethod

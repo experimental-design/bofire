@@ -32,10 +32,10 @@ def register(
     """
 
     def _register(cls: Type[Strategy]) -> Type[Strategy]:
-        ACTUAL_MAP[data_model_cls] = cls
-
-        # Also register with the data model union so Pydantic accepts the type
+        # Register with the data model union first so a discriminator conflict
+        # is raised before the functional map is touched (no partial state).
         data_models.register_strategy(data_model_cls)
+        ACTUAL_MAP[data_model_cls] = cls
 
         return cls
 

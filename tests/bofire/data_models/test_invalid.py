@@ -28,6 +28,14 @@ def test_kernel_should_be_invalid(invalid_kernel_spec: InvalidSpec):
     _invalidate(invalid_kernel_spec)
 
 
+def test_mean_should_be_invalid(invalid_mean_spec: InvalidSpec):
+    _invalidate(invalid_mean_spec)
+
+
+def test_likelihood_should_be_invalid(invalid_likelihood_spec: InvalidSpec):
+    _invalidate(invalid_likelihood_spec)
+
+
 def test_constraint_should_be_invalid(invalid_constraint_spec: InvalidSpec):
     _invalidate(invalid_constraint_spec)
 
@@ -74,14 +82,14 @@ def test_transform_should_be_invalid(invalid_condition_spec: InvalidSpec):
     _invalidate(invalid_condition_spec)
 
 
-def test_outlier_detection_should_be_invalid(
-    invalid_outlier_detection_spec: InvalidSpec,
+def test_descriptor_generators_should_be_invalid(
+    invalid_descriptor_generator_spec: InvalidSpec,
 ):
-    _invalidate(invalid_outlier_detection_spec)
+    _invalidate(invalid_descriptor_generator_spec)
 
 
-def test_molfeatures_should_be_invalid(invalid_molfeatures_spec: InvalidSpec):
-    _invalidate(invalid_molfeatures_spec)
+def test_encoding_should_be_invalid(invalid_encoding_spec: InvalidSpec):
+    _invalidate(invalid_encoding_spec)
 
 
 def test_local_search_config_should_be_invalid(

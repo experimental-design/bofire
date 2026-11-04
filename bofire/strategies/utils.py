@@ -1,4 +1,5 @@
-from typing import Callable, Dict, List, Literal, Optional, Tuple, Type, Union
+import os
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -40,6 +41,47 @@ from bofire.utils.domain_repair import (
     default_input_preprocessing_specs,
 )
 from bofire.utils.torch_tools import get_nonlinear_constraints, tkwargs
+
+
+def _resolve_ga_callback(
+    data_model: GeneticAlgorithmDataModel,
+) -> Optional[Callable[..., Any]]:
+    """Resolve a runtime callback from GA data model settings."""
+    file_path = data_model.ga_progress_csv_path
+    if file_path is None:
+        return None
+    return _make_csv_progress_callback(file_path)
+
+
+def _make_csv_progress_callback(file_path: str) -> Callable[..., Any]:
+    """Create a callback that appends GA progress information to CSV."""
+
+    header = "generation,n_eval,best_f\n"
+    os.makedirs(os.path.dirname(file_path) or ".", exist_ok=True)
+    with open(file_path, "w", encoding="utf-8") as file:
+        file.write(header)
+
+    def _csv_callback(algorithm):
+        generation = getattr(algorithm, "n_gen", "")
+        evaluator = getattr(algorithm, "evaluator", None)
+        n_eval = getattr(evaluator, "n_eval", "") if evaluator is not None else ""
+
+        best_f = ""
+        opt = getattr(algorithm, "opt", None)
+        if opt is not None:
+            try:
+                f_val = opt.get("F")
+                if f_val is not None:
+                    arr = np.asarray(f_val).reshape(-1)
+                    if arr.size > 0:
+                        best_f = float(np.min(arr))
+            except Exception:
+                best_f = ""
+
+        with open(file_path, "a", encoding="utf-8") as file:
+            file.write(f"{generation},{n_eval},{best_f}\n")
+
+    return _csv_callback
 
 
 class GaMixedDomainHandler:
@@ -666,6 +708,7 @@ def run_ga(
     n_obj: Optional[int] = None,
     verbose: bool = False,
     optimization_direction: Literal["min", "max"] = "max",
+    callback: Optional[Callable[..., Any]] = None,
 ) -> Tuple[Union[Tensor, List[pd.DataFrame]], Union[Tensor, np.ndarray]]:
     """Convenience function to minimize one or multiple objective functions using a genetic algorithm.
 
@@ -699,6 +742,8 @@ def run_ga(
             Assuming that each callable returns a single output. If the callables return multiple outputs, n_obj
             must be set to the sum of the number of outputs of each callable.
         verbose (bool, optional): Whether to print the QP iterations. Defaults to False.
+        callback (Optional[Callable[..., Any]], optional): Callback passed to `pymoo.optimize.minimize`.
+            The callback is invoked by pymoo during optimization. Defaults to None.
 
     Returns
         x_opt (Union[Tensor, pd.DataFrame]): optimized experiments
@@ -717,7 +762,18 @@ def run_ga(
         optimization_direction=optimization_direction,
     )
 
-    res = pymoo_minimize(problem, algorithm, termination, verbose=verbose)
+    resolved_callback = callback or _resolve_ga_callback(data_model)
+
+    pymoo_kwargs = {"verbose": verbose}
+    if resolved_callback is not None:
+        pymoo_kwargs["callback"] = resolved_callback
+
+    res = pymoo_minimize(
+        problem,
+        algorithm,
+        termination,
+        **pymoo_kwargs,
+    )
 
     if callable_format == "torch":
         # transform the result to the numeric domain

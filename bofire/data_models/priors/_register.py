@@ -32,21 +32,15 @@ def _rebuild_dependent_models() -> None:
         ExactWassersteinKernel,
         WassersteinKernel,
     )
+    from bofire.data_models.likelihoods.likelihood import (
+        GaussianLikelihood,
+        SparseOutlierGaussianLikelihood,
+        TaskwiseLikelihood,
+    )
+    from bofire.data_models.means.mean import ConstantMean, TaskwiseMean
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
-    from bofire.data_models.surrogates.linear import LinearSurrogate
-    from bofire.data_models.surrogates.mixed_single_task_gp import (
-        MixedSingleTaskGPSurrogate,
-    )
     from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
-    from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
-    from bofire.data_models.surrogates.robust_single_task_gp import (
-        RobustSingleTaskGPSurrogate,
-    )
-    from bofire.data_models.surrogates.single_task_gp import (
-        SingleTaskGPHyperconfig,
-        SingleTaskGPSurrogate,
-    )
-    from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
+    from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 
     AnyPrior = priors_api.AnyPrior
     AnyPriorConstraint = priors_api.AnyPriorConstraint
@@ -70,13 +64,9 @@ def _rebuild_dependent_models() -> None:
         (PolynomialFeatureInteractionKernel, "outputscale_prior"),
         (WassersteinKernel, "lengthscale_prior"),
         (ExactWassersteinKernel, "lengthscale_prior"),
-        (SingleTaskGPSurrogate, "noise_prior"),
-        (MultiTaskGPSurrogate, "noise_prior"),
-        (MixedSingleTaskGPSurrogate, "noise_prior"),
-        (TanimotoGPSurrogate, "noise_prior"),
-        (PolynomialSurrogate, "noise_prior"),
-        (LinearSurrogate, "noise_prior"),
-        (RobustSingleTaskGPSurrogate, "noise_prior"),
+        (ConstantMean, "prior"),
+        (GaussianLikelihood, "noise_prior"),
+        (SparseOutlierGaussianLikelihood, "noise_prior"),
     ]:
         patch_field(model_cls, field_name, AnyPrior)
 
@@ -90,15 +80,8 @@ def _rebuild_dependent_models() -> None:
         (PositiveIndexKernel, "var_constraint"),
         (WedgeKernel, "lengthscale_constraint"),
         (ScaleKernel, "outputscale_constraint"),
-        (SingleTaskGPSurrogate, "noise_constraint"),
-        (MultiTaskGPSurrogate, "noise_constraint"),
-        (MixedSingleTaskGPSurrogate, "noise_constraint"),
-        (TanimotoGPSurrogate, "noise_constraint"),
-        (PolynomialSurrogate, "noise_constraint"),
-        (LinearSurrogate, "noise_constraint"),
-        (RobustSingleTaskGPSurrogate, "noise_constraint"),
-        (SingleTaskGPHyperconfig, "lengthscale_constraint"),
-        (SingleTaskGPHyperconfig, "outputscale_constraint"),
+        (GaussianLikelihood, "noise_constraint"),
+        (SparseOutlierGaussianLikelihood, "noise_constraint"),
     ]:
         patch_field(model_cls, field_name, AnyPriorConstraint)
 
@@ -130,20 +113,22 @@ def _rebuild_dependent_models() -> None:
     ]:
         cls.model_rebuild(force=True)
 
-    # 4. Surrogate models
-    SingleTaskGPHyperconfig.model_rebuild(force=True)
+    # 4. Means and likelihoods, which surrogates hold
+    for cls in [ConstantMean, GaussianLikelihood, SparseOutlierGaussianLikelihood]:
+        cls.model_rebuild(force=True)
+
+    # 4b. Taskwise wrappers, which embed means and likelihoods
+    for cls in [TaskwiseMean, TaskwiseLikelihood]:
+        cls.model_rebuild(force=True)
+
+    # 5. Surrogate models
     for cls in [
         SingleTaskGPSurrogate,
         MultiTaskGPSurrogate,
-        MixedSingleTaskGPSurrogate,
-        TanimotoGPSurrogate,
-        PolynomialSurrogate,
-        LinearSurrogate,
-        RobustSingleTaskGPSurrogate,
     ]:
         cls.model_rebuild(force=True)
 
-    # 5. BotorchSurrogates
+    # 6. BotorchSurrogates
     BotorchSurrogates.model_rebuild(force=True)
 
 
@@ -156,12 +141,16 @@ def register_prior(data_model_cls: type) -> None:
 
     Args:
         data_model_cls: A concrete subclass of ``Prior``.
+
+    Raises:
+        ValueError: If a different prior with the same ``type`` discriminator
+            is already registered.
     """
     import bofire.data_models.priors.api as priors_api
+    from bofire.data_models._register_utils import register_into
 
-    if data_model_cls in priors_api._PRIOR_TYPES:
+    if not register_into(priors_api._PRIOR_TYPES, data_model_cls, kind="prior"):
         return
-    priors_api._PRIOR_TYPES.append(data_model_cls)
     priors_api.AnyPrior = tagged_union(*priors_api._PRIOR_TYPES)
     _rebuild_dependent_models()
 
@@ -175,11 +164,17 @@ def register_prior_constraint(data_model_cls: type) -> None:
 
     Args:
         data_model_cls: A concrete subclass of ``PriorConstraint`` or ``Interval``.
+
+    Raises:
+        ValueError: If a different prior constraint with the same ``type``
+            discriminator is already registered.
     """
     import bofire.data_models.priors.api as priors_api
+    from bofire.data_models._register_utils import register_into
 
-    if data_model_cls in priors_api._PRIOR_CONSTRAINT_TYPES:
+    if not register_into(
+        priors_api._PRIOR_CONSTRAINT_TYPES, data_model_cls, kind="prior constraint"
+    ):
         return
-    priors_api._PRIOR_CONSTRAINT_TYPES.append(data_model_cls)
     priors_api.AnyPriorConstraint = tagged_union(*priors_api._PRIOR_CONSTRAINT_TYPES)
     _rebuild_dependent_models()

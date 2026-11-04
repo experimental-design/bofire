@@ -1,4 +1,5 @@
 import importlib
+import math
 
 import gpytorch
 import pandas as pd
@@ -7,27 +8,24 @@ import torch
 from botorch.models import MultiTaskGP
 from botorch.models.transforms.input import InputStandardize, Normalize
 from botorch.models.transforms.outcome import ChainedOutcomeTransform, Log, Standardize
+from gpytorch.likelihoods.hadamard_gaussian_likelihood import HadamardGaussianLikelihood
 from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.api import MultiTaskHimmelblau
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.encodings.api import OrdinalEncoding
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.data_models.kernels.api import MaternKernel, RBFKernel
+from bofire.data_models.kernels.api import RBFKernel
+from bofire.data_models.likelihoods.api import GaussianLikelihood, TaskwiseLikelihood
+from bofire.data_models.means.api import ConstantMean, TaskwiseMean
 from bofire.data_models.priors.api import (
-    HVARFNER_LENGTHSCALE_PRIOR,
-    HVARFNER_NOISE_PRIOR,
-    LKJ_PRIOR,
-    MBO_LENGTHSCALE_PRIOR,
-    MBO_NOISE_PRIOR,
-    THREESIX_LENGTHSCALE_PRIOR,
-    THREESIX_NOISE_PRIOR,
+    DimensionalityScaledLogNormalPrior,
     GammaPrior,
     GreaterThan,
     LogNormalPrior,
@@ -40,47 +38,6 @@ from bofire.data_models.surrogates.scaler import Standardize as StandardizeScale
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
-def test_MultiTaskGPHyperconfig():
-    # we test here also the basic trainable
-    benchmark = MultiTaskHimmelblau()
-    surrogate_data_no_hy = MultiTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-        hyperconfig=None,
-    )
-
-    with pytest.raises(ValueError, match="No hyperconfig available."):
-        surrogate_data_no_hy.update_hyperparameters(
-            benchmark.domain.inputs.sample(1).loc[0],
-        )
-    # test that correct stuff is written
-    surrogate_data = MultiTaskGPSurrogate(
-        inputs=benchmark.domain.inputs,
-        outputs=benchmark.domain.outputs,
-    )
-    candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
-    surrogate_data.update_hyperparameters(candidate)
-
-    assert surrogate_data.kernel.ard == (candidate["ard"] == "True")
-    if candidate.kernel == "matern_1.5":
-        assert isinstance(surrogate_data.kernel, MaternKernel)
-        assert surrogate_data.kernel.nu == 1.5
-    elif candidate.kernel == "matern_2.5":
-        assert isinstance(surrogate_data.kernel, MaternKernel)
-        assert surrogate_data.kernel.nu == 2.5
-    else:
-        assert isinstance(surrogate_data.kernel, RBFKernel)
-    if candidate.prior == "mbo":
-        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
-        assert surrogate_data.kernel.lengthscale_prior == MBO_LENGTHSCALE_PRIOR()
-    elif candidate.prior == "threesix":
-        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
-        assert surrogate_data.kernel.lengthscale_prior == THREESIX_LENGTHSCALE_PRIOR()
-    else:
-        assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
-        assert surrogate_data.kernel.lengthscale_prior == HVARFNER_LENGTHSCALE_PRIOR()
-
-
 def test_MultiTask_input_preprocessing():
     # test that if no input_preprocessing_specs are provided, the ordinal encoding is used
     inputs = Inputs(
@@ -90,7 +47,7 @@ def test_MultiTask_input_preprocessing():
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     data_model = MultiTaskGPSurrogate(inputs=inputs, outputs=outputs)
     assert data_model.input_preprocessing_specs == {
-        "task_id": CategoricalEncodingEnum.ORDINAL,
+        "task_id": OrdinalEncoding(),
     }
 
     # test that if we have a categorical input, one-hot encoding is correctly applied
@@ -105,27 +62,22 @@ def test_MultiTask_input_preprocessing():
         outputs=outputs,
     )
     assert data_model.input_preprocessing_specs == {
-        "categories": CategoricalEncodingEnum.ORDINAL,
-        "task_id": CategoricalEncodingEnum.ORDINAL,
+        "categories": OrdinalEncoding(),
+        "task_id": OrdinalEncoding(),
     }
 
 
 @pytest.mark.parametrize(
-    "kernel, scaler, output_scaler, task_prior",
+    "kernel, scaler, output_scaler",
     [
-        (RBFKernel(ard=True), NormalizeScaler(), ScalerEnum.STANDARDIZE, None),
-        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.STANDARDIZE, None),
-        (RBFKernel(ard=False), None, ScalerEnum.IDENTITY, LKJ_PRIOR()),
-        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.LOG, None),
-        (
-            RBFKernel(ard=False),
-            StandardizeScaler(),
-            ScalerEnum.CHAINED_LOG_STANDARDIZE,
-            None,
-        ),
+        (RBFKernel(ard=True), NormalizeScaler(), ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), None, ScalerEnum.IDENTITY),
+        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.LOG),
+        (RBFKernel(ard=False), StandardizeScaler(), ScalerEnum.CHAINED_LOG_STANDARDIZE),
     ],
 )
-def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
+def test_MultiTaskGPModel(kernel, scaler, output_scaler):
     benchmark = MultiTaskHimmelblau()
     inputs = benchmark.domain.inputs
     outputs = benchmark.domain.outputs
@@ -144,18 +96,16 @@ def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
         scaler=scaler,
         output_scaler=output_scaler,
         kernel=kernel,
-        task_prior=task_prior,
     )
 
     model = surrogates.map(model)
     with pytest.raises(ValueError):
         model.dumps()
-    # if task_prior is not None, a warning should be raised
-    if task_prior is not None:
-        with pytest.warns(UserWarning):
-            model.fit(experiments)
-    else:
-        model.fit(experiments)
+    model.fit(experiments)
+    # every task has a noise level and a mean of its own
+    assert isinstance(model.model.likelihood, HadamardGaussianLikelihood)
+    assert model.model.likelihood.noise_covar.noise.shape[-1] == 2
+    assert len(model.model.mean_module.base_means) == 2
     # check that the active_dims are set correctly
     assert torch.allclose(
         model.model.covar_module.kernels[0].active_dims,
@@ -221,7 +171,11 @@ def test_MultiTaskGPModel_noise_constraint():
     model = MultiTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
-        noise_constraint=GreaterThan(lower_bound=5e-4),
+        likelihood=TaskwiseLikelihood(
+            likelihood=GaussianLikelihood(
+                noise_constraint=GreaterThan(lower_bound=5e-4)
+            )
+        ),
     )
     model = surrogates.map(model)
     model.fit(experiments)
@@ -263,7 +217,11 @@ def test_noise_prior_registered_for_multi_task_gp():
         MultiTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=GammaPrior(concentration=1.1, rate=0.001),
+            likelihood=TaskwiseLikelihood(
+                likelihood=GaussianLikelihood(
+                    noise_prior=GammaPrior(concentration=1.1, rate=0.001)
+                )
+            ),
         )
     )
     surrogate.fit(experiments)
@@ -287,20 +245,78 @@ def test_noise_prior_directional_effect_on_multi_task_gp():
         MultiTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=LogNormalPrior(loc=-8.0, scale=0.1),  # mode ~ 3e-4
+            # mode ~ 3e-4
+            likelihood=TaskwiseLikelihood(
+                likelihood=GaussianLikelihood(
+                    noise_prior=LogNormalPrior(loc=-8.0, scale=0.1)
+                )
+            ),
         )
     )
     large_noise = surrogates.map(
         MultiTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
-            noise_prior=GammaPrior(concentration=1.1, rate=0.001),  # mode = 100
+            # mode = 100
+            likelihood=TaskwiseLikelihood(
+                likelihood=GaussianLikelihood(
+                    noise_prior=GammaPrior(concentration=1.1, rate=0.001)
+                )
+            ),
         )
     )
     small_noise.fit(experiments)
     large_noise.fit(experiments)
 
+    # one noise level per task, each pulled in the direction of its prior
     assert (
-        large_noise.model.likelihood.noise.item()
-        > small_noise.model.likelihood.noise.item()
+        large_noise.model.likelihood.noise_covar.noise
+        > small_noise.model.likelihood.noise_covar.noise
+    ).all()
+
+
+def test_dimension_scaled_priors_count_the_inputs_without_the_task(monkeypatch):
+    # Model construction determines the priors; optimizer fitting is unnecessary.
+    monkeypatch.setattr(
+        "bofire.surrogates.multi_task_gp.fit_gpytorch_mll", lambda *args, **kwargs: None
     )
+    benchmark, experiments = _multi_task_experiments()
+    prior = DimensionalityScaledLogNormalPrior(
+        loc=1.0, loc_scaling=0.5, scale=1.0, scale_scaling=0.5
+    )
+    surrogate = surrogates.map(
+        MultiTaskGPSurrogate(
+            inputs=benchmark.domain.inputs,
+            outputs=benchmark.domain.outputs,
+            mean=TaskwiseMean(mean=ConstantMean(prior=prior)),
+            likelihood=TaskwiseLikelihood(
+                likelihood=GaussianLikelihood(noise_prior=prior, noise_constraint=None)
+            ),
+        )
+    )
+    surrogate.fit(experiments)
+
+    # two continuous inputs next to the task: d = 2
+    registered = _get_registered_noise_prior(surrogate.model)
+    assert float(registered.loc) == pytest.approx(1.0 + math.log(2) * 0.5)
+    mean_priors = list(surrogate.model.mean_module.named_priors())
+    assert len(mean_priors) == 2
+    for _, _, mean_prior, _, _ in mean_priors:
+        assert float(mean_prior.loc) == pytest.approx(1.0 + math.log(2) * 0.5)
+
+
+def test_plain_mean_and_likelihood_are_shared_by_all_tasks():
+    benchmark, experiments = _multi_task_experiments()
+    surrogate = surrogates.map(
+        MultiTaskGPSurrogate(
+            inputs=benchmark.domain.inputs,
+            outputs=benchmark.domain.outputs,
+            mean=ConstantMean(),
+            likelihood=GaussianLikelihood(),
+        )
+    )
+    surrogate.fit(experiments)
+
+    assert type(surrogate.model.likelihood) is gpytorch.likelihoods.GaussianLikelihood
+    assert surrogate.model.likelihood.noise.numel() == 1
+    assert type(surrogate.model.mean_module) is gpytorch.means.ConstantMean

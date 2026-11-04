@@ -39,6 +39,9 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
+from bofire.data_models.strategies.convergence_criteria.api import (
+    AnyConvergenceCriterion,
+)
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 
@@ -429,6 +432,7 @@ class EntingStrategy(PredictiveStrategy):
         solver_verbose: bool | None = None,
         solver_params: Dict[str, Any] | None = None,
         seed: int | None = None,
+        convergence_criterion: AnyConvergenceCriterion | None = None,
     ) -> Self:
         """
         Create an enting strategy instance with the specified parameters.

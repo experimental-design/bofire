@@ -94,13 +94,8 @@ def invalid_transforms_spec(request) -> specs.InvalidSpec:
     return request.param
 
 
-@fixture(params=specs.outlier_detection.invalids)
-def invalid_outlier_detection_spec(request) -> specs.InvalidSpec:
-    return request.param
-
-
-@fixture(params=specs.molfeatures.invalids)
-def invalid_molfeatures_spec(request) -> specs.InvalidSpec:
+@fixture(params=specs.descriptor_generators.invalids)
+def invalid_descriptor_generator_spec(request) -> specs.InvalidSpec:
     return request.param
 
 
@@ -180,6 +175,26 @@ def kernel_spec(request) -> specs.Spec:
     return request.param
 
 
+@fixture(params=specs.means.valids)
+def mean_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.means.invalids)
+def invalid_mean_spec(request) -> specs.InvalidSpec:
+    return request.param
+
+
+@fixture(params=specs.likelihoods.valids)
+def likelihood_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.likelihoods.invalids)
+def invalid_likelihood_spec(request) -> specs.InvalidSpec:
+    return request.param
+
+
 @fixture(params=specs.conditions.valids)
 def condition_spec(request) -> specs.Spec:
     return request.param
@@ -190,13 +205,21 @@ def transforms_detection_spec(request) -> specs.Spec:
     return request.param
 
 
-@fixture(params=specs.outlier_detection.valids)
-def outlier_detection_spec(request) -> specs.Spec:
+@fixture(params=specs.descriptor_generators.valids)
+def descriptor_generator_spec(request) -> specs.Spec:
     return request.param
 
 
-@fixture(params=specs.molfeatures.valids)
-def molfeatures_spec(request) -> specs.Spec:
+@fixture(params=specs.encodings.valids)
+def encoding_spec(request) -> specs.Spec:
+    return request.param
+
+
+# no invalid encoding specs today: the only constrained field, `correlation_cutoff`, is
+# bounded by pydantic itself, and an invalid spec for it would test pydantic rather than
+# BoFire. The fixture exists so that adding one later needs no wiring.
+@fixture(params=specs.encodings.invalids)
+def invalid_encoding_spec(request) -> specs.InvalidSpec:
     return request.param
 
 

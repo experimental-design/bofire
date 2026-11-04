@@ -14,43 +14,32 @@ from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
 from bofire.data_models.surrogates.fully_bayesian import (
     FullyBayesianSingleTaskGPSurrogate,
 )
-from bofire.data_models.surrogates.linear import LinearSurrogate
-from bofire.data_models.surrogates.map_saas import (
-    AdditiveMapSaasSingleTaskGPSurrogate,
-    EnsembleMapSaasSingleTaskGPSurrogate,
-)
-from bofire.data_models.surrogates.mixed_single_task_gp import (
-    MixedSingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.map_saas import EnsembleMapSaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.mlp import (
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
 )
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
-from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
+from bofire.data_models.surrogates.selection import SelectionSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
-from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
+from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.types import InputTransformSpecs
 from bofire.data_models.unions import tagged_union
 
 
-_BOTORCH_SURROGATE_TYPES: List[Type[BotorchSurrogate]] = [
+_BOTORCH_SURROGATE_TYPES: List[Type[Surrogate]] = [
     EmpiricalSurrogate,
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
-    MixedSingleTaskGPSurrogate,
     RegressionMLPEnsemble,
     ClassificationMLPEnsemble,
     FullyBayesianSingleTaskGPSurrogate,
-    TanimotoGPSurrogate,
-    LinearSurrogate,
-    PolynomialSurrogate,
     LinearDeterministicSurrogate,
     CategoricalDeterministicSurrogate,
     MultiTaskGPSurrogate,
-    AdditiveMapSaasSingleTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
+    SelectionSurrogate,
 ]
 
 AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)
@@ -67,11 +56,18 @@ def register_botorch_surrogate(
 
     Args:
         data_model_cls: A concrete subclass of ``BotorchSurrogate``.
+
+    Raises:
+        ValueError: If a different botorch surrogate with the same ``type``
+            discriminator is already registered.
     """
+    from bofire.data_models._register_utils import register_into
+
     global AnyBotorchSurrogate
-    if data_model_cls in _BOTORCH_SURROGATE_TYPES:
+    if not register_into(
+        _BOTORCH_SURROGATE_TYPES, data_model_cls, kind="botorch surrogate"
+    ):
         return
-    _BOTORCH_SURROGATE_TYPES.append(data_model_cls)
     AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)
     new_annotation = List[AnyBotorchSurrogate]
     BotorchSurrogates.__annotations__["surrogates"] = new_annotation

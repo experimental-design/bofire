@@ -1,8 +1,16 @@
+import random
+
 from pydantic import ValidationError
 
 import bofire.data_models.kernels.api as kernels
+from bofire.data_models.descriptor_generators.api import (
+    Fingerprints,
+    MordredDescriptors,
+)
+from bofire.data_models.encodings.api import DescriptorEncoding
 from bofire.data_models.priors.api import (
     GammaPrior,
+    LKJPrior,
     LogNormalPrior,
     NonTransformedInterval,
     SmoothedBoxPrior,
@@ -13,6 +21,13 @@ from tests.bofire.data_models.specs.specs import Specs
 
 
 specs = Specs([])
+
+
+def _scalar_prior():
+    """A random valid prior over a single hyperparameter: anything but LKJ, which is a
+    prior over correlation matrices."""
+    return random.choice([s for s in priors.valids if s.cls is not LKJPrior]).obj()
+
 
 specs.add_valid(
     kernels.PositiveIndexKernel,
@@ -117,7 +132,23 @@ specs.add_invalid(
         "features": None,
     },
     error=ValidationError,
-    message="target_task_index must be less than num_categories-1",
+    message="target_task_index must be less than num_categories",
+)
+
+specs.add_valid(
+    kernels.PositiveIndexKernel,
+    lambda: {
+        "num_categories": 3,
+        "rank": 1,
+        "prior": None,
+        "var_constraint": None,
+        "task_prior": None,
+        "diag_prior": None,
+        "normalize_covar_matrix": True,
+        "target_task_index": 2,
+        "unit_scale_for_target": True,
+        "features": None,
+    },
 )
 
 specs.add_valid(
@@ -229,7 +260,7 @@ specs.add_valid(
         "ard": True,
         "nu": 2.5,
         "features": None,
-        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_prior": _scalar_prior().model_dump(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
@@ -240,14 +271,14 @@ specs.add_invalid(
     lambda: {
         "ard": True,
         "nu": 5,
-        "lengthscale_prior": priors.valid().obj(),
+        "lengthscale_prior": _scalar_prior(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
         "features": None,
     },
-    error=ValueError,
-    message="nu expected to be 0.5, 1.5, or 2.5",
+    error=ValidationError,
+    message="Input should be 0.5, 1.5 or 2.5",
 )
 specs.add_valid(
     kernels.InfiniteWidthBNNKernel,
@@ -261,7 +292,7 @@ specs.add_valid(
     kernels.RBFKernel,
     lambda: {
         "ard": True,
-        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_prior": _scalar_prior().model_dump(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
@@ -272,7 +303,7 @@ specs.add_valid(
     kernels.SphericalLinearKernel,
     lambda: {
         "ard": True,
-        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_prior": _scalar_prior().model_dump(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
@@ -284,7 +315,7 @@ specs.add_invalid(
     kernels.SphericalLinearKernel,
     lambda: {
         "ard": False,
-        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_prior": _scalar_prior().model_dump(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
@@ -333,10 +364,44 @@ specs.add_valid(
 specs.add_valid(
     kernels.TanimotoKernel,
     lambda: {
-        "ard": True,
         "features": None,
+        "fingerprints": None,
     },
 )
+specs.add_valid(
+    kernels.TanimotoKernel,
+    lambda: {
+        "features": ["mol"],
+        "fingerprints": DescriptorEncoding(
+            columns=[], generators=[Fingerprints(n_bits=32)]
+        ).model_dump(),
+    },
+)
+specs.add_invalid(
+    kernels.TanimotoKernel,
+    lambda: {
+        "features": ["mol1", "mol2"],
+        "fingerprints": DescriptorEncoding(columns=[], generators=[Fingerprints()]),
+    },
+    error=ValueError,
+    message="A Tanimoto kernel with fingerprints needs exactly one feature.",
+)
+for fingerprints in [
+    DescriptorEncoding(
+        columns=[], generators=[MordredDescriptors(descriptors=["nAcid"])]
+    ),
+    DescriptorEncoding(columns=["size"], generators=[Fingerprints()]),
+    DescriptorEncoding(),
+]:
+    specs.add_invalid(
+        kernels.TanimotoKernel,
+        lambda fingerprints=fingerprints: {
+            "features": ["mol"],
+            "fingerprints": fingerprints,
+        },
+        error=ValueError,
+        message="must come from Fingerprints or Fragments generators only",
+    )
 specs.add_valid(
     kernels.PolynomialFeatureInteractionKernel,
     lambda: {
@@ -354,12 +419,12 @@ specs.add_valid(
     lambda: {
         "base_kernel": specs.valid(kernels.LinearKernel).obj().model_dump(),
         "ard": True,
-        "lengthscale_prior": priors.valid().obj().model_dump(),
+        "lengthscale_prior": _scalar_prior().model_dump(),
         "lengthscale_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
-        "angle_prior": priors.valid().obj().model_dump(),
-        "radius_prior": priors.valid().obj().model_dump(),
+        "angle_prior": _scalar_prior().model_dump(),
+        "radius_prior": _scalar_prior().model_dump(),
         "conditions": [],
     },
 )
@@ -367,11 +432,11 @@ specs.add_valid(
     kernels.DownsamplingKernel,
     lambda: {
         "features": ["task_1"],
-        "offset_prior": priors.valid().obj().model_dump(),
+        "offset_prior": _scalar_prior().model_dump(),
         "offset_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
-        "power_prior": priors.valid().obj().model_dump(),
+        "power_prior": _scalar_prior().model_dump(),
         "power_constraint": prior_constraints.valid(NonTransformedInterval)
         .obj()
         .model_dump(),
@@ -390,4 +455,10 @@ specs.add_invalid(
     lambda: {"features": ["task_1", "task_2"]},
     error=ValueError,
     message="DownsamplingKernel requires a single task feature to be provided",
+)
+
+
+specs.add_valid(
+    kernels.AdditiveMapSaasKernel,
+    lambda: {"features": None, "n_taus": 4},
 )

@@ -7,7 +7,8 @@ import pytest
 from pandas.testing import assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
-from bofire.data_models.features.api import ContinuousDescriptorInput, ContinuousInput
+from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.features.descriptors import Descriptors
 
 
 def test_continuous_input_invalid_stepsize():
@@ -347,31 +348,28 @@ def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
         (ContinuousInput(key="k", bounds=(1, 2)), False, None),
         (ContinuousInput(key="k", bounds=(2, 3)), False, None),
         (
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="k",
                 bounds=(1, 1),
-                descriptors=["a", "b"],
-                values=[1, 2],
+                descriptors=Descriptors(columns={"a": [1], "b": [2]}),
             ),
             True,
             [1],
         ),
         (
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="k",
                 bounds=(1, 2),
-                descriptors=["a", "b"],
-                values=[1, 2],
+                descriptors=Descriptors(columns={"a": [1], "b": [2]}),
             ),
             False,
             None,
         ),
         (
-            ContinuousDescriptorInput(
+            ContinuousInput(
                 key="k",
                 bounds=(2, 3),
-                descriptors=["a", "b"],
-                values=[1, 2],
+                descriptors=Descriptors(columns={"a": [1], "b": [2]}),
             ),
             False,
             None,
@@ -428,3 +426,38 @@ def test_continuous_output_to_description_no_context():
 
     feat = ContinuousOutput(key="yield", objective=MinimizeObjective(w=1.0))
     assert feat.to_description() == "yield: Minimize"
+
+
+def test_continuous_descriptor_input_to_pydantic_field():
+    feat = ContinuousInput(
+        key="x", bounds=(0, 1), descriptors=Descriptors(columns={"d1": [0.5]})
+    )
+    field_type, field_info = feat.to_pydantic_field()
+    assert field_type is float
+    # one value per descriptor: the feature is a single component, not a table
+    assert (
+        field_info.description
+        == "Continuous, bounds [0.0, 1.0] — descriptors: {'d1': 0.5}"
+    )
+
+
+def test_continuous_with_structure_to_pydantic_field():
+    feat = ContinuousInput(
+        key="conc", bounds=(0.0, 1.0), descriptors=Descriptors(structure=["CCO"])
+    )
+    _, field_info = feat.to_pydantic_field()
+    # a numeric feature is a single component, so it carries exactly one structure,
+    # reported as a scalar rather than a one-element list
+    assert field_info.description == "Continuous, bounds [0.0, 1.0] — structure: CCO"
+
+
+def test_continuous_with_structure_to_pydantic_field_with_descriptors():
+    feat = ContinuousInput(
+        key="conc",
+        bounds=(0.0, 1.0),
+        descriptors=Descriptors(columns={"logP": [-0.3]}, structure=["CCO"]),
+    )
+    _, field_info = feat.to_pydantic_field()
+    assert field_info.description == (
+        "Continuous, bounds [0.0, 1.0] — descriptors: {'logP': -0.3} — structure: CCO"
+    )
