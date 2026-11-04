@@ -28,10 +28,10 @@ from bofire.data_models.likelihoods.api import (
     HVARFNER_LIKELIHOOD,
     MBO_LIKELIHOOD,
     THREESIX_LIKELIHOOD,
-    AnyLikelihood,
+    AnySingleTaskLikelihood,
     SparseOutlierGaussianLikelihood,
 )
-from bofire.data_models.means.api import AnyMean, ConstantMean
+from bofire.data_models.means.api import AnySingleTaskMean, ConstantMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
@@ -75,12 +75,12 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
             lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),
         )
     )
-    mean: AnyMean = Field(
+    mean: AnySingleTaskMean = Field(
         default=ConstantMean(),
         description="Prior mean function, what the model predicts far from any "
         "observation.",
     )
-    likelihood: AnyLikelihood = Field(
+    likelihood: AnySingleTaskLikelihood = Field(
         default=HVARFNER_LIKELIHOOD(),
         description="How observations scatter around the response, i.e. the model of "
         "the measurement noise.",

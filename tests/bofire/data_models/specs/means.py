@@ -18,3 +18,9 @@ specs.add_valid(
         ).model_dump(),
     },
 )
+specs.add_valid(
+    means.TaskwiseMean,
+    lambda: {
+        "mean": means.ConstantMean(prior=NormalPrior(loc=0.0, scale=1.0)).model_dump()
+    },
+)

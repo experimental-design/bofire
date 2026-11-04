@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 from bofire.data_models.descriptor_generators.api import Fingerprints
 from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
@@ -25,8 +26,9 @@ from bofire.data_models.likelihoods.api import (
     HVARFNER_LIKELIHOOD,
     THREESIX_LIKELIHOOD,
     SparseOutlierGaussianLikelihood,
+    TaskwiseLikelihood,
 )
-from bofire.data_models.means.api import ConstantMean
+from bofire.data_models.means.api import ConstantMean, TaskwiseMean
 from bofire.data_models.priors.api import (
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
@@ -263,3 +265,12 @@ def test_tanimoto_multiplies_the_kernels_of_several_molecular_inputs():
 def test_tanimoto_rejects(inputs):
     with pytest.raises(ValueError, match="every input to be a categorical"):
         SingleTaskGPSurrogate.tanimoto(inputs, OUTPUTS)
+
+
+@pytest.mark.parametrize(
+    "component",
+    [{"mean": TaskwiseMean()}, {"likelihood": TaskwiseLikelihood()}],
+)
+def test_single_task_gp_rejects_taskwise_components(component):
+    with pytest.raises(ValidationError):
+        SingleTaskGPSurrogate(inputs=INPUTS, outputs=OUTPUTS, **component)

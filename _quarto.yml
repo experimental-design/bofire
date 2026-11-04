@@ -109,11 +109,13 @@ quartodoc:
           members:
             - Mean
             - ConstantMean
+            - TaskwiseMean
         - name: data_models.likelihoods.api
           members:
             - Likelihood
             - GaussianLikelihood
             - SparseOutlierGaussianLikelihood
+            - TaskwiseLikelihood
     - title: Data Models - Surrogates
       desc: Surrogate model configuration data models
       contents:
