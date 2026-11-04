@@ -7,9 +7,11 @@ import bofire.strategies.api as strategies
 from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.acquisition_functions.api import qNEI
 from bofire.data_models.features.api import CategoricalInput
+from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import (
     AlwaysTrueCondition,
     NumberOfExperimentsCondition,
+    PreferenceStrategy,
     RandomStrategy,
     SoboStrategy,
     Step,
@@ -86,6 +88,29 @@ def test_StepwiseStrategy_invalid_AlwaysTrue():
                     ),
                     condition=NumberOfExperimentsCondition(n_experiments=10),
                 ),
+            ],
+        )
+
+
+@pytest.mark.parametrize("serialized", [False, True])
+def test_StepwiseStrategy_rejects_preference(serialized):
+    domain = Himmelblau().domain
+    domain.outputs[0].objective = MaximizeObjective()
+    preference = PreferenceStrategy(domain=domain)
+    with pytest.raises(ValueError, match="PreferenceStrategy.*StepwiseStrategy"):
+        StepwiseStrategy(
+            domain=domain,
+            steps=[
+                Step(
+                    strategy_data=RandomStrategy(domain=domain),
+                    condition=NumberOfExperimentsCondition(n_experiments=5),
+                ),
+                {
+                    "strategy_data": preference.model_dump()
+                    if serialized
+                    else preference,
+                    "condition": AlwaysTrueCondition(),
+                },
             ],
         )
 
