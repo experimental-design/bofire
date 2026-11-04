@@ -23,7 +23,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.kernels.api import RBFKernel
 from bofire.data_models.likelihoods.api import GaussianLikelihood, TaskwiseLikelihood
-from bofire.data_models.means.api import ConstantMean
+from bofire.data_models.means.api import ConstantMean, TaskwiseMean
 from bofire.data_models.priors.api import (
     DimensionalityScaledLogNormalPrior,
     GammaPrior,
@@ -275,7 +275,11 @@ def test_noise_prior_directional_effect_on_multi_task_gp():
     ).all()
 
 
-def test_dimension_scaled_priors_count_the_inputs_without_the_task():
+def test_dimension_scaled_priors_count_the_inputs_without_the_task(monkeypatch):
+    # Model construction determines the priors; optimizer fitting is unnecessary.
+    monkeypatch.setattr(
+        "bofire.surrogates.multi_task_gp.fit_gpytorch_mll", lambda *args, **kwargs: None
+    )
     benchmark, experiments = _multi_task_experiments()
     prior = DimensionalityScaledLogNormalPrior(
         loc=1.0, loc_scaling=0.5, scale=1.0, scale_scaling=0.5
@@ -284,6 +288,7 @@ def test_dimension_scaled_priors_count_the_inputs_without_the_task():
         MultiTaskGPSurrogate(
             inputs=benchmark.domain.inputs,
             outputs=benchmark.domain.outputs,
+            mean=TaskwiseMean(mean=ConstantMean(prior=prior)),
             likelihood=TaskwiseLikelihood(
                 likelihood=GaussianLikelihood(noise_prior=prior, noise_constraint=None)
             ),
@@ -294,6 +299,10 @@ def test_dimension_scaled_priors_count_the_inputs_without_the_task():
     # two continuous inputs next to the task: d = 2
     registered = _get_registered_noise_prior(surrogate.model)
     assert float(registered.loc) == pytest.approx(1.0 + math.log(2) * 0.5)
+    mean_priors = list(surrogate.model.mean_module.named_priors())
+    assert len(mean_priors) == 2
+    for _, _, mean_prior, _, _ in mean_priors:
+        assert float(mean_prior.loc) == pytest.approx(1.0 + math.log(2) * 0.5)
 
 
 def test_plain_mean_and_likelihood_are_shared_by_all_tasks():

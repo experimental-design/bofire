@@ -1,5 +1,7 @@
 import math
 
+from pydantic import ValidationError
+
 import bofire.data_models.likelihoods.api as likelihoods
 from bofire.data_models.priors.api import (
     HVARFNER_NOISE_PRIOR,
@@ -44,4 +46,23 @@ specs.add_valid(
             noise_prior=HVARFNER_NOISE_PRIOR()
         ).model_dump(),
     },
+)
+
+specs.add_invalid(
+    likelihoods.TaskwiseLikelihood,
+    lambda: {
+        "likelihood": likelihoods.SparseOutlierGaussianLikelihood(
+            prior_mean_of_support=3
+        ),
+    },
+    error=ValidationError,
+)
+specs.add_invalid(
+    likelihoods.TaskwiseLikelihood,
+    lambda: {
+        "likelihood": likelihoods.SparseOutlierGaussianLikelihood(
+            prior_mean_of_support=3
+        ).model_dump(),
+    },
+    error=ValidationError,
 )

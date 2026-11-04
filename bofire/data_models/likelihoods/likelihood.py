@@ -89,6 +89,7 @@ class TaskwiseLikelihood(Likelihood):
     type: Literal["TaskwiseLikelihood"] = "TaskwiseLikelihood"
     likelihood: GaussianLikelihood = Field(
         default=GaussianLikelihood(),
+        discriminator="type",
         description="The noise model every task gets a copy of; each copy is "
         "fitted separately.",
     )
