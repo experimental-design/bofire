@@ -6,21 +6,32 @@ from bofire.data_models.transforms.transform import Transform
 
 
 class ManipulateDataTransform(Transform):
-    """Transform that can be used to manipulate experiments/candidates by applying pandas based transformations
-    as described here: https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.eval.html#pandas.DataFrame.eval
+    """Rewrites columns of the experiments and candidates of a step of a stepwise
+    strategy with pandas expressions, as `DataFrame.eval` evaluates them, e.g.
+    `"y = y * 100"`.
 
-    Attributes:
-        experiment_transformations: List of strings representing the transformations to be applied to the experiments
-        candidate_transformations: List of strings representing the transformations to be applied to the candidates
-        candidate_untransformations: List of strings representing the transformations to be applied to untransform the
-            generated candidates
-
+    At least one of the three lists has to be given.
     """
 
     type: Literal["ManipulateDataTransform"] = "ManipulateDataTransform"
-    experiment_transforms: Optional[List[str]] = Field(None, min_length=1)
-    candidate_transforms: Optional[List[str]] = Field(None, min_length=1)
-    candidate_untransforms: Optional[List[str]] = Field(None, min_length=1)
+    experiment_transforms: Optional[List[str]] = Field(
+        None,
+        min_length=1,
+        description="Expressions applied to the experiments before the step sees "
+        "them.",
+    )
+    candidate_transforms: Optional[List[str]] = Field(
+        None,
+        min_length=1,
+        description="Expressions applied to the pending candidates before the step "
+        "sees them.",
+    )
+    candidate_untransforms: Optional[List[str]] = Field(
+        None,
+        min_length=1,
+        description="Expressions applied to the candidates the step proposes, to "
+        "undo the transformation.",
+    )
 
     @model_validator(mode="after")
     def validate_transformations(self):
