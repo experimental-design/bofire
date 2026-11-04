@@ -169,3 +169,6 @@ notebook_test_stats.csv
 
 # ignore scripts
 scripts/*
+
+# Reference papers kept locally, not part of the repo
+*.pdf
