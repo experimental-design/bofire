@@ -25,11 +25,6 @@ class PreferenceStrategy(BotorchStrategy):
         "to one candidate. All support larger batches. qSR and qEUBO evaluate the "
         "same expected maximum utility for the same batch.",
     )
-    frequency_hyperopt: Literal[0] = Field(
-        default=0,
-        description="Cross-validation hyperparameter tuning is not supported for "
-        "pairwise observations.",
-    )
 
     @classmethod
     def _generate_single_surrogate_spec_for_output(

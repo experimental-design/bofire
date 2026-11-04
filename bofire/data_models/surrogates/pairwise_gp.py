@@ -34,11 +34,6 @@ class PairwiseGPSurrogate(BotorchSurrogate, LBFGSBFitted):
     """
 
     type: Literal["PairwiseGPSurrogate"] = "PairwiseGPSurrogate"
-    hyperconfig: None = Field(
-        default=None,
-        description="PairwiseGP hyperparameter optimization is not supported.",
-    )
-
     kernel: AnyKernel = Field(
         default_factory=lambda: ScaleKernel(
             base_kernel=RBFKernel(

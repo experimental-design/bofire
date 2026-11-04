@@ -47,6 +47,7 @@ from bofire.data_models.strategies.api import (
     PreferenceStrategy as PreferenceStrategyDataModel,
 )
 from bofire.data_models.surrogates.api import BotorchSurrogates, PairwiseGPSurrogate
+from bofire.data_models.surrogates.optimizer import LBFGSB
 
 warnings.filterwarnings("ignore")
 rng = np.random.default_rng(42)
@@ -224,10 +225,9 @@ latent utility of the best option in that batch.
 
 Like other BoTorch strategies, it accepts a `BotorchSurrogates` collection through
 `surrogate_specs`. This collection must contain exactly one `PairwiseGPSurrogate`;
-omitting it creates a default pairwise GP for the domain. Cross-validation
-hyperparameter tuning is not supported, so `frequency_hyperopt` must remain zero
-and the surrogate must not specify a `hyperconfig`. The GP's parameters are still
-fitted to the comparison data normally.
+omitting it creates a default pairwise GP for the domain. The GP's parameters are
+fitted to the comparison data normally. Its fitting budget is configured through
+`optimizer=LBFGSB(...)` on the pairwise surrogate, as for the other GP surrogates.
 
 ```{python}
 domain = Domain(inputs=inputs, outputs=outputs)
@@ -475,10 +475,14 @@ def label_pairs(experiments, pairs, rng):
 def fit_preference_strategy(
     experiments, preferences, acquisition_function, seed
 ):
+    # A modest fit budget keeps the repeated tutorial study fast.
+    study_surrogate = surrogate_data.model_copy(
+        update={"optimizer": LBFGSB(maxiter=50)}
+    )
     preference_strategy = strategies.map(
         PreferenceStrategyDataModel(
             domain=domain,
-            surrogate_specs=BotorchSurrogates(surrogates=[surrogate_data]),
+            surrogate_specs=BotorchSurrogates(surrogates=[study_surrogate]),
             acquisition_function=acquisition_function,
             acquisition_optimizer=BotorchOptimizer(
                 n_restarts=5,
@@ -488,8 +492,6 @@ def fit_preference_strategy(
             seed=seed,
         )
     )
-    # A modest fit budget keeps the repeated tutorial study fast.
-    preference_strategy.surrogate.training_specs = {"maxiter": 50}
     preference_strategy.tell(experiments, preferences=preferences)
     return preference_strategy
 
@@ -694,11 +696,9 @@ plt.show()
 The shaded regions show one standard deviation across the ten matched
 replications.
 
-In this seeded illustration, the recommendation curves are close for the first
-few iterations, after which qEUBO pulls ahead of random pair selection. The
-best-measured-design curves nearly overlap. Both policies approach the optimum
-as more measurements and labels accumulate. With ten replications, this remains
-an illustrative baseline rather than a performance claim. The key point is
-that, even with the same qLogNEI experiment-acquisition rule, the choice of
-preference pairs changes the learned utility surrogate and therefore changes
-subsequent experiments.
+The two metrics distinguish finding a good design from recognizing it: the best
+measured utility scores the experiments, while recommendation utility also
+reflects what the model has learned from comparisons. The comparison policy can
+affect both, because the learned utility surrogate guides subsequent experiments.
+These ten replications illustrate that interaction; they do not establish that
+one comparison policy consistently outperforms the other.

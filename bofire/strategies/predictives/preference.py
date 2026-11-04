@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Optional
 
 import pandas as pd
 import torch
@@ -213,8 +213,6 @@ class PreferenceStrategy(BotorchStrategy):
         seed: int | None = None,
         convergence_criterion: AnyConvergenceCriterion | None = None,
         include_infeasible_exps_in_acqf_calc: bool = False,
-        frequency_hyperopt: Literal[0] = 0,
-        folds: int = 5,
     ) -> Self:
         """Create a preferential Bayesian optimization strategy."""
 

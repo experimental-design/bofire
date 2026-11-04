@@ -41,7 +41,6 @@ _BOTORCH_SURROGATE_TYPES: List[Type[Surrogate]] = [
     MultiTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
     SelectionSurrogate,
-
     PairwiseGPSurrogate,
 ]
 
