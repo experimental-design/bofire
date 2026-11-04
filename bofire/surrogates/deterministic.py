@@ -1,7 +1,9 @@
 import torch
 from botorch.models.deterministic import AffineDeterministicModel
 from botorch.models.transforms.input import ChainedInputTransform
+from typing_extensions import Self
 
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.encodings.api import OneHotEncoding
 from bofire.data_models.surrogates.api import (
     CategoricalDeterministicSurrogate as CategoricalDeterministicSurrogateDataModel,
@@ -9,12 +11,40 @@ from bofire.data_models.surrogates.api import (
 from bofire.data_models.surrogates.api import (
     LinearDeterministicSurrogate as LinearDeterministicSurrogateDataModel,
 )
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.engineered_features import map as map_feature
+from bofire.surrogates.surrogate import make_surrogate
 from bofire.utils.torch_tools import get_NumericToCategorical_input_transform, tkwargs
 
 
 class LinearDeterministicSurrogate(BotorchSurrogate):
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        coefficients: dict[str, float],
+        intercept: float,
+        dump: str | None = None,
+        categorical_encodings: InputTransformSpecs = {},  # noqa: B006 - copied by make_surrogate
+        engineered_features: EngineeredFeatures = EngineeredFeatures(),  # noqa: B008 - copied by make_surrogate
+    ) -> Self:
+        """Create a deterministic linear model ready for prediction.
+
+        Args:
+            inputs: Numeric input features.
+            outputs: Output features.
+            coefficients: Coefficients keyed by input and engineered feature names.
+            intercept: Constant offset.
+            dump: Serialized model, if provided.
+            categorical_encodings: In-model categorical encodings.
+            engineered_features: Features derived from the inputs.
+
+        Defaults mirror the data model and are copied for each call.
+        """
+        return make_surrogate(cls, LinearDeterministicSurrogateDataModel, locals())
+
     def __init__(
         self,
         data_model: LinearDeterministicSurrogateDataModel,
@@ -51,6 +81,30 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
 
 
 class CategoricalDeterministicSurrogate(BotorchSurrogate):
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        mapping: dict[str, float],
+        dump: str | None = None,
+        categorical_encodings: InputTransformSpecs = {},  # noqa: B006 - copied by make_surrogate
+        engineered_features: EngineeredFeatures = EngineeredFeatures(),  # noqa: B008 - copied by make_surrogate
+    ) -> Self:
+        """Create a deterministic categorical model ready for prediction.
+
+        Args:
+            inputs: Exactly one categorical input feature.
+            outputs: Output features.
+            mapping: Continuous value for each input category.
+            dump: Serialized model, if provided.
+            categorical_encodings: In-model categorical encodings.
+            engineered_features: Features derived from the inputs.
+
+        Defaults mirror the data model and are copied for each call.
+        """
+        return make_surrogate(cls, CategoricalDeterministicSurrogateDataModel, locals())
+
     def __init__(
         self,
         data_model: CategoricalDeterministicSurrogateDataModel,

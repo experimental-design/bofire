@@ -7,7 +7,9 @@ from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
 from torch import Tensor, nn
 from torch.utils.data import DataLoader, Dataset
+from typing_extensions import Self
 
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import (
     ClassificationMLPEnsemble as DataModelClassification,
@@ -16,7 +18,10 @@ from bofire.data_models.surrogates.api import MLPEnsemble as DataModel
 from bofire.data_models.surrogates.api import (
     RegressionMLPEnsemble as DataModelRegression,
 )
+from bofire.data_models.surrogates.scaler import AnyScaler, ScalerEnum
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.surrogate import make_surrogate
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -204,6 +209,54 @@ class MLPEnsemble(TrainableBotorchSurrogate):
 
 
 class RegressionMLPEnsemble(MLPEnsemble):
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        dump: str | None = None,
+        categorical_encodings: InputTransformSpecs = {},  # noqa: B006 - copied by make_surrogate
+        engineered_features: EngineeredFeatures = EngineeredFeatures(),  # noqa: B008 - copied by make_surrogate
+        scaler: AnyScaler = None,
+        output_scaler: ScalerEnum = ScalerEnum.IDENTITY,
+        n_estimators: int = 5,
+        hidden_layer_sizes: Sequence = (100,),
+        activation: Literal["relu", "logistic", "tanh"] = "relu",
+        dropout: float = 0.0,
+        batch_size: int = 10,
+        n_epochs: int = 200,
+        lr: float = 1e-4,
+        weight_decay: float = 0.0,
+        subsample_fraction: float = 1.0,
+        shuffle: bool = True,
+        final_activation: Literal["identity"] = "identity",
+    ) -> Self:
+        """Create a regression MLP ensemble using validated data-model settings.
+
+        Args:
+            inputs: Input features.
+            outputs: Continuous output features.
+            dump: Serialized fitted model to restore, if provided.
+            categorical_encodings: In-model categorical encodings.
+            engineered_features: Features derived from the inputs.
+            scaler: Input scaler; None disables scaling.
+            output_scaler: Output scaling method.
+            n_estimators: Number of networks in the ensemble.
+            hidden_layer_sizes: Width of each hidden layer.
+            activation: Hidden-layer activation.
+            dropout: Dropout probability.
+            batch_size: Training batch size.
+            n_epochs: Training epochs per network.
+            lr: Learning rate.
+            weight_decay: Optimizer weight decay.
+            subsample_fraction: Training sample fraction per network.
+            shuffle: Whether to shuffle training batches.
+            final_activation: identity activation for regression.
+
+        Defaults mirror the data model and are copied for each call. Call ``fit`` to train.
+        """
+        return make_surrogate(cls, DataModelRegression, locals())
+
     def __init__(self, data_model: DataModelRegression, **kwargs):
         super().__init__(data_model, **kwargs)
 
@@ -261,6 +314,54 @@ class RegressionMLPEnsemble(MLPEnsemble):
 
 
 class ClassificationMLPEnsemble(MLPEnsemble):
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        dump: str | None = None,
+        categorical_encodings: InputTransformSpecs = {},  # noqa: B006 - copied by make_surrogate
+        engineered_features: EngineeredFeatures = EngineeredFeatures(),  # noqa: B008 - copied by make_surrogate
+        scaler: AnyScaler = None,
+        output_scaler: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY,
+        n_estimators: int = 5,
+        hidden_layer_sizes: Sequence = (100,),
+        activation: Literal["relu", "logistic", "tanh"] = "relu",
+        dropout: float = 0.0,
+        batch_size: int = 10,
+        n_epochs: int = 200,
+        lr: float = 1e-4,
+        weight_decay: float = 0.0,
+        subsample_fraction: float = 1.0,
+        shuffle: bool = True,
+        final_activation: Literal["softmax"] = "softmax",
+    ) -> Self:
+        """Create a classification MLP ensemble using validated data-model settings.
+
+        Args:
+            inputs: Input features.
+            outputs: Categorical output features.
+            dump: Serialized fitted model to restore, if provided.
+            categorical_encodings: In-model categorical encodings.
+            engineered_features: Features derived from the inputs.
+            scaler: Input scaler; None disables scaling.
+            output_scaler: Output scaling method.
+            n_estimators: Number of networks in the ensemble.
+            hidden_layer_sizes: Width of each hidden layer.
+            activation: Hidden-layer activation.
+            dropout: Dropout probability.
+            batch_size: Training batch size.
+            n_epochs: Training epochs per network.
+            lr: Learning rate.
+            weight_decay: Optimizer weight decay.
+            subsample_fraction: Training sample fraction per network.
+            shuffle: Whether to shuffle training batches.
+            final_activation: softmax activation for classification.
+
+        Defaults mirror the data model and are copied for each call. Call ``fit`` to train.
+        """
+        return make_surrogate(cls, DataModelClassification, locals())
+
     def __init__(self, data_model: DataModelClassification, **kwargs):
         super().__init__(data_model, **kwargs)
 

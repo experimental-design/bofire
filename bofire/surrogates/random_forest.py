@@ -1,6 +1,6 @@
 import base64
 import io
-from typing import Optional
+from typing import Literal, Optional
 
 import numpy as np
 import torch
@@ -10,10 +10,15 @@ from botorch.models.transforms.outcome import OutcomeTransform
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.utils.validation import check_is_fitted
 from torch import Tensor
+from typing_extensions import Self
 
+from bofire.data_models.domain.api import EngineeredFeatures, Inputs, Outputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import RandomForestSurrogate as DataModel
+from bofire.data_models.surrogates.scaler import AnyScaler, Normalize, ScalerEnum
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
+from bofire.surrogates.surrogate import make_surrogate
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -85,6 +90,62 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
 
     The same hyperparameters are available as for the wrapped sklearn RandomForestRegreesor.
     """
+
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        dump: str | None = None,
+        categorical_encodings: InputTransformSpecs = {},  # noqa: B006 - copied by make_surrogate
+        engineered_features: EngineeredFeatures = EngineeredFeatures(),  # noqa: B008 - copied by make_surrogate
+        scaler: AnyScaler = Normalize(),  # noqa: B008 - copied by make_surrogate
+        output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE,
+        n_estimators: int = 100,
+        criterion: Literal[
+            "squared_error", "absolute_error", "friedman_mse", "poisson"
+        ] = "squared_error",
+        max_depth: int | None = None,
+        min_samples_split: int | float = 2,
+        min_samples_leaf: int | float = 1,
+        min_weight_fraction_leaf: float = 0.0,
+        max_features: int | float | Literal["auto", "sqrt", "log2"] = 1.0,
+        max_leaf_nodes: int | None = None,
+        min_impurity_decrease: float = 0.0,
+        bootstrap: bool = True,
+        oob_score: bool = False,
+        random_state: int | None = None,
+        ccp_alpha: float = 0.0,
+        max_samples: int | float | None = None,
+    ) -> Self:
+        """Create a runtime random forest using validated data-model settings.
+
+        Args:
+            inputs: Input features.
+            outputs: Output features.
+            dump: Serialized fitted model to restore, if provided.
+            categorical_encodings: In-model categorical encodings.
+            engineered_features: Features derived from the inputs.
+            scaler: Input scaler; None disables scaling.
+            output_scaler: Output scaling method.
+            n_estimators: Number of trees.
+            criterion: Split quality criterion.
+            max_depth: Maximum tree depth.
+            min_samples_split: Minimum sample count or fraction needed to split.
+            min_samples_leaf: Minimum sample count or fraction in a leaf.
+            min_weight_fraction_leaf: Minimum weighted sample fraction in a leaf.
+            max_features: Number or fraction of features considered per split.
+            max_leaf_nodes: Maximum leaf count per tree.
+            min_impurity_decrease: Minimum impurity decrease needed to split.
+            bootstrap: Whether trees use bootstrap samples.
+            oob_score: Whether to compute an out-of-bag score.
+            random_state: Random seed for the forest.
+            ccp_alpha: Cost-complexity pruning parameter.
+            max_samples: Sample count or fraction drawn for each bootstrap tree.
+
+        Defaults mirror the data model and are copied for each call. Call ``fit`` to train.
+        """
+        return make_surrogate(cls, DataModel, locals())
 
     def __init__(
         self,
