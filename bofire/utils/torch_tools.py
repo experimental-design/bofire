@@ -127,15 +127,18 @@ def get_linear_constraints(
             constraints.append(
                 (
                     torch.tensor(indices),
-                    -torch.tensor(scaled_coefficients).to(**tkwargs),
+                    -torch.tensor(scaled_coefficients, **tkwargs),
                     -(rhs + c.rhs - np.sum(np.array(coefficients) * lower)),
                 ),
             )
         else:
+            # Construct directly in solver precision: a float32 intermediate
+            # followed by .to(**tkwargs) loses precision and can move implied
+            # fixed values outside valid bounds.
             constraints.append(
                 (
                     torch.tensor(indices),
-                    -torch.tensor(coefficients).to(**tkwargs),
+                    -torch.tensor(coefficients, **tkwargs),
                     -(rhs + c.rhs),
                 ),
             )

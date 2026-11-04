@@ -1,9 +1,10 @@
 import importlib.util
 import sys
+from math import comb
 
 import numpy as np
 import pytest
-from scipy.optimize import LinearConstraint, NonlinearConstraint
+from scipy.optimize import LinearConstraint, NonlinearConstraint, OptimizeResult
 
 from bofire.data_models.constraints.api import (
     InterpointEqualityConstraint,
@@ -21,9 +22,11 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
+from bofire.strategies.doe import utils as doe_utils
 from bofire.strategies.doe.objective import DOptimalityCriterion, get_objective_function
 from bofire.strategies.doe.utils import (
     ConstraintWrapper,
+    _build_nchoosek_combined_patterns,
     _minimize,
     constraints_as_scipy_constraints,
     convert_formula_to_string,
@@ -35,6 +38,317 @@ from bofire.strategies.doe.utils import (
 
 
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
+
+
+# Infeasible-pattern errors read: "No combined NChooseK patterns are feasible
+# under the input bounds and linear constraints." The pytest.raises match below
+# checks the key terms "input bounds and linear constraints", which identify the
+# failure without coupling tests to the entire sentence's wording.
+
+
+@pytest.mark.parametrize("max_count", [2, 3])
+@pytest.mark.parametrize(
+    "upper_bound, minimum_required",
+    [(0.3, 4), (0.4, 3), (0.49, 3), (0.5, 2), (0.6, 2), (0.99, 2), (1.0, 1)],
+)
+def test_nchoosek_mixture_patterns(max_count, upper_bound, minimum_required):
+    """Issue #842: filter by component caps without modifying the domain.
+
+    Requesting 20 experiment slots forces the assignment to cycle through the
+    surviving patterns (6 for max_count=2 or 10 for max_count=3 when 0.5 <= cap < 1).
+    Caps 0.3 and 0.4 require four and three components respectively, testing empty
+    and reduced feasible sets; 0.49/0.5 straddle pair feasibility, 0.6 reproduces
+    the issue, and 0.99/1.0 straddle singleton feasibility for a mixture sum of one.
+    """
+    keys = [f"x{i}" for i in range(4)]
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, upper_bound)) for k in keys],
+        constraints=[
+            NChooseKConstraint(
+                features=keys, min_count=0, max_count=max_count, none_also_valid=False
+            ),
+            LinearEqualityConstraint(features=keys, coefficients=[1] * 4, rhs=1),
+        ],
+    )
+    before = domain.model_dump()
+    expected_count = sum(comb(4, k) for k in range(minimum_required, max_count + 1))
+    for _ in range(2):
+        if expected_count == 0:
+            with pytest.raises(ValueError, match="input bounds and linear constraints"):
+                _build_nchoosek_combined_patterns(domain)
+            with pytest.raises(ValueError, match="input bounds and linear constraints"):
+                nchoosek_constraints_as_bounds(domain, 20)
+            assert domain.model_dump() == before
+            continue
+        patterns = _build_nchoosek_combined_patterns(domain)
+        assert len(patterns) == expected_count
+        assert all(
+            minimum_required <= 4 - len(pattern) <= max_count for pattern in patterns
+        )
+        bounds = np.array(nchoosek_constraints_as_bounds(domain, 20)).reshape(20, 4, 2)
+        assert (bounds[:, :, 1].sum(axis=1) >= 1).all()
+        assert domain.model_dump() == before
+
+
+@pytest.mark.parametrize(
+    "scenario", ["inequality", "joint", "all_features_unpinned", "none"]
+)
+def test_nchoosek_linear_filter(scenario):
+    """Issue #842: check linear constraints jointly, preserving unconstrained patterns."""
+    keys = ["a", "b", "c"]
+    constraints = [
+        NChooseKConstraint(
+            features=keys,
+            min_count=3 if scenario == "all_features_unpinned" else 1,
+            max_count=3 if scenario == "all_features_unpinned" else 2,
+            none_also_valid=False,
+        )
+    ]
+    if scenario == "inequality":
+        constraints.append(
+            LinearInequalityConstraint(
+                features=["a", "b"], coefficients=[-1, -1], rhs=-0.5
+            )
+        )
+    elif scenario == "joint":
+        constraints.extend(
+            [
+                LinearEqualityConstraint(
+                    features=["a", "b"], coefficients=[1, 1], rhs=1
+                ),
+                LinearInequalityConstraint(
+                    features=["a", "b"], coefficients=[1, 1], rhs=0.5
+                ),
+            ]
+        )
+    elif scenario == "all_features_unpinned":
+        constraints.append(
+            LinearEqualityConstraint(features=keys, coefficients=[1] * 3, rhs=1)
+        )
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 1)) for k in keys],
+        constraints=constraints,
+    )
+    if scenario == "joint":
+        with pytest.raises(ValueError, match="input bounds and linear constraints"):
+            _build_nchoosek_combined_patterns(domain)
+    else:
+        patterns = set(_build_nchoosek_combined_patterns(domain))
+        if scenario == "all_features_unpinned":
+            assert patterns == {()}
+        else:
+            expected = {(0,), (1,), (2,), (0, 1), (0, 2), (1, 2)}
+            if scenario == "inequality":
+                expected.remove((0, 1))
+            assert patterns == expected
+
+
+@pytest.mark.parametrize(
+    "rhs, expected_inactive",
+    [
+        pytest.param(1.0, {("z",)}, id="one-pattern-one-inactive"),
+        pytest.param(
+            0.75, {("z",), ("b",), ("b", "z")}, id="multiple-patterns-and-inactive"
+        ),
+    ],
+)
+def test_nchoosek_filter_feature_order(rhs, expected_inactive):
+    """Issue #842 discussion: shuffled inputs must still pin the correct named features.
+
+    Asymmetric bounds and reordered coefficients expose index mix-ups; the second
+    case checks multiple surviving patterns, including two deactivated features.
+    """
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="z", bounds=(0, 0.1)),
+            ContinuousInput(key="b", bounds=(0, 0.3)),
+            ContinuousInput(key="a", bounds=(0, 0.8)),
+        ],
+        constraints=[
+            NChooseKConstraint(
+                features=["z", "a", "b"],
+                min_count=1,
+                max_count=2,
+                none_also_valid=False,
+            ),
+            LinearEqualityConstraint(
+                features=["b", "z", "a"], coefficients=[2, 1, 1], rhs=rhs
+            ),
+        ],
+    )
+    keys = domain.inputs.get_keys()
+    assert keys == ["a", "b", "z"]
+    patterns = _build_nchoosek_combined_patterns(domain)
+    # ("z",) means only z is deactivated; a and b remain unpinned.
+    assert {tuple(keys[idx] for idx in p) for p in patterns} == expected_inactive
+
+    # Request twice as many experiments as patterns; each pattern must appear twice.
+    n_experiments = 2 * len(expected_inactive)
+    bounds = np.array(nchoosek_constraints_as_bounds(domain, n_experiments)).reshape(
+        n_experiments, 3, 2
+    )
+    expected_upper = {
+        tuple(0 if key in inactive else cap for key, cap in zip(keys, [0.8, 0.3, 0.1]))
+        for inactive in expected_inactive
+    }
+    observed_upper = [tuple(row) for row in bounds[:, :, 1]]
+    assert set(observed_upper) == expected_upper
+    assert all(observed_upper.count(row) == 2 for row in expected_upper)
+    np.testing.assert_array_equal(bounds[:, :, 0], np.zeros((n_experiments, 3)))
+
+
+@pytest.mark.parametrize("scenario", ["equality", "inequality"])
+def test_nchoosek_filter_signed_coefficients(scenario):
+    """Issue #842: signed coefficients must leave only the pattern that pins a.
+
+    For a-2*b = -1 (or <= -1), a=0 permits b=0.5, but b=0 requires
+    a=-1 (or <= -1), outside its bounds; coefficients are supplied in b,a order.
+    """
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="a", bounds=(0, 0.4)),
+            ContinuousInput(key="b", bounds=(0, 0.6)),
+        ],
+        constraints=[
+            NChooseKConstraint(
+                features=["a", "b"], min_count=1, max_count=1, none_also_valid=False
+            ),
+            (
+                LinearEqualityConstraint
+                if scenario == "equality"
+                else LinearInequalityConstraint
+            )(features=["b", "a"], coefficients=[-2, 1], rhs=-1),
+        ],
+    )
+    # Canonical feature order is a,b: [(0,)] means only pinning a survives.
+    assert _build_nchoosek_combined_patterns(domain) == [(0,)]
+
+
+@pytest.mark.parametrize(
+    "nchoosek, linear", [(False, False), (False, True), (True, False)]
+)
+def test_nchoosek_filter_skips_lp(nchoosek, linear, monkeypatch):
+    """Issue #842: avoid solver overhead when no joint feasibility check is needed.
+
+    With no NChooseK patterns or no linear constraints, filtering must never call
+    the LP solver; a replacement that fails on any call enforces this.
+    """
+    keys = ["a", "b"]
+    constraints = []
+    if nchoosek:
+        constraints.append(
+            NChooseKConstraint(
+                features=keys, min_count=1, max_count=2, none_also_valid=False
+            )
+        )
+    if linear:
+        constraints.append(
+            LinearEqualityConstraint(features=keys, coefficients=[1, 1], rhs=1)
+        )
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 1)) for k in keys],
+        constraints=constraints,
+    )
+
+    def unexpected_lp(*args, **kwargs):
+        pytest.fail("LP called on a fast path")
+
+    monkeypatch.setattr(doe_utils.opt, "linprog", unexpected_lp)
+    assert len(_build_nchoosek_combined_patterns(domain)) == (3 if nchoosek else 0)
+
+
+def test_nchoosek_filter_checks_each_unique_pattern_once(monkeypatch):
+    """Issue #842: deduplicate patterns before paying for joint LP checks.
+
+    The substituted generator returns pin-a twice and pin-b once: only two
+    unique patterns need checking, even when reused for 20 experiments.
+    Two linear constraints exercise the joint LP path rather than interval-only
+    filtering; 40 returned bound pairs represent 20 experiments with two features.
+    """
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b"]],
+        constraints=[
+            LinearEqualityConstraint(features=["a", "b"], coefficients=[1, 1], rhs=1),
+            LinearInequalityConstraint(
+                features=["a", "b"], coefficients=[-1, -1], rhs=0
+            ),
+        ],
+    )
+    monkeypatch.setattr(
+        doe_utils, "_get_nchoosek_combined_patterns", lambda _: [(0,), (0,), (1,)]
+    )
+    linprog = doe_utils.opt.linprog
+    calls = 0
+
+    def counted_lp(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        return linprog(*args, **kwargs)
+
+    monkeypatch.setattr(doe_utils.opt, "linprog", counted_lp)
+    assert len(nchoosek_constraints_as_bounds(domain, 20)) == 40
+    assert calls == 2
+
+
+def test_nchoosek_filter_surfaces_solver_failure(monkeypatch):
+    """Issue #842: a numerical solver failure must not discard a pattern silently.
+
+    Both pin-a and pin-b can satisfy a+b=1 and a+b>=0 within their bounds.
+    A substituted LP result reports numerical failure, not proven infeasibility,
+    so filtering must raise RuntimeError containing the solver's explanation.
+    """
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b"]],
+        constraints=[
+            NChooseKConstraint(
+                features=["a", "b"], min_count=1, max_count=1, none_also_valid=False
+            ),
+            LinearEqualityConstraint(features=["a", "b"], coefficients=[1, 1], rhs=1),
+            LinearInequalityConstraint(
+                features=["a", "b"], coefficients=[-1, -1], rhs=0
+            ),
+        ],
+    )
+
+    def failed_lp(*args, **kwargs):
+        return OptimizeResult(success=False, status=4, message="numerical failure")
+
+    monkeypatch.setattr(doe_utils.opt, "linprog", failed_lp)
+    with pytest.raises(RuntimeError, match="numerical failure"):
+        _build_nchoosek_combined_patterns(domain)
+
+
+@pytest.mark.parametrize("n_experiments", [5, 6, 8])
+def test_doe_mixture_public_ask(n_experiments):
+    """Issue #842: strategy.ask(n_experiments) must return the requested valid rows.
+
+    Requests of 5, 6, and 8 are below, equal to, and above the six feasible
+    pair patterns; eight experiments therefore require pattern reuse.
+    """
+    from bofire.data_models.strategies.api import DoEStrategy as DoEDataModel
+    from bofire.data_models.strategies.doe import SpaceFillingCriterion
+    from bofire.strategies.doe_strategy import DoEStrategy
+
+    keys = [f"x{i}" for i in range(4)]
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 0.6)) for k in keys],
+        constraints=[
+            NChooseKConstraint(
+                features=keys, min_count=0, max_count=2, none_also_valid=False
+            ),
+            LinearEqualityConstraint(features=keys, coefficients=[1] * 4, rhs=1),
+        ],
+    )
+    strategy = DoEStrategy(
+        data_model=DoEDataModel(
+            domain=domain, criterion=SpaceFillingCriterion(), seed=42
+        )
+    )
+    before = domain.model_dump()
+    candidates = strategy.ask(n_experiments)
+    assert len(candidates) == n_experiments
+    domain.validate_candidates(candidates, only_inputs=True, tol=1e-4)
+    assert domain.model_dump() == before
 
 
 def get_formula_from_string_recursion_limit():

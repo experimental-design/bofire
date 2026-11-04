@@ -697,20 +697,107 @@ def _get_nchoosek_combined_patterns(
     return allowed_constraint_patterns
 
 
+def _filter_linearly_feasible_patterns(
+    domain: Domain,
+    patterns: list[tuple[int, ...]],
+) -> list[tuple[int, ...]]:
+    """Keep patterns compatible with bounds and intrapoint linear constraints.
+
+    Feasibility checks use copies of the input bounds; the domain is not modified.
+    Nonlinear and interpoint feasibility and the nonzero status of unpinned
+    features are not established here. Single linear constraints use attainable
+    intervals; multiple rows use a joint LP.
+    """
+    linear_constraints = domain.constraints.get(
+        [LinearEqualityConstraint, LinearInequalityConstraint]
+    )
+    if not patterns or not linear_constraints:
+        return patterns
+
+    # Convert constraints once, in the same feature order used by the patterns.
+    # Keep equality and inequality rows separate for the joint feasibility solver.
+    equalities, equality_rhs, inequalities, inequality_rhs = [], [], [], []
+    for constraint in linear_constraints:
+        matrix, _, rhs = get_constraint_function_and_bounds(constraint, domain, 1)
+        if isinstance(constraint, LinearEqualityConstraint):
+            equalities.append(matrix[0])
+            equality_rhs.append(rhs[0])
+        else:
+            inequalities.append(matrix[0])
+            inequality_rhs.append(rhs[0])
+
+    continuous_inputs = domain.inputs.get(ContinuousInput)
+    if len(continuous_inputs) != len(domain.inputs):
+        raise ValueError("NChooseK linear feasibility requires a continuous domain.")
+    bounds = np.array([feature.bounds for feature in continuous_inputs], dtype=float)
+    # Follow SciPy linprog's naming: e.g. a_ub @ x <= b_ub, where a_ub holds
+    # inequality coefficients and b_ub their upper bounds.
+    a_eq = np.array(equalities) if equalities else None
+    b_eq = np.array(equality_rhs) if equalities else None
+    a_ub = np.array(inequalities) if inequalities else None
+    b_ub = np.array(inequality_rhs) if inequalities else None
+    matrix = np.array(equalities + inequalities)
+    rhs = np.array(equality_rhs + inequality_rhs)
+    # Positive terms are smallest at lower bounds; negative terms at upper bounds.
+    # Separating them lets us compute each row's attainable minimum and maximum.
+    positive = np.maximum(matrix, 0)
+    negative = np.minimum(matrix, 0)
+    objective = np.zeros(len(bounds))
+    feasible = []
+    for pattern in patterns:
+        # A pattern lists inactive features: pin those to zero in a fresh copy.
+        pattern_bounds = bounds.copy()
+        pattern_bounds[list(pattern)] = 0
+        minimum = positive @ pattern_bounds[:, 0] + negative @ pattern_bounds[:, 1]
+        maximum = positive @ pattern_bounds[:, 1] + negative @ pattern_bounds[:, 0]
+        # Reject rows whose attainable interval cannot satisfy the constraint:
+        # inequalities need minimum <= rhs; equalities also need maximum >= rhs.
+        tolerance = 1e-7  # HiGHS' default primal feasibility tolerance.
+        if np.any(minimum > rhs + tolerance) or np.any(
+            maximum[: len(equalities)] < rhs[: len(equalities)] - tolerance
+        ):
+            continue
+        if len(linear_constraints) == 1:
+            feasible.append(pattern)
+            continue
+        # Individually attainable rows can still contradict one another. A zero
+        # objective asks only whether one point satisfies all rows together.
+        result = opt.linprog(
+            c=objective,
+            A_eq=a_eq,
+            b_eq=b_eq,
+            A_ub=a_ub,
+            b_ub=b_ub,
+            bounds=pattern_bounds,
+            method="highs",
+        )
+        if result.success:
+            feasible.append(pattern)
+        elif result.status != 2:
+            # Only proven infeasibility (status 2) justifies dropping a pattern;
+            # numerical or solver failures must not silently shrink the search.
+            raise RuntimeError(
+                f"Linear feasibility check failed for NChooseK pattern {pattern}: "
+                f"{result.message} (status {result.status})."
+            )
+    return feasible
+
+
 def _build_nchoosek_combined_patterns(
     domain: Domain,
 ) -> list[tuple[int, ...]]:
-    """Collect combined deactivation patterns.
+    """Collect combined deactivation patterns compatible with linear constraints.
 
     Args:
         domain: Domain whose NChooseK constraints should be combined.
 
     Returns:
-        A deduplicated list of inactive-index tuples.
+        A deduplicated list of inactive-index tuples. The domain is not modified.
 
     Raises:
         ValueError: When no valid combined patterns exist (contradictory
-            constraints).
+            NChooseK constraints or infeasibility with bounds/linear constraints).
+        RuntimeError: When the linear feasibility solver fails unexpectedly.
     """
     result = list(set(_get_nchoosek_combined_patterns(domain)))
 
@@ -722,7 +809,13 @@ def _build_nchoosek_combined_patterns(
             "The overlapping constraints are contradictory."
         )
 
-    return result
+    feasible = _filter_linearly_feasible_patterns(domain, result)
+    if result and not feasible:
+        raise ValueError(
+            "No combined NChooseK patterns are feasible under the input bounds "
+            "and linear constraints."
+        )
+    return feasible
 
 
 def nchoosek_constraints_as_bounds(
@@ -737,7 +830,9 @@ def nchoosek_constraints_as_bounds(
 
     Returns:
         A list of tuples containing bounds that respect NChooseK constraints
-        imposed onto the decision variables.
+        imposed onto the decision variables. Patterns are screened for linear
+        feasibility before being reused across experiment slots. The domain
+        and its feature bounds are not modified.
 
     """
 

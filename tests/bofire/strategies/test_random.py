@@ -1,6 +1,7 @@
 import warnings
 
 import pytest
+from botorch.exceptions.errors import InfeasibilityError
 from pandas.testing import assert_frame_equal
 
 import bofire.data_models.strategies.api as data_models
@@ -25,6 +26,257 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.data_models.features.descriptors import Descriptors
+
+
+@pytest.mark.parametrize(
+    "free_count", [0, 1], ids=["all-pinned-to-zero", "one-free-capped-at-0.6"]
+)
+def test_polytope_infeasible_pinned_mixture(free_count):
+    """Issue #842: zero or one unpinned component cannot sum to one.
+
+    free_count counts components allowed in [0, 0.6]; all others are fixed at zero.
+    Zero tests a constant contradiction; one tests an out-of-bounds implied value.
+    """
+    keys = ["x0", "x1", "x2"]
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=k, bounds=(0, 0.6) if i < free_count else (0, 0))
+            for i, k in enumerate(keys)
+        ],
+        constraints=[
+            LinearEqualityConstraint(features=keys, coefficients=[1] * 3, rhs=1)
+        ],
+    )
+    with pytest.raises(InfeasibilityError):
+        strategies.RandomStrategy._sample_from_polytope(domain=domain, n=2, seed=1)
+
+
+@pytest.mark.parametrize("weighted", [False, True])
+def test_nchoosek_mixture_replenishes_samples(monkeypatch, weighted):
+    """Issue #842: rejected subsets must not reduce ask's requested row count.
+
+    The weighted case also preserves the surviving subsets' 3:1 multiplicity.
+    """
+    keys = [f"x{i}" for i in range(4)]
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 0.6)) for k in keys],
+        constraints=[
+            NChooseKConstraint(
+                features=keys, min_count=0, max_count=2, none_also_valid=False
+            ),
+            LinearEqualityConstraint(features=keys, coefficients=[1] * 4, rhs=1),
+        ],
+    )
+    strategy = strategies.RandomStrategy(
+        data_model=data_models.RandomStrategy(
+            domain=domain, seed=1, n_burnin=10, n_thinning=1
+        )
+    )
+    monkeypatch.setattr(
+        strategy,
+        "sample_valid_nchoosek_features",
+        lambda **kwargs: (
+            [(), ("x0", "x1"), ("x0", "x1"), ("x0", "x1"), ("x2", "x3")]
+            if weighted
+            else [(), ("x0",), ("x0", "x1")]
+        ),
+    )
+    before = domain.model_dump()
+    requested = 20 if weighted else 12
+    candidates = strategy.ask(requested)
+    assert len(candidates) == requested
+    if weighted:
+        assert (candidates["x0"] > 0).sum() == 15
+        assert (candidates["x2"] > 0).sum() == 5
+    domain.validate_candidates(candidates, only_inputs=True)
+    assert domain.model_dump() == before
+
+
+@pytest.mark.parametrize(
+    "conflict", ["bounds", "equalities", "inequality", "zero_coefficient"]
+)
+def test_polytope_fixed_constraint_conflicts(conflict):
+    """Issue #842: substituting fixed values must reveal infeasible constraints.
+
+    With b fixed at zero and a bounded by [0, 1], the cases reduce to:
+    bounds: a=2, outside its bounds;
+    equalities: a=0.5 and a=0.25, contradictory fixed values;
+    inequality: a=0.5 and a<=0.25, contradictory requirements;
+    zero_coefficient: a=0.5 and 0*a+0=1, an impossible constant equality.
+
+    Each must raise InfeasibilityError rather than return invalid samples, so
+    NChooseK sampling can recognize and skip the infeasible subset.
+    """
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="a", bounds=(0, 1)),
+            ContinuousInput(key="b", bounds=(0, 0)),
+        ],
+        constraints=[
+            LinearEqualityConstraint(
+                features=["a", "b"],
+                coefficients=[1, 1],
+                rhs=2 if conflict == "bounds" else 0.5,
+            ),
+        ],
+    )
+    if conflict == "equalities":
+        domain.constraints.constraints.append(
+            LinearEqualityConstraint(features=["a", "b"], coefficients=[1, 1], rhs=0.25)
+        )
+    elif conflict == "inequality":
+        domain.constraints.constraints.append(
+            LinearInequalityConstraint(
+                features=["a", "b"], coefficients=[1, 1], rhs=0.25
+            )
+        )
+    elif conflict == "zero_coefficient":
+        domain.constraints.constraints.append(
+            LinearEqualityConstraint(features=["a", "b"], coefficients=[0, 1], rhs=1)
+        )
+    with pytest.raises(InfeasibilityError):
+        strategies.RandomStrategy._sample_from_polytope(domain=domain, n=2, seed=1)
+
+
+def test_polytope_chained_pseudo_fixed():
+    """Issue #842: propagate implied fixed values through successive equalities.
+
+    With b fixed at zero, a+b=0.4 first fixes a=0.4; substituting that into
+    a+c=1 then fixes c=0.6. Reduction must continue until no further values
+    are implied, rather than stopping after checking each equality once.
+    Both requested rows must contain these fixed values and satisfy the domain.
+    """
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="a", bounds=(0, 1)),
+            ContinuousInput(key="b", bounds=(0, 0)),
+            ContinuousInput(key="c", bounds=(0, 1)),
+        ],
+        constraints=[
+            LinearEqualityConstraint(features=["a", "b"], coefficients=[1, 1], rhs=0.4),
+            LinearEqualityConstraint(features=["a", "c"], coefficients=[1, 1], rhs=1),
+        ],
+    )
+    candidates = strategies.RandomStrategy._sample_from_polytope(
+        domain=domain, n=2, seed=1
+    )
+    domain.validate_candidates(candidates, only_inputs=True)
+    assert candidates["a"].tolist() == [0.4, 0.4]
+    assert candidates["c"].tolist() == [0.6, 0.6]
+
+
+def test_polytope_pseudo_fixed_decimal_boundary():
+    """Bounds validation must not reject a feasible decimal equality through rounding.
+
+    With b=0, 0.1*a+b=0.3 fixes a at its lower bound of 3. Converting 0.1
+    through float32 first moves the computed value below that bound; even
+    double-precision division needs allowance for floating-point roundoff.
+    """
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="a", bounds=(3, 4)),
+            ContinuousInput(key="b", bounds=(0, 0)),
+        ],
+        constraints=[
+            LinearEqualityConstraint(
+                features=["a", "b"], coefficients=[0.1, 1], rhs=0.3
+            )
+        ],
+    )
+    candidates = strategies.RandomStrategy._sample_from_polytope(
+        domain=domain, n=2, seed=1
+    )
+    assert candidates["a"].tolist() == [3, 3]
+    domain.validate_candidates(candidates, only_inputs=True)
+
+
+@pytest.mark.parametrize(
+    "recover", [True, False], ids=["later-draw-recovers", "budget-exhausted"]
+)
+def test_nchoosek_retries_infeasible_subset_draws(monkeypatch, recover):
+    """Issue #842: retry unlucky subset draws before reporting budget exhaustion.
+
+    Empty and singleton subsets cannot satisfy a+b=1 with component caps of 0.6.
+    Return those twice, then offer the feasible pair on the final allowed draw
+    in the recovery case. Otherwise exhaust all three draws and report a sampled
+    search failure, not proof that the domain is infeasible. Previously rejected
+    subsets must not invoke the polytope sampler again within this ask call.
+    """
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 0.6)) for k in ["a", "b"]],
+        constraints=[
+            NChooseKConstraint(
+                features=["a", "b"], min_count=0, max_count=2, none_also_valid=False
+            ),
+            LinearEqualityConstraint(features=["a", "b"], coefficients=[1, 1], rhs=1),
+        ],
+    )
+    strategy = strategies.RandomStrategy(
+        data_model=data_models.RandomStrategy(
+            domain=domain, seed=1, max_iters=3, n_burnin=10, n_thinning=1
+        )
+    )
+    draws = 0
+    sampled = []
+    polytope_sampler = strategy._sample_from_polytope
+
+    def draw_subsets(**kwargs):
+        nonlocal draws
+        draws += 1
+        return [("a", "b"), ("a",)] if recover and draws == 3 else [(), ("a",)]
+
+    def record_polytope_call(**kwargs):
+        sampled.append(
+            tuple(
+                feature.key
+                for feature in kwargs["domain"].inputs.get(ContinuousInput)
+                if not feature.is_fixed()
+            )
+        )
+        return polytope_sampler(**kwargs)
+
+    monkeypatch.setattr(strategy, "sample_valid_nchoosek_features", draw_subsets)
+    monkeypatch.setattr(strategy, "_sample_from_polytope", record_polytope_call)
+    before = domain.model_dump()
+    if recover:
+        candidates = strategy.ask(2)
+        assert len(candidates) == 2
+        domain.validate_candidates(candidates, only_inputs=True)
+    else:
+        with pytest.raises(ValueError, match="after 3 subset-draw batches"):
+            strategy.ask(2)
+    assert draws == 3
+    assert sampled.count(()) == 1
+    assert sampled.count(("a",)) == 1
+    # The feasible pair supplies one initial row and one fresh replenishment row.
+    assert sampled.count(("a", "b")) == (2 if recover else 0)
+    assert domain.model_dump() == before
+
+
+@pytest.mark.parametrize("seed", [1, 2, 3])
+def test_nchoosek_single_candidate_retries(seed):
+    """Issue #842: a one-row request must find the feasible pair despite unlucky draws.
+
+    Only one subset is drawn per batch for ask(1); real seeded draws exercise
+    recovery without requiring the caller to increase the requested row count.
+    """
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 0.6)) for k in ["a", "b"]],
+        constraints=[
+            NChooseKConstraint(
+                features=["a", "b"], min_count=0, max_count=2, none_also_valid=False
+            ),
+            LinearEqualityConstraint(features=["a", "b"], coefficients=[1, 1], rhs=1),
+        ],
+    )
+    strategy = strategies.RandomStrategy(
+        data_model=data_models.RandomStrategy(
+            domain=domain, seed=seed, max_iters=30, n_burnin=10, n_thinning=1
+        )
+    )
+    candidates = strategy.ask(1)
+    assert len(candidates) == 1
+    domain.validate_candidates(candidates, only_inputs=True)
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)

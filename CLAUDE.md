@@ -109,6 +109,10 @@ follow that file's convention instead — consistency within a file beats the gl
 
 Prefer `@pytest.mark.parametrize` over near-duplicate test bodies.
 
+**Use pytest's `monkeypatch` fixture for test doubles and patching, not
+`unittest.mock`.** Use small stub functions or counting wrappers when needed;
+use `monkeypatch.context()` to restore a patch before a test ends.
+
 **Put tests in the module that matches the code under test.** Tests for feature
 containers belong in `tests/bofire/data_models/domain/test_features.py`, not in
 `tests/bofire/test_register.py` — the latter is for the registration machinery itself.

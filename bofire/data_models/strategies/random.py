@@ -38,7 +38,12 @@ class RandomStrategy(Strategy):
        group per ``ContinuousInput`` with ``allow_zero=True`` outside any
        NChooseK). For each drawn subset the unselected zeroable features are
        pinned to ``0`` and the remaining features are sampled via the polytope
-       sampler. Final candidates are concatenated and uniformly subsampled.
+       sampler. Subsets with infeasible reduced polytopes are skipped; any
+       shortfall is replenished with fresh samples from surviving subsets.
+       Final candidates are concatenated and uniformly subsampled. If every
+       subset in a draw is infeasible, new subsets are drawn for at most
+       ``max_iters`` batches, remembering rejected subsets within that call.
+       Exhausting this budget raises an error, not proof of domain infeasibility.
     4. **Nonlinear or product constraints.** When constraints are present that
        cannot be enforced directly by the polytope sampler, regimes 1-3 are
        used as a proposal distribution and rejection sampling filters
@@ -52,13 +57,14 @@ class RandomStrategy(Strategy):
         num_base_samples: Batch size used when drawing proposals during
             rejection sampling. If ``None``, the requested ``candidate_count``
             is used.
-        max_iters: Maximum number of rejection-sampling iterations before the
-            strategy gives up. Each iteration draws ``num_base_samples``
-            candidates.
+        max_iters: Maximum number of subset-draw batches searched for a linearly
+            feasible NChooseK/allow_zero subset per sampling call. Also bounds
+            nonlinear rejection-sampling iterations, each drawing
+            ``num_base_samples`` candidates; the two loops have separate counters.
         max_combinations: Maximum number of distinct active-feature subsets to
-            draw per ``ask`` when NChooseK or ``allow_zero`` features are
-            present. Larger values give a better mix of subsets at the cost of
-            more polytope-sampler invocations.
+            draw per batch when NChooseK or ``allow_zero`` features are present,
+            capped by the requested candidate count. Larger values give a better
+            mix of subsets at the cost of more polytope-sampler invocations.
         nchoosek_max_iters: Maximum number of rejection-sampling attempts when
             drawing a single valid active-feature subset under overlapping
             ``NChooseKConstraint``s. Independent from ``max_iters``.

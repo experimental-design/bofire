@@ -37,6 +37,42 @@ from bofire.utils.torch_tools import (
 )
 
 
+def _reduce_fixed_constraints(
+    constraints: List[Tuple[torch.Tensor, torch.Tensor, float]],
+    fixed: Dict[int, float],
+    equality: bool,
+) -> List[Tuple[torch.Tensor, torch.Tensor, float]]:
+    """Substitute fixed values and reject violated constant linear constraints."""
+    reduced = []
+    for indices, coefficients, rhs in constraints:
+        # Identify terms whose features are still free to vary.
+        free = torch.tensor(
+            [int(idx) not in fixed for idx in indices],
+            device=indices.device,
+            dtype=torch.bool,
+        )
+        # Move fixed contributions to the right-hand side. For example,
+        # 2*a + b = 5 with a=1 becomes b = 3.
+        rhs -= sum(
+            float(coef) * fixed[int(idx)]
+            for idx, coef in zip(indices[~free], coefficients[~free])
+        )
+        # Keep only nonzero free terms, preserving their original feature indices.
+        nonzero = free & (coefficients != 0)
+        if nonzero.any():
+            reduced.append((indices[nonzero], coefficients[nonzero], rhs))
+        # With no variable terms left, check 0 = rhs or 0 >= rhs (BoTorch's
+        # inequality convention). Satisfied constant rows need not reach the solver.
+        elif (equality and not math.isclose(rhs, 0, abs_tol=1e-8)) or (
+            not equality and rhs > 1e-8
+        ):
+            raise InfeasibilityError(
+                "Fixed features violate a linear "
+                f"{'equality' if equality else 'inequality'} constraint."
+            )
+    return reduced
+
+
 class RandomStrategy(Strategy):
     """Strategy for randomly selecting new candidates.
 
@@ -146,11 +182,21 @@ class RandomStrategy(Strategy):
     ) -> pd.DataFrame:
         """Sample from the domain with NChooseK constraints.
 
+        Discard feature subsets whose pinned bounds make the linear constraints
+        infeasible. If an entire batch is rejected, draw another batch, up to
+        ``max_iters``, without resampling polytopes already found infeasible.
+        If only some subsets are rejected, fill any sample shortfall with fresh
+        points from the surviving subsets, weighted by their drawn multiplicities.
+
         Args:
             candidate_count (int): The number of samples to generate.
 
         Returns:
-            pd.DataFrame: A DataFrame containing the sampled data.
+            pd.DataFrame: Exactly ``candidate_count`` sampled rows.
+
+        Raises:
+            ValueError: If no sampled subset is feasible after ``max_iters``
+                batches of draws. This does not establish domain infeasibility.
 
         """
         nchoosek_keys, allow_zero_keys = self._get_zeroable_keys(self.domain)
@@ -162,58 +208,86 @@ class RandomStrategy(Strategy):
             # at most `max_combinations` distinct subsets; their multiplicities
             # in `drawn` determine how many polytope samples each subset gets.
             n_combos = min(self.max_combinations, candidate_count)
-            drawn = self.sample_valid_nchoosek_features(
-                domain=self.domain,
-                seed=self._get_seed(),
-                n=n_combos,
-                max_iters=self.nchoosek_max_iters,
-            )
-            combinations = Counter(drawn)
-
             # Each sampled subset gets `count * sampling_multiplier` polytope
-            # samples, so the total before final resampling is at least
-            # `candidate_count`.
+            # samples, before discarding infeasible subsets. Any resulting
+            # shortfall is replenished from the feasible subsets.
             sampling_multiplier = math.ceil(candidate_count / n_combos)
 
             samples = []
-            for combo, count in combinations.items():
-                # Clone the domain and turn the NChooseK problem into a plain
-                # polytope problem: drop the NChooseK constraints, then pin
-                # every zeroable feature that wasn't selected to bounds [0, 0].
-                domain = deepcopy(self.domain)
-                domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
-                for key in zeroable_keys - set(combo):
-                    feat = domain.inputs.get_by_key(key=key)
-                    assert isinstance(feat, ContinuousInput)
-                    feat.bounds = [0.0, 0.0]
-                try:
-                    samples.append(
-                        self._sample_from_polytope(
-                            domain=domain,
-                            fallback_sampling_method=self.fallback_sampling_method,
-                            n_burnin=self.n_burnin,
-                            n_thinning=self.n_thinning,
-                            seed=self._get_seed(),
-                            n=count * sampling_multiplier,
-                            sampler_kwargs=self.sampler_kwargs,
-                        ),
+            feasible_domains = []
+            rejected: set[Tuple[str, ...]] = set()
+            # A feasible domain can have only infeasible subsets in the first
+            # random draw (#842), especially for ask(1). Retry within max_iters,
+            # remembering rejected subsets to avoid repeating polytope work.
+            for _ in range(self.max_iters):
+                drawn = self.sample_valid_nchoosek_features(
+                    domain=self.domain,
+                    seed=self._get_seed(),
+                    n=n_combos,
+                    max_iters=self.nchoosek_max_iters,
+                )
+                for combo, count in Counter(drawn).items():
+                    if combo in rejected:
+                        continue
+                    # Pin a subset on a copy, never on the original domain.
+                    domain = deepcopy(self.domain)
+                    domain.constraints = domain.constraints.get(
+                        excludes=NChooseKConstraint
                     )
-                except InfeasibilityError:
-                    # The chosen subset, after pinning all other zeroable
-                    # features to zero, makes the reduced polytope
-                    # infeasible against the domain's linear constraints
-                    # (e.g. a mixture-sum equality that no subset of the
-                    # active features can satisfy). The polytope sampler's
-                    # interior-point solver is the authoritative
-                    # feasibility check; drop the combination and continue.
-                    continue
+                    for key in zeroable_keys - set(combo):
+                        feat = domain.inputs.get_by_key(key=key)
+                        assert isinstance(feat, ContinuousInput)
+                        feat.bounds = [0.0, 0.0]
+                    try:
+                        samples.append(
+                            self._sample_from_polytope(
+                                domain=domain,
+                                fallback_sampling_method=self.fallback_sampling_method,
+                                n_burnin=self.n_burnin,
+                                n_thinning=self.n_thinning,
+                                seed=self._get_seed(),
+                                n=count * sampling_multiplier,
+                                sampler_kwargs=self.sampler_kwargs,
+                            ),
+                        )
+                        feasible_domains.append((domain, count))
+                    except InfeasibilityError:
+                        rejected.add(combo)
+                if samples:
+                    break
             if not samples:
                 raise ValueError(
-                    "All sampled NChooseK subsets produced infeasible "
-                    "polytopes. Check the interaction between NChooseK and "
-                    "linear constraints (e.g. a mixture sum=1 forbids the "
-                    "empty subset)."
+                    "No feasible sampled NChooseK subset found "
+                    f"after {self.max_iters} subset-draw batches "
+                    f"({len(rejected)} distinct subsets rejected). "
+                    "This does not prove that the domain is infeasible. "
+                    "Increase max_iters or max_combinations to search more subsets, "
+                    "or check the interaction between NChooseK, bounds, and "
+                    "linear constraints."
                 )
+            shortfall = candidate_count - sum(len(sample) for sample in samples)
+            if shortfall > 0:
+                # Preserve surviving subset multiplicities and draw fresh points.
+                total_weight = sum(weight for _, weight in feasible_domains)
+                cumulative_weight = 0
+                allocated = 0
+                for domain, weight in feasible_domains:
+                    cumulative_weight += weight
+                    target = shortfall * cumulative_weight // total_weight
+                    count = target - allocated
+                    allocated = target
+                    if count:
+                        samples.append(
+                            self._sample_from_polytope(
+                                domain=domain,
+                                n=count,
+                                fallback_sampling_method=self.fallback_sampling_method,
+                                n_burnin=self.n_burnin,
+                                n_thinning=self.n_thinning,
+                                seed=self._get_seed(),
+                                sampler_kwargs=self.sampler_kwargs,
+                            )
+                        )
             samples = pd.concat(samples, axis=0, ignore_index=True)
             return samples.sample(
                 n=candidate_count,
@@ -331,6 +405,10 @@ class RandomStrategy(Strategy):
         Returns:
             pd.DataFrame: A DataFrame containing the sampled points.
 
+        Raises:
+            InfeasibilityError: If linear constraints conflict with fixed values
+                or require pseudo-fixed values outside the input bounds.
+
         """
         if seed is None:
             seed = int(np.random.default_rng().integers(1, 1000000))
@@ -352,35 +430,76 @@ class RandomStrategy(Strategy):
             constraint=LinearEqualityConstraint,
             unit_scaled=False,
         )
-        cleaned_eqs = []
         fixed_features: Dict[str, float] = {  # ty: ignore[invalid-assignment]
             feat.key: feat.fixed_value()[0]  # ty: ignore[not-subscriptable]
             for feat in domain.inputs.get(ContinuousInput)
             if feat.is_fixed()
         }
 
-        for eq in eqs:
-            if (
-                len(eq[0]) == 1
-            ):  # only one coefficient, so this is a pseudo fixed feature
-                fixed_features[domain.inputs.get_keys(ContinuousInput)[eq[0][0]]] = (
-                    float(eq[2] / eq[1][0])
-                )
-            else:
-                cleaned_eqs.append(eq)
-
-        fixed_features_indices: Dict[int, float] = {
-            domain.inputs.get_keys(ContinuousInput).index(key): value
-            for key, value in fixed_features.items()
+        all_keys = domain.inputs.get_keys()
+        fixed_features_indices = {
+            all_keys.index(key): value for key, value in fixed_features.items()
         }
+        # A newly fixed coordinate can turn another equality into a singleton.
+        while True:
+            eqs = _reduce_fixed_constraints(eqs, fixed_features_indices, equality=True)
+            singletons = [eq for eq in eqs if len(eq[0]) == 1]
+            if not singletons:
+                break
+            for indices, coefficients, rhs in singletons:
+                idx = int(indices[0])
+                value = float(rhs / coefficients[0])
+                feature = domain.inputs.get_by_key(all_keys[idx])
+                assert isinstance(feature, ContinuousInput)
+                # Permit arithmetic roundoff, not genuinely out-of-bounds values.
+                tolerance = 8 * np.finfo(float).eps * max(
+                    1, abs(value), abs(feature.lower_bound), abs(feature.upper_bound)
+                )
+                if not (
+                    feature.lower_bound - tolerance
+                    <= value
+                    <= feature.upper_bound + tolerance
+                ):
+                    raise InfeasibilityError(
+                        f"Linear equality fixes {feature.key} to {value}, outside "
+                        f"its bounds {feature.bounds}."
+                    )
+                value = min(max(value, feature.lower_bound), feature.upper_bound)
+                if idx in fixed_features_indices and not math.isclose(
+                    fixed_features_indices[idx], value, rel_tol=0, abs_tol=1e-8
+                ):
+                    raise InfeasibilityError(
+                        f"Linear equalities fix {feature.key} to conflicting values."
+                    )
+                fixed_features_indices[idx] = value
+                fixed_features[feature.key] = value
 
         ineqs = get_linear_constraints(
             domain=domain,
             constraint=LinearInequalityConstraint,
             unit_scaled=False,
         )
+        ineqs = _reduce_fixed_constraints(ineqs, fixed_features_indices, equality=False)
 
         interpoints = get_interpoint_constraints(domain=domain, n_candidates=n)
+        unfixed_ineqs = _generate_unfixed_lin_constraints(
+            constraints=ineqs,
+            eq=False,
+            fixed_features=fixed_features_indices,
+            dimension=len(domain.inputs.get(ContinuousInput)),
+        )
+        unfixed_eqs = _generate_unfixed_lin_constraints(
+            constraints=eqs,
+            eq=True,
+            fixed_features=fixed_features_indices,
+            dimension=len(domain.inputs.get(ContinuousInput)),
+        )
+        unfixed_interpoints = _generate_unfixed_lin_constraints(
+            constraints=interpoints,
+            eq=True,
+            fixed_features=fixed_features_indices,
+            dimension=len(domain.inputs.get(ContinuousInput)),
+        )
 
         lower = [
             feat.lower_bound
@@ -407,25 +526,8 @@ class RandomStrategy(Strategy):
         else:
             bounds = torch.tensor([lower, upper]).to(**tkwargs)
 
-            unfixed_ineqs = _generate_unfixed_lin_constraints(
-                constraints=ineqs,
-                eq=False,
-                fixed_features=fixed_features_indices,
-                dimension=len(domain.inputs.get(ContinuousInput)),
-            )
-            unfixed_eqs = _generate_unfixed_lin_constraints(
-                constraints=cleaned_eqs,
-                eq=True,
-                fixed_features=fixed_features_indices,
-                dimension=len(domain.inputs.get(ContinuousInput)),
-            )
-            unfixed_interpoints = _generate_unfixed_lin_constraints(
-                constraints=interpoints,
-                eq=True,
-                fixed_features=fixed_features_indices,
-                dimension=len(domain.inputs.get(ContinuousInput)),
-            )
-
+            assert unfixed_eqs is not None and unfixed_interpoints is not None
+            assert unfixed_ineqs is not None
             combined_eqs = unfixed_eqs + unfixed_interpoints
 
             # now use the hit and run sampler
