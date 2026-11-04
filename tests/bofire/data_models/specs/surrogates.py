@@ -952,6 +952,38 @@ specs.add_valid(
     },
 )
 
+for likelihood in [
+    GaussianLikelihood(),
+    GaussianLikelihood().model_dump(),
+    "gaussian",
+    "probit",
+    "logit",
+    {"type": "UnknownLikelihood"},
+]:
+    specs.add_invalid(
+        models.PairwiseGPSurrogate,
+        lambda likelihood=likelihood: {
+            **specs.valid(models.PairwiseGPSurrogate).spec(),
+            "likelihood": likelihood,
+        },
+        error=ValueError,
+    )
+
+for likelihood in [
+    PairwiseProbitLikelihood(),
+    PairwiseLogitLikelihood(),
+    PairwiseProbitLikelihood().model_dump(),
+    PairwiseLogitLikelihood().model_dump(),
+]:
+    specs.add_invalid(
+        models.SingleTaskGPSurrogate,
+        lambda likelihood=likelihood: {
+            **specs.valid(models.SingleTaskGPSurrogate).spec(),
+            "likelihood": likelihood,
+        },
+        error=ValueError,
+    )
+
 specs.add_invalid(
     models.PairwiseGPSurrogate,
     lambda: {

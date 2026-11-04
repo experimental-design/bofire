@@ -29,7 +29,6 @@ from bofire.data_models.likelihoods.api import (
     PairwiseProbitLikelihood as PairwiseProbitLikelihoodSpec,
 )
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate
-from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 
 
 DIM = 3
@@ -81,7 +80,7 @@ def test_pairwise_gp_rejects_hyperconfig():
         PairwiseGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            hyperconfig=SingleTaskGPHyperconfig(),
+            hyperconfig=None,
         )
 
 
@@ -262,9 +261,12 @@ def test_pairwise_gp_likelihood(likelihood, expected_cls):
     inputs, outputs = _make_domain()
     experiments, preferences, utility = _make_data()
 
-    surrogate = surrogates.map(
-        PairwiseGPSurrogate(inputs=inputs, outputs=outputs, likelihood=likelihood)
+    data_model = PairwiseGPSurrogate(
+        inputs=inputs, outputs=outputs, likelihood=likelihood
     )
+    restored = PairwiseGPSurrogate.model_validate_json(data_model.model_dump_json())
+    assert restored.model_dump(mode="json") == data_model.model_dump(mode="json")
+    surrogate = surrogates.map(restored)
     surrogate.fit(experiments, preferences)
 
     assert isinstance(surrogate.model.likelihood, expected_cls)

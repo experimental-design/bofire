@@ -164,9 +164,10 @@ def test_preference_strategy_rejects_mismatched_surrogate(mismatch):
         DataModel(domain=domain, surrogate_specs=specs)
 
 
-def test_preference_strategy_rejects_hyperparameter_tuning():
-    with pytest.raises(ValueError, match="frequency_hyperopt"):
-        DataModel(domain=_domain(), frequency_hyperopt=1)
+@pytest.mark.parametrize("field, value", [("frequency_hyperopt", 0), ("folds", 5)])
+def test_preference_strategy_rejects_removed_hyperparameter_tuning_fields(field, value):
+    with pytest.raises(ValueError, match=field):
+        DataModel(domain=_domain(), **{field: value})
 
 
 @pytest.mark.parametrize("acquisition_class", [qEUBO, qLogNEI, qSR, qUCB])
