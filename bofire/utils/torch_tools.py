@@ -24,16 +24,8 @@ from bofire.data_models.constraints.nonlinear import (
     NONLINEAR_EQUALITY_TOLERANCE,
     NonlinearConstraint,
 )
-from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
-    CategoricalInput,
-    CategoricalMolecularInput,
-    ContinuousInput,
-    Input,
-)
-from bofire.data_models.molfeatures.api import AnyMolFeatures
 from bofire.data_models.encodings.api import AnyCategoricalEncoding, OrdinalEncoding
+from bofire.data_models.features.api import CategoricalInput, ContinuousInput, Input
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
