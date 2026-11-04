@@ -1,3 +1,4 @@
+from bofire.strategies.doe.score import get_optimality_score
 from bofire.strategies.doe_strategy import DoEStrategy
 from bofire.strategies.fractional_factorial import FractionalFactorialStrategy
 from bofire.strategies.llm import LLMStrategy
