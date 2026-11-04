@@ -258,11 +258,12 @@ def test_empty_feasible_region():
         ),
         constraints=Constraints(
             constraints=[
+                # x + y <= 0.3 and x + y >= 0.7 can never both hold: genuinely empty.
                 NonlinearInequalityConstraint(
-                    features=["x", "y"], expression="x + y - 1.5"
+                    features=["x", "y"], expression="x + y - 0.3"
                 ),
                 NonlinearInequalityConstraint(
-                    features=["x", "y"], expression="0.5 - x - y"
+                    features=["x", "y"], expression="0.7 - x - y"
                 ),
             ]
         ),
@@ -274,17 +275,23 @@ def test_empty_feasible_region():
     )
     strategy = SoboStrategy(data_model=data_model)
 
+    # Historical experiments are not required to satisfy the (now-empty) feasible
+    # region -- BoFire allows telling infeasible/historical data. We need >= 2 valid
+    # rows just to clear has_sufficient_experiments() so ask() reaches candidate
+    # generation instead of failing for an unrelated reason.
     experiments = pd.DataFrame(
         {
-            "x": [0.5],
-            "y": [0.5],
-            "z": [1.0],
-            "valid_z": [1],
+            "x": [0.5, 0.4],
+            "y": [0.5, 0.45],
+            "z": [1.0, 0.9],
+            "valid_z": [1, 1],
         }
     )
     strategy.tell(experiments)
 
-    with pytest.raises(ValueError, match="Not enough experiments available"):
+    with pytest.raises(
+        ValueError, match="Could not generate any feasible initial conditions"
+    ):
         strategy.ask(1)
 
     print("✓ Empty feasible region handled correctly")

@@ -1,7 +1,7 @@
 import collections.abc
 import warnings
 from collections.abc import Sequence
-from typing import Any, Dict, Literal, Optional, Tuple, Union
+from typing import Any, Dict, Literal, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -364,6 +364,7 @@ class Domain(BaseModel):
         only_inputs: bool = False,
         tol: float = 1e-5,
         raise_validation_error: bool = True,
+        tol_overrides: Optional[Dict[Type[Constraint], float]] = None,
     ) -> pd.DataFrame:
         """Method to check the validty of proposed candidates
 
@@ -374,6 +375,9 @@ class Domain(BaseModel):
                 is larger than tol. Defaults to 1e-6.
             raise_validation_error (bool, optional): If true an error will be raised if candidates violate constraints,
                 otherwise only a warning will be displayed. Defaults to True.
+            tol_overrides (Dict[Type[Constraint], float], optional): per-constraint-type
+                tolerance that takes precedence over `tol` for constraints of that exact
+                type. See `Constraints.is_fulfilled`. Defaults to None.
 
         Raises:
             ValueError: when a column is missing for a defined input feature
@@ -390,7 +394,9 @@ class Domain(BaseModel):
         assert isinstance(self.inputs, Inputs)
         candidates = self.inputs.validate_candidates(candidates)
         # check if all constraints are fulfilled
-        if not self.constraints.is_fulfilled(candidates, tol=tol).all():
+        if not self.constraints.is_fulfilled(
+            candidates, tol=tol, tol_overrides=tol_overrides
+        ).all():
             if raise_validation_error:
                 raise ConstraintNotFulfilledError(
                     f"Constraints not fulfilled: {candidates}",
@@ -407,6 +413,7 @@ class Domain(BaseModel):
         experiments: pd.DataFrame,
         tol: float = 1e-6,
         exlude_interpoint: bool = True,
+        tol_overrides: Optional[Dict[Type[Constraint], float]] = None,
     ) -> pd.Series:
         """Check if all constraints are fulfilled on all rows of the provided dataframe
         both constraints and inputs are checked.
@@ -415,6 +422,9 @@ class Domain(BaseModel):
             experiments: Dataframe with data, the constraint validity should be tested on
             tol: Tolerance for checking the constraints. Defaults to 1e-6.
             exlude_interpoint: If True, InterpointConstraints are excluded from the check. Defaults to True.
+            tol_overrides (Dict[Type[Constraint], float], optional): per-constraint-type
+                tolerance that takes precedence over `tol` for constraints of that exact
+                type. See `Constraints.is_fulfilled`. Defaults to None.
 
         Returns:
             Boolean series indicating if all constraints are fulfilled for all rows.
@@ -424,9 +434,9 @@ class Domain(BaseModel):
             if exlude_interpoint
             else self.constraints.get()
         )
-        return constraints.is_fulfilled(experiments, tol) & self.inputs.is_fulfilled(
-            experiments
-        )
+        return constraints.is_fulfilled(
+            experiments, tol, tol_overrides=tol_overrides
+        ) & self.inputs.is_fulfilled(experiments)
 
     @property
     def experiment_column_names(self):

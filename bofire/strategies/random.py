@@ -22,7 +22,10 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
-    NonlinearInequalityConstraint,
+)
+from bofire.data_models.constraints.nonlinear import (
+    NONLINEAR_CONSTRAINT_TOL_OVERRIDES,
+    NONLINEAR_EQUALITY_TOLERANCE,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
@@ -35,6 +38,8 @@ from bofire.strategies.strategy import Strategy, make_strategy
 from bofire.utils.torch_tools import (
     get_interpoint_constraints,
     get_linear_constraints,
+    get_nonlinear_constraints,
+    project_onto_nonlinear_constraints,
     tkwargs,
 )
 
@@ -68,17 +73,9 @@ class RandomStrategy(Strategy):
         self.nchoosek_max_iters = data_model.nchoosek_max_iters
         self.sampler_kwargs = data_model.sampler_kwargs
 
-        needs_relaxed_tol = any(
-            isinstance(
-                c,
-                (
-                    NonlinearEqualityConstraint,
-                    NonlinearInequalityConstraint,
-                ),
-            )
-            for c in self.domain.constraints
-        )
-        self._validation_tol = 1e-3 if needs_relaxed_tol else 1e-6
+        # Nonlinear constraints get their own, looser tolerance via tol_overrides
+        # in _ask below; this default stays tight for every other constraint type.
+        self._validation_tol = 1e-6
 
     def has_sufficient_experiments(self) -> bool:
         """Check if there are sufficient experiments for the strategy.
@@ -124,13 +121,51 @@ class RandomStrategy(Strategy):
             if n_iters > self.max_iters:
                 raise ValueError("Maximum iterations exceeded in rejection sampling.")
             samples = self._sample_with_nchooseks(num_base_samples)
+            samples = self._project_onto_equality_constraints(samples)
             valid = self.domain.constraints.is_fulfilled(
-                samples, tol=self._validation_tol
+                samples,
+                tol=self._validation_tol,
+                tol_overrides=NONLINEAR_CONSTRAINT_TOL_OVERRIDES,
             )
             n_found += np.sum(valid)
             valid_samples.append(samples[valid.values])
             n_iters += 1
         return pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
+
+    def _project_onto_equality_constraints(self, samples: pd.DataFrame) -> pd.DataFrame:
+        """Nudge sampled points towards any `NonlinearEqualityConstraint` manifold.
+
+        A `NonlinearEqualityConstraint` has a measure-zero feasible set, so plain
+        uniform rejection sampling has essentially no chance of landing inside the
+        `equality_tolerance` band by chance alone. Running a few gradient steps
+        (the same projection used as a last-resort repair for the BoTorch optimizer,
+        see `project_onto_nonlinear_constraints`) substantially improves the odds
+        before the regular `is_fulfilled` rejection check below runs. Other
+        constraint types are left to that rejection check as before.
+        """
+        equality_constraints = self.domain.constraints.get(NonlinearEqualityConstraint)
+        if len(equality_constraints) == 0:
+            return samples
+
+        cont_inputs = self.domain.inputs.get(ContinuousInput)
+        cont_keys = [feat.key for feat in cont_inputs]
+        bounds = torch.tensor(
+            [
+                [feat.bounds[0] for feat in cont_inputs],
+                [feat.bounds[1] for feat in cont_inputs],
+            ],
+            dtype=torch.double,
+        )
+        nonlinear_constraints = get_nonlinear_constraints(
+            self.domain,
+            includes=[NonlinearEqualityConstraint],
+            equality_tolerance=NONLINEAR_EQUALITY_TOLERANCE,
+        )
+        X = torch.tensor(samples[cont_keys].to_numpy(), dtype=torch.double)
+        X_proj = project_onto_nonlinear_constraints(X, nonlinear_constraints, bounds)
+        samples = samples.copy()
+        samples[cont_keys] = X_proj.numpy()
+        return samples
 
     @staticmethod
     def _get_zeroable_keys(domain: Domain) -> Tuple[set[str], set[str]]:

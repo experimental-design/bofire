@@ -1,7 +1,7 @@
 import collections.abc
 from collections.abc import Iterator, Sequence
 from itertools import chain
-from typing import Generic, List, Literal, Optional, Type, TypeVar, Union
+from typing import Dict, Generic, List, Literal, Optional, Type, TypeVar, Union
 
 import pandas as pd
 from pydantic import Field
@@ -64,13 +64,23 @@ class Constraints(BaseModel, Generic[C]):
         """
         return [c.jacobian(experiments) for c in self.constraints]
 
-    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
+    def is_fulfilled(
+        self,
+        experiments: pd.DataFrame,
+        tol: float = 1e-6,
+        tol_overrides: Optional[Dict[Type[Constraint], float]] = None,
+    ) -> pd.Series:
         """Check if all constraints are fulfilled on all rows of the provided dataframe
 
         Args:
             experiments (pd.DataFrame): Dataframe with data, the constraint validity should be tested on
             tol (float, optional): tolerance parameter. A constraint is considered as not fulfilled if
                 the violation is larger than tol. Defaults to 0.
+            tol_overrides (Dict[Type[Constraint], float], optional): per-constraint-type
+                tolerance that takes precedence over `tol` for constraints of that exact
+                type. Useful when some constraint types (e.g. nonlinear ones, only
+                satisfied up to a numerical solver's convergence tolerance) need a
+                looser tolerance than the rest of the domain. Defaults to None.
 
         Returns:
             Boolean: True if all constraints are fulfilled for all rows, false if not
@@ -80,7 +90,13 @@ class Constraints(BaseModel, Generic[C]):
             return pd.Series([True] * len(experiments), index=experiments.index)
         return (
             pd.concat(
-                [c.is_fulfilled(experiments, tol) for c in self.constraints],
+                [
+                    c.is_fulfilled(
+                        experiments,
+                        (tol_overrides or {}).get(type(c), tol),
+                    )
+                    for c in self.constraints
+                ],
                 axis=1,
             )
             .fillna(True)

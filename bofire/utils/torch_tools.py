@@ -20,7 +20,10 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
     ProductInequalityConstraint,
 )
-from bofire.data_models.constraints.nonlinear import NonlinearConstraint
+from bofire.data_models.constraints.nonlinear import (
+    NONLINEAR_EQUALITY_TOLERANCE,
+    NonlinearConstraint,
+)
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -379,7 +382,7 @@ def _nonlinear_equality_botorch_callables(
 def get_nonlinear_constraints(
     domain: Domain,
     includes: Optional[List[Type[Constraint]]] = None,
-    equality_tolerance: float = 1e-3,
+    equality_tolerance: float = NONLINEAR_EQUALITY_TOLERANCE,
 ) -> List[Tuple[Callable[[Tensor], float], bool]]:
     """Returns a list of callable functions that represent the nonlinear constraints
     for the given domain that can be processed by botorch.
@@ -452,6 +455,56 @@ def get_nonlinear_constraints(
             callables.append((lower_fn, True))
 
     return callables
+
+
+def project_onto_nonlinear_constraints(
+    X: Tensor,
+    nonlinear_constraints: List[Tuple[Callable[[Tensor], Tensor], bool]],
+    bounds: Tensor,
+    max_iter: int = 100,
+    lr: float = 0.01,
+    tol: float = 1e-4,
+) -> Tensor:
+    """Project points onto the feasible region of nonlinear constraints via gradient descent.
+
+    Minimizes the summed squared constraint violation with Adam, clamping to `bounds`
+    after every step. Useful in particular for `NonlinearEqualityConstraint`, whose
+    feasible set has measure zero in the input space, so uniform rejection sampling has
+    essentially no chance of landing on it exactly -- this nudges a nearby point onto
+    (or very close to) the constraint manifold instead.
+
+    Args:
+        X: Tensor of shape (..., d) with the points to project.
+        nonlinear_constraints: List of (callable, is_equality) tuples as returned by
+            `get_nonlinear_constraints`. Each callable maps a (n, d) tensor to a tensor
+            of constraint values that are feasible when >= 0.
+        bounds: Tensor of shape (2, d) with lower/upper bounds to clamp to after each step.
+        max_iter: Maximum number of Adam steps.
+        lr: Adam learning rate.
+        tol: Stop early once the summed squared violation drops below this value.
+
+    Returns:
+        Tensor of the same shape as `X` with (approximately) feasible points.
+    """
+    if len(nonlinear_constraints) == 0:
+        return X
+    shape = X.shape
+    X_flat = X.reshape(-1, X.shape[-1]).clone().requires_grad_(True)
+    optimizer = torch.optim.Adam([X_flat], lr=lr)
+    for _ in range(max_iter):
+        optimizer.zero_grad()
+        total_violation = torch.tensor(0.0, dtype=X.dtype, device=X.device)
+        for constraint_fn, _ in nonlinear_constraints:
+            vals = constraint_fn(X_flat)
+            violation = torch.clamp(-vals, min=0.0)
+            total_violation = total_violation + (violation**2).sum()
+        if total_violation.item() < tol:
+            break
+        total_violation.backward()
+        optimizer.step()
+        with torch.no_grad():
+            X_flat.clamp_(bounds[0], bounds[1])
+    return X_flat.detach().reshape(shape)
 
 
 def constrained_objective2botorch(

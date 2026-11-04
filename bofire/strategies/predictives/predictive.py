@@ -6,6 +6,7 @@ import pandas as pd
 import shap
 from pydantic import PositiveInt
 
+from bofire.data_models.constraints.nonlinear import NONLINEAR_CONSTRAINT_TOL_OVERRIDES
 from bofire.data_models.features.task import TaskInput
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.data_models.types import InputTransformSpecs
@@ -88,6 +89,7 @@ class PredictiveStrategy(Strategy):
             candidates=candidates,
             tol=self._validation_tol,
             raise_validation_error=raise_validation_error,
+            tol_overrides=NONLINEAR_CONSTRAINT_TOL_OVERRIDES,
         )
         return candidates
 

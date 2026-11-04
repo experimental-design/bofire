@@ -30,6 +30,7 @@ from bofire.data_models.constraints.api import (
     ProductConstraint,
     ProductInequalityConstraint,
 )
+from bofire.data_models.constraints.nonlinear import NONLINEAR_EQUALITY_TOLERANCE
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
@@ -65,6 +66,7 @@ from bofire.utils.torch_tools import (
     get_linear_constraints,
     get_nonlinear_constraints,
     get_torch_bounds_from_domain,
+    project_onto_nonlinear_constraints,
     tkwargs,
 )
 
@@ -465,37 +467,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
         return candidates
 
-    def _project_onto_nonlinear_constraints(
-        self,
-        X: Tensor,
-        domain: Domain,
-        bounds: Tensor,
-        max_iter: int = 100,
-        lr: float = 0.01,
-        tol: float = 1e-4,
-    ) -> Tensor:
-        """Project candidate tensor onto nonlinear constraint manifold (for fallback)."""
-        nonlinear_constraints, _, _ = self._get_nonlinear_constraint_setup(domain)
-        if nonlinear_constraints is None or len(nonlinear_constraints) == 0:
-            return X
-        shape = X.shape
-        X_flat = X.reshape(-1, X.shape[-1]).clone().requires_grad_(True)
-        optimizer = torch.optim.Adam([X_flat], lr=lr)
-        for _ in range(max_iter):
-            optimizer.zero_grad()
-            total_violation = torch.tensor(0.0, dtype=X.dtype, device=X.device)
-            for constraint_fn, _ in nonlinear_constraints:
-                vals = constraint_fn(X_flat)
-                violation = torch.clamp(-vals, min=0.0)
-                total_violation = total_violation + (violation**2).sum()
-            if total_violation.item() < tol:
-                break
-            total_violation.backward()
-            optimizer.step()
-            with torch.no_grad():
-                X_flat.clamp_(bounds[0], bounds[1])
-        return X_flat.detach().reshape(shape)
-
     def _prune(
         self,
         candidates: Tensor,
@@ -615,12 +586,20 @@ class BotorchOptimizer(AcquisitionOptimizer):
             OptimizerEnum.OPTIMIZE_ACQF_MIXED: optimize_acqf_mixed,
             OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING: optimize_acqf_mixed_alternating,
         }
+        nonlinear_constraints, _, _ = self._get_nonlinear_constraint_setup(domain)
+
+        if nonlinear_constraints is None or len(nonlinear_constraints) == 0:
+            # No nonlinear constraints: behave exactly as before this retry logic
+            # was introduced -- a single attempt, exceptions propagate immediately.
+            return optimizer_mapping[optimizer](
+                **optimizer_input.model_dump(exclude_none=True)
+            )  # type: ignore
+
         # Prefer principled retries over post-hoc projection/repair:
         # If we get infeasible candidates back from BoTorch, re-run the optimizer a few
         # times and *escalate* the search (more raw_samples / restarts) for tight
         # feasible regions.
         max_infeasible_retries = 4
-        nonlinear_constraints, _, _ = self._get_nonlinear_constraint_setup(domain)
 
         for attempt in range(max_infeasible_retries + 1):
             # Escalate search budget on retries (no change for attempt==0).
@@ -639,21 +618,21 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     **optimizer_input_i.model_dump(exclude_none=True)
                 )  # type: ignore
             except (CandidateGenerationError, ValueError):
-                # IC generation / constraint validation failures can surface as ValueError.
-                # Retry with larger budgets rather than disabling constraints.
+                # IC generation / constraint validation failures for the nonlinear
+                # constraints can surface as ValueError (see get_nonlinear_constraints
+                # users above). Retry with larger budgets rather than disabling
+                # constraints. We only reach this branch when nonlinear constraints
+                # are present, so domains without them are never affected.
                 if attempt == max_infeasible_retries:
                     raise
                 continue
-
-            if nonlinear_constraints is None or len(nonlinear_constraints) == 0:
-                return candidates, acqf_vals
 
             # Check feasibility in tensor space: BoTorch-style constraints are feasible when >= 0.
             X_flat = candidates.reshape(-1, candidates.shape[-1])
             with torch.no_grad():
                 feasible = True
                 for constraint_fn, _ in nonlinear_constraints:
-                    if torch.any(constraint_fn(X_flat) < 0.0):
+                    if torch.any(constraint_fn(X_flat) < -1e-9):
                         feasible = False
                         break
 
@@ -662,7 +641,14 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
             # Otherwise retry (unless this was the last attempt).
             if attempt == max_infeasible_retries:
-                return candidates, acqf_vals
+                # Last resort: gradient-project the still-infeasible candidate onto
+                # the constraint manifold rather than returning a known violation.
+                return (
+                    project_onto_nonlinear_constraints(
+                        candidates, nonlinear_constraints, bounds
+                    ),
+                    acqf_vals,
+                )
         return candidates, acqf_vals
 
     def _get_optimizer_options(self, domain: Domain) -> Dict[str, int]:
@@ -747,24 +733,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
         nonlinear_constraints = get_nonlinear_constraints(
             domain,
             includes=nonlinear_types,
-            equality_tolerance=1e-3,
-        )
-        # Special-case: if all NonlinearInequalityConstraints use callable expressions
-        # (rather than string expressions), skip passing them through to BoTorch as
-        # nonlinear_inequality_constraints. In this mode, BoTorch has no robust way
-        # to construct feasible initial conditions and will otherwise raise when
-        # validating batch_initial_conditions. We instead rely on BoFire's own
-        # domain-level validation of candidates.
-        from bofire.data_models.constraints.api import (
-            NonlinearInequalityConstraint as _NIConstr,
+            equality_tolerance=NONLINEAR_EQUALITY_TOLERANCE,
         )
 
-        ni_constraints = domain.constraints.get(_NIConstr)
-        has_callable_nonlinear_ineq = any(
-            callable(c.expression) for c in ni_constraints
-        )
-
-        if len(nonlinear_constraints) == 0 or has_callable_nonlinear_ineq:
+        if len(nonlinear_constraints) == 0:
             # Do not enforce nonlinear constraints inside BoTorch optimize_acqf;
             # also disable the custom initial-condition generator.
             ic_generator = None

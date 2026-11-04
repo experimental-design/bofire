@@ -33,6 +33,13 @@ from bofire.data_models.domain.features import Inputs
 from bofire.data_models.features.api import ContinuousInput
 
 
+# Tolerance used to relax a nonlinear equality constraint f(x) = 0 into the pair of
+# inequalities f(x) <= tol and -f(x) <= tol that BoTorch/numerical solvers can satisfy
+# in practice. Shared across torch_tools.get_nonlinear_constraints and the strategies
+# that validate against nonlinear constraints, so it stays in one place.
+NONLINEAR_EQUALITY_TOLERANCE = 1e-3
+
+
 class NonlinearConstraint(IntrapointConstraint):
     """Base class for nonlinear equality and inequality constraints.
 
@@ -362,3 +369,16 @@ class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
 
     def to_description(self) -> str:
         raise NotImplementedError
+
+
+# Per-constraint-type tolerance override for Constraints.is_fulfilled /
+# Domain.is_fulfilled / Domain.validate_candidates (see their `tol_overrides`
+# argument). Nonlinear constraints are only satisfied up to a numerical solver's
+# convergence tolerance, so checking them against the same tight default used for
+# linear/NChooseK constraints would reject otherwise-valid candidates; checking
+# everything with the relaxed tolerance would instead let real NChooseK/linear
+# violations slip through undetected in mixed domains.
+NONLINEAR_CONSTRAINT_TOL_OVERRIDES = {
+    NonlinearInequalityConstraint: NONLINEAR_EQUALITY_TOLERANCE,
+    NonlinearEqualityConstraint: NONLINEAR_EQUALITY_TOLERANCE,
+}
