@@ -6,8 +6,8 @@ import pandas as pd
 import shap
 from pydantic import PositiveInt
 
-from bofire.data_models.constraints.nonlinear import NONLINEAR_CONSTRAINT_TOL_OVERRIDES
 import bofire.strategies.convergence_criteria.api as convergence_criteria
+from bofire.data_models.constraints.nonlinear import NONLINEAR_CONSTRAINT_TOL_OVERRIDES
 from bofire.data_models.features.task import TaskInput
 from bofire.data_models.strategies.api import PredictiveStrategy as DataModel
 from bofire.data_models.types import InputTransformSpecs
