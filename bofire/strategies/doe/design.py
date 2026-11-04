@@ -51,8 +51,7 @@ def find_local_max_ipopt(
         use_cyipopt: If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
             If None, cyipopt is used if available.
         seed: Random seed for sampling. Defaults to None, in this case no seed is given to the
-        callback: Called with an `AskOptimizationProgress` once per iteration of the solver. Its
-            `max_steps` is the `max_iter` option of the solver.
+        callback: Called with an `AskProgressData` once per iteration of the solver.
 
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a

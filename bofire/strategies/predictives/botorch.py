@@ -142,7 +142,7 @@ class BotorchStrategy(PredictiveStrategy):
 
         Args:
             candidate_count (int, optional): [description]. Defaults to 1.
-            progress_callback: Called with an `AskOptimizationProgress` while the
+            progress_callback: Called with an `AskProgressData` while the
                 acquisition function is optimized.
 
         Returns:

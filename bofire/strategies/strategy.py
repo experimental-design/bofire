@@ -140,7 +140,7 @@ class Strategy(ABC):
             add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
             raise_validation_error (bool, optional): If true an error will be raised if candidates violate constraints,
                 otherwise only a warning will be displayed. Defaults to True.
-            progress_callback: Called with an `AskOptimizationProgress` while the
+            progress_callback: Called with an `AskProgressData` while the
                 acquisition function (or the design criterion of a DoE) is
                 optimized. Ignored by strategies that optimize neither.
 
@@ -242,7 +242,7 @@ class Strategy(ABC):
 
         Args:
             candidate_count (PositiveInt, optional): Number of candidates to be generated. Defaults to None.
-            progress_callback: Called with an `AskOptimizationProgress` while the
+            progress_callback: Called with an `AskProgressData` while the
                 acquisition function (or the design criterion of a DoE) is
                 optimized. Ignored by strategies that optimize neither.
 

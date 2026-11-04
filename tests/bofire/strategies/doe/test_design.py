@@ -984,7 +984,5 @@ def test_find_local_max_ipopt_reports_progress():
     )
     assert len(events) > 0
     assert [e.step for e in events] == list(range(1, len(events) + 1))
-    assert {e.max_steps for e in events} == {20}
     assert len(events) <= 20
-    assert all(e.optimizer == "scipy" for e in events)
     assert all(e.value is None or np.isfinite(e.value) for e in events)

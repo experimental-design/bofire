@@ -39,8 +39,8 @@ from bofire.strategies.doe.utils_categorical_discrete import (
     map_categorical_to_continuous,
 )
 from bofire.strategies.progress import (
-    AskOptimizationProgress,
     AskProgressCallback,
+    AskProgressData,
     scipy_progress_callback,
 )
 from bofire.strategies.random import RandomStrategy
@@ -791,8 +791,7 @@ def _minimize(
         ipopt_options (dict): Options for Ipopt solver. If Ipopt is not available, only the fields "max_iter" and "print_level" of this argument are used.
         use_hessian (bool): Use hessian if set to True.
         use_cyipopt (bool): Use cyipopt if set to True. Defaults to true if cyipopt is available.
-        callback: Called with an `AskOptimizationProgress` once per solver iteration.
-            Requires the field "max_iter" in `ipopt_options`, which is reported as `max_steps`.
+        callback: Called with an `AskProgressData` once per solver iteration.
 
     Returns:
         np.ndarray: The optimized design as flattened numpy array.
@@ -819,10 +818,8 @@ def _minimize(
         steps = count(1)
         if callback is not None:
             problem.on_iteration = lambda obj_value: callback(
-                AskOptimizationProgress(
-                    optimizer="ipopt",
+                AskProgressData(
                     step=next(steps),
-                    max_steps=ipopt_options["max_iter"],
                     # ipopt minimizes the objective
                     value=-float(obj_value),
                 )
@@ -839,9 +836,7 @@ def _minimize(
 
         scipy_callback = None
         if callback is not None:
-            scipy_callback = scipy_progress_callback(
-                callback, "scipy", max_steps=ipopt_options["max_iter"]
-            )
+            scipy_callback = scipy_progress_callback(callback)
 
         result = opt.minimize(
             fun=objective_function.evaluate,

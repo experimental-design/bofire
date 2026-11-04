@@ -99,7 +99,7 @@ class PredictiveStrategy(Strategy):
             raise_validation_error (bool, optional): If true an error will be
                 raised if candidates violate constraints, otherwise only a
                 warning will be displayed. Defaults to True.
-            progress_callback: Called with an `AskOptimizationProgress` while the
+            progress_callback: Called with an `AskProgressData` while the
                 acquisition function is optimized. Ignored by strategies that do
                 not optimize an acquisition function.
 

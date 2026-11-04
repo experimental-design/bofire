@@ -50,7 +50,7 @@ class MultiFidelityVarianceBasedStrategy(SoboStrategy):
 
         Args:
             candidate_count (int): number of candidates to be generated
-            progress_callback: Called with an `AskOptimizationProgress` while the
+            progress_callback: Called with an `AskProgressData` while the
                 acquisition function is optimized.
 
         Returns:

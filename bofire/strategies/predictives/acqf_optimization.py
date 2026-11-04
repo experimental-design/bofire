@@ -62,8 +62,8 @@ from bofire.strategies.predictives._nchoosek_pruning import (
     semicontinuous_specs_from_domain,
 )
 from bofire.strategies.progress import (
-    AskOptimizationProgress,
     AskProgressCallback,
+    AskProgressData,
     scipy_progress_callback,
 )
 from bofire.strategies.random import RandomStrategy
@@ -93,9 +93,7 @@ ALTERNATING_OPTIMIZER_THRESHOLD = 10
 _DISCRETE_MAX_BATCH_SIZE = 2048
 
 
-def _discrete_progress_hook(
-    callback: AskProgressCallback, n_choices: int, max_steps: int
-) -> Callable:
+def _discrete_progress_hook(callback: AskProgressCallback, n_choices: int) -> Callable:
     """Forward hook reporting one step per batch of choices that is scored.
 
     `optimize_acqf_discrete` scores all remaining choices once per requested
@@ -111,14 +109,7 @@ def _discrete_progress_hook(
         nonlocal pass_size, seen, best
         seen += len(output)
         best = max(best, output.max().item())
-        callback(
-            AskOptimizationProgress(
-                optimizer="botorch",
-                step=next(steps),
-                max_steps=max_steps,
-                value=best,
-            )
-        )
+        callback(AskProgressData(step=next(steps), value=best))
         if seen >= pass_size:
             pass_size -= 1
             seen = 0
@@ -148,7 +139,7 @@ class AcquisitionOptimizer(ABC):
             acqfs: List of acquisition functions that should be optimized.
             domain: The domain of the optimization problem.
             experiments: The experiments that have been conducted so far.
-            callback: Called with an `AskOptimizationProgress` while the
+            callback: Called with an `AskProgressData` while the
                 acquisition function is optimized. Optimizers or code paths that
                 cannot report progress emit a `UserWarning` and never call it.
 
@@ -201,7 +192,7 @@ class AcquisitionOptimizer(ABC):
             acqfs (List[AcquisitionFunction]): List of acquisition functions that should be optimized.
             domain (Domain): The domain of the optimization problem.
             experiments: The experiments that have been conducted so far.
-            callback: Called with an `AskOptimizationProgress` while the
+            callback: Called with an `AskProgressData` while the
                 acquisition function is optimized.
 
         Returns:
@@ -300,7 +291,7 @@ class AcquisitionOptimizer(ABC):
             acqf: Acquisition function that should be optimized.
             domain: The domain of the optimization problem.
             experiments: The experiments that have been conducted so far.
-            callback: Called with an `AskOptimizationProgress` once per batch of
+            callback: Called with an `AskProgressData` once per batch of
                 choices that is scored.
 
         Returns:
@@ -350,12 +341,7 @@ class AcquisitionOptimizer(ABC):
             # batches of `max_batch_size`, once per requested candidate
             n_choices = len(t_choices)
             hook_handle = acqf.register_forward_hook(
-                _discrete_progress_hook(
-                    callback,
-                    n_choices=n_choices,
-                    max_steps=min(candidate_count, n_choices)
-                    * math.ceil(n_choices / max_batch_size),
-                )
+                _discrete_progress_hook(callback, n_choices=n_choices)
             )
         try:
             candidates, _ = optimize_acqf_discrete(
@@ -448,14 +434,12 @@ class _OptimizeAcqfMixedAlternatingInput(_OptimizeAcqfInputBase):
     equality_constraints: list[tuple[Tensor, Tensor, float]] | None
 
 
-def _pymoo_progress_callback(callback: AskProgressCallback, max_steps: int) -> Callable:
+def _pymoo_progress_callback(callback: AskProgressCallback) -> Callable:
     def on_generation(algorithm) -> None:
         opt = algorithm.opt
         callback(
-            AskOptimizationProgress(
-                optimizer="genetic_algorithm",
+            AskProgressData(
                 step=algorithm.n_gen,
-                max_steps=max_steps,
                 # run_ga(optimization_direction="max") stores F = -acqf
                 value=None if opt is None else -float(np.min(opt.get("F"))),
             )
@@ -482,42 +466,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
     def _setup(self):
         pass
 
-    def _max_callback_steps(
-        self, domain: Domain, candidate_count: int, n_acqfs: int
-    ) -> int:
-        """Upper bound on the iterations the inner optimizers report in one `_optimize`.
-
-        Restarts are optimized in groups. Depending on the installed scipy
-        version, botorch reports either one step per iteration of a group or one
-        per iteration of each restart in it. The bound covers both: it assumes
-        every restart runs for `maxiter` iterations, which an optimizer that
-        converges earlier does not.
-
-        Returns:
-            The bound, or 0 if the optimizer used does not report progress.
-        """
-        optimizer = self._determine_optimizer(domain=domain, n_acqfs=n_acqfs)
-        if optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED_ALTERNATING:
-            return 0
-        n_combos = domain.inputs.get_number_of_categorical_combinations(
-            include_semicontinuous=not is_pruning_applicable(domain),
-        )
-        if optimizer == OptimizerEnum.OPTIMIZE_ACQF_LIST:
-            runs = n_acqfs * n_combos
-        elif optimizer == OptimizerEnum.OPTIMIZE_ACQF_MIXED:
-            runs = n_combos * candidate_count
-        else:
-            runs = candidate_count if self.sequential else 1
-        # the second optimization of LSR-BO
-        passes = (
-            2
-            if self.local_search_config is not None
-            and has_local_search_region(domain)
-            and candidate_count == 1
-            else 1
-        )
-        return passes * runs * self.n_restarts * self.maxiter
-
     def _optimize(
         self,
         candidate_count: int,
@@ -526,17 +474,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
         experiments: Optional[pd.DataFrame] = None,
         callback: Optional[AskProgressCallback] = None,
     ) -> pd.DataFrame:
-        scipy_callback = (
-            None
-            if callback is None
-            else scipy_progress_callback(
-                callback,
-                "botorch",
-                max_steps=self._max_callback_steps(
-                    domain, candidate_count, n_acqfs=len(acqfs)
-                ),
-            )
-        )
+        scipy_callback = None if callback is None else scipy_progress_callback(callback)
         pruning_applicable = is_pruning_applicable(domain)
 
         input_preprocessing_specs = self._input_preprocessing_specs(domain)
@@ -1065,7 +1003,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             domain (Domain): The domain of the optimization problem.
             input_preprocessing_specs (InputTransformSpecs): Preprocessing specifications for the inputs.
             experiments (Optional[pd.DataFrame]): Existing experiments, if any.
-            callback: Called with an `AskOptimizationProgress` once per generation.
+            callback: Called with an `AskProgressData` once per generation.
 
         Returns:
             Tuple[torch.Tensor, torch.Tensor]: Optimized candidates and their corresponding objective values.
@@ -1114,17 +1052,7 @@ class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
             input_preprocessing_specs=input_preprocessing_specs,
             verbose=data_model.verbose,
             optimization_direction="max",
-            callback=None
-            if callback is None
-            else _pymoo_progress_callback(
-                callback,
-                # pymoo evaluates one population per generation and stops at whichever
-                # of the two budgets is exhausted first
-                max_steps=min(
-                    data_model.n_max_gen,
-                    math.ceil(data_model.n_max_evals / data_model.population_size),
-                ),
-            ),
+            callback=None if callback is None else _pymoo_progress_callback(callback),
         )
 
         return x_opt, f_opt  # ty: ignore[invalid-return-type]
