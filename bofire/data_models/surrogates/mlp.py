@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Annotated, Literal, Type
 
-from pydantic import Field
+from pydantic import Field, PositiveInt
 
 from bofire.data_models.features.api import (
     AnyOutput,
@@ -13,24 +13,84 @@ from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurr
 
 
 class MLPEnsemble(TrainableBotorchSurrogate):
+    """Ensemble of small neural networks (multilayer perceptrons).
+
+    Every network is trained on a resample of the experiments drawn with
+    replacement; predictions average over the networks, and their spread serves as
+    the uncertainty. Suited to larger data sets than a Gaussian process.
+    """
+
     type: Literal["MLPEnsemble"] = "MLPEnsemble"
-    n_estimators: Annotated[int, Field(ge=1)] = 5
-    hidden_layer_sizes: Sequence = (100,)
-    activation: Literal["relu", "logistic", "tanh"] = "relu"
-    dropout: Annotated[float, Field(ge=0.0)] = 0.0
-    batch_size: Annotated[int, Field(ge=1)] = 10
-    n_epochs: Annotated[int, Field(ge=1)] = 200
-    lr: Annotated[float, Field(gt=0.0)] = 1e-4
-    weight_decay: Annotated[float, Field(ge=0.0)] = 0.0
-    subsample_fraction: Annotated[float, Field(gt=0.0)] = 1.0
-    shuffle: bool = True
+    n_estimators: Annotated[int, Field(ge=1)] = Field(
+        default=5,
+        description="Number of networks in the ensemble. More networks give a more "
+        "reliable uncertainty at a higher cost.",
+    )
+    hidden_layer_sizes: Sequence[PositiveInt] = Field(
+        default=(100,),
+        description="Number of units of each hidden layer, from input to output.",
+    )
+    activation: Literal["relu", "logistic", "tanh"] = Field(
+        default="relu",
+        description="Activation function of the hidden layers.",
+    )
+    dropout: Annotated[float, Field(ge=0.0, lt=1.0)] = Field(
+        default=0.0,
+        description="Probability with which a hidden unit is left out in each "
+        "training step, as regularization; 0 for none.",
+    )
+    batch_size: Annotated[int, Field(ge=1)] = Field(
+        default=10,
+        description="Number of experiments per training step.",
+    )
+    n_epochs: Annotated[int, Field(ge=1)] = Field(
+        default=200,
+        description="Number of passes over the training data.",
+    )
+    lr: Annotated[float, Field(gt=0.0)] = Field(
+        default=1e-4,
+        description="Learning rate of the Adam optimizer.",
+    )
+    weight_decay: Annotated[float, Field(ge=0.0)] = Field(
+        default=0.0,
+        description="Strength of the L2 regularization of the weights; 0 for none.",
+    )
+    subsample_fraction: Annotated[float, Field(gt=0.0)] = Field(
+        default=1.0,
+        description="Size of each network's resample, as a fraction of the "
+        "experiments.",
+    )
+    shuffle: bool = Field(
+        default=True,
+        description="Whether the order of the experiments is shuffled in every "
+        "epoch.",
+    )
 
 
 class RegressionMLPEnsemble(MLPEnsemble):
+    """Ensemble of neural networks for a continuous output, trained on the mean
+    absolute error.
+
+    Examples:
+        >>> RegressionMLPEnsemble(
+        ...     inputs=inputs, outputs=outputs, hidden_layer_sizes=(32, 32)
+        ... )
+    """
+
     type: Literal["RegressionMLPEnsemble"] = "RegressionMLPEnsemble"
-    final_activation: Literal["identity"] = "identity"
-    scaler: AnyScaler = None
-    output_scaler: ScalerEnum = ScalerEnum.IDENTITY
+    scaler: AnyScaler = Field(
+        default=None,
+        description="How the continuous inputs and the engineered features are "
+        "scaled for the networks: `Normalize` maps them to [0, 1], `Standardize` to "
+        "zero mean and unit variance over the data, and None leaves them as they are.",
+    )
+    output_scaler: ScalerEnum = Field(
+        default=ScalerEnum.IDENTITY,
+        description="How the output is transformed for training: STANDARDIZE to zero "
+        "mean and unit variance, LOG to its logarithm (outputs must be positive), "
+        "CHAINED_LOG_STANDARDIZE to both, IDENTITY not at all. Predictions are "
+        "transformed back.",
+    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
@@ -40,14 +100,28 @@ class RegressionMLPEnsemble(MLPEnsemble):
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        return isinstance(my_type, type(ContinuousOutput))
+        return issubclass(my_type, ContinuousOutput)
 
 
 class ClassificationMLPEnsemble(MLPEnsemble):
+    """Ensemble of neural networks for a categorical output, predicting the
+    probability of every category; trained on the cross-entropy.
+
+    Examples:
+        >>> ClassificationMLPEnsemble(inputs=inputs, outputs=outputs)
+    """
+
     type: Literal["ClassificationMLPEnsemble"] = "ClassificationMLPEnsemble"
-    final_activation: Literal["softmax"] = "softmax"
-    scaler: AnyScaler = None
-    output_scaler: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY
+    scaler: AnyScaler = Field(
+        default=None,
+        description="How the continuous inputs and the engineered features are "
+        "scaled for the networks: `Normalize` maps them to [0, 1], `Standardize` to "
+        "zero mean and unit variance over the data, and None leaves them as they are.",
+    )
+    output_scaler: Literal[ScalerEnum.IDENTITY] = Field(
+        default=ScalerEnum.IDENTITY,
+        description="The categorical output is not transformed.",
+    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
@@ -57,4 +131,4 @@ class ClassificationMLPEnsemble(MLPEnsemble):
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        return isinstance(my_type, type(CategoricalOutput))
+        return issubclass(my_type, CategoricalOutput)

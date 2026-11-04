@@ -413,7 +413,6 @@ specs.add_valid(
         "max_leaf_nodes": None,
         "min_impurity_decrease": 0.0,
         "bootstrap": True,
-        "oob_score": False,
         "random_state": None,
         "ccp_alpha": 0.0,
         "max_samples": None,
@@ -439,7 +438,6 @@ specs.add_valid(
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
         "activation": "relu",
-        "final_activation": "identity",
         "dropout": 0.0,
         "batch_size": 10,
         "n_epochs": 200,
@@ -469,7 +467,6 @@ specs.add_invalid(
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
         "activation": "relu",
-        "final_activation": "softmax",
         "dropout": 0.0,
         "batch_size": 10,
         "n_epochs": 200,
@@ -502,7 +499,6 @@ specs.add_valid(
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
         "activation": "relu",
-        "final_activation": "softmax",
         "dropout": 0.0,
         "batch_size": 10,
         "n_epochs": 200,
@@ -532,7 +528,6 @@ specs.add_invalid(
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
         "activation": "relu",
-        "final_activation": "identity",
         "dropout": 0.0,
         "batch_size": 10,
         "n_epochs": 200,
@@ -1024,3 +1019,19 @@ specs.add_invalid(
     error=ValueError,
     message="Option 1 has different inputs.",
 )
+
+# surrogates for continuous outputs reject a categorical one
+for surrogate_cls in [models.SingleTaskGPSurrogate, models.RandomForestSurrogate]:
+    specs.add_invalid(
+        surrogate_cls,
+        lambda: {
+            "inputs": Inputs(
+                features=[features.valid(ContinuousInput).obj()]
+            ).model_dump(),
+            "outputs": Outputs(
+                features=[features.valid(CategoricalOutput).obj()]
+            ).model_dump(),
+        },
+        error=ValueError,
+        message="Invalid output type passed.",
+    )

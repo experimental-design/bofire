@@ -1,6 +1,6 @@
 from typing import Literal, Type
 
-from pydantic import PositiveInt, field_validator
+from pydantic import Field, PositiveInt, field_validator
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.surrogates.optimizer import LBFGSBFitted
@@ -9,20 +9,28 @@ from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurr
 
 
 class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
-    """Ensemble MAP SAAS single-task GP
+    """Ensemble of single-task GPs for many inputs of which only a few matter.
 
-    Batched ensemble of ``SingleTaskGP``s with the Matern-5/2 kernel and a SAAS prior.
+    Every member has a Matern-5/2 kernel whose lengthscales get a sparsity (SAAS)
+    prior, each member of a different strength; predictions average over the members.
+    `SingleTaskGPSurrogate.additive_map_saas` instead sums kernels of different
+    sparsity within one model. Outputs can be standardized or left as they are, but
+    not log-transformed.
 
-    Attributes:
-        n_taus (PositiveInt): Number of sub-kernels to use in the SAAS model.
-        output_scaler (ScalerEnum): Scaler for the output transformation.
+    Examples:
+        >>> EnsembleMapSaasSingleTaskGPSurrogate(
+        ...     inputs=inputs, outputs=outputs, n_taus=4
+        ... )
     """
 
     type: Literal["EnsembleMapSaasSingleTaskGPSurrogate"] = (
         "EnsembleMapSaasSingleTaskGPSurrogate"
     )
-    n_taus: PositiveInt = 4
-    output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
+    n_taus: PositiveInt = Field(
+        default=4,
+        description="Number of members of the ensemble, each with a sparsity strength "
+        "of its own, drawn when the model is built.",
+    )
 
     @field_validator("output_scaler")
     @classmethod
@@ -53,4 +61,4 @@ class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitt
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        return isinstance(my_type, type(ContinuousOutput))
+        return issubclass(my_type, ContinuousOutput)
