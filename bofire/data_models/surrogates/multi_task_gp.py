@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Type
+from typing import Literal, Type
 
 from pydantic import Field, model_validator
 
@@ -10,31 +10,61 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
 )
 from bofire.data_models.kernels.api import AnyKernel, RBFKernel
-from bofire.data_models.priors.api import (
-    HVARFNER_LENGTHSCALE_PRIOR,
-    HVARFNER_NOISE_PRIOR,
-    AnyPrior,
-    AnyPriorConstraint,
-    GreaterThan,
+from bofire.data_models.likelihoods.api import (
+    HVARFNER_LIKELIHOOD,
+    AnyMultiTaskLikelihood,
+    TaskwiseLikelihood,
 )
-from bofire.data_models.priors.lkj import LKJPrior
+from bofire.data_models.means.api import AnyMultiTaskMean, ConstantMean, TaskwiseMean
+from bofire.data_models.priors.api import HVARFNER_LENGTHSCALE_PRIOR, GreaterThan
 from bofire.data_models.surrogates.optimizer import LBFGSBFitted
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
 class MultiTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
+    """Gaussian process over several related tasks, which learns how strongly they are
+    correlated and transfers what it learns about one task to the others.
+
+    The tasks are the categories of the one `CategoricalTaskInput`, e.g. a cheap
+    simulation and the real experiment, or a previous and the current campaign. The
+    covariance is the kernel over the other inputs times a learned correlation between
+    the tasks (intrinsic coregionalization). By default every task has a mean and a
+    noise level of its own, so tasks may differ in offset and in measurement
+    precision; with a plain mean or Gaussian likelihood, all tasks share one.
+    Predictions for a task use the data of all tasks, weighted by how strongly they
+    correlate with it.
+
+    Examples:
+        >>> MultiTaskGPSurrogate(
+        ...     inputs=Inputs(features=[
+        ...         ContinuousInput(key="x", bounds=(0, 1)),
+        ...         CategoricalTaskInput(key="task", categories=["simulation", "experiment"]),
+        ...     ]),
+        ...     outputs=Outputs(features=[ContinuousOutput(key="y")]),
+        ... )
+    """
+
     type: Literal["MultiTaskGPSurrogate"] = "MultiTaskGPSurrogate"
     kernel: AnyKernel = Field(
         default_factory=lambda: RBFKernel(
             ard=True,
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-        )
+            lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),
+        ),
+        description="Kernel over all inputs except the task input; the correlation "
+        "between the tasks is learned separately.",
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
-    noise_constraint: Optional[AnyPriorConstraint] = Field(
-        default_factory=lambda: GreaterThan(lower_bound=1e-4),
+    mean: AnyMultiTaskMean = Field(
+        default=TaskwiseMean(mean=ConstantMean()),
+        description="Prior mean function. A `TaskwiseMean` gives every task a mean "
+        "of its own; a plain mean is shared by all tasks.",
     )
-    task_prior: Optional[LKJPrior] = Field(default_factory=lambda: None)
+    likelihood: AnyMultiTaskLikelihood = Field(
+        default=TaskwiseLikelihood(likelihood=HVARFNER_LIKELIHOOD()),
+        description="Model of the measurement noise. A `TaskwiseLikelihood` gives "
+        "every task a noise level of its own; a plain Gaussian likelihood is one "
+        "noise level for all tasks.",
+    )
 
     @classmethod
     def _default_plain_categorical_encodings(cls) -> dict:

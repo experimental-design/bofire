@@ -159,10 +159,6 @@ UNDOCUMENTED_FIELDS = {
     "bofire.data_models.surrogates.deterministic.CategoricalDeterministicSurrogate.mapping",
     "bofire.data_models.surrogates.deterministic.LinearDeterministicSurrogate.coefficients",
     "bofire.data_models.surrogates.deterministic.LinearDeterministicSurrogate.intercept",
-    "bofire.data_models.surrogates.multi_task_gp.MultiTaskGPSurrogate.kernel",
-    "bofire.data_models.surrogates.multi_task_gp.MultiTaskGPSurrogate.noise_constraint",
-    "bofire.data_models.surrogates.multi_task_gp.MultiTaskGPSurrogate.noise_prior",
-    "bofire.data_models.surrogates.multi_task_gp.MultiTaskGPSurrogate.task_prior",
     "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.kernel",
     "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.likelihood",
     "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.scaler",
@@ -235,7 +231,6 @@ UNDOCUMENTED_CLASSES = {
     "bofire.data_models.strategies.strategy.Strategy",
     "bofire.data_models.surrogates.deterministic.LinearDeterministicSurrogate",
     "bofire.data_models.surrogates.empirical.EmpiricalSurrogate",
-    "bofire.data_models.surrogates.multi_task_gp.MultiTaskGPSurrogate",
     "bofire.data_models.transforms.drop_data.DropDataTransform",
     "bofire.data_models.transforms.transform.Transform",
 }

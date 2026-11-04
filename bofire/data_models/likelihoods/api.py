@@ -4,6 +4,7 @@ from bofire.data_models.likelihoods.likelihood import (
     GaussianLikelihood,
     Likelihood,
     SparseOutlierGaussianLikelihood,
+    TaskwiseLikelihood,
 )
 from bofire.data_models.priors.api import (
     HVARFNER_NOISE_PRIOR,
@@ -14,7 +15,18 @@ from bofire.data_models.priors.api import (
 from bofire.data_models.unions import tagged_union
 
 
-AnyLikelihood = tagged_union(GaussianLikelihood, SparseOutlierGaussianLikelihood)
+AnyLikelihood = tagged_union(
+    GaussianLikelihood, SparseOutlierGaussianLikelihood, TaskwiseLikelihood
+)
+
+# the likelihoods a single-task GP takes
+AnySingleTaskLikelihood = tagged_union(
+    GaussianLikelihood, SparseOutlierGaussianLikelihood
+)
+
+# the likelihoods a multi-task GP takes: a plain Gaussian likelihood is shared by all
+# tasks
+AnyMultiTaskLikelihood = tagged_union(GaussianLikelihood, TaskwiseLikelihood)
 
 
 # likelihoods of interest, built anew on every call so that no two models share them
