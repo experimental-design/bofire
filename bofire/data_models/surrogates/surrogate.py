@@ -11,9 +11,11 @@ from bofire.data_models.types import InputTransformSpecs
 
 
 class Surrogate(BaseModel):
-    """Model that predicts the outputs from the inputs, fitted to experiments.
+    """Model that predicts the outputs from the inputs.
 
-    Strategies use it to decide where to measure next.
+    Most surrogates are fitted to experiments; deterministic ones compute their
+    predictions from a given formula or mapping. Strategies use them to decide where
+    to measure next.
     """
 
     type: Any

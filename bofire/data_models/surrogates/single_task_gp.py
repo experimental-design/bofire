@@ -73,10 +73,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
     it predicts far from any data, and the likelihood how much of the spread in the
     data it attributes to measurement noise. The default is BoTorch's default
     single-task GP: an RBF kernel with a lengthscale per input and priors scaled to
-    the number of inputs. The static methods build common variants: `options`
-    (a set of kernels and priors to choose from), `linear`, `polynomial`,
-    `additive_map_saas` (many inputs, few relevant), `mixed` (categorical inputs),
-    `robust` (outliers) and `tanimoto` (molecules).
+    the number of inputs.
 
     Examples:
         >>> SingleTaskGPSurrogate(inputs=inputs, outputs=outputs)

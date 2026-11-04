@@ -9,13 +9,14 @@ from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurr
 
 
 class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
-    """Ensemble of single-task GPs for many inputs of which only a few matter.
+    """Batched ensemble of single-task GPs with a Matern-5/2 kernel and a sparse
+    axis-aligned subspace (SAAS) prior, as BoTorch's `EnsembleMapSaasSingleTaskGP`
+    (Daulton et al., BONSAI, 2026).
 
-    Every member has a Matern-5/2 kernel whose lengthscales get a sparsity (SAAS)
-    prior, each member of a different strength; predictions average over the members.
-    `SingleTaskGPSurrogate.additive_map_saas` instead sums kernels of different
-    sparsity within one model. Outputs can be standardized or left as they are, but
-    not log-transformed.
+    Every member of the ensemble has a sparsity parameter of its own; the
+    hyperparameters are fitted by maximizing the marginal likelihood, and the
+    predictions form a mixture over the members. Outputs can be standardized or left
+    as they are, but not log-transformed.
 
     Examples:
         >>> EnsembleMapSaasSingleTaskGPSurrogate(

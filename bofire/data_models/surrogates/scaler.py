@@ -25,14 +25,14 @@ class Scaler(BaseModel):
     features: NonRestrictedFeatureKeys = Field(
         default=[],
         description="Keys of the inputs and engineered features to scale. If empty, "
-        "all that reach the model as real values: continuous inputs, categoricals "
-        "encoded by static or Mordred descriptors, and all engineered features.",
+        "all of them that reach the model as real values are scaled: continuous "
+        "inputs, categoricals encoded by static or Mordred descriptors, and all "
+        "engineered features.",
     )
 
 
 class Normalize(Scaler):
-    """Maps inputs to [0, 1] using their bounds, widened to cover the data; engineered
-    features use the range of the data."""
+    """Maps the inputs to [0, 1]."""
 
     type: Literal["Normalize"] = "Normalize"
 
