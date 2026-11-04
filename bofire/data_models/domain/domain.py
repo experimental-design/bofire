@@ -35,24 +35,28 @@ def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
 
 
 class Domain(BaseModel):
-    """Representation of the optimization problem/domain
-
-    Attributes:
-        inputs (List[Input], optional): List of input features. Defaults to [].
-        outputs (List[Output], optional): List of output features. Defaults to [].
-        constraints (List[Constraint], optional): List of constraints. Defaults to [].
-        context (str, optional): Free-text context providing additional information
-            about the optimization problem. Useful for agentic optimization where an
-            LLM agent can leverage this description to better understand the overall
-            problem, its goals, and any domain-specific knowledge.
-    """
+    """The optimization problem: what can be varied (inputs), what is measured and
+    what for (outputs with objectives), and which combinations are allowed
+    (constraints)."""
 
     type: Literal["Domain"] = "Domain"
 
-    inputs: Inputs = Field(default_factory=lambda: Inputs())
-    outputs: Outputs = Field(default_factory=lambda: Outputs())
-    constraints: Constraints = Field(default_factory=lambda: Constraints())
-    context: Optional[str] = None
+    inputs: Inputs = Field(
+        default=Inputs(), description="The features that can be varied."
+    )
+    outputs: Outputs = Field(
+        default=Outputs(),
+        description="The features that are measured, each with its objective.",
+    )
+    constraints: Constraints = Field(
+        default=Constraints(),
+        description="Conditions every proposed experiment has to satisfy.",
+    )
+    context: Optional[str] = Field(
+        default=None,
+        description="Free-text description of the problem, its goals and relevant "
+        "background, for LLM-based strategies and agents.",
+    )
 
     def to_description(self) -> str:
         """Render a human-readable description of the optimization problem.
