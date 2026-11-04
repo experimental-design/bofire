@@ -60,13 +60,52 @@ def register(
     return _register
 
 
+def _power_mean(
+    amounts: torch.Tensor,
+    descriptors: torch.Tensor,
+    normalize: bool,
+    power: float,
+) -> torch.Tensor:
+    """Amount-weighted power mean of the descriptor rows; 0 where the amounts sum to 0.
+
+    Multiplied by the total amount unless ``normalize`` is set. Wherever ``torch.where``
+    discards a branch, the branch's input is replaced by a stand-in on which it is
+    finite, so that its gradient is finite as well.
+    """
+    total = torch.sum(amounts, dim=-1, keepdim=True)
+    present = total > 0
+    weights = torch.where(
+        present,
+        amounts / torch.where(present, total, 1.0),
+        1.0 / amounts.shape[-1],
+    )
+    if power == 0.0:
+        mean = torch.exp(torch.matmul(weights, torch.log(descriptors)))
+    else:
+        inner = torch.matmul(weights, torch.pow(descriptors, power))
+        # zero only for a positive power, where all present components have a zero
+        # descriptor; the root is not differentiable there
+        positive = inner > 0
+        mean = torch.where(
+            positive,
+            torch.pow(torch.where(positive, inner, 1.0), 1.0 / power),
+            0.0,
+        )
+    if not normalize:
+        mean = total * mean
+    return torch.where(present, mean, 0.0)
+
+
 def _weighted_features(
     X: torch.Tensor,
     indices: torch.Tensor,
     descriptors: torch.Tensor,
     normalize: bool,
+    power: float = 1.0,
 ) -> torch.Tensor:
     weights = X[..., indices]
+    if power != 1.0:
+        return _power_mean(weights, descriptors, normalize, power).unsqueeze(-2)
     weighted_sum = torch.matmul(weights, descriptors)
     if normalize:
         weight_sum = torch.clamp(
@@ -111,6 +150,19 @@ def map_weighted_feature(
     # once over the combined component structures (when enabled).
     components = [inputs.get_by_key(key) for key in feature.features]
     matrix = feature.component_table(components)
+    # generated descriptors are only known once the table is built, so their sign
+    # is checked here rather than on the data model
+    if feature.power != 1.0:
+        strict = feature.power <= 0
+        invalid = (matrix <= 0) if strict else (matrix < 0)
+        offending = list(matrix.columns[invalid.any()])
+        if offending:
+            raise ValueError(
+                f"{feature.key}: power={feature.power} requires "
+                f"{'strictly positive' if strict else 'non-negative'} descriptor "
+                f"values, but {offending} have values "
+                f"{'of 0 or below' if strict else 'below 0'}.",
+            )
     descriptors = torch.tensor(matrix.values, dtype=torch.double)
     return AppendFeatures(
         f=_weighted_features,
@@ -118,6 +170,7 @@ def map_weighted_feature(
             "indices": indices,
             "descriptors": descriptors,
             "normalize": feature.normalize,
+            "power": feature.power,
         },
         transform_on_train=True,
     )

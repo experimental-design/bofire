@@ -1,6 +1,7 @@
 import importlib
 
 import pytest
+from pydantic import TypeAdapter
 
 from bofire.data_models.descriptor_generators.api import (
     Fingerprints,
@@ -8,6 +9,7 @@ from bofire.data_models.descriptor_generators.api import (
 )
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import (
+    AnyEngineeredFeature,
     ContinuousInput,
     SumFeature,
     WeightedSumFeature,
@@ -212,6 +214,62 @@ def test_weighted_sum_feature_rejects_incompatible_components(second_block, mess
     )
     with pytest.raises(ValueError, match=message):
         feature.validate_features(inputs)
+
+
+@pytest.mark.parametrize(
+    "power, lower_bound, valid",
+    [
+        (1.0, -1.0, True),
+        (0.0, 0.0, True),
+        (0.0, -1.0, False),
+        (2.0, -1.0, False),
+    ],
+)
+def test_weighted_sum_feature_power_requires_non_negative_amounts(
+    power, lower_bound, valid
+):
+    feature = WeightedSumFeature(
+        key="w", features=["feat1", "feat2"], columns=["desc1"], power=power
+    )
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key="feat1",
+                bounds=(lower_bound, 1),
+                descriptors=Descriptors(columns={"desc1": [1.0]}),
+            ),
+            ContinuousInput(
+                key="feat2",
+                bounds=(0, 1),
+                descriptors=Descriptors(columns={"desc1": [2.0]}),
+            ),
+        ]
+    )
+    if valid:
+        feature.validate_features(inputs)
+    else:
+        with pytest.raises(ValueError, match=r"the lower bounds of \['feat1'\]"):
+            feature.validate_features(inputs)
+
+
+def test_weighted_sum_feature_serialized_before_power_loads_as_weighted_sum():
+    """A feature serialized before `power` existed carries no such key, and must load
+    as the weighted sum it was."""
+    serialized = {
+        "type": "WeightedSumFeature",
+        "key": "w",
+        "features": ["a", "b", "c"],
+        "keep_features": True,
+        "columns": ["d"],
+        "generators": [],
+        "filter_descriptors": False,
+        "correlation_cutoff": 0.95,
+        "normalize": True,
+        "context": None,
+    }
+    feature = TypeAdapter(AnyEngineeredFeature).validate_python(serialized)
+    assert isinstance(feature, WeightedSumFeature)
+    assert feature.model_dump() == {**serialized, "power": 1.0}
 
 
 def _molecular_inputs() -> Inputs:

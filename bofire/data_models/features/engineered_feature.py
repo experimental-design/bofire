@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, Annotated, ClassVar, List, Literal
 
 import pandas as pd
-from pydantic import Field, PositiveFloat, PositiveInt, model_validator
+from pydantic import Field, FiniteFloat, PositiveFloat, PositiveInt, model_validator
 
 from bofire.data_models.encodings.naming import get_encoded_name
 from bofire.data_models.features._descriptor_spec import DescriptorSpec
@@ -96,14 +96,30 @@ class MeanFeature(EngineeredFeature):
 class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
     """Amount-weighted blend of descriptors over the specified component features.
 
-    For each descriptor ``d`` the output is ``Σᵢ amountᵢ · rowᵢ,d`` where ``amountᵢ``
-    is the value of component feature ``i`` (optionally normalized by ``Σᵢ amountᵢ``).
+    With ``aᵢ`` the value of component feature ``i``, ``wᵢ = aᵢ / Σⱼ aⱼ`` the normalized
+    amounts and ``dᵢ`` the component's value of a descriptor, the output for that
+    descriptor is the weighted power mean ``Mₚ = (Σᵢ wᵢ · dᵢᵖ)^(1/p)``, multiplied by
+    the total amount ``Σᵢ aᵢ`` unless ``normalize`` is set. With the default ``power=1``
+    this is the weighted sum ``Σᵢ aᵢ · dᵢ``, or the weighted mean when normalized. Where
+    all amounts are 0, the output is 0.
     The descriptor columns are declared by the :class:`DescriptorSpec` mixin
     (``columns`` for static columns and/or ``generators`` for molecular generators).
 
     This is how a mixture gets described by the properties of what is in it rather than
     by the amounts alone: each component contributes its descriptor row in proportion to
     how much of it is present.
+
+    The exponent selects the mixing rule, which depends on the property being blended:
+
+    | ``power`` | mean | typical use |
+    |---|---|---|
+    | 1 | arithmetic, ``Σᵢ wᵢ dᵢ`` | ideal mixing, many molar properties |
+    | 0 | geometric, ``exp(Σᵢ wᵢ ln dᵢ)`` | viscosity of liquid mixtures (Arrhenius) |
+    | -1 | harmonic, ``(Σᵢ wᵢ / dᵢ)⁻¹`` | density from mass fractions, ideal mixing |
+    | 0.5 | ``(Σᵢ wᵢ √dᵢ)²`` | energy parameters (van der Waals one-fluid rule) |
+
+    Several features with different rules can be given to one surrogate side by side,
+    leaving it to the model, e.g. through ARD lengthscales, to pick the relevant one.
 
     The component features named here must each carry a one-row ``Descriptors`` block,
     as ``ContinuousInput`` does in its second example.
@@ -127,6 +143,16 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
         ...     generators=[Fingerprints(n_bits=32)],
         ...     normalize=True,
         ... )
+
+        Blend viscosities by their geometric mean, the Arrhenius mixing rule:
+
+        >>> WeightedSumFeature(
+        ...     key="blend_viscosity",
+        ...     features=["water", "ethanol"],
+        ...     columns=["viscosity"],
+        ...     normalize=True,
+        ...     power=0.0,
+        ... )
     """
 
     type: Literal["WeightedSumFeature"] = "WeightedSumFeature"
@@ -136,6 +162,15 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
         description="Whether to divide by the total amount, giving a weighted mean "
         "instead of a weighted sum. Use this when the composition matters but the "
         "overall scale does not.",
+    )
+    power: FiniteFloat = Field(
+        default=1.0,
+        description="Exponent of the weighted power mean taken over the components' "
+        "descriptor values, which selects the mixing rule: 1 is the arithmetic mean "
+        "(the plain weighted sum), 0 the geometric mean, -1 the harmonic mean and 0.5 "
+        "the van der Waals one-fluid rule (Σᵢ wᵢ √dᵢ)². Any other value is a power "
+        "mean in between. A power other than 1 requires non-negative amounts and "
+        "descriptors; a power of 0 or below requires strictly positive descriptors.",
     )
 
     def component_table(self, features: List["ContinuousInput"]) -> pd.DataFrame:
@@ -176,12 +211,23 @@ class WeightedSumFeature(EngineeredFeature, DescriptorSpec):
         the blended block, which is what the consumers actually read: merging is where the
         components' mutual compatibility — same columns, all or none carrying a structure —
         is decided, and without this it would only surface at build time.
+
+        A ``power`` other than 1 also requires the amounts to be non-negative, so every
+        component's lower bound must be at least 0. The sign of the descriptor values is
+        checked when the feature is built, since generated values are only known then.
         """
         super().validate_features(inputs)
         components = [inputs.get_by_key(key) for key in self.features]
         for feat in components:
             self.validate_for(feat.descriptors, feat.key)
         self.validate_for(self._merged_descriptors(components), self.key)
+        if self.power != 1.0:
+            negative = [feat.key for feat in components if feat.lower_bound < 0]
+            if negative:
+                raise ValueError(
+                    f"{self.key}: power={self.power} requires non-negative amounts, but "
+                    f"the lower bounds of {negative} are below 0.",
+                )
 
 
 class ProductFeature(EngineeredFeature):
