@@ -8,7 +8,7 @@ from bofire.data_models.features.api import (
     CategoricalOutput,
     ContinuousOutput,
 )
-from bofire.data_models.surrogates.scaler import AnyScaler, ScalerEnum
+from bofire.data_models.surrogates.scaler import AnyScaler, ScalerEnum, Standardize
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
@@ -52,13 +52,13 @@ class MLPEnsemble(TrainableBotorchSurrogate):
         description="Learning rate of the Adam optimizer.",
     )
     weight_decay: Annotated[float, Field(ge=0.0)] = Field(
-        default=0.0,
+        default=1e-4,
         description="Strength of the L2 regularization of the weights; 0 for none.",
     )
     subsample_fraction: Annotated[float, Field(gt=0.0)] = Field(
         default=1.0,
         description="Size of each network's resample, as a fraction of the "
-        "experiments.",
+        "experiments; it is drawn with replacement, so values above 1 are possible.",
     )
     shuffle: bool = Field(
         default=True,
@@ -79,17 +79,13 @@ class RegressionMLPEnsemble(MLPEnsemble):
 
     type: Literal["RegressionMLPEnsemble"] = "RegressionMLPEnsemble"
     scaler: AnyScaler = Field(
-        default=None,
+        default=Standardize(),
         description="How the continuous inputs and the engineered features are "
-        "scaled for the networks: `Normalize` maps them to [0, 1], `Standardize` to "
-        "zero mean and unit variance over the data, and None leaves them as they are.",
+        "scaled for the networks; None leaves them as they are.",
     )
     output_scaler: ScalerEnum = Field(
         default=ScalerEnum.IDENTITY,
-        description="How the output is transformed for training: STANDARDIZE to zero "
-        "mean and unit variance, LOG to its logarithm (outputs must be positive), "
-        "CHAINED_LOG_STANDARDIZE to both, IDENTITY not at all. Predictions are "
-        "transformed back.",
+        description="How the output is transformed for training.",
     )
 
     @classmethod
@@ -113,10 +109,9 @@ class ClassificationMLPEnsemble(MLPEnsemble):
 
     type: Literal["ClassificationMLPEnsemble"] = "ClassificationMLPEnsemble"
     scaler: AnyScaler = Field(
-        default=None,
+        default=Standardize(),
         description="How the continuous inputs and the engineered features are "
-        "scaled for the networks: `Normalize` maps them to [0, 1], `Standardize` to "
-        "zero mean and unit variance over the data, and None leaves them as they are.",
+        "scaled for the networks; None leaves them as they are.",
     )
     output_scaler: Literal[ScalerEnum.IDENTITY] = Field(
         default=ScalerEnum.IDENTITY,

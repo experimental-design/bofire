@@ -79,8 +79,7 @@ class BotorchSurrogates(BaseModel):
     """The surrogates of a BoTorch strategy, one per output.
 
     Each surrogate predicts one output; together they cover every output of the
-    domain exactly once and use every input of the domain. An input used by several
-    surrogates must be the same feature in each of them.
+    domain exactly once and use every input of the domain.
     """
 
     surrogates: List[AnyBotorchSurrogate] = Field(
@@ -140,7 +139,7 @@ class BotorchSurrogates(BaseModel):
         for model in v:
             if len(model.outputs) != 1:
                 raise ValueError("Only single output surrogates allowed.")
-        # check that the output feature keys are distinctw
+        # check that the output feature keys are distinct
         used_output_feature_keys = list(
             itertools.chain.from_iterable([model.outputs.get_keys() for model in v]),
         )

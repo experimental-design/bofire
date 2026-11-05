@@ -13,9 +13,9 @@ class EnsembleMapSaasSingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitt
     axis-aligned subspace (SAAS) prior, as BoTorch's `EnsembleMapSaasSingleTaskGP`
     (Daulton et al., BONSAI, 2026).
 
-    Every member of the ensemble has a sparsity parameter of its own; the
-    hyperparameters are fitted by maximizing the marginal likelihood, and the
-    predictions form a mixture over the members. Outputs can be standardized or left
+    Every member of the ensemble has a sparsity parameter of its own, drawn once and
+    then kept fixed, not learned; the other hyperparameters are fitted by maximizing
+    the marginal likelihood, and the predictions form a mixture over the members. Outputs can be standardized or left
     as they are, but not log-transformed.
 
     Examples:

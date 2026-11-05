@@ -9,13 +9,20 @@ from bofire.data_models.unions import tagged_union
 
 
 class ScalerEnum(str, Enum):
-    """Transform of the outputs before fitting: standardization, the logarithm, both,
-    or none."""
+    """Transform applied to the outputs before fitting; predictions are transformed
+    back."""
 
     STANDARDIZE = "STANDARDIZE"
+    """Transform to zero mean and unit variance."""
+
     IDENTITY = "IDENTITY"
+    """Do not transform."""
+
     LOG = "LOG"
+    """Transform to the logarithm; outputs must be positive."""
+
     CHAINED_LOG_STANDARDIZE = "CHAINED_LOG_STANDARDIZE"
+    """Transform to the logarithm, then to zero mean and unit variance."""
 
 
 class Scaler(BaseModel):
@@ -38,7 +45,7 @@ class Normalize(Scaler):
 
 
 class Standardize(Scaler):
-    """Shifts and scales inputs to zero mean and unit variance over the data."""
+    """Shifts and scales the inputs to zero mean and unit variance over the data."""
 
     type: Literal["Standardize"] = "Standardize"
 

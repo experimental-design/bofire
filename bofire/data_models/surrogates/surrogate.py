@@ -14,8 +14,9 @@ class Surrogate(BaseModel):
     """Model that predicts the outputs from the inputs.
 
     Most surrogates are fitted to experiments; deterministic ones compute their
-    predictions from a given formula or mapping. Strategies use them to decide where
-    to measure next.
+    predictions from a given formula or mapping. Strategies use surrogates to model
+    the black-box function, which is used when deciding which experiment to carry out
+    next.
     """
 
     type: Any

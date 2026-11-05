@@ -92,8 +92,8 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
             lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),
         ),
-        description="Covariance function: how strongly the response at two points is "
-        "assumed to be related, i.e. which experiments count as similar.",
+        description="The kernel: how strongly the response at two points is assumed "
+        "to be related, i.e. which experiments count as similar.",
     )
     mean: AnySingleTaskMean = Field(
         default=ConstantMean(),

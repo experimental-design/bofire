@@ -12,9 +12,9 @@ from bofire.data_models.types import InputTransformSpecs
 class BotorchSurrogate(Surrogate):
     """Surrogate built on BoTorch, usable in the Bayesian optimization strategies.
 
-    Categorical inputs reach the model in the encoding chosen per input, and
-    engineered features are computed from the inputs inside the model, so the
-    optimizer keeps working on the inputs themselves.
+    Categorical inputs are passed through their encoding before they reach the
+    model. Engineered features are computed from the inputs inside the model, and
+    are not set directly by the optimizer.
     """
 
     categorical_encodings: InputTransformSpecs = Field(
@@ -24,7 +24,7 @@ class BotorchSurrogate(Surrogate):
         "key. An input not listed gets a default from the descriptor data it carries: "
         "a structure column (e.g. SMILES) gives fingerprints, numeric descriptor "
         "columns give a descriptor encoding, and a plain categorical gets the "
-        "surrogate's default, one-hot for most surrogates.",
+        "surrogate's default.",
     )
     engineered_features: EngineeredFeatures = Field(
         default=EngineeredFeatures(),

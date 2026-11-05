@@ -11,9 +11,10 @@ class FullyBayesianSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     """Single-task GP whose hyperparameters are sampled by MCMC (NUTS) instead of
     fitted.
 
-    Predictions average over the sampled models, which accounts for the uncertainty
-    in the hyperparameters. This is more robust with few data or many inputs than a
-    single fit, but much slower.
+    Predictions are a mixture of Gaussians, one per sampled set of hyperparameters.
+    By including samples from the distribution of the hyperparameters instead of
+    only the most likely ones, a fully Bayesian model is more expressive and more
+    robust with few data or many inputs, at a higher computational cost.
 
     Examples:
         >>> FullyBayesianSingleTaskGPSurrogate(
