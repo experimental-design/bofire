@@ -3,6 +3,7 @@ from typing import Optional
 import pandas as pd
 
 from bofire.data_models.strategies.api import FactorialStrategy as DataModel
+from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.strategy import Strategy
 
 
@@ -14,7 +15,11 @@ class FactorialStrategy(Strategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
 
-    def _ask(self, candidate_count: Optional[int] = None) -> pd.DataFrame:
+    def _ask(
+        self,
+        candidate_count: Optional[int] = None,
+        progress_callback: Optional[AskProgressCallback] = None,
+    ) -> pd.DataFrame:
         if candidate_count is not None:
             raise ValueError(
                 "FactorialStrategy will ignore the specified value of candidate_count. "
