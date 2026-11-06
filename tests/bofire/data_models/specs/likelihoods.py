@@ -66,3 +66,7 @@ specs.add_invalid(
     },
     error=ValidationError,
 )
+
+
+specs.add_valid(likelihoods.PairwiseProbitLikelihood, lambda: {})
+specs.add_valid(likelihoods.PairwiseLogitLikelihood, lambda: {})

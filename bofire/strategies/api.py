@@ -17,6 +17,7 @@ from bofire.strategies.predictives.multi_fidelity_knowledge_gradient import (
     MultiFidelityHVKGStrategy,
 )
 from bofire.strategies.predictives.predictive import PredictiveStrategy
+from bofire.strategies.predictives.preference import PreferenceStrategy
 from bofire.strategies.predictives.qparego import QparegoStrategy
 from bofire.strategies.predictives.sobo import (
     AdditiveSoboStrategy,

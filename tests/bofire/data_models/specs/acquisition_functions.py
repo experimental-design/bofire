@@ -17,6 +17,18 @@ specs.add_valid(
 )
 
 specs.add_valid(
+    acquisition_functions.qEUBO,
+    lambda: {"n_mc_samples": 512},
+)
+
+specs.add_invalid(
+    acquisition_functions.qEUBO,
+    lambda: {"n_mc_samples": 513},
+    error=ValueError,
+    message="Argument is not power of two.",
+)
+
+specs.add_valid(
     acquisition_functions.qLogEI,
     lambda: {"n_mc_samples": 512},
 )

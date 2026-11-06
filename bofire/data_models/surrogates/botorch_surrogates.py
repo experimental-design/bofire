@@ -20,6 +20,7 @@ from bofire.data_models.surrogates.mlp import (
     RegressionMLPEnsemble,
 )
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
+from bofire.data_models.surrogates.pairwise_gp import PairwiseGPSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.selection import SelectionSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
@@ -40,6 +41,7 @@ _BOTORCH_SURROGATE_TYPES: List[Type[Surrogate]] = [
     MultiTaskGPSurrogate,
     EnsembleMapSaasSingleTaskGPSurrogate,
     SelectionSurrogate,
+    PairwiseGPSurrogate,
 ]
 
 AnyBotorchSurrogate = tagged_union(*_BOTORCH_SURROGATE_TYPES)

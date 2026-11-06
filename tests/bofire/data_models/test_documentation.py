@@ -160,7 +160,6 @@ UNDOCUMENTED_FIELDS = {
     "bofire.data_models.surrogates.deterministic.LinearDeterministicSurrogate.coefficients",
     "bofire.data_models.surrogates.deterministic.LinearDeterministicSurrogate.intercept",
     "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.kernel",
-    "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.likelihood",
     "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.scaler",
     "bofire.data_models.transforms.drop_data.DropDataTransform.to_be_removed_candidates",
     "bofire.data_models.transforms.drop_data.DropDataTransform.to_be_removed_experiments",

@@ -1,6 +1,10 @@
 from typing import Callable, Dict, Optional, Tuple, Type
 
 import gpytorch
+from botorch.models.likelihoods.pairwise import (
+    PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
+)
 from gpytorch.likelihoods.hadamard_gaussian_likelihood import HadamardGaussianLikelihood
 
 import bofire.data_models.likelihoods.api as data_models
@@ -50,12 +54,26 @@ def map_TaskwiseLikelihood(
     )
 
 
+def map_PairwiseProbitLikelihood(
+    data_model: data_models.PairwiseProbitLikelihood, d: int, **kwargs
+) -> PairwiseProbitLikelihood:
+    return PairwiseProbitLikelihood()
+
+
+def map_PairwiseLogitLikelihood(
+    data_model: data_models.PairwiseLogitLikelihood, d: int, **kwargs
+) -> PairwiseLogitLikelihood:
+    return PairwiseLogitLikelihood()
+
+
 LIKELIHOOD_MAP: Dict[Type[data_models.Likelihood], Callable] = {
     data_models.GaussianLikelihood: map_GaussianLikelihood,
     # the base likelihood: BoTorch's RobustRelevancePursuitSingleTaskGP wraps it into
     # its SparseOutlierGaussianLikelihood, which needs the number of training points
     data_models.SparseOutlierGaussianLikelihood: map_GaussianLikelihood,
     data_models.TaskwiseLikelihood: map_TaskwiseLikelihood,
+    data_models.PairwiseProbitLikelihood: map_PairwiseProbitLikelihood,
+    data_models.PairwiseLogitLikelihood: map_PairwiseLogitLikelihood,
 }
 
 

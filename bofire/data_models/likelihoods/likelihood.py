@@ -93,3 +93,23 @@ class TaskwiseLikelihood(Likelihood):
         description="The noise model every task gets a copy of; each copy is "
         "fitted separately.",
     )
+
+
+class PairwiseProbitLikelihood(Likelihood):
+    """Binary preferences with Gaussian noise on the latent utilities.
+
+    Converts the difference in utility between two alternatives into a preference
+    probability using the cumulative normal distribution.
+    """
+
+    type: Literal["PairwiseProbitLikelihood"] = "PairwiseProbitLikelihood"
+
+
+class PairwiseLogitLikelihood(Likelihood):
+    """Binary preferences described by the Bradley-Terry model.
+
+    Converts the difference in utility between two alternatives into a preference
+    probability using the logistic sigmoid function.
+    """
+
+    type: Literal["PairwiseLogitLikelihood"] = "PairwiseLogitLikelihood"

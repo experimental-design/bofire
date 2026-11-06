@@ -28,6 +28,8 @@ from bofire.data_models.kernels.api import (
 from bofire.data_models.likelihoods.api import (
     THREESIX_LIKELIHOOD,
     GaussianLikelihood,
+    PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
     SparseOutlierGaussianLikelihood,
     TaskwiseLikelihood,
 )
@@ -907,7 +909,7 @@ specs.add_valid(
             outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
         ).model_dump(),
         "scaler": Normalize().model_dump(),
-        "likelihood": "probit",
+        "likelihood": PairwiseProbitLikelihood().model_dump(),
         "engineered_features": EngineeredFeatures().model_dump(),
         "categorical_encodings": {},
         "optimizer": LBFGSB().model_dump(),
@@ -937,13 +939,45 @@ specs.add_valid(
             outputscale_constraint=PAIRWISEGP_OUTPUTSCALE_CONSTRAINT(),
         ).model_dump(),
         "scaler": Normalize().model_dump(),
-        "likelihood": "logit",
+        "likelihood": PairwiseLogitLikelihood().model_dump(),
         "engineered_features": EngineeredFeatures().model_dump(),
         "categorical_encodings": {},
         "optimizer": LBFGSB().model_dump(),
         "dump": None,
     },
 )
+
+for likelihood in [
+    GaussianLikelihood(),
+    GaussianLikelihood().model_dump(),
+    "gaussian",
+    "probit",
+    "logit",
+    {"type": "UnknownLikelihood"},
+]:
+    specs.add_invalid(
+        models.PairwiseGPSurrogate,
+        lambda likelihood=likelihood: {
+            **specs.valid(models.PairwiseGPSurrogate).spec(),
+            "likelihood": likelihood,
+        },
+        error=ValueError,
+    )
+
+for likelihood in [
+    PairwiseProbitLikelihood(),
+    PairwiseLogitLikelihood(),
+    PairwiseProbitLikelihood().model_dump(),
+    PairwiseLogitLikelihood().model_dump(),
+]:
+    specs.add_invalid(
+        models.SingleTaskGPSurrogate,
+        lambda likelihood=likelihood: {
+            **specs.valid(models.SingleTaskGPSurrogate).spec(),
+            "likelihood": likelihood,
+        },
+        error=ValueError,
+    )
 
 specs.add_invalid(
     models.PairwiseGPSurrogate,

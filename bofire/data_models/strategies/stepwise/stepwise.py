@@ -7,6 +7,7 @@ from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import CategoricalInput, CategoricalOutput, Feature
 from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
+from bofire.data_models.strategies.predictives.preference import PreferenceStrategy
 from bofire.data_models.strategies.stepwise.conditions import (
     AlwaysTrueCondition,
     AnyCondition,
@@ -77,6 +78,11 @@ class StepwiseStrategy(Strategy):
     @model_validator(mode="after")
     def validate_steps(self):
         for i, step in enumerate(self.steps):
+            if isinstance(step.strategy_data, PreferenceStrategy):
+                raise ValueError(
+                    "PreferenceStrategy cannot be used in StepwiseStrategy. "
+                    "Generate and label initial designs separately."
+                )
             validate_domain_compatibility(self.domain, step.strategy_data.domain)
             if i < len(self.steps) - 1 and isinstance(
                 step.condition, AlwaysTrueCondition
