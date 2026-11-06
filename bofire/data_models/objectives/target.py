@@ -3,6 +3,7 @@ from typing import Literal, Optional, Union
 import numpy as np
 import pandas as pd
 from pydantic import Field
+from scipy.special import expit
 
 from bofire.data_models.objectives.objective import (
     ConstrainedObjective,
@@ -46,7 +47,8 @@ class TargetObjective(Objective, ConstrainedObjective):
 
     A constrained objective: the reward is the product of two sigmoids, forming a
     plateau of width `tolerance` around the target. Use `CloseToTargetObjective` when
-    no feasible window is intended.
+    no feasible window is intended. Both sigmoid factors are evaluated directly to
+    preserve small rewards outside the window.
 
     Examples:
         >>> TargetObjective(target_value=7.0, tolerance=0.5, steepness=10.0)
@@ -81,24 +83,8 @@ class TargetObjective(Objective, ConstrainedObjective):
             np.array: An array of reward values calculated by the product of two sigmoidal shaped functions resulting in a maximum at the target value.
 
         """
-        return (
-            1
-            / (
-                1
-                + np.exp(
-                    -1 * self.steepness * (x - (self.target_value - self.tolerance)),
-                )
-            )
-            * (
-                1
-                - 1
-                / (
-                    1.0
-                    + np.exp(
-                        -1
-                        * self.steepness
-                        * (x - (self.target_value + self.tolerance)),
-                    )
-                )
-            )
+        return expit(
+            self.steepness * (x - (self.target_value - self.tolerance)),
+        ) * expit(
+            self.steepness * ((self.target_value + self.tolerance) - x),
         )
