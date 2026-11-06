@@ -171,6 +171,22 @@ class OptimizerBenchmark:
                     "skipping nonlinear constraints / n-choose-k constr. / categorical exclude constr. for botorch optimizer"
                 )
 
+        # NonlinearEqualityConstraint defines a measure-zero manifold, so
+        # RandomStrategy's rejection sampling (used for GA's initial candidates)
+        # cannot reliably hit it. NonlinearInequalityConstraint/NChooseK/
+        # CategoricalExclude define full-volume feasible regions and work fine.
+        if len(
+            domain.constraints.get(
+                constraints_data_models.NonlinearEqualityConstraint
+            ).constraints
+        ) > 0 and isinstance(
+            optimizer, data_models_strategies.GeneticAlgorithmOptimizer
+        ):
+            pytest.skip(
+                "skipping tests with nonlinear equality constraints for GeneticAlgorithm - "
+                "RandomStrategy cannot reliably generate feasible initial candidates"
+            )
+
         strategy = self.strategy(domain=domain, acquisition_optimizer=optimizer)
         strategy = strategies.map(strategy)
 
