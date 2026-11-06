@@ -89,8 +89,9 @@ class NChooseKConstraint(IntrapointConstraint):
         return self
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
-        """Smooth relaxation of NChooseK constraint by countig the number of zeros in a candidate by a sum of
-        narrow gaussians centered at zero.
+        """Smooth relaxation of NChooseK constraints by counting zeros with narrow gaussians.
+
+        Only constrained features are evaluated; experiment labels are preserved.
 
         Args:
             experiments (pd.DataFrame): Data to evaluate the constraint on.
@@ -103,28 +104,27 @@ class NChooseKConstraint(IntrapointConstraint):
         def relu(x):
             return np.maximum(0, x)
 
-        indices = np.array(
-            [i for i, name in enumerate(experiments.columns) if name in self.features],
-            dtype=np.int64,
-        )
-        experiments_tensor = np.array(experiments.to_numpy())
+        experiments_tensor = experiments[self.features].to_numpy()
 
         max_count_violation = np.zeros(experiments_tensor.shape[0])
         min_count_violation = np.zeros(experiments_tensor.shape[0])
 
         if self.max_count != len(self.features):
             max_count_violation = relu(
-                -1 * narrow_gaussian(x=experiments_tensor[..., indices]).sum(axis=-1)
+                -1 * narrow_gaussian(x=experiments_tensor).sum(axis=-1)
                 + (len(self.features) - self.max_count),
             )
 
         if self.min_count > 0:
             min_count_violation = relu(
-                narrow_gaussian(x=experiments_tensor[..., indices]).sum(axis=-1)
+                narrow_gaussian(x=experiments_tensor).sum(axis=-1)
                 - (len(self.features) - self.min_count),
             )
 
-        return pd.Series(max_count_violation + min_count_violation)
+        return pd.Series(
+            max_count_violation + min_count_violation,
+            index=experiments.index,
+        )
 
     def count_is_valid(self, count: int) -> bool:
         """True if ``count`` non-zero features satisfies this NChooseK band.
