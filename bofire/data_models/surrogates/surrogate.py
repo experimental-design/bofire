@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Any, Optional, Type
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
@@ -11,10 +11,22 @@ from bofire.data_models.types import InputTransformSpecs
 
 
 class Surrogate(BaseModel):
+    """Model that predicts the outputs from the inputs.
+
+    Most surrogates are fitted to experiments; deterministic ones compute their
+    predictions from a given formula or mapping. Strategies use surrogates to model
+    the black-box function, which is used when deciding which experiment to carry out
+    next.
+    """
+
     type: Any
-    inputs: Inputs
-    outputs: Outputs
-    dump: Optional[str] = None
+    inputs: Inputs = Field(description="The input features the model predicts from.")
+    outputs: Outputs = Field(description="The output features the model predicts.")
+    dump: Optional[str] = Field(
+        default=None,
+        description="A fitted model, as returned by the surrogate's `dumps()`. If "
+        "provided, the surrogate starts out fitted to the data it was dumped with.",
+    )
 
     @property
     def input_preprocessing_specs(self) -> InputTransformSpecs:

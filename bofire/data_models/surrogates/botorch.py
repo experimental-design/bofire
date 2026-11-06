@@ -10,24 +10,26 @@ from bofire.data_models.types import InputTransformSpecs
 
 
 class BotorchSurrogate(Surrogate):
-    """Base class for all botorch based surrogates, that can be used in botorch
-    based strategies.
+    """Surrogate built on BoTorch, usable in the Bayesian optimization strategies.
 
-    Attributes:
-        categorical_encodings: A dictionary specifying how
-            categorical features are to be encoded **within** the botorch based surrogate.
-            Keys are the feature keys and values are the encoding types. If a feature is
-            not specified, a default is chosen from the descriptor *data* the feature
-            carries: a feature with a structure column (e.g. ``smiles``) is fingerprint
-            encoded, one with numeric descriptor columns is descriptor encoded, and a
-            plain categorical falls back to the surrogate-specific default (one-hot here).
+    Categorical inputs are passed through their encoding before they reach the
+    model. Engineered features are computed from the inputs inside the model, and
+    are not set directly by the optimizer.
     """
 
     categorical_encodings: InputTransformSpecs = Field(
-        default_factory=dict, validate_default=True
+        default={},
+        validate_default=True,
+        description="How each categorical input is represented to the model, by input "
+        "key. An input not listed gets a default from the descriptor data it carries: "
+        "a structure column (e.g. SMILES) gives fingerprints, numeric descriptor "
+        "columns give a descriptor encoding, and a plain categorical gets the "
+        "surrogate's default.",
     )
     engineered_features: EngineeredFeatures = Field(
-        default_factory=lambda: EngineeredFeatures()
+        default=EngineeredFeatures(),
+        description="Quantities derived from the inputs, such as sums or "
+        "amount-weighted descriptor blends, that the model sees as further inputs.",
     )
 
     @classmethod

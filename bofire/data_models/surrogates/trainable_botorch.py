@@ -5,8 +5,18 @@ from bofire.data_models.surrogates.scaler import AnyScaler, Normalize, ScalerEnu
 
 
 class TrainableBotorchSurrogate(BotorchSurrogate):
-    scaler: AnyScaler = Field(default_factory=Normalize)
-    output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
+    """BoTorch surrogate fitted to experiments, with its inputs and outputs scaled for
+    the model."""
+
+    scaler: AnyScaler = Field(
+        default=Normalize(),
+        description="How the continuous inputs and the engineered features are "
+        "scaled for the model; None leaves them as they are.",
+    )
+    output_scaler: ScalerEnum = Field(
+        default=ScalerEnum.STANDARDIZE,
+        description="How the outputs are transformed for fitting.",
+    )
 
     @model_validator(mode="after")
     def validate_scaler_features(self):
