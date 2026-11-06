@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple
+from copy import deepcopy
+from inspect import signature
+from typing import Callable, Dict, List, Protocol, Tuple, TypeVar, cast
 
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
 from bofire.data_models.domain.domain import is_numeric
 from bofire.data_models.features.api import CategoricalOutput
@@ -15,6 +18,11 @@ from bofire.utils.naming_conventions import (
 
 
 class Surrogate(ABC):
+    @classmethod
+    def from_spec(cls, data_model: DataModel) -> Self:
+        """Construct this runtime surrogate from a validated configuration."""
+        return cls(data_model=data_model)
+
     def __init__(
         self,
         data_model: DataModel,
@@ -129,3 +137,39 @@ class Surrogate(ABC):
         training data but only on the domain
         """
         return {}
+
+
+S = TypeVar("S", bound=Surrogate)
+
+
+class _SurrogateFactory(Protocol):
+    """The factory callable exposed by concrete surrogate classes."""
+
+    make: Callable[..., Surrogate]
+
+
+def make_surrogate(
+    surrogate_type: type[S], data_model_type: type[DataModel], locals_of_make: dict
+) -> S:
+    """Factory function to create a surrogate of type surrogate_type from a data model of type data_model_type.
+    This function is a helper for the `make`-`@classmethod`s of the surrogates. All locals except `cls` are passed to the
+    data model constructor, including None. Default objects are copied so that validation and runtime mutations
+    do not affect subsequent calls.
+    Args:
+        surrogate_type: The class of the surrogate to be created.
+        data_model_type: The data model class.
+        locals_of_make: The local variables of the make-function that called this function.
+    Returns:
+        Surrogate: The surrogate object.
+    """
+    parameters = signature(cast(_SurrogateFactory, surrogate_type).make).parameters
+    kwargs = {}
+    for key, value in locals_of_make.items():
+        # since we get all locals from the `make`-`@classmethod`s we need to remove the `cls` variable.
+        if key == "cls":
+            continue
+        parameter = parameters.get(key)
+        if parameter is not None and value is parameter.default:
+            value = deepcopy(value)
+        kwargs[key] = value
+    return surrogate_type.from_spec(data_model_type(**kwargs))
