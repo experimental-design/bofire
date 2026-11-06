@@ -1,7 +1,10 @@
+import warnings
 from typing import Annotated, Any, Dict, List, Literal, Optional, Type, Union
 
 from formulaic import Formula
 from formulaic.errors import FormulaSyntaxError
+from formulaic.parser import DefaultFormulaParser
+from formulaic.parser.types import ASTNode
 from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
@@ -19,6 +22,45 @@ PREDEFINED_MODEL_TYPES = Literal[
     "linear-and-interactions",
     "fully-quadratic",
 ]
+
+
+def _iter_ast_nodes(node: object):
+    if isinstance(node, ASTNode):
+        yield node
+        for arg in node.args:
+            yield from _iter_ast_nodes(arg)
+
+
+def _warn_on_potential_formulaic_term_drops(formula: str) -> None:
+    try:
+        ast = DefaultFormulaParser().get_ast(formula)
+    except Exception:
+        return
+    risky_patterns = []
+    supported_operators = {":", "*", "+", "-", "~"}
+
+    for node in _iter_ast_nodes(ast):
+        operator = node.operator.symbol
+        if operator not in supported_operators:
+            risky_patterns.append(f"operator `{operator}`")
+        if (
+            operator in {":", "*"}
+            and len(node.args) == 2
+            and str(node.args[0]) == str(node.args[1])
+        ):
+            risky_patterns.append(f"self interaction `{node}`")
+
+    if risky_patterns:
+        details = ", ".join(dict.fromkeys(risky_patterns))
+        warnings.warn(
+            "Formulaic may silently drop model terms that are not correctly delimited by braces. "
+            f"Detected potentially risky pattern(s): {details}. "
+            "If you intended powers or self-products, wrap terms in curly braces "
+            "(for example `{x**2}` or `{x*x}`). See Formulaic grammar for details: "
+            "https://matthewwardrop.github.io/formulaic/latest/guides/grammar/.",
+            UserWarning,
+            stacklevel=2,
+        )
 
 
 class OptimalityCriterion(BaseModel):
@@ -49,6 +91,7 @@ class DoEOptimalityCriterion(OptimalityCriterion):
                 Formula(formula)
             except FormulaSyntaxError:
                 raise ValueError(f"Invalid formula: {formula}")
+            _warn_on_potential_formulaic_term_drops(formula)
         return formula
 
 
