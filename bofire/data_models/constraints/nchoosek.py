@@ -91,8 +91,6 @@ class NChooseKConstraint(IntrapointConstraint):
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
         """Smooth relaxation of NChooseK constraints by counting zeros with narrow gaussians.
 
-        Only constrained features are evaluated; experiment labels are preserved.
-
         Args:
             experiments (pd.DataFrame): Data to evaluate the constraint on.
 
