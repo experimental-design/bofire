@@ -3,6 +3,7 @@ from typing import Literal, Optional, Union
 import numpy as np
 import pandas as pd
 from pydantic import Field
+from scipy.special import expit
 
 from bofire.data_models.objectives.objective import (
     ConstrainedObjective,
@@ -16,7 +17,8 @@ class SigmoidObjective(Objective, ConstrainedObjective):
 
     A sigmoid objective expresses a threshold rather than a direction: the reward runs
     from 0 to 1 across a transition centred on `tp`, and is flat on either side. Values
-    far beyond the threshold therefore earn no additional credit.
+    far beyond the threshold therefore earn no additional credit. Evaluation remains
+    stable in the saturated tails.
     """
 
     steepness: TGt0 = Field(
@@ -60,7 +62,7 @@ class MaximizeSigmoidObjective(SigmoidObjective):
             np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
 
         """
-        return 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
+        return expit(self.steepness * (x - self.tp))
 
 
 class MovingMaximizeSigmoidObjective(SigmoidObjective):
@@ -107,9 +109,7 @@ class MovingMaximizeSigmoidObjective(SigmoidObjective):
             np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
 
         """
-        return 1 / (
-            1 + np.exp(-1 * self.steepness * (x - self.get_adjusted_tp(x_adapt)))
-        )
+        return expit(self.steepness * (x - self.get_adjusted_tp(x_adapt)))
 
 
 class MinimizeSigmoidObjective(SigmoidObjective):
@@ -143,4 +143,4 @@ class MinimizeSigmoidObjective(SigmoidObjective):
             np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
 
         """
-        return 1 - 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
+        return expit(self.steepness * (self.tp - x))
