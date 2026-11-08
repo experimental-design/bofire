@@ -88,6 +88,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - LLM field descriptions report descriptor data uniformly for every feature type: a prefix stating what the feature is and its range or options, then the data — `Categorical, allowed: [...] — descriptors per category: {...} — structure: [...]`, `Continuous, bounds [...] — descriptors: {...} — structure: CCO`. Previously the kind was announced in the prefix (`Categorical with descriptors`, `Continuous molecular (SMILES: CCO)`) and only the two descriptor-carrying classes emitted anything.
 
 ### Fixed
+- `QparegoStrategy` draws independent Chebyshev scalarization weights for each candidate in a batch, instead of reusing one trade-off direction for the whole batch (#849). Baseline predictions and output constraints are shared across candidates.
 - Surrogates now reject output types they can't model. Every surrogate's output check was always true (`isinstance(my_type, type(ContinuousOutput))`), so e.g. a `SingleTaskGPSurrogate` or `RandomForestSurrogate` accepted a categorical output, and a `ClassificationMLPEnsemble` a continuous one.
 - Predictions of a model with both continuous and categorical outputs are labelled correctly. The prediction columns listed every categorical output before the continuous ones, while the models are stacked in output order (continuous first), so the values landed under the wrong column names.
 - `training_specs` of the GP surrogates is passed on to the optimizer; it was silently ignored.
