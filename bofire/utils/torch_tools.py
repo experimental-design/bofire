@@ -502,52 +502,23 @@ def get_objective_callable(
             * (torch.abs(y[..., idx] - objective.target_value) ** objective.exponent)
         )
     if isinstance(objective, MinimizeSigmoidObjective):
-        return lambda y, X=None: (
-            1.0
-            - 1.0
-            / (
-                1.0
-                + torch.exp(-1.0 * objective.steepness * (y[..., idx] - objective.tp))
-            )
+        return lambda y, X=None: torch.sigmoid(
+            objective.steepness * (objective.tp - y[..., idx]),
         )
     if isinstance(objective, MaximizeSigmoidObjective):
-        return lambda y, X=None: (
-            1.0
-            / (
-                1.0
-                + torch.exp(-1.0 * objective.steepness * (y[..., idx] - objective.tp))
-            )
+        return lambda y, X=None: torch.sigmoid(
+            objective.steepness * (y[..., idx] - objective.tp),
         )
     if isinstance(objective, MovingMaximizeSigmoidObjective):
         tp = x_adapt.max().item() + objective.tp
-        return lambda y, X=None: (
-            1.0 / (1.0 + torch.exp(-1.0 * objective.steepness * (y[..., idx] - tp)))
-        )
+        return lambda y, X=None: torch.sigmoid(objective.steepness * (y[..., idx] - tp))
     if isinstance(objective, TargetObjective):
-        return lambda y, X=None: (
-            1.0
-            / (
-                1.0
-                + torch.exp(
-                    -1
-                    * objective.steepness
-                    * (y[..., idx] - (objective.target_value - objective.tolerance)),
-                )
-            )
-            * (
-                1.0
-                - 1.0
-                / (
-                    1.0
-                    + torch.exp(
-                        -1.0
-                        * objective.steepness
-                        * (
-                            y[..., idx] - (objective.target_value + objective.tolerance)
-                        ),
-                    )
-                )
-            )
+        return lambda y, X=None: torch.sigmoid(
+            objective.steepness
+            * (y[..., idx] - (objective.target_value - objective.tolerance)),
+        ) * torch.sigmoid(
+            objective.steepness
+            * ((objective.target_value + objective.tolerance) - y[..., idx]),
         )
 
     if isinstance(objective, IncreasingDesirabilityObjective):
