@@ -141,7 +141,7 @@ def test_qparego(num_test_candidates):
     preds = my_strategy.predict(experiments)
     assert len(preds) == len(experiments)
     # test get objective
-    objective, _, _ = my_strategy._get_objective_and_constraints()
+    [objective], _, _ = my_strategy._get_objectives_and_constraints(1)
     assert isinstance(objective, GenericMCObjective)
     acqfs = my_strategy._get_acqfs(2)
     assert len(acqfs) == 2
@@ -172,7 +172,7 @@ def test_qparego_constraints(num_test_candidates):
         my_strategy = QparegoStrategy(data_model=data_model)
         my_strategy.tell(experiments)
         # test get objective
-        objective, _, _ = my_strategy._get_objective_and_constraints()
+        [objective], _, _ = my_strategy._get_objectives_and_constraints(1)
         assert isinstance(objective, GenericMCObjective)
         # ask
         candidates = my_strategy.ask(num_test_candidates)

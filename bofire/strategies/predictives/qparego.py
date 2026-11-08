@@ -44,17 +44,6 @@ class QparegoStrategy(BotorchStrategy):
         self.acquisition_function = data_model.acquisition_function
         self.constraint_callables, self.etas = None, 1e-3
 
-    def _get_objective_and_constraints(
-        self,
-    ) -> Tuple[
-        GenericMCObjective,
-        Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
-        Union[List, float],
-    ]:
-        """Return one random scalarization and the output constraints."""
-        objectives, constraints, etas = self._get_objectives_and_constraints(1)
-        return objectives[0], constraints, etas
-
     def _get_objectives_and_constraints(
         self,
         n: int,
