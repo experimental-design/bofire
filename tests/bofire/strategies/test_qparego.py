@@ -49,7 +49,7 @@ def test_qparego_independent_scalarizations(acquisition, n):
     low, high = Y.min(dim=0).values, Y.max(dim=0).values
     normalized_probes = 0.8 - 0.6 * torch.eye(3, dtype=torch.double)
     probes = (low + normalized_probes * (high - low)).unsqueeze(0)
-    weights = 0.1 + 0.6 * torch.eye(3, dtype=torch.double)
+    weights = 0.1 + 0.7 * torch.eye(3, dtype=torch.double)
     with (
         patch(
             "bofire.strategies.predictives.qparego.sample_simplex",
