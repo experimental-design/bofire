@@ -35,6 +35,7 @@ from bofire.data_models.acquisition_functions.api import qEUBO, qLogNEI
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.likelihoods.api import PairwiseProbitLikelihood
+from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import (
     BotorchOptimizer,
     PreferenceStrategy as PreferenceStrategyDataModel,
@@ -111,7 +112,9 @@ inputs = Inputs(
         ContinuousInput(key="x_2", bounds=(0.0, 1.0)),
     ]
 )
-outputs = Outputs(features=[ContinuousOutput(key="utility")])
+outputs = Outputs(
+    features=[ContinuousOutput(key="utility", objective=MaximizeObjective())]
+)
 
 surrogate_data = PairwiseGPSurrogate(
     inputs=inputs,
@@ -120,6 +123,10 @@ surrogate_data = PairwiseGPSurrogate(
 )
 surrogate = surrogates.map(surrogate_data)
 ```
+
+We explicitly maximize the learned latent utility: larger values indicate
+stronger preference. `MaximizeObjective()` is also the default for a
+`ContinuousOutput`.
 
 The probit likelihood is the default. To use the logistic alternative, import
 `PairwiseLogitLikelihood` from `bofire.data_models.likelihoods.api` and pass
