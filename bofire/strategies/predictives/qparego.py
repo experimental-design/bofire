@@ -15,12 +15,7 @@ from bofire.data_models.acquisition_functions.acquisition_function import (
     qNEI,
 )
 from bofire.data_models.api import Domain
-from bofire.data_models.objectives.api import (
-    CloseToTargetObjective,
-    MaximizeObjective,
-    MinimizeObjective,
-    Objective,
-)
+from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.api import QparegoStrategy as DataModel
 from bofire.data_models.strategies.convergence_criteria.api import (
     AnyConvergenceCriterion,
@@ -37,10 +32,9 @@ from bofire.utils.torch_tools import (
 )
 
 
-# this implementation follows this tutorial: https://github.com/pytorch/botorch/blob/main/tutorials/multi_objective_bo.ipynb
-# main difference to the multiobjective strategies is that we have a randomized list of acqfs, this has to be bring into accordance
-# with the other strategies
 class QparegoStrategy(BotorchStrategy):
+    """Generate candidates sequentially with an independent scalarization per point."""
+
     def __init__(
         self,
         data_model: DataModel,
@@ -50,41 +44,23 @@ class QparegoStrategy(BotorchStrategy):
         self.acquisition_function = data_model.acquisition_function
         self.constraint_callables, self.etas = None, 1e-3
 
-    def _get_objective_and_constraints(
+    def _get_objectives_and_constraints(
         self,
+        n: int,
     ) -> Tuple[
-        GenericMCObjective,
+        List[GenericMCObjective],
         Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
         Union[List, float],
     ]:
-        """Returns the scalarized objective.
+        """Draw independent scalarizations using shared baseline predictions.
 
-        Returns:
-            GenericMCObjective: the botorch objective.
-            Union[ConstrainedObjective, None]: the botorch constraints.
-            Union[List, float]: etas used in the botorch constraints.
-
+        Each candidate gets its own weights and callable. Output transformations,
+        posterior-mean predictions, and output constraints are computed once.
         """
         assert self.experiments is not None, "No experiments available."
         ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(
             **tkwargs,
         )
-        weights = (
-            sample_simplex(
-                len(
-                    self.domain.outputs.get_keys_by_objective(
-                        includes=[
-                            MaximizeObjective,
-                            MinimizeObjective,
-                            CloseToTargetObjective,
-                        ],
-                    ),
-                ),
-                **tkwargs,
-            ).squeeze()
-            * ref_point_mask
-        )
-
         obj_callable = get_multiobjective_objective(
             outputs=self.domain.outputs,
             experiments=self.experiments,
@@ -100,15 +76,21 @@ class QparegoStrategy(BotorchStrategy):
             df_preds[[f"{key}_pred" for key in self.domain.outputs.get_keys()]].values,
         ).to(**tkwargs)
 
-        scalarization = get_chebyshev_scalarization(
-            weights=weights,
-            Y=obj_callable(preds, None) * ref_point_mask,
-        )
+        Y = obj_callable(preds, None) * ref_point_mask
 
-        def objective_callable(Z, X=None):
-            return scalarization(obj_callable(Z, None) * ref_point_mask, X)
+        def make_objective() -> GenericMCObjective:
+            weights = (
+                sample_simplex(len(ref_point_mask), **tkwargs).squeeze()
+                * ref_point_mask
+            )
+            scalarization = get_chebyshev_scalarization(weights=weights, Y=Y)
 
-        if len(weights) != len(self.domain.outputs.get_by_objective(Objective)):
+            def objective_callable(Z, X=None):
+                return scalarization(obj_callable(Z, None) * ref_point_mask, X)
+
+            return GenericMCObjective(objective=objective_callable)
+
+        if len(ref_point_mask) != len(self.domain.outputs.get_by_objective(Objective)):
             constraint_callables, etas = get_output_constraints(
                 self.domain.outputs,
                 experiments=self.experiments,
@@ -117,7 +99,7 @@ class QparegoStrategy(BotorchStrategy):
             constraint_callables, etas = None, 1e-3
 
         return (
-            GenericMCObjective(objective=objective_callable),
+            [make_objective() for _ in range(n)],
             constraint_callables,
             etas,
         )
@@ -130,17 +112,17 @@ class QparegoStrategy(BotorchStrategy):
         X_train, X_pending = self.get_acqf_input_tensors()
 
         (
-            objective_callable,
+            objectives,
             constraint_callables,
             etas,
-        ) = self._get_objective_and_constraints()
+        ) = self._get_objectives_and_constraints(n)
 
         assert self.model is not None
-        for i in range(n):
+        for i, objective in enumerate(objectives):
             acqf = get_acquisition_function(
                 acquisition_function_name=self.acquisition_function.__class__.__name__,
                 model=self.model,
-                objective=objective_callable,
+                objective=objective,
                 X_observed=X_train,
                 X_pending=X_pending if i == 0 else None,
                 constraints=constraint_callables,

@@ -101,7 +101,6 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
         self.max_leaf_nodes = data_model.max_leaf_nodes
         self.min_impurity_decrease = data_model.min_impurity_decrease
         self.bootstrap = data_model.bootstrap
-        self.oob_score = data_model.oob_score
         self.random_state = data_model.random_state
         self.ccp_alpha = data_model.ccp_alpha
         self.max_samples = data_model.max_samples
@@ -142,7 +141,6 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
             max_leaf_nodes=self.max_leaf_nodes,
             min_impurity_decrease=self.min_impurity_decrease,
             bootstrap=self.bootstrap,
-            oob_score=self.oob_score,
             random_state=self.random_state,
             ccp_alpha=self.ccp_alpha,
             max_samples=self.max_samples,

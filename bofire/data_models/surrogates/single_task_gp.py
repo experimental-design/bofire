@@ -66,14 +66,34 @@ _PRIOR_SETS = [
 
 
 class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
+    """Gaussian process assembled from a kernel, a mean and a likelihood, with its
+    hyperparameters fitted to the data.
+
+    The kernel decides which experiments the model considers similar, the mean what
+    it predicts far from any data, and the likelihood how much of the spread in the
+    data it attributes to measurement noise. The default is BoTorch's default
+    single-task GP: an RBF kernel with a lengthscale per input and priors scaled to
+    the number of inputs.
+
+    Examples:
+        >>> SingleTaskGPSurrogate(inputs=inputs, outputs=outputs)
+        >>> SingleTaskGPSurrogate(
+        ...     inputs=inputs,
+        ...     outputs=outputs,
+        ...     kernel=ScaleKernel(base_kernel=MaternKernel(ard=True, nu=2.5)),
+        ... )
+    """
+
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
     kernel: AnyKernel = Field(
-        default_factory=lambda: RBFKernel(
+        default=RBFKernel(
             ard=True,
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
             lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),
-        )
+        ),
+        description="The kernel: how strongly the response at two points is assumed "
+        "to be related, i.e. which experiments count as similar.",
     )
     mean: AnySingleTaskMean = Field(
         default=ConstantMean(),
@@ -437,4 +457,4 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        return isinstance(my_type, type(ContinuousOutput))
+        return issubclass(my_type, ContinuousOutput)

@@ -1,34 +1,100 @@
 from typing import Annotated, Literal, Optional, Type, Union
 
-from pydantic import Field
+from pydantic import Field, PositiveFloat, PositiveInt
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
 class RandomForestSurrogate(TrainableBotorchSurrogate):
+    """Random forest regressor: an average over many decision trees, each fitted to a
+    random resample of the data.
+
+    The spread of the individual trees' predictions serves as the uncertainty. The
+    model assumes neither a smooth response nor a characteristic lengthscale, so it
+    copes with abrupt changes and with responses that vary on different scales in
+    different regions. It can't extrapolate beyond the data, and its uncertainty is
+    a heuristic, unlike the analytic uncertainty of a Gaussian process. The
+    hyperparameters are those of
+    scikit-learn's `RandomForestRegressor`, with its defaults.
+
+    Examples:
+        >>> RandomForestSurrogate(inputs=inputs, outputs=outputs, n_estimators=200)
+    """
+
     type: Literal["RandomForestSurrogate"] = "RandomForestSurrogate"
 
-    # hyperparams passed down to `RandomForestRegressor`
-    n_estimators: int = 100
+    n_estimators: PositiveInt = Field(
+        default=100,
+        description="Number of trees. More trees give smoother predictions and a "
+        "more stable uncertainty at a higher cost.",
+    )
     criterion: Literal[
         "squared_error",
         "absolute_error",
         "friedman_mse",
         "poisson",
-    ] = "squared_error"
-    max_depth: Optional[int] = None
-    min_samples_split: Union[int, float] = 2
-    min_samples_leaf: Union[int, float] = 1
-    min_weight_fraction_leaf: float = 0.0
-    max_features: Union[int, float, Literal["auto", "sqrt", "log2"]] = 1.0
-    max_leaf_nodes: Optional[int] = None
-    min_impurity_decrease: float = 0.0
-    bootstrap: bool = True
-    oob_score: bool = False
-    random_state: Optional[int] = None
-    ccp_alpha: Annotated[float, Field(ge=0)] = 0.0
-    max_samples: Optional[Union[int, float]] = None
+    ] = Field(
+        default="squared_error",
+        description="How the quality of a split is measured: squared error, absolute "
+        "error (less sensitive to outliers), Friedman's improvement of the squared "
+        "error, or Poisson deviance (for non-negative counts).",
+    )
+    max_depth: Optional[PositiveInt] = Field(
+        default=None,
+        description="Maximal depth of a tree. If not provided, trees grow until their "
+        "leaves are pure or reach `min_samples_split`.",
+    )
+    min_samples_split: Union[PositiveInt, PositiveFloat] = Field(
+        default=2,
+        description="Minimal number of experiments a node needs to be split; a float "
+        "is a fraction of all experiments.",
+    )
+    min_samples_leaf: Union[PositiveInt, PositiveFloat] = Field(
+        default=1,
+        description="Minimal number of experiments in a leaf; a float is a fraction of "
+        "all experiments. Larger values smooth the predictions.",
+    )
+    min_weight_fraction_leaf: Annotated[float, Field(ge=0.0, le=0.5)] = Field(
+        default=0.0,
+        description="Minimal fraction of all experiments in a leaf.",
+    )
+    max_features: Union[PositiveInt, PositiveFloat, Literal["sqrt", "log2"]] = Field(
+        default=1.0,
+        description="Number of inputs considered at each split: an integer count, a "
+        "fraction of all inputs, or the square root or base-2 logarithm of their "
+        "number. Fewer inputs make the trees more diverse.",
+    )
+    max_leaf_nodes: Optional[PositiveInt] = Field(
+        default=None,
+        description="Maximal number of leaves per tree. If not provided, unlimited.",
+    )
+    min_impurity_decrease: Annotated[float, Field(ge=0.0)] = Field(
+        default=0.0,
+        description="A node is only split if this reduces the split criterion by at "
+        "least this amount, weighted by the share of experiments in the node.",
+    )
+    bootstrap: bool = Field(
+        default=True,
+        description="Whether each tree is fitted to a random resample of the "
+        "experiments, drawn with replacement. If not, every tree sees all of them.",
+    )
+    random_state: Optional[int] = Field(
+        default=None,
+        description="Optional seed for the random resampling and the choice of "
+        "inputs at each split, for reproducible fits.",
+    )
+    ccp_alpha: Annotated[float, Field(ge=0)] = Field(
+        default=0.0,
+        description="Strength of the cost-complexity pruning of the trees after "
+        "growing; 0 means no pruning.",
+    )
+    max_samples: Optional[Union[PositiveInt, PositiveFloat]] = Field(
+        default=None,
+        description="Size of each tree's resample when `bootstrap` is set: a count, or "
+        "a fraction of the experiments. If not provided, as many as there are "
+        "experiments.",
+    )
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
@@ -38,4 +104,4 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        return isinstance(my_type, type(ContinuousOutput))
+        return issubclass(my_type, ContinuousOutput)

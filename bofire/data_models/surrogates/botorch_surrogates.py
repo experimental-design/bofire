@@ -1,7 +1,7 @@
 import itertools
 from typing import List, Type
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
@@ -76,12 +76,15 @@ def register_botorch_surrogate(
 
 
 class BotorchSurrogates(BaseModel):
-    """ "List of botorch surrogates.
+    """The surrogates of a BoTorch strategy, one per output.
 
-    Behaves similar to a Surrogate.
+    Each surrogate predicts one output; together they cover every output of the
+    domain exactly once and use every input of the domain.
     """
 
-    surrogates: List[AnyBotorchSurrogate]
+    surrogates: List[AnyBotorchSurrogate] = Field(
+        description="One surrogate per output, each with exactly one output feature."
+    )
 
     @property
     def input_preprocessing_specs(self) -> InputTransformSpecs:
@@ -136,7 +139,7 @@ class BotorchSurrogates(BaseModel):
         for model in v:
             if len(model.outputs) != 1:
                 raise ValueError("Only single output surrogates allowed.")
-        # check that the output feature keys are distinctw
+        # check that the output feature keys are distinct
         used_output_feature_keys = list(
             itertools.chain.from_iterable([model.outputs.get_keys() for model in v]),
         )
