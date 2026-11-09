@@ -174,6 +174,8 @@ class WassersteinKernel(Kernel):
     has_lengthscale = True
 
     def __init__(self, squared: bool = False, **kwargs):
+        if kwargs.pop("ard_num_dims", None) not in (None, 1):
+            raise ValueError("Shape kernels support only one scalar lengthscale.")
         super(WassersteinKernel, self).__init__(**kwargs)
         self.squared = squared
 
@@ -224,6 +226,8 @@ class ExactWassersteinKernel(Kernel):
         order: int = 1,
         **kwargs,
     ):
+        if kwargs.pop("ard_num_dims", None) not in (None, 1):
+            raise ValueError("Shape kernels support only one scalar lengthscale.")
         super(ExactWassersteinKernel, self).__init__(**kwargs)
         if order not in (1, 2):
             raise ValueError("order must be 1 or 2.")
@@ -296,10 +300,8 @@ class ExactWassersteinKernel(Kernel):
         if diag and x1_x.shape[-2] != x2_x.shape[-2]:
             dists = dists.diagonal(dim1=-2, dim2=-1)
 
-        if self.lengthscale.numel() == 1:
-            dists = dists / self.lengthscale.squeeze()
-        else:
-            dists = dists / self.lengthscale.mean()
+        lengthscale = self.lengthscale.squeeze(-1) if diag else self.lengthscale
+        dists = dists / lengthscale
 
         dists = dists.clamp_min(1e-15)
 

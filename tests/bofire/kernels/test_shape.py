@@ -1,3 +1,4 @@
+import pytest
 import torch
 from torch.testing import assert_close
 
@@ -8,6 +9,12 @@ from bofire.kernels.shape import (
     _pairwise_piecewise_linear_wasserstein,
 )
 from bofire.utils.torch_tools import interp1d
+
+
+@pytest.mark.parametrize("kernel_cls", [WassersteinKernel, ExactWassersteinKernel])
+def test_shape_kernel_rejects_ard(kernel_cls):
+    with pytest.raises(ValueError, match="only one scalar lengthscale"):
+        kernel_cls(ard_num_dims=4)
 
 
 def _make_monotonic_x(
@@ -134,7 +141,6 @@ def test_pairwise_piecewise_linear_wasserstein_order2_matches_manual():
 def test_exact_wasserstein_kernel_chunked_matches_baseline():
     dtype = torch.double
     batch, n1, n2, points = 2, 3, 4, 7
-    feature_dim = 2 * points
     idx_y = torch.arange(points, dtype=torch.long)
     idx_x = torch.arange(points, 2 * points, dtype=torch.long)
 
@@ -155,7 +161,6 @@ def test_exact_wasserstein_kernel_chunked_matches_baseline():
         "append_y": torch.tensor([], dtype=dtype),
         "normalize_y": torch.tensor([1.0], dtype=dtype),
         "normalize_x": True,
-        "ard_num_dims": feature_dim,
     }
     kernel_baseline = ExactWassersteinKernel(**kwargs, pair_chunk_size=None)
     kernel_chunked = ExactWassersteinKernel(**kwargs, pair_chunk_size=2)
@@ -181,7 +186,7 @@ def test_wasserstein_kernel_diag_matches_matrix_diagonal():
     dtype = torch.double
     x1 = torch.rand(6, 9, dtype=dtype)
     x2 = torch.rand(6, 9, dtype=dtype)
-    kernel = WassersteinKernel(ard_num_dims=9)
+    kernel = WassersteinKernel()
 
     full = kernel.forward(x1, x2, diag=False)
     diag = kernel.forward(x1, x2, diag=True)
@@ -192,7 +197,6 @@ def test_wasserstein_kernel_diag_matches_matrix_diagonal():
 def test_exact_wasserstein_kernel_diag_matches_matrix_diagonal():
     dtype = torch.double
     batch, n, points = 2, 4, 7
-    feature_dim = 2 * points
     idx_y = torch.arange(points, dtype=torch.long)
     idx_x = torch.arange(points, 2 * points, dtype=torch.long)
 
@@ -212,7 +216,6 @@ def test_exact_wasserstein_kernel_diag_matches_matrix_diagonal():
         append_y=torch.tensor([], dtype=dtype),
         normalize_y=torch.tensor([1.0], dtype=dtype),
         normalize_x=True,
-        ard_num_dims=feature_dim,
     )
 
     full = kernel.forward(x1, x2, diag=False)
@@ -224,7 +227,6 @@ def test_exact_wasserstein_kernel_diag_matches_matrix_diagonal():
 def test_exact_wasserstein_kernel_order2_chunked_matches_baseline():
     dtype = torch.double
     batch, n1, n2, points = 1, 3, 130, 7
-    feature_dim = 2 * points
     idx_y = torch.arange(points, dtype=torch.long)
     idx_x = torch.arange(points, 2 * points, dtype=torch.long)
 
@@ -245,7 +247,6 @@ def test_exact_wasserstein_kernel_order2_chunked_matches_baseline():
         "normalize_y": torch.tensor([1.0], dtype=dtype),
         "normalize_x": True,
         "order": 2,
-        "ard_num_dims": feature_dim,
     }
     kernel_auto = ExactWassersteinKernel(**kwargs, pair_chunk_size=None)
     kernel_explicit = ExactWassersteinKernel(**kwargs, pair_chunk_size=32)
