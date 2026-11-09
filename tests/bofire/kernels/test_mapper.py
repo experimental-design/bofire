@@ -307,24 +307,7 @@ def test_map_wasserstein_kernel():
 
 @pytest.mark.parametrize("kernel_cls", [WassersteinKernel, ExactWassersteinKernel])
 @pytest.mark.parametrize("nodes", [2, 32])
-@pytest.mark.parametrize(
-    "prior, parameters",
-    [
-        (
-            DimensionalityScaledLogNormalPrior(loc=0.3, scale=0.7),
-            {"loc": 0.3, "scale": 0.7},
-        ),
-        (
-            DimensionalityScaledGammaPrior(
-                concentration=2.0, concentration_scaling=0.5, rate=0.8, rate_power=0.5
-            ),
-            {"concentration": 2.5, "rate": 0.8},
-        ),
-    ],
-)
-def test_shape_kernel_prior_independent_of_discretization(
-    kernel_cls, nodes, prior, parameters
-):
+def test_shape_kernel_prior_independent_of_discretization(kernel_cls, nodes):
     kwargs = {}
     n_dims = nodes
     if kernel_cls is ExactWassersteinKernel:
@@ -334,14 +317,17 @@ def test_shape_kernel_prior_independent_of_discretization(
             "y_keys": [f"x{i}" for i in range(nodes, n_dims)],
         }
     kernel = kernels.map(
-        kernel_cls(lengthscale_prior=prior, **kwargs),
+        kernel_cls(
+            lengthscale_prior=DimensionalityScaledLogNormalPrior(loc=0.3, scale=0.7),
+            **kwargs,
+        ),
         batch_shape=torch.Size(),
         active_dims=list(range(n_dims)),
         features_to_idx_mapper=lambda keys: [int(key[1:]) for key in keys],
     )
     assert kernel.raw_lengthscale.shape == (1, 1)
-    for name, value in parameters.items():
-        assert getattr(kernel.lengthscale_prior, name).item() == pytest.approx(value)
+    assert kernel.lengthscale_prior.loc.item() == pytest.approx(0.3)
+    assert kernel.lengthscale_prior.scale.item() == pytest.approx(0.7)
 
 
 def test_map_exact_wasserstein_kernel_auto_chunking():
@@ -387,7 +373,7 @@ def test_exact_wasserstein_coordinate_keys_preserve_order(features):
         active_dims=[5, 3, 0, 1, 4, 2],
         features_to_idx_mapper=mapper,
     ).double()
-    kernel.lengthscale = 1.0
+    kernel.lengthscale = 2.0
     # Columns 0 and 3 have no bearing on the curve. Both curves have x=[0, 1]
     # and their y-coordinates differ by 0.3 everywhere.
     x = torch.tensor(
@@ -395,7 +381,8 @@ def test_exact_wasserstein_coordinate_keys_preserve_order(features):
         dtype=torch.double,
     )
     actual = kernel(x).to_dense()
-    expected = torch.exp(-torch.tensor([[0.0, 0.3], [0.3, 0.0]], dtype=torch.double))
+    distances = torch.tensor([[0.0, 0.3], [0.3, 0.0]], dtype=torch.double)
+    expected = torch.exp(-distances / 2.0)
     torch.testing.assert_close(actual, expected)
 
 

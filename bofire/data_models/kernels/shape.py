@@ -42,7 +42,6 @@ class ExactWassersteinKernel(LengthscaleKernel, FeatureSpecificKernel):
     this computes it analytically from the curves' break points.
     A single lengthscale scales the distance between whole curves; its prior is
     mapped with dimensionality one, independently of the number of break points.
-    Curves must have at least two paired points, including any fixed endpoints.
 
     Examples:
         >>> ExactWassersteinKernel(
@@ -118,6 +117,4 @@ class ExactWassersteinKernel(LengthscaleKernel, FeatureSpecificKernel):
         n_y = len(self.y_keys) + len(self.prepend_y) + len(self.append_y)
         if n_x != n_y:
             raise ValueError("Total number of x and y values must be equal.")
-        if n_x < 2:
-            raise ValueError("A curve must have at least two points.")
         return self

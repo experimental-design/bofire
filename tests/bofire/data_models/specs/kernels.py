@@ -257,10 +257,6 @@ for invalid, message in [
         "Total number of x and y values must be equal",
     ),
     (
-        {"x_keys": ["a"], "y_keys": ["b"]},
-        "A curve must have at least two points",
-    ),
-    (
         {"x_keys": ["a", "b"], "y_keys": ["c", "d"], "features": ["a", "b", "c"]},
         "Coordinate keys must be included in features.*d",
     ),

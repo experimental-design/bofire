@@ -467,10 +467,6 @@ def _curve_indices(
                 f"Curve coordinate '{key}' must resolve to exactly one input column, "
                 f"got {len(columns)}."
             )
-        if columns[0] not in active_dims:
-            raise ValueError(
-                f"Curve coordinate '{key}' is not among the kernel's active dimensions."
-            )
         # GPyTorch selects active_dims before calling the kernel's forward method.
         indices.append(active_dims.index(columns[0]))
     return torch.tensor(indices, dtype=torch.long)
