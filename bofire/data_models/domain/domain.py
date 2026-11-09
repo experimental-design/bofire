@@ -35,9 +35,9 @@ def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
 
 
 class Domain(BaseModel):
-    """The optimization problem: what can be varied (inputs), what is measured and
-    what for (outputs with objectives), and which combinations are allowed
-    (constraints)."""
+    """Definition of an optimization problem: its input features, its output
+    features with their objectives, and the constraints every proposed experiment
+    has to satisfy."""
 
     type: Literal["Domain"] = "Domain"
 

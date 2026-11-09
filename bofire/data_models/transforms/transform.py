@@ -4,10 +4,10 @@ from bofire.data_models.base import BaseModel
 
 
 class Transform(BaseModel):
-    """Changes the data a step of a stepwise strategy works with.
+    """Data transformation used in a step of a stepwise strategy.
 
-    The experiments and pending candidates are transformed before the step's strategy
-    sees them, and the candidates it proposes are transformed back.
+    It transforms the experiments and the pending candidates before the step's
+    strategy receives them, and transforms the candidates the strategy proposes back.
     """
 
     type: Any

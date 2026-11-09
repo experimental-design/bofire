@@ -6,14 +6,8 @@ from bofire.data_models.base import BaseModel
 
 
 class LLMProvider(BaseModel):
-    """How to connect to an LLM service.
-
-    A provider can be passed to any BoFire component that uses an LLM. The API key
-    is never stored: the provider names the environment variable that holds it, and
-    the key is read from there when BoFire creates the client. Settings of a
-    particular use, such as temperature or system prompt, are set on the component,
-    not here.
-    """
+    """Connection settings for an LLM service, which can be passed to any BoFire
+    component that uses an LLM."""
 
     type: Any
     model: str = Field(
