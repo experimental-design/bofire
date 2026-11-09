@@ -99,6 +99,18 @@ class MultiObjectiveAcquisitionFunction(AcquisitionFunction):
     )
 
 
+class PreferenceAcquisitionFunction(AcquisitionFunction):
+    """Base class for acquisitions that select alternatives for preference queries."""
+
+    type: Any
+
+
+class qEUBO(MCAcquisitionFunction, PreferenceAcquisitionFunction):
+    """MC-based expected utility of the best option."""
+
+    type: Literal["qEUBO"] = "qEUBO"
+
+
 class qNEI(
     MCAcquisitionFunction,
     NoisyAcquisitionFunction,

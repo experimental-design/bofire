@@ -82,6 +82,7 @@ quartodoc:
             - MoboStrategy
             - MultiFidelityVarianceBasedStrategy
             - MultiobjectiveStrategy
+            - PreferenceStrategy
             - AdditiveSoboStrategy
             - CustomSoboStrategy
             - LLMStrategy
@@ -116,6 +117,8 @@ quartodoc:
             - GaussianLikelihood
             - SparseOutlierGaussianLikelihood
             - TaskwiseLikelihood
+            - PairwiseProbitLikelihood
+            - PairwiseLogitLikelihood
     - title: Data Models - Surrogates
       desc: Surrogate model configuration data models
       contents:
@@ -148,6 +151,7 @@ quartodoc:
             - EntingStrategy
             - MultiFidelityVarianceBasedStrategy
             - ActiveLearningStrategy
+            - PreferenceStrategy
             - ShortestPathStrategy
             - StepwiseStrategy
             - LLMStrategy

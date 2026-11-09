@@ -3,25 +3,15 @@ from typing import Optional
 import botorch
 import torch
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.likelihoods.pairwise import (
-    PairwiseLogitLikelihood,
-    PairwiseProbitLikelihood,
-)
 from botorch.models.pairwise_gp import PairwiseLaplaceMarginalLogLikelihood
 from botorch.models.transforms.input import InputTransform
 
 import bofire.kernels.api as kernels
+import bofire.likelihoods.api as likelihoods
 from bofire.data_models.surrogates.api import PairwiseGPSurrogate as DataModel
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.pairwise_trainable import PairwiseTrainableSurrogate
 from bofire.surrogates.utils import scipy_options
-
-
-# maps the serializable likelihood name to the BoTorch PairwiseLikelihood class
-PAIRWISE_LIKELIHOODS = {
-    "probit": PairwiseProbitLikelihood,
-    "logit": PairwiseLogitLikelihood,
-}
 
 
 class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
@@ -38,7 +28,7 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
 
     model: Optional[botorch.models.PairwiseGP] = None
 
-    def _fit_pairwise(
+    def _fit(
         self,
         datapoints: torch.Tensor,
         comparisons: torch.Tensor,
@@ -53,7 +43,7 @@ class PairwiseGPSurrogate(BotorchSurrogate, PairwiseTrainableSurrogate):
         self.model = botorch.models.PairwiseGP(
             datapoints=datapoints,
             comparisons=comparisons,
-            likelihood=PAIRWISE_LIKELIHOODS[self.likelihood](),
+            likelihood=likelihoods.map(self.likelihood, d=n_dim),
             covar_module=kernels.map(
                 self.kernel,
                 batch_shape=torch.Size(),

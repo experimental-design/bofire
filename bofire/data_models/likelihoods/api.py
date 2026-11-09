@@ -3,6 +3,8 @@ import math
 from bofire.data_models.likelihoods.likelihood import (
     GaussianLikelihood,
     Likelihood,
+    PairwiseLogitLikelihood,
+    PairwiseProbitLikelihood,
     SparseOutlierGaussianLikelihood,
     TaskwiseLikelihood,
 )
@@ -16,7 +18,11 @@ from bofire.data_models.unions import tagged_union
 
 
 AnyLikelihood = tagged_union(
-    GaussianLikelihood, SparseOutlierGaussianLikelihood, TaskwiseLikelihood
+    GaussianLikelihood,
+    SparseOutlierGaussianLikelihood,
+    TaskwiseLikelihood,
+    PairwiseProbitLikelihood,
+    PairwiseLogitLikelihood,
 )
 
 # the likelihoods a single-task GP takes
@@ -27,6 +33,7 @@ AnySingleTaskLikelihood = tagged_union(
 # the likelihoods a multi-task GP takes: a plain Gaussian likelihood is shared by all
 # tasks
 AnyMultiTaskLikelihood = tagged_union(GaussianLikelihood, TaskwiseLikelihood)
+AnyPairwiseLikelihood = tagged_union(PairwiseProbitLikelihood, PairwiseLogitLikelihood)
 
 
 # likelihoods of interest, built anew on every call so that no two models share them
