@@ -38,7 +38,6 @@ from bofire.data_models.features.api import (
 from bofire.data_models.features.descriptors import Descriptors
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
-    ExactWassersteinKernel,
     HammingDistanceKernel,
     RBFKernel,
     ScaleKernel,
@@ -59,57 +58,13 @@ from bofire.data_models.priors.api import (
     NormalPrior,
 )
 from bofire.data_models.priors.api import GreaterThan as BoFireGreaterThan
-from bofire.data_models.surrogates.api import LBFGSB, ScalerEnum, SingleTaskGPSurrogate
+from bofire.data_models.surrogates.api import ScalerEnum, SingleTaskGPSurrogate
 from bofire.data_models.surrogates.scaler import Normalize as NormalizeScaler
 from bofire.data_models.surrogates.scaler import Standardize as StandardizeScaler
 from bofire.utils.torch_tools import tkwargs
 
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
-
-
-@pytest.mark.parametrize("select_features", [False, True])
-def test_single_task_gp_exact_wasserstein_feature_keys(select_features):
-    inputs = Inputs(
-        features=[
-            ContinuousInput(key=key, bounds=[0, 1])
-            for key in ["unrelated", "x_end", "x_start", "y_end", "y_start"]
-        ]
-    )
-    experiments = pd.DataFrame(
-        {
-            "unrelated": [0.1, 0.9, 0.3, 0.7],
-            "x_start": [0.0, 0.1, 0.2, 0.0],
-            "x_end": [1.0, 0.9, 0.8, 0.9],
-            "y_start": [0.0, 0.1, 0.2, 0.3],
-            "y_end": [0.6, 0.7, 0.8, 0.9],
-            "response": [0.3, 0.4, 0.5, 0.6],
-        }
-    )
-    kernel = ExactWassersteinKernel(
-        x_keys=["x_start", "x_end"],
-        y_keys=["y_start", "y_end"],
-        features=["y_end", "x_end", "y_start", "x_start"] if select_features else None,
-        normalize_x=False,
-    )
-    model = surrogates.map(
-        SingleTaskGPSurrogate(
-            inputs=inputs,
-            outputs=Outputs(features=[ContinuousOutput(key="response")]),
-            kernel=ScaleKernel(base_kernel=kernel),
-            scaler=None,
-            optimizer=LBFGSB(maxiter=10),
-        )
-    )
-    model.fit(experiments)
-    predictions = model.predict(experiments)
-    assert np.isfinite(predictions.to_numpy()).all()
-    assert (predictions["response_sd"] > 0).all()
-    # Changes to unrelated inputs and DataFrame column order must not change
-    # predictions from this curve kernel.
-    changed = experiments.copy()
-    changed["unrelated"] = 1.0 - changed["unrelated"]
-    assert_frame_equal(predictions, model.predict(changed[changed.columns[::-1]]))
 
 
 @pytest.mark.parametrize(

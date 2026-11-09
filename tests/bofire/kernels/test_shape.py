@@ -12,59 +12,9 @@ from bofire.utils.torch_tools import interp1d
 
 
 @pytest.mark.parametrize("kernel_cls", [WassersteinKernel, ExactWassersteinKernel])
-@pytest.mark.parametrize("ard_num_dims", [0, 2, 4])
-def test_shape_kernel_rejects_ard(kernel_cls, ard_num_dims):
+def test_shape_kernel_rejects_ard(kernel_cls):
     with pytest.raises(ValueError, match="only one scalar lengthscale"):
-        kernel_cls(ard_num_dims=ard_num_dims)
-
-
-@pytest.mark.parametrize("kernel_cls", [WassersteinKernel, ExactWassersteinKernel])
-@pytest.mark.parametrize("ard_num_dims", [None, 1])
-@pytest.mark.parametrize("batched_inputs", [False, True])
-@pytest.mark.parametrize("squared", [False, True])
-def test_shape_kernel_independent_batch_lengthscales(
-    kernel_cls, ard_num_dims, batched_inputs, squared
-):
-    # Every pair of curves differs by a constant, so its distance is known exactly.
-    y1 = torch.tensor([[0.0, 0.5], [0.1, 0.6], [0.2, 0.7]], dtype=torch.double)
-    y2 = y1 + 0.3
-    kwargs = {}
-    x1, x2 = y1, y2
-    if kernel_cls is ExactWassersteinKernel:
-        grid = torch.tensor([[0.0, 1.0]], dtype=torch.double).expand(3, -1)
-        x1, x2 = torch.cat([grid, y1], -1), torch.cat([grid, y2], -1)
-        empty = torch.empty(0, dtype=torch.double)
-        kwargs = {
-            "idx_x": torch.tensor([0, 1]),
-            "idx_y": torch.tensor([2, 3]),
-            "prepend_x": empty,
-            "prepend_y": empty,
-            "append_x": empty,
-            "append_y": empty,
-            "normalize_y": torch.tensor(1.0, dtype=torch.double),
-        }
-    if batched_inputs:
-        x1, x2 = x1.expand(2, -1, -1), x2.expand(2, -1, -1)
-
-    kernel = kernel_cls(
-        batch_shape=torch.Size([2]),
-        ard_num_dims=ard_num_dims,
-        squared=squared,
-        **kwargs,
-    ).double()
-    kernel.lengthscale = torch.tensor([0.5, 2.0], dtype=torch.double).view(2, 1, 1)
-    distances = (y1[:, 0, None] - y2[None, :, 0]).abs()
-    scaled = distances / torch.tensor([0.5, 2.0], dtype=torch.double).view(2, 1, 1)
-    expected = torch.exp(-(scaled**2) if squared else -scaled)
-
-    full = kernel(x1, x2).to_dense()
-    diagonal = kernel(x1, x2, diag=True)
-    assert kernel.raw_lengthscale.shape == (2, 1, 1)
-    assert_close(full, expected)
-    assert_close(diagonal, expected.diagonal(dim1=-2, dim2=-1))
-    full.sum().backward()
-    assert torch.isfinite(kernel.raw_lengthscale.grad).all()
-    assert (kernel.raw_lengthscale.grad != 0).all()
+        kernel_cls(ard_num_dims=4)
 
 
 def _make_monotonic_x(

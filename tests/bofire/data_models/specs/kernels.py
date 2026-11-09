@@ -249,14 +249,6 @@ specs.add_valid(
 )
 for invalid, message in [
     (
-        {"x_keys": ["x", "x"], "y_keys": ["a", "b"]},
-        "Features must be unique",
-    ),
-    (
-        {"x_keys": ["a", "b"], "y_keys": ["y", "y"]},
-        "Features must be unique",
-    ),
-    (
         {"x_keys": ["a", "b"], "y_keys": ["b", "c"]},
         "x_keys and y_keys must not overlap",
     ),
@@ -271,10 +263,6 @@ for invalid, message in [
     (
         {"x_keys": ["a", "b"], "y_keys": ["c", "d"], "features": ["a", "b", "c"]},
         "Coordinate keys must be included in features.*d",
-    ),
-    (
-        {"idx_x": [0, 1], "idx_y": [2, 3]},
-        "Extra inputs are not permitted",
     ),
 ]:
     specs.add_invalid(

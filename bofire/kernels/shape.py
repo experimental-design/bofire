@@ -170,19 +170,12 @@ def _pairwise_piecewise_linear_wasserstein(
     return dists.squeeze(0) if squeeze_batch else dists
 
 
-class _ShapeKernel(Kernel):
-    """Kernel with one scalar lengthscale per batch member."""
-
+class WassersteinKernel(Kernel):
     has_lengthscale = True
 
-    def __init__(self, ard_num_dims: Optional[int] = None, **kwargs):
-        if ard_num_dims not in (None, 1):
-            raise ValueError("Shape kernels support only one scalar lengthscale.")
-        super().__init__(**kwargs)
-
-
-class WassersteinKernel(_ShapeKernel):
     def __init__(self, squared: bool = False, **kwargs):
+        if kwargs.pop("ard_num_dims", None) not in (None, 1):
+            raise ValueError("Shape kernels support only one scalar lengthscale.")
         super(WassersteinKernel, self).__init__(**kwargs)
         self.squared = squared
 
@@ -215,7 +208,9 @@ class WassersteinKernel(_ShapeKernel):
         return torch.exp(-dists)
 
 
-class ExactWassersteinKernel(_ShapeKernel):
+class ExactWassersteinKernel(Kernel):
+    has_lengthscale = True
+
     def __init__(
         self,
         squared: bool = False,
@@ -231,6 +226,8 @@ class ExactWassersteinKernel(_ShapeKernel):
         order: int = 1,
         **kwargs,
     ):
+        if kwargs.pop("ard_num_dims", None) not in (None, 1):
+            raise ValueError("Shape kernels support only one scalar lengthscale.")
         super(ExactWassersteinKernel, self).__init__(**kwargs)
         if order not in (1, 2):
             raise ValueError("order must be 1 or 2.")
