@@ -1,8 +1,9 @@
 from typing import List, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel, LengthscaleKernel
+from bofire.data_models.types import NonRestrictedFeatureKeys
 
 
 class WassersteinKernel(LengthscaleKernel, FeatureSpecificKernel):
@@ -41,6 +42,13 @@ class ExactWassersteinKernel(LengthscaleKernel, FeatureSpecificKernel):
     this computes it analytically from the curves' break points.
     A single lengthscale scales the distance between whole curves; its prior is
     mapped with dimensionality one, independently of the number of break points.
+    Curves must have at least two paired points, including any fixed endpoints.
+
+    Examples:
+        >>> ExactWassersteinKernel(
+        ...     x_keys=["x_start", "x_end"],
+        ...     y_keys=["y_start", "y_end"],
+        ... )
     """
 
     type: Literal["ExactWassersteinKernel"] = "ExactWassersteinKernel"
@@ -49,13 +57,16 @@ class ExactWassersteinKernel(LengthscaleKernel, FeatureSpecificKernel):
         description="Whether to use the squared exponential form rather than the "
         "absolute exponential one.",
     )
-    idx_x: List[int] = Field(
-        description="Positions of the x-coordinates of the curve among the kernel's "
-        "inputs.",
+    x_keys: NonRestrictedFeatureKeys = Field(
+        description="Ordered feature keys holding the curve's x-coordinates. Each "
+        "key must resolve to one scalar input column and must be included in "
+        "`features` when a subset is selected. Must not overlap `y_keys`.",
     )
-    idx_y: List[int] = Field(
-        description="Positions of the y-coordinates of the curve among the kernel's "
-        "inputs, paired with `idx_x`.",
+    y_keys: NonRestrictedFeatureKeys = Field(
+        description="Ordered feature keys holding the curve's y-coordinates. Each "
+        "key must resolve to one scalar input column and must be included in "
+        "`features` when a subset is selected. Coordinates are paired positionally "
+        "after prepending and appending fixed values; both totals must match.",
     )
     prepend_x: List[float] = Field(
         default=[],
@@ -92,3 +103,21 @@ class ExactWassersteinKernel(LengthscaleKernel, FeatureSpecificKernel):
         description="Order of the Wasserstein distance: 1 integrates the absolute "
         "difference between the curves, 2 the squared difference.",
     )
+
+    @model_validator(mode="after")
+    def validate_keys(self) -> "ExactWassersteinKernel":
+        if set(self.x_keys) & set(self.y_keys):
+            raise ValueError("x_keys and y_keys must not overlap.")
+        if self.features:
+            missing = set(self.x_keys + self.y_keys) - set(self.features)
+            if missing:
+                raise ValueError(
+                    f"Coordinate keys must be included in features: {sorted(missing)}."
+                )
+        n_x = len(self.x_keys) + len(self.prepend_x) + len(self.append_x)
+        n_y = len(self.y_keys) + len(self.prepend_y) + len(self.append_y)
+        if n_x != n_y:
+            raise ValueError("Total number of x and y values must be equal.")
+        if n_x < 2:
+            raise ValueError("A curve must have at least two points.")
+        return self

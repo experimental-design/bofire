@@ -77,11 +77,19 @@ def test_map(kernel_spec: Spec):
         and kernel.features is not None
     ):
         return
+    active_dims = list(range(5))
+    mapper = None
+    if isinstance(kernel, ExactWassersteinKernel):
+        active_dims = list(range(6))
+
+        def mapper(keys):
+            return [int(key[1:]) for key in keys]
+
     gkernel = kernels.map(
         kernel,
         batch_shape=torch.Size(),
-        active_dims=list(range(5)),
-        features_to_idx_mapper=None,
+        active_dims=active_dims,
+        features_to_idx_mapper=mapper,
     )
     assert isinstance(gkernel, EQUIVALENTS[kernel.__class__])
 
@@ -321,12 +329,15 @@ def test_shape_kernel_prior_independent_of_discretization(
     n_dims = nodes
     if kernel_cls is ExactWassersteinKernel:
         n_dims = 2 * nodes
-        kwargs = {"idx_x": list(range(nodes)), "idx_y": list(range(nodes, n_dims))}
+        kwargs = {
+            "x_keys": [f"x{i}" for i in range(nodes)],
+            "y_keys": [f"x{i}" for i in range(nodes, n_dims)],
+        }
     kernel = kernels.map(
         kernel_cls(lengthscale_prior=prior, **kwargs),
         batch_shape=torch.Size([2]),
         active_dims=list(range(n_dims)),
-        features_to_idx_mapper=None,
+        features_to_idx_mapper=lambda keys: [int(key[1:]) for key in keys],
     )
     assert kernel.raw_lengthscale.shape == (2, 1, 1)
     for name, value in parameters.items():
@@ -336,8 +347,8 @@ def test_shape_kernel_prior_independent_of_discretization(
 def test_map_exact_wasserstein_kernel_auto_chunking():
     kernel = ExactWassersteinKernel(
         squared=False,
-        idx_x=[4, 5],
-        idx_y=[0, 1, 2, 3],
+        x_keys=["x4", "x5"],
+        y_keys=["x0", "x1", "x2", "x3"],
         prepend_x=[0.0],
         prepend_y=[],
         append_x=[1.0],
@@ -350,11 +361,104 @@ def test_map_exact_wasserstein_kernel_auto_chunking():
         kernel,
         batch_shape=torch.Size(),
         active_dims=list(range(6)),
-        features_to_idx_mapper=None,
+        features_to_idx_mapper=lambda keys: [int(key[1:]) for key in keys],
     )
     assert isinstance(k, shapeKernels.ExactWassersteinKernel)
     assert k.pair_chunk_size is None
     assert k.order == 2
+
+
+@pytest.mark.parametrize(
+    "features", [None, [], ["y_end", "x_end", "y_start", "x_start"]]
+)
+@pytest.mark.parametrize("wrapped", [False, True])
+def test_exact_wasserstein_coordinate_keys_preserve_order(features, wrapped):
+    columns = {"x_start": 4, "x_end": 1, "y_start": 5, "y_end": 2}
+
+    def mapper(keys):
+        # Feature mappers can sort their result by input order.
+        return sorted(columns[key] for key in keys)
+
+    spec = ExactWassersteinKernel(
+        x_keys=["x_start", "x_end"],
+        y_keys=["y_start", "y_end"],
+        features=features,
+    )
+    kernel = kernels.map(
+        ScaleKernel(base_kernel=spec) if wrapped else spec,
+        batch_shape=torch.Size(),
+        active_dims=[5, 3, 0, 1, 4, 2],
+        features_to_idx_mapper=mapper,
+    ).double()
+    base = kernel.base_kernel if wrapped else kernel
+    base.lengthscale = 1.0
+    if wrapped:
+        kernel.outputscale = 1.5
+    # Columns 0 and 3 have no bearing on the curve. Both curves have x=[0, 1]
+    # and their y-coordinates differ by 0.3 everywhere.
+    x = torch.tensor(
+        [[99.0, 1.0, 0.7, -10.0, 0.0, 0.2], [22.0, 1.0, 1.0, 0.0, 0.0, 0.5]],
+        dtype=torch.double,
+        requires_grad=True,
+    )
+    actual = kernel(x).to_dense()
+    expected = torch.exp(-torch.tensor([[0.0, 0.3], [0.3, 0.0]], dtype=torch.double))
+    torch.testing.assert_close(actual, expected * (1.5 if wrapped else 1.0))
+    actual.sum().backward()
+    torch.testing.assert_close(x.grad[:, [0, 3]], torch.zeros(2, 2, dtype=torch.double))
+    assert torch.isfinite(x.grad).all()
+
+
+@pytest.mark.parametrize("columns", [[], [0, 1]])
+def test_exact_wasserstein_coordinate_must_be_scalar(columns):
+    with pytest.raises(ValueError, match="Curve coordinate 'x'.*exactly one"):
+        kernels.map(
+            ExactWassersteinKernel(
+                x_keys=["x"], y_keys=["y"], prepend_x=[0.0], prepend_y=[0.0]
+            ),
+            batch_shape=torch.Size(),
+            active_dims=[0, 1, 2],
+            features_to_idx_mapper=lambda keys: columns,
+        )
+
+
+def test_exact_wasserstein_coordinate_must_be_active():
+    with pytest.raises(ValueError, match="Curve coordinate 'x'.*active dimensions"):
+        kernels.map(
+            ExactWassersteinKernel(
+                x_keys=["x"], y_keys=["y"], prepend_x=[0.0], prepend_y=[0.0]
+            ),
+            batch_shape=torch.Size(),
+            active_dims=[1, 2],
+            features_to_idx_mapper=lambda keys: [0],
+        )
+
+
+def test_exact_wasserstein_coordinate_keys_require_mapper():
+    with pytest.raises(RuntimeError, match="must be defined to resolve curve"):
+        kernels.map(
+            ExactWassersteinKernel(
+                x_keys=["x"], y_keys=["y"], prepend_x=[0.0], prepend_y=[0.0]
+            ),
+            batch_shape=torch.Size(),
+            active_dims=[0, 1],
+            features_to_idx_mapper=None,
+        )
+
+
+def test_exact_wasserstein_fixed_coordinates():
+    kernel = kernels.map(
+        ExactWassersteinKernel(
+            x_keys=[], y_keys=[], prepend_x=[0.0, 1.0], prepend_y=[0.0, 1.0]
+        ),
+        batch_shape=torch.Size(),
+        active_dims=[0],
+        features_to_idx_mapper=None,
+    )
+    torch.testing.assert_close(
+        kernel(torch.rand(3, 1, dtype=torch.double)).to_dense(),
+        torch.ones(3, 3, dtype=torch.double),
+    )
 
 
 def test_map_HammingDistanceKernel_to_categorical_without_ard():

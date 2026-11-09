@@ -424,8 +424,8 @@ def map_ExactWassersteinKernel(
     **kwargs,
 ) -> ExactWassersteinKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
-    idx_x = torch.as_tensor(data_model.idx_x, dtype=torch.long)
-    idx_y = torch.as_tensor(data_model.idx_y, dtype=torch.long)
+    idx_x = _curve_indices(data_model.x_keys, active_dims, features_to_idx_mapper)
+    idx_y = _curve_indices(data_model.y_keys, active_dims, features_to_idx_mapper)
     prepend_x = torch.tensor(data_model.prepend_x, dtype=torch.double)
     prepend_y = torch.tensor(data_model.prepend_y, dtype=torch.double)
     append_x = torch.tensor(data_model.append_x, dtype=torch.double)
@@ -447,6 +447,35 @@ def map_ExactWassersteinKernel(
         order=data_model.order,
         active_dims=active_dims,
     )
+
+
+def _curve_indices(
+    keys: List[str],
+    active_dims: List[int],
+    features_to_idx_mapper: Optional[Callable[[List[str]], List[int]]],
+) -> torch.Tensor:
+    """Resolve ordered scalar coordinate keys within the active input columns."""
+    if keys and features_to_idx_mapper is None:
+        raise RuntimeError(
+            "features_to_idx_mapper must be defined to resolve curve feature keys."
+        )
+    indices = []
+    for key in keys:
+        assert features_to_idx_mapper is not None
+        # Resolve separately: a mapper may return columns in input order.
+        columns = features_to_idx_mapper([key])
+        if len(columns) != 1:
+            raise ValueError(
+                f"Curve coordinate '{key}' must resolve to exactly one input column, "
+                f"got {len(columns)}."
+            )
+        if columns[0] not in active_dims:
+            raise ValueError(
+                f"Curve coordinate '{key}' is not among the kernel's active dimensions."
+            )
+        # GPyTorch selects active_dims before calling the kernel's forward method.
+        indices.append(active_dims.index(columns[0]))
+    return torch.tensor(indices, dtype=torch.long)
 
 
 def map_PolynomialFeatureInteractionKernel(

@@ -236,8 +236,8 @@ specs.add_valid(
         "lengthscale_prior": priors.valid(GammaPrior).obj().model_dump(),
         "lengthscale_constraint": None,
         "features": None,
-        "idx_x": [4, 5],
-        "idx_y": [0, 1, 2, 3],
+        "x_keys": ["x4", "x5"],
+        "y_keys": ["x0", "x1", "x2", "x3"],
         "prepend_x": [0.0],
         "prepend_y": [],
         "append_x": [1.0],
@@ -247,6 +247,43 @@ specs.add_valid(
         "order": 2,
     },
 )
+for invalid, message in [
+    (
+        {"x_keys": ["x", "x"], "y_keys": ["a", "b"]},
+        "Features must be unique",
+    ),
+    (
+        {"x_keys": ["a", "b"], "y_keys": ["y", "y"]},
+        "Features must be unique",
+    ),
+    (
+        {"x_keys": ["a", "b"], "y_keys": ["b", "c"]},
+        "x_keys and y_keys must not overlap",
+    ),
+    (
+        {"x_keys": ["a", "b"], "y_keys": ["c"]},
+        "Total number of x and y values must be equal",
+    ),
+    (
+        {"x_keys": ["a"], "y_keys": ["b"]},
+        "A curve must have at least two points",
+    ),
+    (
+        {"x_keys": ["a", "b"], "y_keys": ["c", "d"], "features": ["a", "b", "c"]},
+        "Coordinate keys must be included in features.*d",
+    ),
+    (
+        {"idx_x": [0, 1], "idx_y": [2, 3]},
+        "Extra inputs are not permitted",
+    ),
+]:
+    specs.add_invalid(
+        kernels.ExactWassersteinKernel,
+        lambda invalid=invalid: invalid,
+        error=ValidationError,
+        message=message,
+    )
+
 specs.add_valid(
     kernels.LinearKernel,
     lambda: {
