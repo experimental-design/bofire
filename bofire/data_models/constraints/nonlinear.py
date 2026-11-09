@@ -33,6 +33,13 @@ from bofire.data_models.domain.features import Inputs
 from bofire.data_models.features.api import ContinuousInput
 
 
+# Tolerance used to relax a nonlinear equality constraint f(x) = 0 into the pair of
+# inequalities f(x) <= tol and -f(x) <= tol that BoTorch/numerical solvers can satisfy
+# in practice. Shared across torch_tools.get_nonlinear_constraints and the strategies
+# that validate against nonlinear constraints, so it stays in one place.
+NONLINEAR_EQUALITY_TOLERANCE = 1e-3
+
+
 class NonlinearConstraint(IntrapointConstraint):
     """Base class for nonlinear equality and inequality constraints."""
 
@@ -59,6 +66,12 @@ class NonlinearConstraint(IntrapointConstraint):
     )
 
     def validate_inputs(self, inputs: Inputs):
+        """Validate that all constraint features are continuous inputs.
+        Args:
+            inputs (Inputs): Input feature collection from the domain.
+        Raises:
+            ValueError: If any feature is not a ContinuousInput.
+        """
         keys = inputs.get_keys(ContinuousInput)
         for f in self.features:
             if f not in keys:
@@ -68,6 +81,7 @@ class NonlinearConstraint(IntrapointConstraint):
 
     @model_validator(mode="after")
     def validate_features(self):
+        """Validate that provided features match callable expression arguments."""
         if isinstance(self.expression, Callable):
             features = list(inspect.getfullargspec(self.expression).args)
             if set(features) != set(self.features):
@@ -79,6 +93,13 @@ class NonlinearConstraint(IntrapointConstraint):
     @field_validator("jacobian_expression")
     @classmethod
     def set_jacobian_expression(cls, jacobian_expression, info) -> Union[str, Callable]:
+        """Auto-compute Jacobian using SymPy for string expressions if not provided.
+        Args:
+            jacobian_expression: User-provided Jacobian or None.
+            info: Pydantic validation context.
+        Returns:
+            Union[str, Callable]: Jacobian expression.
+        """
         if (
             jacobian_expression is None
             and "features" in info.data.keys()
@@ -114,6 +135,12 @@ class NonlinearConstraint(IntrapointConstraint):
     @field_validator("hessian_expression")
     @classmethod
     def set_hessian_expression(cls, hessian_expression, info) -> Union[str, Callable]:
+        """Auto-compute Hessian using SymPy for string expressions if not provided.
+        Args:            hessian_expression: User-provided Hessian or None.
+            info: Pydantic validation context.
+        Returns:
+            Union[str, Callable]: Hessian expression.
+        """
         if (
             hessian_expression is None
             and "features" in info.data.keys()
@@ -154,17 +181,20 @@ class NonlinearConstraint(IntrapointConstraint):
         return hessian_expression
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
+        """Evaluate the constraint on a DataFrame of experiments.
+
+        For BoTorch / tensor evaluation, use the callables from
+        :func:`bofire.utils.torch_tools.get_nonlinear_constraints`.
+        """
         if isinstance(self.expression, str):
-            return experiments.eval(self.expression, engine="python")
-        elif isinstance(self.expression, Callable):
-            func_input = {
-                col: torch_tensor(experiments[col], requires_grad=False)
-                for col in experiments.columns
-            }
-            return pd.Series(
-                self.expression(**func_input).cpu().numpy(),
-                index=experiments.index,  # Preserves orogonal indices instead of creating new ones.
-            )
+            return experiments.eval(self.expression)
+        if isinstance(self.expression, Callable):
+            args = inspect.getfullargspec(self.expression).args
+            func_input = {arg: experiments[arg].to_numpy() for arg in args}
+            out = self.expression(**func_input)
+            if hasattr(out, "detach"):
+                out = out.detach().cpu().numpy()
+            return pd.Series(np.asarray(out), index=experiments.index)
         raise ValueError("expression must be a string or callable")
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
@@ -310,6 +340,31 @@ class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
 
     type: Literal["NonlinearEqualityConstraint"] = "NonlinearEqualityConstraint"
 
+    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
+        """
+        Check if the nonlinear equality constraint is fulfilled.
+
+        Since this constraint is converted to two inequality constraints during
+        optimization (f(x) <= tol and f(x) >= -tol), we validate consistently
+        by checking if the violation is within the tolerance band.
+
+        Args:
+            experiments: DataFrame containing the candidate points to validate
+            tol: Tolerance for constraint fulfillment (default: 1e-6)
+
+        Returns:
+            Boolean Series indicating whether each candidate fulfills the constraint
+        """
+
+        violation = self(experiments)
+        # Small epsilon to handle floating-point boundary cases
+        # e.g. violation = -0.001 with tol = 0.001 should pass
+        # Add a small absolute epsilon to avoid false negatives when we're right on
+        # the boundary (e.g. 0.0010000000000001 with tol=0.001).
+        eps = max(tol * 1e-9, 1e-15, 1e-9)
+        result = pd.Series(np.abs(violation) <= (tol + eps), index=experiments.index)
+        return result
+
     def to_description(self) -> str:
         raise NotImplementedError
 
@@ -331,3 +386,16 @@ class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
 
     def to_description(self) -> str:
         raise NotImplementedError
+
+
+# Per-constraint-type tolerance override for Constraints.is_fulfilled /
+# Domain.is_fulfilled / Domain.validate_candidates (see their `tol_overrides`
+# argument). Nonlinear constraints are only satisfied up to a numerical solver's
+# convergence tolerance, so checking them against the same tight default used for
+# linear/NChooseK constraints would reject otherwise-valid candidates; checking
+# everything with the relaxed tolerance would instead let real NChooseK/linear
+# violations slip through undetected in mixed domains.
+NONLINEAR_CONSTRAINT_TOL_OVERRIDES = {
+    NonlinearInequalityConstraint: NONLINEAR_EQUALITY_TOLERANCE,
+    NonlinearEqualityConstraint: NONLINEAR_EQUALITY_TOLERANCE,
+}

@@ -7,6 +7,7 @@ import pandas as pd
 from pydantic import PositiveInt
 from typing_extensions import Self
 
+from bofire.data_models.constraints.nonlinear import NONLINEAR_CONSTRAINT_TOL_OVERRIDES
 from bofire.data_models.domain.domain import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import Strategy as DataModel
@@ -42,7 +43,9 @@ class Strategy(ABC):
         self.seed_seq = np.random.SeedSequence(seed)
         self._experiments = None
         self._candidates = None
-        # Default validation tolerance - subclasses can override this
+        # Nonlinear constraints get their own, looser tolerance via tol_overrides
+        # wherever candidates/experiments are validated (see NONLINEAR_CONSTRAINT_TOL_OVERRIDES);
+        # this default stays tight for every other constraint type.
         self._validation_tol = 1e-5
 
     @property
@@ -167,6 +170,7 @@ class Strategy(ABC):
             only_inputs=True,
             tol=self._validation_tol,
             raise_validation_error=raise_validation_error,
+            tol_overrides=NONLINEAR_CONSTRAINT_TOL_OVERRIDES,
         )
 
         if candidate_count is not None:

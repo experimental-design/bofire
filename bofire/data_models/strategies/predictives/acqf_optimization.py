@@ -155,11 +155,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
             bool: True if the constraint type is valid for the strategy chosen, False otherwise
 
         """
-        if my_type in [
-            constraints.NonlinearInequalityConstraint,
-            constraints.NonlinearEqualityConstraint,
-        ]:
-            return False
         return True
 
     def validate_domain(self, domain: Domain):

@@ -10,6 +10,7 @@ from botorch.acquisition.utils import get_infeasible_cost
 from botorch.models.gpytorch import GPyTorchModel
 from torch import Tensor
 
+from bofire.data_models.constraints.nonlinear import NONLINEAR_CONSTRAINT_TOL_OVERRIDES
 from bofire.data_models.features.api import Input
 from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
@@ -203,7 +204,11 @@ class BotorchStrategy(PredictiveStrategy):
             # input constraints are fulfilled, output constraints are handled directly
             # in botorch
             fulfilled_experiments = clean_experiments[
-                self.domain.is_fulfilled(clean_experiments)
+                self.domain.is_fulfilled(
+                    clean_experiments,
+                    tol=self._validation_tol,
+                    tol_overrides=NONLINEAR_CONSTRAINT_TOL_OVERRIDES,
+                )
             ].copy()
             if len(fulfilled_experiments) == 0:
                 warnings.warn(

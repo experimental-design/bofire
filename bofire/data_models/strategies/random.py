@@ -9,6 +9,7 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
     ProductInequalityConstraint,
 )
@@ -83,6 +84,7 @@ class RandomStrategy(Strategy):
             NChooseKConstraint,
             InterpointEqualityConstraint,
             NonlinearInequalityConstraint,
+            NonlinearEqualityConstraint,
             ProductInequalityConstraint,
             CategoricalExcludeConstraint,
         ]
