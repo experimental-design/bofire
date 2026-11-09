@@ -408,8 +408,10 @@ def map_WassersteinKernel(
 ) -> WassersteinKernel:
     active_dims = _compute_active_dims(data_model, active_dims, features_to_idx_mapper)
     return WassersteinKernel(
+        batch_shape=batch_shape,
         squared=data_model.squared,
-        **_lengthscale(data_model, d=len(active_dims)),
+        # The distance is averaged over the discretization, not summed.
+        **_lengthscale(data_model, d=1),
         active_dims=active_dims,
     )
 
@@ -430,8 +432,10 @@ def map_ExactWassersteinKernel(
     append_y = torch.tensor(data_model.append_y, dtype=torch.double)
     normalize_y = torch.tensor(data_model.normalize_y, dtype=torch.double)
     return ExactWassersteinKernel(
+        batch_shape=batch_shape,
         squared=data_model.squared,
-        **_lengthscale(data_model, d=len(active_dims)),
+        # The integrated curve distance does not scale with the number of nodes.
+        **_lengthscale(data_model, d=1),
         idx_x=idx_x,
         idx_y=idx_y,
         prepend_x=prepend_x,

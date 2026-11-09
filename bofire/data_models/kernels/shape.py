@@ -15,6 +15,8 @@ class WassersteinKernel(LengthscaleKernel, FeatureSpecificKernel):
 
     The shape are assumed to be discretized as a set of points. Make sure that
     the discretization is fine enough to capture the shape of the data.
+    A single lengthscale scales the distance between whole curves; its prior is
+    mapped with dimensionality one, independently of the number of points.
 
     """
 
@@ -37,6 +39,8 @@ class ExactWassersteinKernel(LengthscaleKernel, FeatureSpecificKernel):
 
     Unlike `WassersteinKernel`, which approximates the distance from a discretization,
     this computes it analytically from the curves' break points.
+    A single lengthscale scales the distance between whole curves; its prior is
+    mapped with dimensionality one, independently of the number of break points.
     """
 
     type: Literal["ExactWassersteinKernel"] = "ExactWassersteinKernel"

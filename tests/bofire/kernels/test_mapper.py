@@ -41,6 +41,7 @@ from bofire.data_models.priors.api import (
     CHEN_OUTPUTSCALE_PRIOR,
     THREESIX_SCALE_PRIOR,
     DimensionalityScaledGammaPrior,
+    DimensionalityScaledLogNormalPrior,
     GammaPrior,
     LogTransformedInterval,
 )
@@ -294,6 +295,42 @@ def test_map_wasserstein_kernel():
     )
     assert k.squared is True
     assert hasattr(k, "lengthscale_prior") is False
+
+
+@pytest.mark.parametrize("kernel_cls", [WassersteinKernel, ExactWassersteinKernel])
+@pytest.mark.parametrize("nodes", [2, 4, 32])
+@pytest.mark.parametrize(
+    "prior, parameters",
+    [
+        (
+            DimensionalityScaledLogNormalPrior(loc=0.3, scale=0.7),
+            {"loc": 0.3, "scale": 0.7},
+        ),
+        (
+            DimensionalityScaledGammaPrior(
+                concentration=2.0, concentration_scaling=0.5, rate=0.8, rate_power=0.5
+            ),
+            {"concentration": 2.5, "rate": 0.8},
+        ),
+    ],
+)
+def test_shape_kernel_prior_independent_of_discretization(
+    kernel_cls, nodes, prior, parameters
+):
+    kwargs = {}
+    n_dims = nodes
+    if kernel_cls is ExactWassersteinKernel:
+        n_dims = 2 * nodes
+        kwargs = {"idx_x": list(range(nodes)), "idx_y": list(range(nodes, n_dims))}
+    kernel = kernels.map(
+        kernel_cls(lengthscale_prior=prior, **kwargs),
+        batch_shape=torch.Size([2]),
+        active_dims=list(range(n_dims)),
+        features_to_idx_mapper=None,
+    )
+    assert kernel.raw_lengthscale.shape == (2, 1, 1)
+    for name, value in parameters.items():
+        assert getattr(kernel.lengthscale_prior, name).item() == pytest.approx(value)
 
 
 def test_map_exact_wasserstein_kernel_auto_chunking():

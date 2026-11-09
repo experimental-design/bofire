@@ -170,9 +170,18 @@ def _pairwise_piecewise_linear_wasserstein(
     return dists.squeeze(0) if squeeze_batch else dists
 
 
-class WassersteinKernel(Kernel):
+class _ShapeKernel(Kernel):
+    """Kernel with one scalar lengthscale per batch member."""
+
     has_lengthscale = True
 
+    def __init__(self, ard_num_dims: Optional[int] = None, **kwargs):
+        if ard_num_dims not in (None, 1):
+            raise ValueError("Shape kernels support only one scalar lengthscale.")
+        super().__init__(**kwargs)
+
+
+class WassersteinKernel(_ShapeKernel):
     def __init__(self, squared: bool = False, **kwargs):
         super(WassersteinKernel, self).__init__(**kwargs)
         self.squared = squared
@@ -206,9 +215,7 @@ class WassersteinKernel(Kernel):
         return torch.exp(-dists)
 
 
-class ExactWassersteinKernel(Kernel):
-    has_lengthscale = True
-
+class ExactWassersteinKernel(_ShapeKernel):
     def __init__(
         self,
         squared: bool = False,
@@ -296,10 +303,8 @@ class ExactWassersteinKernel(Kernel):
         if diag and x1_x.shape[-2] != x2_x.shape[-2]:
             dists = dists.diagonal(dim1=-2, dim2=-1)
 
-        if self.lengthscale.numel() == 1:
-            dists = dists / self.lengthscale.squeeze()
-        else:
-            dists = dists / self.lengthscale.mean()
+        lengthscale = self.lengthscale.squeeze(-1) if diag else self.lengthscale
+        dists = dists / lengthscale
 
         dists = dists.clamp_min(1e-15)
 
