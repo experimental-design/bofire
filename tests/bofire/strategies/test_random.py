@@ -411,3 +411,12 @@ def test_sample_valid_nchoosek_features_empty_returns_empty_tuple():
         domain=domain, seed=3, n=4
     )
     assert samples == [(), (), (), ()]
+
+
+def test_ask_ignores_progress_callback():
+    domain = supported_domains[0]
+    strategy = strategies.map(data_models.RandomStrategy(domain=domain))
+    events = []
+    candidates = strategy.ask(2, progress_callback=events.append)
+    assert len(candidates) == 2
+    assert events == []

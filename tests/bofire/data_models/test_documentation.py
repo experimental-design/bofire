@@ -22,37 +22,6 @@ import bofire.data_models
 
 # Fields that do not yet carry `Field(description=...)`. Only ever remove entries.
 UNDOCUMENTED_FIELDS = {
-    "bofire.data_models.dataframes.dataframes.CandidateOutputValue.objective_value",
-    "bofire.data_models.dataframes.dataframes.CandidateOutputValue.standard_deviation",
-    "bofire.data_models.dataframes.dataframes.DataFrame.rows",
-    "bofire.data_models.dataframes.dataframes.ExperimentOutputValue.valid",
-    "bofire.data_models.dataframes.dataframes.OutputValue.value",
-    "bofire.data_models.dataframes.dataframes.Row.inputs",
-    "bofire.data_models.dataframes.dataframes.Row.outputs",
-    "bofire.data_models.descriptor_generators.generators.Fingerprints.bond_radius",
-    "bofire.data_models.descriptor_generators.generators.Fingerprints.n_bits",
-    "bofire.data_models.descriptor_generators.generators.Fragments.fragments",
-    "bofire.data_models.descriptor_generators.generators.MordredDescriptors.descriptors",
-    "bofire.data_models.descriptor_generators.generators.MordredDescriptors.ignore_3D",
-    "bofire.data_models.domain.constraints.Constraints.constraints",
-    "bofire.data_models.domain.domain.Domain.constraints",
-    "bofire.data_models.domain.domain.Domain.context",
-    "bofire.data_models.domain.domain.Domain.inputs",
-    "bofire.data_models.domain.domain.Domain.outputs",
-    "bofire.data_models.domain.features._BaseFeatures.features",
-    "bofire.data_models.encodings.onehot.OneHotEncoding.drop_first",
-    "bofire.data_models.llm.provider.AnthropicFoundryLLMProvider.api_key_env_var",
-    "bofire.data_models.llm.provider.AnthropicFoundryLLMProvider.model",
-    "bofire.data_models.llm.provider.AnthropicFoundryLLMProvider.resource_env_var",
-    "bofire.data_models.llm.provider.AnthropicLLMProvider.api_key_env_var",
-    "bofire.data_models.llm.provider.AnthropicLLMProvider.model",
-    "bofire.data_models.llm.provider.LLMProvider.api_key_env_var",
-    "bofire.data_models.llm.provider.LLMProvider.model",
-    "bofire.data_models.llm.provider.OpenAICompatibleLLMProvider.api_key_env_var",
-    "bofire.data_models.llm.provider.OpenAICompatibleLLMProvider.base_url",
-    "bofire.data_models.llm.provider.OpenAICompatibleLLMProvider.model",
-    "bofire.data_models.llm.provider.OpenAILLMProvider.api_key_env_var",
-    "bofire.data_models.llm.provider.OpenAILLMProvider.model",
     "bofire.data_models.strategies.convergence_criteria.hypervolume_improvement.HypervolumeImprovementCriterion.min_improvement",
     "bofire.data_models.strategies.convergence_criteria.hypervolume_improvement.HypervolumeImprovementCriterion.n_lookback",
     "bofire.data_models.strategies.convergence_criteria.objective_improvement.ObjectiveImprovementCriterion.min_improvement",
@@ -162,38 +131,10 @@ UNDOCUMENTED_FIELDS = {
     "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.kernel",
     "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.likelihood",
     "bofire.data_models.surrogates.pairwise_gp.PairwiseGPSurrogate.scaler",
-    "bofire.data_models.transforms.drop_data.DropDataTransform.to_be_removed_candidates",
-    "bofire.data_models.transforms.drop_data.DropDataTransform.to_be_removed_experiments",
-    "bofire.data_models.transforms.manipulate_data.ManipulateDataTransform.candidate_transforms",
-    "bofire.data_models.transforms.manipulate_data.ManipulateDataTransform.candidate_untransforms",
-    "bofire.data_models.transforms.manipulate_data.ManipulateDataTransform.experiment_transforms",
 }
 
 # Classes that do not yet carry a docstring of their own. Only ever remove entries.
 UNDOCUMENTED_CLASSES = {
-    "bofire.data_models.base.BaseModel",
-    "bofire.data_models.dataframes.dataframes.CandidateOutputValue",
-    "bofire.data_models.dataframes.dataframes.CandidateRow",
-    "bofire.data_models.dataframes.dataframes.Candidates",
-    "bofire.data_models.dataframes.dataframes.DataFrame",
-    "bofire.data_models.dataframes.dataframes.DataFrame[CandidateRow]",
-    "bofire.data_models.dataframes.dataframes.DataFrame[ExperimentRow]",
-    "bofire.data_models.dataframes.dataframes.ExperimentOutputValue",
-    "bofire.data_models.dataframes.dataframes.ExperimentRow",
-    "bofire.data_models.dataframes.dataframes.Experiments",
-    "bofire.data_models.dataframes.dataframes.OutputValue",
-    "bofire.data_models.dataframes.dataframes.Row",
-    "bofire.data_models.dataframes.dataframes.Row[CandidateOutputValue]",
-    "bofire.data_models.dataframes.dataframes.Row[ExperimentOutputValue]",
-    "bofire.data_models.descriptor_generators.generators.Fingerprints",
-    "bofire.data_models.descriptor_generators.generators.Fragments",
-    "bofire.data_models.descriptor_generators.generators.MordredDescriptors",
-    "bofire.data_models.domain.constraints.Constraints",
-    "bofire.data_models.domain.features.Features",
-    "bofire.data_models.domain.features._BaseFeatures[Annotated[Union[ContinuousOutput, CategoricalOutput], FieldInfo(annotation=NoneType, required=True, discriminator='type')]]",
-    "bofire.data_models.domain.features._BaseFeatures[Annotated[Union[DiscreteInput, CategoricalInput, ContinuousInput, ContinuousOutput, CategoricalOutput, CategoricalTaskInput, ContinuousTaskInput, SumFeature, MeanFeature, WeightedSumFeature, ProductFeature, InterpolateFeature, CloneFeature], FieldInfo(annotation=NoneType, required=True, discriminator='type')]]",
-    "bofire.data_models.domain.features._BaseFeatures[Annotated[Union[DiscreteInput, CategoricalInput, ContinuousInput, ContinuousTaskInput, CategoricalTaskInput], FieldInfo(annotation=NoneType, required=True, discriminator='type')]]",
-    "bofire.data_models.domain.features._BaseFeatures[Annotated[Union[SumFeature, MeanFeature, WeightedSumFeature, ProductFeature, InterpolateFeature, CloneFeature], FieldInfo(annotation=NoneType, required=True, discriminator='type')]]",
     "bofire.data_models.strategies.doe.AOptimalityCriterion",
     "bofire.data_models.strategies.doe.DOptimalityCriterion",
     "bofire.data_models.strategies.doe.DoEOptimalityCriterion",
@@ -231,13 +172,11 @@ UNDOCUMENTED_CLASSES = {
     "bofire.data_models.strategies.strategy.Strategy",
     "bofire.data_models.surrogates.deterministic.LinearDeterministicSurrogate",
     "bofire.data_models.surrogates.empirical.EmpiricalSurrogate",
-    "bofire.data_models.transforms.drop_data.DropDataTransform",
-    "bofire.data_models.transforms.transform.Transform",
 }
 
 
 def _collect_data_model_classes() -> Dict[str, Type[BaseModel]]:
-    """Return every pydantic model defined under `bofire.data_models`, keyed by path.
+    """Return every pydantic model declared under `bofire.data_models`, keyed by path.
 
     Import errors are deliberately not caught: a module that cannot be imported would
     otherwise drop out of the parametrization and leave a whole package unenforced.
@@ -253,6 +192,9 @@ def _collect_data_model_classes() -> Dict[str, Type[BaseModel]]:
                 isinstance(obj, type)
                 and issubclass(obj, BaseModel)
                 and obj.__module__.startswith("bofire.data_models")
+                # parametrized generics such as `DataFrame[CandidateRow]` are created by
+                # pydantic, not declared; their generic carries the docs
+                and obj.__pydantic_generic_metadata__["origin"] is None
             ):
                 classes[f"{obj.__module__}.{obj.__qualname__}"] = obj
     return classes

@@ -17,8 +17,10 @@ CExcludes = TypeVar("CExcludes", bound=Union[AnyConstraint, Constraint])
 
 
 class Constraints(BaseModel, Generic[C]):
+    """Container of the constraints of a domain."""
+
     type: Literal["Constraints"] = "Constraints"
-    constraints: Sequence[C] = Field(default_factory=list)
+    constraints: Sequence[C] = Field(default=[], description="The constraints.")
 
     def __iter__(self) -> Iterator[C]:
         return iter(self.constraints)
