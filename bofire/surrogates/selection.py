@@ -3,11 +3,14 @@ from typing import Optional, cast
 
 import numpy as np
 import pandas as pd
+from typing_extensions import Self
 
-from bofire.data_models.enum import REGRESSION_METRIC_DIRECTIONS
+from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.enum import REGRESSION_METRIC_DIRECTIONS, RegressionMetricsEnum
 from bofire.data_models.surrogates.api import SelectionSurrogate as DataModel
+from bofire.data_models.surrogates.selection import AnyOptionSurrogate
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
-from bofire.surrogates.surrogate import Surrogate
+from bofire.surrogates.surrogate import Surrogate, make_surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 
 
@@ -18,6 +21,32 @@ class SelectionSurrogate(Surrogate, TrainableSurrogate):
     fitted option that makes the predictions, and `scores` holds the
     cross-validation metrics of every option, one row per option in their order.
     """
+
+    @classmethod
+    def make(
+        cls,
+        inputs: Inputs,
+        outputs: Outputs,
+        options: list[AnyOptionSurrogate],
+        dump: str | None = None,
+        metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE,
+        folds: int = 5,
+        random_state: int | None = None,
+    ) -> Self:
+        """Create a surrogate that selects among complete configurations.
+
+        Args:
+            inputs: Input features shared by all options.
+            outputs: One continuous output shared by all options.
+            options: At least two surrogate data models to compare.
+            dump: Serialized fitted selection model to restore, if provided.
+            metric: Cross-validation metric used to rank options.
+            folds: Number of cross-validation folds.
+            random_state: Seed for splitting experiments; None draws a seed.
+
+        Defaults mirror the data model. Call ``fit`` to select and train an option.
+        """
+        return make_surrogate(cls, DataModel, locals())
 
     def __init__(
         self,
