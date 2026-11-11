@@ -652,9 +652,9 @@ def test_solve_pounce_defaults_overridable(monkeypatch):
     seen = {}
     real_minimize = pounce.minimize
 
-    def fake_minimize(fun, x0, options=None, **kwargs):
-        seen.update(options)
-        return real_minimize(fun, x0, options=options, **kwargs)
+    def fake_minimize(fun, x0, **kwargs):
+        seen.update(kwargs)
+        return real_minimize(fun, x0, **kwargs)
 
     monkeypatch.setattr(pounce, "minimize", fake_minimize)
     obj, x0, bounds, constraints, _ = _mixture_doe_setup()

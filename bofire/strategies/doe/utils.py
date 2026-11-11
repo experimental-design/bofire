@@ -850,11 +850,17 @@ POUNCE_DOE_DEFAULTS = {
 OPTIMIZERS = ("pounce", "ipopt", "scipy")
 
 
+# Constraints are passed as scipy dict constraints with a sparse ``jac`` because
+# that is the only format both interior-point backends keep sparse:
+# ``cyipopt.minimize_ipopt`` densifies ``LinearConstraint`` objects, while SLSQP
+# needs dense dict Jacobians (``_densify_jacobians``). Once cyipopt is dropped,
+# this can be simplified: emit ``LinearConstraint``/``NonlinearConstraint``
+# objects, which pounce keeps sparse and scipy densifies for SLSQP itself, and
+# remove ``_densify_jacobians`` and ``_ipopt_method``.
 def _densify_jacobians(constraints: List[dict]) -> List[dict]:
-    """Return copies of the dict constraints with their (coo) ``jac`` densified.
+    """Return copies of the dict constraints with their sparse ``jac`` densified.
 
-    scipy SLSQP requires a dense constraint Jacobian (it raises on a sparse one),
-    so the scipy path densifies; ipopt/pounce use the sparse coo jac directly.
+    SLSQP rejects sparse Jacobians in dict constraints.
     """
 
     def densify(jac):
@@ -900,6 +906,37 @@ def _check_optimizer(optimizer: str) -> None:
         )
 
 
+def _ipopt_method(
+    fun,
+    x0,
+    args=(),
+    jac=None,
+    hess=None,
+    hessp=None,
+    bounds=None,
+    constraints=(),
+    callback=None,
+    **options,
+):
+    """``cyipopt.minimize_ipopt`` with the signature of a
+    ``scipy.optimize.minimize`` custom method, which passes options as keyword
+    arguments rather than as one ``options`` dict."""
+    from cyipopt import minimize_ipopt  # ty: ignore[unresolved-import]
+
+    return minimize_ipopt(
+        fun,
+        x0,
+        args=args,
+        jac=jac,
+        hess=hess,
+        hessp=hessp,
+        bounds=bounds,
+        constraints=constraints,
+        callback=callback,
+        options=options,
+    )
+
+
 def _solve(
     objective_function: Objective,
     x0: np.ndarray,
@@ -910,15 +947,16 @@ def _solve(
 ) -> opt.OptimizeResult:
     """Minimize the objective over the given bounds and constraints.
 
-    All backends receive the same scipy-style problem: the objective and its
-    gradient, per-variable bounds, and the dict constraints from
-    ``constraints_as_scipy_constraints``, whose ``jac`` returns a sparse
-    ``coo_array``.
+    Every backend runs through ``scipy.optimize.minimize`` with the same
+    problem: the objective and its gradient, per-variable bounds, and the dict
+    constraints from ``constraints_as_scipy_constraints``, whose ``jac`` returns
+    a sparse ``coo_array``. scipy hands bounds and constraints unchanged to a
+    callable ``method``, so the Jacobians stay sparse for pounce and cyipopt.
 
-    - ``"pounce"``: ``pounce.minimize``, sparse Jacobians, with
-      ``POUNCE_DOE_DEFAULTS`` underneath ``optimizer_options``.
-    - ``"ipopt"``: ``cyipopt.minimize_ipopt``, sparse Jacobians.
-    - ``"scipy"``: SLSQP, with the Jacobians densified; Ipopt-style
+    - ``"pounce"``: ``method=pounce.minimize``, with ``POUNCE_DOE_DEFAULTS``
+      underneath ``optimizer_options``.
+    - ``"ipopt"``: ``method=_ipopt_method`` (cyipopt).
+    - ``"scipy"``: ``method="SLSQP"`` with the Jacobians densified; Ipopt-style
       ``max_iter``/``print_level`` are translated.
 
     Args:
@@ -937,41 +975,27 @@ def _solve(
         ImportError: If the backend for ``optimizer`` is not installed.
     """
     _check_optimizer(optimizer)
-    optimizer_options = dict(optimizer_options or {})
+    options = dict(optimizer_options or {})
     constraints = constraints or []
-    fun = objective_function.evaluate
-    jac = objective_function.evaluate_jacobian
-
     if optimizer == "pounce":
-        from pounce import minimize as pounce_minimize
+        from pounce import minimize as method
 
-        return pounce_minimize(
-            fun,
-            x0=x0,
-            jac=jac,
-            bounds=bounds,
-            constraints=constraints,
-            options={**POUNCE_DOE_DEFAULTS, **optimizer_options},
-        )
-    if optimizer == "ipopt":
-        from cyipopt import minimize_ipopt  # ty: ignore[unresolved-import]
+        options = {**POUNCE_DOE_DEFAULTS, **options}
+    elif optimizer == "ipopt":
+        method = _ipopt_method
+    else:
+        method = "SLSQP"
+        constraints = _densify_jacobians(constraints)
+        options = _scipy_options(options)
 
-        return minimize_ipopt(
-            fun,
-            x0=x0,
-            jac=jac,
-            bounds=bounds,
-            constraints=constraints,
-            options=optimizer_options,
-        )
     return opt.minimize(
-        fun=fun,
-        x0=x0,
-        jac=jac,
+        objective_function.evaluate,
+        x0,
+        jac=objective_function.evaluate_jacobian,
         bounds=bounds,
-        method="SLSQP",
-        constraints=_densify_jacobians(constraints),  # SLSQP needs dense jacs
-        options=_scipy_options(optimizer_options),
+        constraints=constraints,
+        method=method,
+        options=options,
     )
 
 
