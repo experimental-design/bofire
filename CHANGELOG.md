@@ -86,6 +86,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - **Breaking**: `CategoricalTaskInput` and `ContinuousTaskInput` declare `descriptors: None`, so they now serialize a `"descriptors": null` key and reject descriptor data at the type level — a task input is an index, not a described entity.
 - **Breaking**: `LinearDeterministicSurrogate` rejects engineered features with `filter_descriptors=True`. A linear model binds one coefficient per column, so the width must follow from the configuration rather than the data.
 - LLM field descriptions report descriptor data uniformly for every feature type: a prefix stating what the feature is and its range or options, then the data — `Categorical, allowed: [...] — descriptors per category: {...} — structure: [...]`, `Continuous, bounds [...] — descriptors: {...} — structure: CCO`. Previously the kind was announced in the prefix (`Categorical with descriptors`, `Continuous molecular (SMILES: CCO)`) and only the two descriptor-carrying classes emitted anything.
+- Register custom likelihoods with `bofire.data_models.likelihoods.api.register`.
 
 ### Fixed
 - `NChooseKConstraint` residual evaluation ignores unrelated experiment metadata and preserves row labels, avoiding object-dtype errors and misalignment when combined with other constraints. ([#855](https://github.com/experimental-design/bofire/issues/855))
