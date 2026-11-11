@@ -850,13 +850,15 @@ POUNCE_DOE_DEFAULTS = {
 OPTIMIZERS = ("pounce", "ipopt", "scipy")
 
 
-# Constraints are passed as scipy dict constraints with a sparse ``jac`` because
-# that is the only format both interior-point backends keep sparse:
-# ``cyipopt.minimize_ipopt`` densifies ``LinearConstraint`` objects, while SLSQP
-# needs dense dict Jacobians (``_densify_jacobians``). Once cyipopt is dropped,
-# this can be simplified: emit ``LinearConstraint``/``NonlinearConstraint``
-# objects, which pounce keeps sparse and scipy densifies for SLSQP itself, and
-# remove ``_densify_jacobians`` and ``_ipopt_method``.
+# Constraints are scipy dict constraints with a sparse ``jac``. Dicts are the only
+# format that stays sparse for both interior-point backends:
+# ``cyipopt.minimize_ipopt`` densifies ``LinearConstraint`` and
+# ``NonlinearConstraint`` objects, and ``pounce.minimize`` accepts nonlinear
+# constraints only as dicts. SLSQP rejects sparse dict Jacobians, hence
+# ``_densify_jacobians``. Dropping SLSQP removes ``_densify_jacobians``; dropping
+# cyipopt removes ``_ipopt_method`` and lets linear constraints become
+# ``LinearConstraint`` objects. Nonlinear constraints stay dicts until pounce
+# accepts ``NonlinearConstraint``.
 def _densify_jacobians(constraints: List[dict]) -> List[dict]:
     """Return copies of the dict constraints with their sparse ``jac`` densified.
 
