@@ -503,7 +503,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Functional class — implements ask/tell</span></span>
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MyStrategy(Strategy):</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _ask(<span class="va">self</span>, candidate_count):</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _ask(<span class="va">self</span>, candidate_count, progress_callback<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame()</span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> has_sufficient_experiments(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
@@ -1180,7 +1180,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Functional class — implements ask/tell</span></span>
 <span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MyStrategy(Strategy):</span>
-<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _ask(<span class="va">self</span>, candidate_count):</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _ask(<span class="va">self</span>, candidate_count, progress_callback<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame()</span>
 <span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> has_sufficient_experiments(<span class="va">self</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
