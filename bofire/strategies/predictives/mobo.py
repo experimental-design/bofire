@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, cast
+from typing import List, Optional, cast
 
 import numpy as np
 import torch
@@ -135,7 +135,7 @@ class MoboStrategy(BotorchStrategy):
     def make(
         cls,
         domain: Domain,
-        ref_point: ExplicitReferencePoint | Dict[str, float] | None = None,
+        ref_point: ExplicitReferencePoint | None = None,
         acquisition_function: AnyMultiObjectiveAcquisitionFunction | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
@@ -152,7 +152,8 @@ class MoboStrategy(BotorchStrategy):
 
         Parameters:
             domain: The domain specifying the search space.
-            ref_point: Reference point for hypervolume computation.
+            ref_point: Reference point for hypervolume computation. A mapping from
+                output keys to numbers is also accepted, as fixed reference values.
             acquisition_function: Acquisition function.
             acquisition_optimizer: Optimizer for the acquisition function.
             surrogate_specs: Surrogate model specifications.

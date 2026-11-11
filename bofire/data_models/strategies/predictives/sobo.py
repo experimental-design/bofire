@@ -1,6 +1,5 @@
 from typing import List, Literal, Optional, Type
 
-import pydantic
 from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.acquisition_functions.api import (
@@ -15,8 +14,12 @@ from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class SoboBaseStrategy(BotorchStrategy):
+    """Bayesian optimization of a single objective, or of several combined into one."""
+
     acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
-        default_factory=lambda: qLogNEI(),
+        default=qLogNEI(),
+        description="Acquisition function that scores candidates by the predicted "
+        "value of the objective.",
     )
 
     @classmethod
@@ -63,6 +66,17 @@ class SoboBaseStrategy(BotorchStrategy):
 
 
 class SoboStrategy(SoboBaseStrategy):
+    """Single-objective Bayesian optimization.
+
+    Exactly one output has an objective to optimize; further outputs may have
+    constrained objectives, such as sigmoid ones, which act as constraints the
+    candidates should satisfy. With `qLogPF` as acquisition function, the strategy
+    only searches for candidates that satisfy those constraints.
+
+    Examples:
+        >>> SoboStrategy(domain=domain, acquisition_function=qLogEI())
+    """
+
     type: Literal["SoboStrategy"] = "SoboStrategy"
 
     @model_validator(mode="after")
@@ -85,12 +99,10 @@ class SoboStrategy(SoboBaseStrategy):
 
 
 class _ForbidPFMixin:
-    """
-    Mixin to forbid the use of qLogPF acquisition function in single-objective strategies
-    that are not the SoboStrategy.
-    """
+    """Forbids qLogPF, which is only allowed in the `SoboStrategy`."""
 
     @field_validator("acquisition_function")
+    @classmethod
     def validate_acquisition_function(cls, acquisition_function):
         if isinstance(acquisition_function, qLogPF):
             raise ValueError(
@@ -99,27 +111,23 @@ class _ForbidPFMixin:
         return acquisition_function
 
 
-class AdditiveSoboStrategy(SoboBaseStrategy, _ForbidPFMixin):
-    type: Literal["AdditiveSoboStrategy"] = "AdditiveSoboStrategy"
-
-    use_output_constraints: bool = True
+class _MultipleObjectivesMixin:
+    """Requires at least two outputs with objectives."""
 
     @field_validator("domain")
-    def validate_is_multiobjective(cls, v, info):
-        if (len(v.outputs.get_by_objective(Objective))) < 2:
+    @classmethod
+    def validate_multiple_objectives(cls, domain):
+        if len(domain.outputs.get_by_objective(Objective)) < 2:
             raise ValueError(
-                "Additive SOBO strategy requires at least 2 outputs with objectives. Consider SOBO strategy instead.",
+                f"{cls.__name__} requires at least 2 outputs with objectives. "
+                "Consider SoboStrategy instead.",
             )
-        return v
+        return domain
 
 
 class _CheckAdaptableWeightsMixin:
-    """
-    Contains an additional validator for weights in multiplicative objective merging.
-
-    Additional validation of weights for adaptable weights, in multiplicative calculations. Adaption to (1, inf)
-    requires w>=1e-8
-    """
+    """Requires objective weights of at least 1e-8, as the weights are divided by
+    the smallest one."""
 
     @model_validator(mode="after")
     def check_adaptable_weights(self):
@@ -127,47 +135,88 @@ class _CheckAdaptableWeightsMixin:
             obj
         ) in self.domain.outputs.get_by_objective():  # ty: ignore[unresolved-attribute]
             if obj.objective.w < 1e-8:
-                raise pydantic.ValidationError(
-                    f"Weight transformation to (1, inf) requires w>=1e-8 . Violated by feature {obj.key}."
+                raise ValueError(
+                    f"Weight transformation to (1, inf) requires w>=1e-8. Violated by feature {obj.key}."
                 )
         return self
 
 
-class MultiplicativeSoboStrategy(
-    SoboBaseStrategy, _CheckAdaptableWeightsMixin, _ForbidPFMixin
-):
-    type: Literal["MultiplicativeSoboStrategy"] = "MultiplicativeSoboStrategy"
+class _OutputConstraintsSoboStrategy(SoboBaseStrategy, _ForbidPFMixin):
+    """Combines the objectives of several outputs into one, optionally keeping the
+    constrained objectives apart as constraints."""
 
-    @field_validator("domain")
-    def validate_is_multiobjective(cls, v, info):
-        if (len(v.outputs.get_by_objective(Objective))) < 2:
-            raise ValueError(
-                "Multiplicative SOBO strategy requires at least 2 outputs with objectives. Consider SOBO strategy instead.",
-            )
-        return v
+    use_output_constraints: bool = Field(
+        default=True,
+        description="Whether outputs with a constrained objective, such as a sigmoid "
+        "one, act as constraints the candidates should satisfy. If not, they are "
+        "combined with the other objectives like any objective.",
+    )
+
+
+class AdditiveSoboStrategy(_OutputConstraintsSoboStrategy, _MultipleObjectivesMixin):
+    """Bayesian optimization of the weighted sum of several objectives.
+
+    The objective values are summed, each weighted by its objective's `w`. A poor
+    value of one objective can be made up for by good values of the others.
+
+    Examples:
+        >>> AdditiveSoboStrategy(domain=domain)
+    """
+
+    type: Literal["AdditiveSoboStrategy"] = "AdditiveSoboStrategy"
+
+
+class MultiplicativeSoboStrategy(
+    SoboBaseStrategy,
+    _MultipleObjectivesMixin,
+    _CheckAdaptableWeightsMixin,
+    _ForbidPFMixin,
+):
+    """Bayesian optimization of the weighted product of several objectives.
+
+    The objective values, each raised to the power of its objective's weight `w`, are
+    multiplied; the weights are rescaled so that the smallest is 1. A candidate is only good if all
+    objectives are good, since a value near zero in one of them makes the product
+    small. Constrained objectives, such as sigmoid ones, are factors like any other.
+
+    Examples:
+        >>> MultiplicativeSoboStrategy(domain=domain)
+    """
+
+    type: Literal["MultiplicativeSoboStrategy"] = "MultiplicativeSoboStrategy"
 
 
 class MultiplicativeAdditiveSoboStrategy(
-    SoboBaseStrategy, _CheckAdaptableWeightsMixin, _ForbidPFMixin
+    _OutputConstraintsSoboStrategy,
+    _MultipleObjectivesMixin,
+    _CheckAdaptableWeightsMixin,
 ):
-    """
-    Mixed, weighted multiplicative (primary, strict) and additive (secondary, non-strict) objectives.
+    """Bayesian optimization of several objectives, combined partly by product and
+    partly by sum.
 
-    The formular for a mixed objective with two multiplicative features (f1, and f2 with weights w1 and w2) and two
-    additive features (f3 and f4 with weights w3 and w4) is:
+    The objectives in `additive_features` are summed, the others multiplied, each
+    weighted by its objective's `w`, rescaled so that the smallest weight is 1. With
+    multiplicative objectives f1 and f2 and additive objectives f3 and f4, the
+    combined objective is
 
-        additive_objective = 1 + f3*w3 + f4*w4
+        f1^w1 * f2^w2 * (1 + w3 * f3 + w4 * f4)
 
-        objective = f1^w1 * f2^w2 * additive_objective
+    so the multiplicative objectives all have to be good, while the additive ones
+    can make up for each other.
 
+    Examples:
+        >>> MultiplicativeAdditiveSoboStrategy(domain=domain, additive_features=["y3"])
     """
 
     type: Literal["MultiplicativeAdditiveSoboStrategy"] = (
         "MultiplicativeAdditiveSoboStrategy"
     )
 
-    use_output_constraints: bool = True
-    additive_features: List[str] = Field(default_factory=list)
+    additive_features: List[str] = Field(
+        default=[],
+        description="Keys of the outputs whose objectives are summed; all other "
+        "objectives are multiplied.",
+    )
 
     @field_validator("additive_features")
     def validate_additive_features(cls, v, values):
@@ -180,8 +229,19 @@ class MultiplicativeAdditiveSoboStrategy(
         return v
 
 
-class CustomSoboStrategy(SoboBaseStrategy, _ForbidPFMixin):
+class CustomSoboStrategy(_OutputConstraintsSoboStrategy):
+    """Bayesian optimization of several objectives combined by a function of your own.
+
+    The function is assigned to the strategy's `f`, not to this data model, and
+    receives the sampled output values, the objective functions and their weights,
+    and the candidates; it returns one value per sample to maximize.
+    """
+
     type: Literal["CustomSoboStrategy"] = "CustomSoboStrategy"
 
-    use_output_constraints: bool = True
-    dump: Optional[str] = None
+    dump: Optional[str] = Field(
+        default=None,
+        description="The function combining the objectives, as returned by the "
+        "strategy's `dumps()`. If not provided, the function has to be set on the "
+        "strategy before it can propose candidates.",
+    )

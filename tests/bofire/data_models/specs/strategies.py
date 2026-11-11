@@ -809,6 +809,33 @@ specs.add_invalid(
 )
 
 specs.add_invalid(
+    strategies.MultiplicativeSoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=[
+                ContinuousOutput(key="alpha", objective=MaximizeObjective(w=1e-9)),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+            ],
+        ),
+    },
+    error=ValueError,
+    message="requires w>=1e-8. Violated by feature alpha",
+)
+
+specs.add_invalid(
+    strategies.MultiplicativeAdditiveSoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+        ),
+    },
+    error=ValueError,
+    message="MultiplicativeAdditiveSoboStrategy requires at least 2 outputs",
+)
+
+specs.add_invalid(
     strategies.SoboStrategy,
     lambda: {
         "domain": Domain(

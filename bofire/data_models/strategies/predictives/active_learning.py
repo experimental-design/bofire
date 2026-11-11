@@ -13,13 +13,21 @@ from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class ActiveLearningStrategy(BotorchStrategy):
-    """Datamodel for an ActiveLearningStrategy that focusses on pure exploration of the input space.
-    This type of strategy chooses new candidate points in order to minimize the uncertainty.
+    """Active learning: proposes the candidates that most reduce the uncertainty of
+    the models over the whole domain, regardless of the objectives.
+
+    Use it to build a model that is accurate everywhere, e.g. to map a response
+    surface, rather than to find an optimum.
+
+    Examples:
+        >>> ActiveLearningStrategy(domain=domain)
     """
 
     type: Literal["ActiveLearningStrategy"] = "ActiveLearningStrategy"
     acquisition_function: AnyActiveLearningAcquisitionFunction = Field(
-        default_factory=lambda: qNegIntPosVar(),
+        default=qNegIntPosVar(),
+        description="Acquisition function scoring candidates by how much they reduce "
+        "the uncertainty of the models.",
     )
 
     @model_validator(mode="after")
@@ -45,9 +53,7 @@ class ActiveLearningStrategy(BotorchStrategy):
             bool: True if the feature type is valid for the strategy chosen, False otherwise
 
         """
-        if my_type not in [CategoricalOutput]:
-            return True
-        return False
+        return my_type is not CategoricalOutput
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:

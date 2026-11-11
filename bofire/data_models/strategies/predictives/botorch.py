@@ -23,14 +23,23 @@ from bofire.data_models.surrogates.api import (
 
 
 class BotorchStrategy(PredictiveStrategy):
-    # acquisition optimizer
-    acquisition_optimizer: AnyAcqfOptimizer = Field(
-        default_factory=lambda: BotorchOptimizer()
-    )
+    """Bayesian optimization with BoTorch: fits one surrogate per output and
+    proposes the candidates that maximize an acquisition function.
 
+    Outputs without a surrogate in `surrogate_specs` get a single-task GP, or the
+    mixed GP if the domain has categorical inputs without descriptors.
+    """
+
+    acquisition_optimizer: AnyAcqfOptimizer = Field(
+        default=BotorchOptimizer(),
+        description="How the acquisition function is maximized over the domain. It "
+        "also decides which constraints the strategy supports.",
+    )
     surrogate_specs: BotorchSurrogates = Field(
-        default_factory=lambda: BotorchSurrogates(surrogates=[]),
+        default=BotorchSurrogates(surrogates=[]),
         validate_default=True,
+        description="Surrogates for some or all outputs; each output without one "
+        "gets a default surrogate.",
     )
     include_infeasible_exps_in_acqf_calc: bool = Field(
         default=False,
@@ -84,28 +93,29 @@ class BotorchStrategy(PredictiveStrategy):
         domain: Domain,
         surrogate_specs: BotorchSurrogates,
     ) -> BotorchSurrogates:
-        """Method to generate model specifications when no model specs are passed
-        As default specification, a 5/2 matern kernel with automated relevance detection and normalization of the input features is used.
+        """Adds a default surrogate, as built by
+        `_generate_single_surrogate_spec_for_output`, for every output of the domain
+        without one, in the order of the domain's outputs.
 
         Args:
             domain (Domain): The domain defining the problem to be optimized with the strategy
-            surrogate_specs (List[ModelSpec], optional): List of model specification classes specifying the models to be used in the strategy. Defaults to None.
+            surrogate_specs: The surrogates passed to the strategy; extended in place.
 
         Raises:
-            KeyError: if there is a model spec for an unknown output feature
-            KeyError: if a model spec has an unknown input feature
+            ValueError: if the surrogates don't fit the domain's inputs and outputs.
+
         Returns:
-            List[ModelSpec]: List of model specification classes
+            BotorchSurrogates: The extended surrogates.
 
         """
         existing_keys = surrogate_specs.outputs.get_keys()
-        non_exisiting_keys = list(set(domain.outputs.get_keys()) - set(existing_keys))
-        _surrogate_specs = surrogate_specs.surrogates
-        for output_feature in non_exisiting_keys:
-            _surrogate_specs.append(
-                cls._generate_single_surrogate_spec_for_output(domain, output_feature)
-            )
-        surrogate_specs.surrogates = _surrogate_specs
+        for output_feature in domain.outputs.get_keys():
+            if output_feature not in existing_keys:
+                surrogate_specs.surrogates.append(
+                    cls._generate_single_surrogate_spec_for_output(
+                        domain, output_feature
+                    )
+                )
         surrogate_specs._check_compability(inputs=domain.inputs, outputs=domain.outputs)
         return surrogate_specs
 
