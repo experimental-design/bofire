@@ -25,26 +25,48 @@ Value = Union[str, float]
 
 
 class OutputValue(BaseModel):
-    value: Optional[Value]
+    """The value of one output in a row."""
+
+    value: Optional[Value] = Field(
+        description="The value: a number for a continuous output, a category for a "
+        "categorical one; None if missing."
+    )
 
 
 TOutputValue = TypeVar("TOutputValue", bound=OutputValue)
 
 
 class ExperimentOutputValue(OutputValue):
-    value: Optional[Value] = Field(description="The observed value.")
-    valid: bool = True
+    """An observed output value."""
+
+    valid: bool = Field(
+        default=True,
+        description="Whether the experiment is valid for this output, e.g. False "
+        "if the measurement failed. Invalid values are ignored when fitting models.",
+    )
 
 
 class CandidateOutputValue(OutputValue):
+    """A predicted output value of a candidate."""
+
     value: Value = Field(description="The predicted value.")
-    standard_deviation: float
-    objective_value: float
+    standard_deviation: float = Field(
+        description="Standard deviation of the prediction."
+    )
+    objective_value: float = Field(
+        description="Value of the output's objective at the prediction, i.e. its "
+        "desirability."
+    )
 
 
 class Row(BaseModel, Generic[TOutputValue]):
-    inputs: Dict[str, Value]
-    outputs: Dict[str, TOutputValue]
+    """One row of a data frame: input values and output values by feature key."""
+
+    inputs: Dict[str, Value] = Field(
+        description="Input values by key: numbers for continuous and discrete inputs, "
+        "categories for categorical ones."
+    )
+    outputs: Dict[str, TOutputValue] = Field(description="Output values by key.")
 
     @abstractmethod
     def to_pandas(self) -> pd.Series:
@@ -83,6 +105,8 @@ class Row(BaseModel, Generic[TOutputValue]):
 
 
 class ExperimentRow(Row[ExperimentOutputValue]):
+    """An experiment: its inputs and the observed outputs."""
+
     type: Literal["ExperimentRow"] = "ExperimentRow"
 
     def to_pandas(self) -> pd.Series:
@@ -108,6 +132,8 @@ class ExperimentRow(Row[ExperimentOutputValue]):
 
 
 class CandidateRow(Row[CandidateOutputValue]):
+    """A proposed experiment: its inputs and, if available, the predicted outputs."""
+
     type: Literal["CandidateRow"] = "CandidateRow"
 
     def to_pandas(self) -> pd.Series:
@@ -144,7 +170,10 @@ TRow = TypeVar("TRow", bound=Row)
 
 
 class DataFrame(BaseModel, Generic[TRow]):
-    rows: Sequence[TRow]
+    """A table of rows, serializable counterpart of a pandas data frame. All rows
+    have the same inputs and outputs."""
+
+    rows: Sequence[TRow] = Field(description="The rows of the table.")
 
     def __len__(self):
         return len(self.rows)
@@ -162,7 +191,7 @@ class DataFrame(BaseModel, Generic[TRow]):
         if len({tuple(sorted(row.categorical_output_keys)) for row in rows}) > 1:
             raise ValueError("Rows must have the same categorical output keys")
         if len({tuple(sorted(row.continuous_output_keys)) for row in rows}) > 1:
-            raise ValueError("Rows must have the same continuous input keys")
+            raise ValueError("Rows must have the same continuous output keys")
         return rows
 
     def to_pandas(self):
@@ -175,6 +204,8 @@ class DataFrame(BaseModel, Generic[TRow]):
 
 
 class Experiments(DataFrame[ExperimentRow]):
+    """A table of experiments with their observed outputs."""
+
     type: Literal["Experiments"] = "Experiments"
 
     @staticmethod
@@ -185,6 +216,8 @@ class Experiments(DataFrame[ExperimentRow]):
 
 
 class Candidates(DataFrame[CandidateRow]):
+    """A table of proposed experiments, with predictions if available."""
+
     type: Literal["Candidates"] = "Candidates"
 
     @staticmethod

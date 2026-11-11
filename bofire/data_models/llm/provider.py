@@ -6,38 +6,30 @@ from bofire.data_models.base import BaseModel
 
 
 class LLMProvider(BaseModel):
-    """Base class for all LLM provider configurations.
-
-    LLM providers are standalone data models that describe how to connect to an
-    LLM service. They can be passed to any BoFire component that needs LLM
-    capabilities (strategies, agents, etc.). API keys are referenced via
-    environment variable names and resolved at runtime.
-
-    Usage-specific settings (temperature, max_tokens, system_prompt) belong on
-    the component that uses the provider, not on the provider itself.
-
-    Attributes:
-        model: The model identifier (e.g., "claude-sonnet-4-20250514", "gpt-4o").
-        api_key_env_var: Name of the environment variable holding the API key.
-    """
+    """Connection settings for an LLM service, which can be passed to any BoFire
+    component that uses an LLM."""
 
     type: Any
-    model: str
-    api_key_env_var: str
+    model: str = Field(
+        description="Identifier of the model at the service, e.g. "
+        "'claude-sonnet-4-20250514' or 'gpt-4o'.",
+    )
+    api_key_env_var: str = Field(
+        description="Name of the environment variable holding the API key.",
+    )
 
 
 class AnthropicLLMProvider(LLMProvider):
-    """LLM provider for the direct Anthropic API.
-
-    Attributes:
-        model: Anthropic model identifier.
-        api_key_env_var: Environment variable name for the Anthropic API key.
-        base_url: Optional custom base URL for the API.
-    """
+    """LLM provider for the Anthropic API."""
 
     type: Literal["AnthropicLLMProvider"] = "AnthropicLLMProvider"
-    model: str = "claude-sonnet-4-20250514"
-    api_key_env_var: str = "ANTHROPIC_API_KEY"
+    model: str = Field(
+        default="claude-sonnet-4-20250514", description="Anthropic model identifier."
+    )
+    api_key_env_var: str = Field(
+        default="ANTHROPIC_API_KEY",
+        description="Name of the environment variable holding the Anthropic API key.",
+    )
     base_url: Optional[str] = Field(
         default=None,
         description="Custom base URL for the Anthropic API.",
@@ -45,33 +37,33 @@ class AnthropicLLMProvider(LLMProvider):
 
 
 class AnthropicFoundryLLMProvider(LLMProvider):
-    """LLM provider for Anthropic models hosted on Azure AI Foundry.
-
-    Attributes:
-        model: Anthropic model identifier on Azure.
-        api_key_env_var: Environment variable name for the Foundry API key.
-        resource_env_var: Environment variable name for the Azure resource name.
-    """
+    """LLM provider for Anthropic models hosted on Azure AI Foundry."""
 
     type: Literal["AnthropicFoundryLLMProvider"] = "AnthropicFoundryLLMProvider"
-    model: str = "claude-sonnet-4-20250514"
-    api_key_env_var: str = "ANTHROPIC_FOUNDRY_API_KEY"
-    resource_env_var: str = "ANTHROPIC_FOUNDRY_RESOURCE"
+    model: str = Field(
+        default="claude-sonnet-4-20250514",
+        description="Anthropic model identifier on Azure.",
+    )
+    api_key_env_var: str = Field(
+        default="ANTHROPIC_FOUNDRY_API_KEY",
+        description="Name of the environment variable holding the Foundry API key.",
+    )
+    resource_env_var: str = Field(
+        default="ANTHROPIC_FOUNDRY_RESOURCE",
+        description="Name of the environment variable holding the Azure resource "
+        "name.",
+    )
 
 
 class OpenAILLMProvider(LLMProvider):
-    """LLM provider for the OpenAI API (including Azure OpenAI via base_url).
-
-    Attributes:
-        model: OpenAI model identifier.
-        api_key_env_var: Environment variable name for the OpenAI API key.
-        base_url: Optional custom base URL (e.g., for Azure OpenAI).
-        organization: Optional OpenAI organization ID.
-    """
+    """LLM provider for the OpenAI API, including Azure OpenAI via `base_url`."""
 
     type: Literal["OpenAILLMProvider"] = "OpenAILLMProvider"
-    model: str = "gpt-4o"
-    api_key_env_var: str = "OPENAI_API_KEY"
+    model: str = Field(default="gpt-4o", description="OpenAI model identifier.")
+    api_key_env_var: str = Field(
+        default="OPENAI_API_KEY",
+        description="Name of the environment variable holding the OpenAI API key.",
+    )
     base_url: Optional[str] = Field(
         default=None,
         description="Custom base URL for the API (e.g., Azure OpenAI endpoint).",
@@ -83,15 +75,11 @@ class OpenAILLMProvider(LLMProvider):
 
 
 class OpenAICompatibleLLMProvider(LLMProvider):
-    """LLM provider for any OpenAI-compatible API (vLLM, Ollama, etc.).
-
-    Attributes:
-        model: Model identifier at the endpoint.
-        api_key_env_var: Environment variable name for the API key.
-        base_url: The endpoint URL (required).
-    """
+    """LLM provider for any OpenAI-compatible API, such as vLLM or Ollama."""
 
     type: Literal["OpenAICompatibleLLMProvider"] = "OpenAICompatibleLLMProvider"
-    model: str
-    api_key_env_var: str = "OPENAI_API_KEY"
-    base_url: str
+    api_key_env_var: str = Field(
+        default="OPENAI_API_KEY",
+        description="Name of the environment variable holding the API key.",
+    )
+    base_url: str = Field(description="URL of the endpoint.")
