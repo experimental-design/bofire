@@ -63,7 +63,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     type: Literal["Features"] = "Features"
     features: FeatureSequence = Field(
-        default=[], description="The features; their keys must be unique."
+        default=[], description="Sequence of features with unique keys."
     )
 
     @field_validator("features")
@@ -334,7 +334,7 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
 
 
 class Inputs(_BaseFeatures[AnyInput]):
-    """Container of input features; at most one of them may be a task input."""
+    """Container of input features."""
 
     type: Literal["Inputs"] = "Inputs"
 

@@ -21,7 +21,8 @@ class OneHotEncoding(CategoricalEncoding):
     drop_first: bool = Field(
         default=False,
         description="Whether to drop the first category's column (dummy encoding), "
-        "giving one column fewer than there are categories.",
+        "giving one column fewer than there are categories and so a lower-"
+        "dimensional encoding.",
     )
 
     def _categories(self, feature: "CategoricalInput") -> list:

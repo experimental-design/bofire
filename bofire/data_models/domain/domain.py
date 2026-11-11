@@ -37,7 +37,13 @@ def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
 class Domain(BaseModel):
     """Definition of an optimization problem: its input features, its output
     features with their objectives, and the constraints every proposed experiment
-    has to satisfy."""
+    has to satisfy.
+
+    The bounds of a single input are set on the input itself; `constraints` holds
+    hard constraints that couple several inputs. Black-box soft constraints, also
+    called output constraints, are outputs whose objective rewards staying within
+    the allowed range.
+    """
 
     type: Literal["Domain"] = "Domain"
 

@@ -41,8 +41,8 @@ class ExperimentOutputValue(OutputValue):
 
     valid: bool = Field(
         default=True,
-        description="Whether the value counts; an invalid one is ignored when "
-        "fitting models.",
+        description="Whether the experiment is valid for this output, e.g. False "
+        "if the measurement failed. Invalid values are ignored when fitting models.",
     )
 
 
