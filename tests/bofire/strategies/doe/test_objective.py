@@ -38,7 +38,7 @@ from bofire.strategies.doe.utils import get_formula_from_string
 from bofire.strategies.doe.utils_categorical_discrete import create_continuous_domain
 
 
-CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
+POUNCE_AVAILABLE = importlib.util.find_spec("pounce") is not None
 
 
 def test_DOptimality_instantiation():
@@ -449,7 +449,7 @@ def test_SpaceFilling_evaluate_jacobian():
     assert np.allclose(space_filling.evaluate_jacobian(x), [-1, -1, 2, 0])
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+@pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
 def test_MinMaxTransform():
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
@@ -516,7 +516,7 @@ def test_MinMaxTransform():
                 delta=0,
                 transform_range=None,
                 n_space_filling_points=4,
-                ipopt_options={"max_iter": 200},
+                optimizer_options={"max_iter": 200},
             ),
             domain=domain,
             n_experiments=4,
@@ -528,14 +528,14 @@ def test_MinMaxTransform():
                     delta=0,
                     transform_range=(-1.0, 1.0),
                     n_space_filling_points=4,
-                    ipopt_options={"max_iter": 200},
+                    optimizer_options={"max_iter": 200},
                 ),
                 domain=domain,
                 n_experiments=4,
             )
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+@pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
 def test_IOptimality_instantiation():
     # no constraints
     domain = Domain.from_lists(
