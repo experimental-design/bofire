@@ -24,20 +24,25 @@ from bofire.strategies.random import RandomStrategy
 def find_local_max_ipopt(
     domain: Domain,
     objective_function: Objective,
-    ipopt_options: Optional[Dict] = None,
+    optimizer_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
-    use_hessian: bool = False,
-    use_cyipopt: Optional[bool] = None,
+    optimizer: str = "pounce",
     seed: Optional[int] = None,
+    *,
+    ipopt_options: Optional[Dict] = None,
+    use_hessian: Optional[bool] = None,
+    use_cyipopt: Optional[bool] = None,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
 
     Args:
         domain: domain containing the inputs and constraints.
         objective_function: The function defining the objective of the optimizattion.
-        ipopt_options: options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+        optimizer_options: options forwarded to the solver, overriding the defaults
+            ``max_iter=500`` and ``print_level=0``. Ipopt options for "pounce" and
+            "ipopt"; for "scipy" only ``max_iter`` and ``print_level`` are used.
         sampling : dataframe containing the initial guess.
         fixed_experiments : dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
@@ -45,16 +50,40 @@ def find_local_max_ipopt(
             Values are set before the optimization. Within one experiment not all variables need to be fixed.
             Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
             Non-fixed variables have to be set to None or nan.
-        use_hessian: If True, the hessian of the objective function is used. Default is False.
-        use_cyipopt: If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
-            If None, cyipopt is used if available.
+        optimizer: NLP solver: "pounce" (default), "ipopt" (requires cyipopt) or
+            "scipy" (SLSQP).
         seed: Random seed for sampling. Defaults to None, in this case no seed is given to the
+        ipopt_options: Deprecated alias of ``optimizer_options``.
+        use_hessian: Deprecated and ignored.
+        use_cyipopt: Deprecated; ``True`` selects "ipopt", ``False`` selects "scipy".
 
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
         local optimum.
 
     """
+    if ipopt_options is not None:
+        warnings.warn(
+            "`ipopt_options` is deprecated; use `optimizer_options`.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        optimizer_options = optimizer_options or ipopt_options
+    if use_cyipopt is not None:
+        warnings.warn(
+            "`use_cyipopt` is deprecated; use `optimizer` ('pounce', 'ipopt' or "
+            "'scipy').",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        optimizer = "ipopt" if use_cyipopt else "scipy"
+    if use_hessian is not None:
+        warnings.warn(
+            "`use_hessian` is deprecated and ignored.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
     #
     # Checks and preparation steps
     #
@@ -153,14 +182,10 @@ def find_local_max_ipopt(
         x0,
     )
 
-    # set ipopt options
-    if ipopt_options is None:
-        ipopt_options = {}
-    _ipopt_options = {"max_iter": 500, "print_level": 0}
-    for key in ipopt_options.keys():
-        _ipopt_options[key] = ipopt_options[key]
-    if _ipopt_options["print_level"] > 12:
-        _ipopt_options["print_level"] = 0
+    # set optimizer options (Ipopt-style defaults; mapped to scipy names internally)
+    _options = {"max_iter": 500, "print_level": 0, **(optimizer_options or {})}
+    if _options.get("print_level", 0) > 12:
+        _options["print_level"] = 0
 
     #
     # Do the optimization
@@ -170,9 +195,8 @@ def find_local_max_ipopt(
         x0=x0,
         bounds=bounds,
         constraints=constraints,
-        use_hessian=use_hessian,
-        ipopt_options=_ipopt_options,
-        use_cyipopt=use_cyipopt,
+        optimizer=optimizer,
+        optimizer_options=_options,
     )
 
     design = pd.DataFrame(

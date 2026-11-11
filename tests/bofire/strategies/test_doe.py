@@ -37,7 +37,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning, append=True)
 
 
-pytest.importorskip("cyipopt")
+pytest.importorskip("pounce")
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -368,6 +368,7 @@ def test_scaled_doe():
 
 @pytest.mark.xfail(reason="This test is failing due to a bad initial point.")
 def test_functional_constraint():
+    pytest.importorskip("cyipopt")  # uses Ipopt's derivative checker
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
@@ -486,13 +487,13 @@ def test_functional_constraint():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        ipopt_options={
+        optimizer_options={
             "max_iter": 5000,
             "derivative_test": "first-order",
             "print_level": 5,
         },
         sampling=sampling,
-        use_cyipopt=True,
+        optimizer="ipopt",
     )
     strategy = DoEStrategy(data_model=data_model)
 
