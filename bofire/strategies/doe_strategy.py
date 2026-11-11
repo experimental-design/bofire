@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, Literal, Optional, cast
 
 import pandas as pd
 import torch
@@ -288,7 +288,7 @@ class DoEStrategy(Strategy):
         seed: int | None = None,
         criterion: AnyOptimalityCriterion | None = None,
         verbose: bool | None = None,
-        optimizer: str | None = None,
+        optimizer: Literal["pounce", "ipopt", "scipy"] | None = None,
         optimizer_options: Dict | None = None,
         scip_params: Dict | None = None,
         sampling: List[List[float]] | None = None,

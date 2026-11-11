@@ -954,7 +954,7 @@ def _solve(
             options={**POUNCE_DOE_DEFAULTS, **optimizer_options},
         )
     if optimizer == "ipopt":
-        from cyipopt import minimize_ipopt
+        from cyipopt import minimize_ipopt  # ty: ignore[unresolved-import]
 
         return minimize_ipopt(
             fun,

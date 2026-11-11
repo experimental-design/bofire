@@ -30,10 +30,6 @@ def find_local_max_ipopt(
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     optimizer: str = "pounce",
     seed: Optional[int] = None,
-    *,
-    ipopt_options: Optional[Dict] = None,
-    use_hessian: Optional[bool] = None,
-    use_cyipopt: Optional[bool] = None,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
 
@@ -53,37 +49,12 @@ def find_local_max_ipopt(
         optimizer: NLP solver: "pounce" (default), "ipopt" (requires cyipopt) or
             "scipy" (SLSQP).
         seed: Random seed for sampling. Defaults to None, in this case no seed is given to the
-        ipopt_options: Deprecated alias of ``optimizer_options``.
-        use_hessian: Deprecated and ignored.
-        use_cyipopt: Deprecated; ``True`` selects "ipopt", ``False`` selects "scipy".
 
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
         local optimum.
 
     """
-    if ipopt_options is not None:
-        warnings.warn(
-            "`ipopt_options` is deprecated; use `optimizer_options`.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        optimizer_options = optimizer_options or ipopt_options
-    if use_cyipopt is not None:
-        warnings.warn(
-            "`use_cyipopt` is deprecated; use `optimizer` ('pounce', 'ipopt' or "
-            "'scipy').",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        optimizer = "ipopt" if use_cyipopt else "scipy"
-    if use_hessian is not None:
-        warnings.warn(
-            "`use_hessian` is deprecated and ignored.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
     #
     # Checks and preparation steps
     #
