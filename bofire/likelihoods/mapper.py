@@ -59,6 +59,66 @@ LIKELIHOOD_MAP: Dict[Type[data_models.Likelihood], Callable] = {
 }
 
 
+def register(
+    data_model_cls: Type[data_models.Likelihood],
+    map_fn: Optional[Callable] = None,
+    *,
+    single_task: bool = True,
+    multi_task: bool = False,
+):
+    """Register a custom likelihood mapping from data model to factory function.
+
+    Can be used as a decorator or as a direct function call::
+
+        # Decorator form
+        @register(MyLikelihoodDataModel, single_task=True, multi_task=False)
+        def map_my_likelihood(data_model, d, **kwargs):
+            return MyGpytorchLikelihood(...)
+
+        # Direct call form
+        register(
+            MyLikelihoodDataModel, map_my_likelihood, single_task=True, multi_task=False
+        )
+
+    BoFire only supports fitting via exact marginal log likelihood, so the registered
+    likelihood must be a subclass of `gpytorch.likelihoods._GaussianLikelihoodBase`.
+    Non-Gaussian likelihoods will fail when the surrogate is fitted.
+
+    Args:
+        data_model_cls: The Pydantic data model class.
+        map_fn: A callable that takes ``(data_model, d, **kwargs)`` and returns a
+            gpytorch likelihood. ``d`` is the number of input dimensions the model
+            sees. A multi-task GP also passes ``num_tasks`` and
+            ``task_feature_index``, the column holding the task. If not provided,
+            returns a decorator.
+        single_task: Whether a ``SingleTaskGPSurrogate`` accepts the likelihood.
+        multi_task: Whether a ``MultiTaskGPSurrogate`` accepts the likelihood.
+
+    Returns:
+        The mapping function (unchanged) when used as a decorator, None otherwise.
+
+    Raises:
+        ValueError: If a different likelihood with the same ``type``
+            discriminator is already registered.
+    """
+
+    def _register(fn: Callable) -> Callable:
+        # Register with the data model unions first so a discriminator conflict
+        # is raised before the functional map is touched (no partial state).
+        data_models.register_likelihood(
+            data_model_cls, single_task=single_task, multi_task=multi_task
+        )
+        LIKELIHOOD_MAP[data_model_cls] = fn
+
+        return fn
+
+    if map_fn is not None:
+        _register(map_fn)
+        return None
+
+    return _register
+
+
 def map(
     data_model: data_models.Likelihood, d: int, **kwargs
 ) -> gpytorch.likelihoods.Likelihood:

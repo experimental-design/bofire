@@ -90,6 +90,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - LLM field descriptions report descriptor data uniformly for every feature type: a prefix stating what the feature is and its range or options, then the data — `Categorical, allowed: [...] — descriptors per category: {...} — structure: [...]`, `Continuous, bounds [...] — descriptors: {...} — structure: CCO`. Previously the kind was announced in the prefix (`Categorical with descriptors`, `Continuous molecular (SMILES: CCO)`) and only the two descriptor-carrying classes emitted anything.
 - **Breaking**: `Strategy._ask` implementations must accept an `progress_callback` keyword argument (`def _ask(self, candidate_count, progress_callback=None)`), because `Strategy.ask` now always passes it. Custom strategies registered via `strategies.register` need the extra parameter; ignoring it is fine.
 - `run_ga` now runs a user-supplied `callback` in addition to the CSV progress writer configured by `ga_progress_csv_path`; previously the writer was silently dropped whenever a callback was given.
+- Register custom likelihoods with `bofire.data_models.likelihoods.api.register`.
 
 ### Fixed
 - Clearer validation messages: a data frame with inconsistent continuous output keys no longer reports them as input keys, and unknown `Fragments`/`MordredDescriptors` names are listed instead of the garbled "Not all provided … were not found".

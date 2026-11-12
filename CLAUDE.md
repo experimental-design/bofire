@@ -266,6 +266,7 @@ Available registration functions:
 - `bofire/data_models/strategies/_register.py` → `register_strategy()`
 - `bofire/data_models/kernels/_register.py` → `register_kernel()`
 - `bofire/data_models/priors/_register.py` → `register_prior()`, `register_prior_constraint()`
+- `bofire/data_models/likelihoods/_register.py` → `register_likelihood()`
 - `bofire/data_models/surrogates/botorch_surrogates.py` → `register_botorch_surrogate()`
 
 These functions are idempotent (check if already registered) and cascade rebuilds to dependent models (e.g., registering a kernel rebuilds surrogate models that reference kernels).
@@ -315,6 +316,7 @@ The spec is automatically picked up by `tests/bofire/conftest.py` which imports 
 | Surrogates | `bofire/data_models/surrogates/` | `api.py`, `botorch_surrogates.py` | `bofire/surrogates/mapper.py` | `tests/.../specs/surrogates.py` |
 | Kernels | `bofire/data_models/kernels/` | `api.py`, `_register.py` | `bofire/kernels/mapper.py` | `tests/.../specs/kernels.py` |
 | Priors | `bofire/data_models/priors/` | `api.py`, `_register.py` | `bofire/priors/mapper.py` | `tests/.../specs/priors.py` |
+| Likelihoods | `bofire/data_models/likelihoods/` | `api.py`, `_register.py` | `bofire/likelihoods/mapper.py` | `tests/.../specs/likelihoods.py` |
 
 ## Code Style
 

@@ -9,6 +9,7 @@ from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     AnyOutput,
+    CategoricalTaskInput,
     ContinuousInput,
     ContinuousOutput,
     EngineeredFeature,
@@ -16,6 +17,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.kernels.continuous import ContinuousKernel as _ContinuousBase
 from bofire.data_models.kernels.kernel import Kernel as KernelDataModel
+from bofire.data_models.likelihoods.likelihood import Likelihood as LikelihoodDataModel
 from bofire.data_models.llm.provider import LLMProvider
 from bofire.data_models.priors.constraint import (
     PriorConstraint as PriorConstraintDataModel,
@@ -449,7 +451,7 @@ class TestRegisterBotorchSurrogate:
 
 
 # ---------------------------------------------------------------------------
-# Stub data models for kernels and priors
+# Stub data models for kernels, priors, and likelihoods
 # ---------------------------------------------------------------------------
 
 
@@ -463,6 +465,10 @@ class _CustomPriorDataModel(PriorDataModel):
 
 class _CustomConstraintDataModel(PriorConstraintDataModel):
     type: Literal["CustomConstraint"] = "CustomConstraint"
+
+
+class _CustomLikelihoodDataModel(LikelihoodDataModel):
+    type: Literal["CustomLikelihood"] = "CustomLikelihood"
 
 
 # ---------------------------------------------------------------------------
@@ -598,6 +604,53 @@ class TestRegisterPrior:
         from bofire.priors.api import register
 
         assert callable(register)
+
+
+# ---------------------------------------------------------------------------
+# Likelihood registration tests
+# ---------------------------------------------------------------------------
+
+
+class TestRegisterLikelihood:
+    def test_register_and_map(self):
+        import bofire.likelihoods.api as likelihoods_api
+        from bofire.likelihoods.mapper import LIKELIHOOD_MAP
+
+        LIKELIHOOD_MAP.pop(_CustomLikelihoodDataModel, None)
+
+        sentinel = MagicMock(name="gpytorch_likelihood")
+
+        def my_map_fn(data_model, d, **kwargs):
+            return sentinel
+
+        likelihoods_api.register(_CustomLikelihoodDataModel, my_map_fn)
+        assert LIKELIHOOD_MAP[_CustomLikelihoodDataModel] is my_map_fn
+
+        result = likelihoods_api.map(_CustomLikelihoodDataModel(), d=1)
+        assert result is sentinel
+
+        # cleanup
+        LIKELIHOOD_MAP.pop(_CustomLikelihoodDataModel, None)
+
+    def test_register_decorator_syntax(self):
+        import bofire.likelihoods.api as likelihoods_api
+        from bofire.likelihoods.mapper import LIKELIHOOD_MAP
+
+        LIKELIHOOD_MAP.pop(_CustomLikelihoodDataModel, None)
+
+        sentinel = MagicMock(name="gpytorch_likelihood")
+
+        @likelihoods_api.register(_CustomLikelihoodDataModel)
+        def my_map_fn(data_model, d, **kwargs):
+            return sentinel
+
+        assert LIKELIHOOD_MAP[_CustomLikelihoodDataModel] is my_map_fn
+
+        result = likelihoods_api.map(_CustomLikelihoodDataModel(), d=1)
+        assert result is sentinel
+
+        # cleanup
+        LIKELIHOOD_MAP.pop(_CustomLikelihoodDataModel, None)
 
 
 # ---------------------------------------------------------------------------
@@ -774,6 +827,120 @@ class TestPriorPydanticIntegration:
 
         k = RBFKernel(lengthscale_prior=_MapperPrior())
         assert isinstance(k.lengthscale_prior, _MapperPrior)
+
+
+class _SingleTaskLikelihood(LikelihoodDataModel):
+    type: Literal["_SingleTaskLikelihood"] = "_SingleTaskLikelihood"
+
+
+class _MultiTaskLikelihood(LikelihoodDataModel):
+    type: Literal["_MultiTaskLikelihood"] = "_MultiTaskLikelihood"
+
+
+class _BothTasksLikelihood(LikelihoodDataModel):
+    type: Literal["_BothTasksLikelihood"] = "_BothTasksLikelihood"
+
+
+class _AdditiveFlagsLikelihood(LikelihoodDataModel):
+    type: Literal["_AdditiveFlagsLikelihood"] = "_AdditiveFlagsLikelihood"
+
+
+_MT_INPUTS = Inputs(
+    features=[
+        ContinuousInput(key="x", bounds=(0, 1)),
+        CategoricalTaskInput(key="task", categories=["a", "b"]),
+    ]
+)
+
+
+class TestLikelihoodPydanticIntegration:
+    """After register_likelihood, a custom likelihood should pass Pydantic
+    validation in exactly the Gaussian processes its flags name."""
+
+    @pytest.mark.parametrize(
+        "likelihood_cls, single_task, multi_task",
+        [
+            (_SingleTaskLikelihood, True, False),
+            (_MultiTaskLikelihood, False, True),
+            (_BothTasksLikelihood, True, True),
+        ],
+    )
+    def test_flags_choose_the_gaussian_processes(
+        self, likelihood_cls, single_task, multi_task
+    ):
+        from pydantic import ValidationError
+
+        from bofire.data_models.likelihoods.api import (
+            _LIKELIHOOD_TYPES,
+            register_likelihood,
+        )
+        from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
+        from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+
+        register_likelihood(
+            likelihood_cls, single_task=single_task, multi_task=multi_task
+        )
+        assert likelihood_cls in _LIKELIHOOD_TYPES
+
+        for surrogate_cls, inputs, accepted in [
+            (SingleTaskGPSurrogate, _INPUTS, single_task),
+            (MultiTaskGPSurrogate, _MT_INPUTS, multi_task),
+        ]:
+            if accepted:
+                s = surrogate_cls(
+                    inputs=inputs, outputs=_OUTPUTS, likelihood=likelihood_cls()
+                )
+                assert isinstance(s.likelihood, likelihood_cls)
+                # serialization round trip
+                assert surrogate_cls(**s.model_dump()) == s
+            else:
+                with pytest.raises(ValidationError):
+                    surrogate_cls(
+                        inputs=inputs, outputs=_OUTPUTS, likelihood=likelihood_cls()
+                    )
+
+    def test_flags_are_additive(self):
+        from bofire.data_models.likelihoods.api import (
+            _MULTI_TASK_LIKELIHOOD_TYPES,
+            _SINGLE_TASK_LIKELIHOOD_TYPES,
+            register_likelihood,
+        )
+        from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
+
+        register_likelihood(_AdditiveFlagsLikelihood)
+        assert _AdditiveFlagsLikelihood not in _MULTI_TASK_LIKELIHOOD_TYPES
+
+        register_likelihood(
+            _AdditiveFlagsLikelihood, single_task=False, multi_task=True
+        )
+        assert _AdditiveFlagsLikelihood in _SINGLE_TASK_LIKELIHOOD_TYPES
+        assert _AdditiveFlagsLikelihood in _MULTI_TASK_LIKELIHOOD_TYPES
+        s = MultiTaskGPSurrogate(
+            inputs=_MT_INPUTS,
+            outputs=_OUTPUTS,
+            likelihood=_AdditiveFlagsLikelihood(),
+        )
+        assert isinstance(s.likelihood, _AdditiveFlagsLikelihood)
+
+    def test_custom_likelihood_in_botorch_surrogates(self):
+        from bofire.data_models.likelihoods.api import register_likelihood
+        from bofire.data_models.surrogates.api import (
+            BotorchSurrogates,
+            SingleTaskGPSurrogate,
+        )
+
+        register_likelihood(_SingleTaskLikelihood)
+
+        surrogates = BotorchSurrogates(
+            surrogates=[
+                SingleTaskGPSurrogate(
+                    inputs=_INPUTS,
+                    outputs=_OUTPUTS,
+                    likelihood=_SingleTaskLikelihood(),
+                )
+            ]
+        )
+        assert BotorchSurrogates(**surrogates.model_dump()) == surrogates
 
 
 # ---------------------------------------------------------------------------
