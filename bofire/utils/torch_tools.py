@@ -623,7 +623,7 @@ def get_objective_callable(
             in_range = (x >= objective.lower_bound) & (x <= objective.upper_bound)
             y[in_range] = 1.0
 
-            return y * objective.w
+            return y
 
         return objective_callable_
 

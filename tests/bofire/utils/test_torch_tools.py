@@ -137,6 +137,10 @@ c3 = LinearInequalityConstraint(
         InRangeDesirability(
             bounds=(1.0, 3.0),
         ),
+        InRangeDesirability(
+            bounds=(1.0, 3.0),
+            w=0.5,
+        ),
     ],
 )
 def test_get_objective_callable(objective):
@@ -456,6 +460,71 @@ def test_get_additive_botorch_objective(exclude_constraints):
             objective_forward.detach().numpy(),
             rtol=1e-06,
         )
+
+
+@pytest.mark.parametrize("in_range_w", [0.25, 0.75])
+@pytest.mark.parametrize("mode", ["additive", "multiplicative"])
+def test_in_range_desirability_aggregation_regression(in_range_w, mode):
+    outputs = Outputs(
+        features=[
+            ContinuousOutput(
+                key="y1",
+                objective=MaximizeObjective(bounds=(0.0, 10.0), w=0.6),
+            ),
+            ContinuousOutput(
+                key="y2",
+                objective=InRangeDesirability(bounds=(1.0, 3.0), w=in_range_w),
+            ),
+        ]
+    )
+    experiments = pd.DataFrame(
+        {
+            "y1": [0.0, 10.0],
+            "y2": [1.0, 3.0],
+            "valid_y1": [1, 1],
+            "valid_y2": [1, 1],
+        }
+    )
+
+    if mode == "additive":
+        botorch_objective = get_additive_botorch_objective(
+            outputs=outputs,
+            experiments=experiments,
+        )
+    else:
+        botorch_objective = get_multiplicative_botorch_objective(
+            outputs=outputs,
+            experiments=experiments,
+        )
+
+    generic_objective = GenericMCObjective(objective=botorch_objective)
+
+    # Both interval boundaries are inclusive.
+    samples = torch.tensor(
+        [
+            [2.0, 0.0],
+            [4.0, 1.0],
+            [5.0, 2.0],
+            [6.0, 3.0],
+            [8.0, 4.0],
+        ],
+        **tkwargs,
+    )
+
+    indicator = torch.tensor([0.0, 1.0, 1.0, 1.0, 0.0], **tkwargs)
+    r1 = torch.tensor([0.2, 0.4, 0.5, 0.6, 0.8], **tkwargs)
+
+    w_max = 0.6
+    if mode == "additive":
+        expected = w_max * r1 + in_range_w * indicator
+    else:
+        min_w = min(w_max, in_range_w)
+        w_max_norm = w_max / min_w
+        w_in_range_norm = in_range_w / min_w
+        expected = (r1**w_max_norm) * (indicator**w_in_range_norm)
+
+    actual = generic_objective(samples)
+    torch.testing.assert_close(actual, expected)
 
 
 def test_get_interpoint_equality_constraints():
