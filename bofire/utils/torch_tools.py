@@ -779,7 +779,7 @@ def get_multiobjective_objective(
 def get_multiplicative_additive_objective(
     outputs: Outputs,
     experiments: pd.DataFrame,
-    exclude_constraints: bool = True,
+    exclude_constraints: bool = False,
     additive_features: Optional[List[str]] = None,
     weights: Optional[Dict[str, float]] = None,
     weight_normalization: Optional[Literal["min", "sum"]] = "min",

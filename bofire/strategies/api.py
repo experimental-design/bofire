@@ -18,6 +18,9 @@ from bofire.strategies.predictives.multi_fidelity_knowledge_gradient import (
 )
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.predictives.qparego import QparegoStrategy
+from bofire.strategies.predictives.scalarization import (
+    register as register_scalarization,
+)
 from bofire.strategies.predictives.sobo import SoboStrategy
 from bofire.strategies.progress import AskProgressCallback, AskProgressData
 from bofire.strategies.random import RandomStrategy

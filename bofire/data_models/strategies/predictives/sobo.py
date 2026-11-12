@@ -59,14 +59,7 @@ class SoboStrategy(BotorchStrategy):
                 )
         elif (
             is_single
-            and (
-                len(self.domain.outputs.get_by_objective(excludes=ConstrainedObjective))
-                - len(
-                    self.domain.outputs.get_by_objective(
-                        includes=None, excludes=Objective
-                    )
-                )
-            )
+            and len(self.domain.outputs.get_by_objective(excludes=ConstrainedObjective))
             > 1
         ):
             raise ValueError(

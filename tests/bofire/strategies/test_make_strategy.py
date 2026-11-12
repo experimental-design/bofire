@@ -11,6 +11,9 @@ from tests.bofire.data_models.specs.api import strategies as strat_specs
 
 
 def remove_optional(anno):
+    # a field patched by a register function keeps its `Annotated` wrapper
+    while get_origin(anno) is typing.Annotated:
+        anno = anno.__origin__
     origin = get_origin(anno)
     if origin == typing.Union or origin is types.UnionType:
         result = []

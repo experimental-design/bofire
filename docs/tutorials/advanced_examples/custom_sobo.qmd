@@ -15,7 +15,6 @@ from typing import Literal
 import bofire.strategies.api as strategies
 from bofire.benchmarks.api import Himmelblau
 from bofire.data_models.strategies.api import Scalarization, SoboStrategy
-from bofire.strategies.predictives import scalarization
 from bofire.utils.torch_tools import get_additive_botorch_objective
 ```
 
@@ -34,7 +33,7 @@ class InputPenaltyScalarization(Scalarization):
     penalty: float = 1.0
 
 
-@scalarization.register(InputPenaltyScalarization)
+@strategies.register_scalarization(InputPenaltyScalarization)
 def map_input_penalty(data_model, domain, experiments, input_preprocessing_specs):
     # the column of the input in the tensor `X`
     feature2index, _ = domain.inputs._get_transform_info(input_preprocessing_specs)

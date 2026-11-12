@@ -49,6 +49,15 @@ def _validate_multiple_objectives(scalarization: Scalarization, domain: Domain):
         )
 
 
+def _validate_objective_keys(keys, name: str, domain: Domain):
+    objective_keys = domain.outputs.get_keys_by_objective(Objective)
+    for key in keys:
+        if key not in objective_keys:
+            raise ValueError(
+                f"{name} given for {key}, which is not an output with an objective.",
+            )
+
+
 class SingleObjectiveScalarization(Scalarization):
     """Optimizes the one output whose objective is not a constrained one.
 
@@ -77,13 +86,7 @@ class _WeightedScalarization(Scalarization):
 
     def validate_domain(self, domain: Domain) -> None:
         _validate_multiple_objectives(self, domain)
-        keys = domain.outputs.get_keys_by_objective(Objective)
-        for key in self.weights:
-            if key not in keys:
-                raise ValueError(
-                    f"Weight given for {key}, which is not an output with an "
-                    "objective.",
-                )
+        _validate_objective_keys(self.weights, "Weight", domain)
 
     def get_weights(self, domain: Domain) -> Dict[str, float]:
         """Returns the weight of every output with an objective.
@@ -127,8 +130,8 @@ class _MultiplicativeScalarization(_WeightedScalarization):
                 raise ValueError(
                     f"{type(self).__name__} can't multiply the objective of {key}: a "
                     f"{type(objective).__name__} has negative values. Use a "
-                    "desirability or sigmoid objective instead, or WeightedSum"
-                    "Scalarization.",
+                    "desirability or sigmoid objective instead, or the "
+                    "WeightedSumScalarization.",
                 )
 
 
@@ -203,12 +206,7 @@ class WeightedProductSumScalarization(_MultiplicativeScalarization):
         ]
 
     def validate_domain(self, domain: Domain) -> None:
-        output_keys = domain.outputs.get_keys()
-        for key in self.additive_features:
-            if key not in output_keys:
-                raise ValueError(
-                    f"Feature {key} is not an output feature of the domain."
-                )
+        _validate_objective_keys(self.additive_features, "Additive feature", domain)
         super().validate_domain(domain)
 
 

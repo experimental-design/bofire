@@ -1308,6 +1308,7 @@ class TestRegisterScalarization:
         from pydantic import TypeAdapter
 
         import bofire.strategies.api as strategies
+        from bofire.data_models.strategies._register import _rebuild_scalarization_union
         from bofire.data_models.strategies.api import (
             AlwaysTrueCondition,
             AnyStrategy,
@@ -1318,50 +1319,63 @@ class TestRegisterScalarization:
             Step,
             StepwiseStrategy,
         )
-        from bofire.strategies.predictives import scalarization
+        from bofire.data_models.strategies.predictives.scalarization import (
+            _SCALARIZATION_TYPES,
+        )
+        from bofire.strategies.predictives.scalarization import SCALARIZATION_MAP
 
         class _MinimumScalarization(Scalarization):
             """Maximizes the smallest of the output values."""
 
             type: Literal["_MinimumScalarization"] = "_MinimumScalarization"
 
-        @scalarization.register(_MinimumScalarization)
+        @strategies.register_scalarization(_MinimumScalarization)
         def map_minimum(data_model, domain, experiments, input_preprocessing_specs):
             return lambda samples, X=None: samples.min(dim=-1).values
 
-        domain = _scalarization_domain()
-        data_model = SoboStrategy(domain=domain, scalarization=_MinimumScalarization())
-        stepwise = StepwiseStrategy(
-            domain=domain,
-            steps=[
-                Step(
-                    strategy_data=RandomStrategy(domain=domain),
-                    condition=NumberOfExperimentsCondition(n_experiments=2),
-                ),
-                Step(strategy_data=data_model, condition=AlwaysTrueCondition()),
-            ],
-        )
-        for obj in (data_model, stepwise):
-            loaded = TypeAdapter(AnyStrategy).validate_json(obj.model_dump_json())
-            assert loaded.model_dump(mode="json") == obj.model_dump(mode="json")
-        loaded = TypeAdapter(AnyStrategy).validate_json(stepwise.model_dump_json())
-        assert isinstance(
-            loaded.steps[1].strategy_data.scalarization, _MinimumScalarization
-        )
+        try:
+            domain = _scalarization_domain()
+            data_model = SoboStrategy(
+                domain=domain, scalarization=_MinimumScalarization()
+            )
+            stepwise = StepwiseStrategy(
+                domain=domain,
+                steps=[
+                    Step(
+                        strategy_data=RandomStrategy(domain=domain),
+                        condition=NumberOfExperimentsCondition(n_experiments=2),
+                    ),
+                    Step(strategy_data=data_model, condition=AlwaysTrueCondition()),
+                ],
+            )
+            for obj in (data_model, stepwise):
+                loaded = TypeAdapter(AnyStrategy).validate_json(obj.model_dump_json())
+                assert loaded.model_dump(mode="json") == obj.model_dump(mode="json")
+            loaded = TypeAdapter(AnyStrategy).validate_json(stepwise.model_dump_json())
+            assert isinstance(
+                loaded.steps[1].strategy_data.scalarization, _MinimumScalarization
+            )
 
-        strategy = strategies.map(data_model)
-        experiments = pd.DataFrame(
-            {"x": [0.1, 0.5, 0.9], "y1": [0.2, 0.4, 0.6], "y2": [0.6, 0.1, 0.3]}
-        )
-        strategy.tell(experiments)
-        objective, constraints, _ = strategy._get_objective_and_constraints()
-        assert constraints is None
-        assert objective.objective is not None
-        assert len(strategy.ask(1)) == 1
+            strategy = strategies.map(data_model)
+            experiments = pd.DataFrame(
+                {"x": [0.1, 0.5, 0.9], "y1": [0.2, 0.4, 0.6], "y2": [0.6, 0.1, 0.3]}
+            )
+            strategy.tell(experiments)
+            objective, constraints, _ = strategy._get_objective_and_constraints()
+            assert constraints is None
+            assert objective.objective is not None
+            assert len(strategy.ask(1)) == 1
+        finally:
+            # leave the unions as they were, for tests comparing annotations
+            _SCALARIZATION_TYPES.remove(_MinimumScalarization)
+            _rebuild_scalarization_union()
+            SCALARIZATION_MAP.pop(_MinimumScalarization)
 
     def test_register_exported_from_api(self):
         from bofire.data_models.strategies.api import register_scalarization
-        from bofire.strategies.predictives.scalarization import register
+        from bofire.strategies.api import (
+            register_scalarization as register_functional_scalarization,
+        )
 
         assert callable(register_scalarization)
-        assert callable(register)
+        assert callable(register_functional_scalarization)

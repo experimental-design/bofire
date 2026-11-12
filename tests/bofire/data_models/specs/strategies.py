@@ -826,6 +826,22 @@ specs.add_invalid(
             inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
             outputs=[
                 ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+                ContinuousOutput(key="gamma", objective=None),
+            ],
+        ),
+    },
+    error=ValueError,
+    message="SOBO strategy can only deal with one no-constraint objective.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=[
+                ContinuousOutput(key="alpha", objective=MaximizeObjective()),
                 ContinuousOutput(key="beta", objective=MinimizeObjective()),
             ],
         ),
@@ -881,7 +897,8 @@ specs.add_invalid(
         "scalarization": WeightedProductSumScalarization(additive_features=["gamma"]),
     },
     error=ValueError,
-    message="Feature gamma is not an output feature of the domain.",
+    message="Additive feature given for gamma, which is not an output with an "
+    "objective.",
 )
 
 specs.add_invalid(
