@@ -2,9 +2,9 @@
 
 ## Scope and comparison
 
-This guide covers all 11 files changed in commit `8c6f31d4`, relative to its
-parent `64a46471`. The working tree was clean when inspected: these changes are
-now committed, rather than an unstaged diff. This guide makes no repository edits.
+This guide covers the fix relative to base commit `64a46471`, including the
+changes in `99c7aac6` and subsequent review follow-ups. It is intended to help
+review the pull request; line links refer to the current source.
 
 The originating issue is [#842](https://github.com/experimental-design/bofire/issues/842).
 The central example has four mixture components bounded by `[0, 0.6]`, a sum of
@@ -75,16 +75,16 @@ sampling caller can recognize and recover from.
 
 ### Changes inside the polytope sampler
 
-[Changed function](bofire/strategies/random.py#L384):
+[Changed function](bofire/strategies/random.py#L422):
 
-- Replaces HEAD's one-pass singleton-equality extraction with repeated reduction.
+- Replaces the base version's one-pass singleton-equality extraction with repeated reduction.
   Fixing one coordinate can make another equality determine another coordinate.
 - Checks each equality-implied value against the feature's bounds.
 - Rejects equalities assigning conflicting values to the same coordinate.
 - Allows machine-scale arithmetic roundoff at a boundary and clamps that tiny
   discrepancy to the actual bound; genuinely out-of-bounds values are rejected.
 - Substitutes the resulting fixed values into inequalities too.
-- [Moves constraint preparation](bofire/strategies/random.py#L485)
+- [Moves constraint preparation](bofire/strategies/random.py#L536)
   before the all-fixed return path. Constant linear contradictions cannot bypass
   checks simply because there are no coordinates left to sample.
 
@@ -92,19 +92,24 @@ sampling caller can recognize and recover from.
 that subset is infeasible; returning `a=1` is not acceptable. The hit-and-run
 sampling algorithm itself is unchanged.
 
+The [normalization helper](bofire/strategies/random.py#L76) scales each row using
+the norm of its original coefficients, including those removed when features were
+fixed. This keeps equivalent constraints consistent for both constant checks and
+the sampler, even when their coefficients are very small.
+
 **Review points:** the constant/conflict checks use `1e-8`; boundary clamping uses
 a magnitude-scaled machine-epsilon tolerance. These have different purposes and
 are not a single unified tolerance policy. The chained-equality regression is
-preservation coverage: HEAD could already produce the expected result in that case.
+preservation coverage: the base version could already produce the expected result in that case.
 
 ## 3. RandomStrategy: recover from rejected subsets without losing rows
 
-[Changed function](bofire/strategies/random.py#L179):
+[Changed function](bofire/strategies/random.py#L212):
 
-| Situation | HEAD behavior | Replacement |
+| Situation | Base behavior | Replacement |
 |---|---|---|
-| Every subset in the draw is infeasible | Immediately raises. | [Retries subset batches](bofire/strategies/random.py#L222) up to `max_iters`, caching rejected subsets for this call. |
-| Some subsets succeed, but too few rows remain | Final sampling can request more rows than available. | [Replenishes the shortfall](bofire/strategies/random.py#L268) with fresh samples from surviving subset domains. |
+| Every subset in the draw is infeasible | Immediately raises. | [Retries subset batches](bofire/strategies/random.py#L256) up to `max_iters`, caching rejected subsets for this call. |
+| Some subsets succeed, but too few rows remain | Final sampling can request more rows than available. | [Replenishes the shortfall](bofire/strategies/random.py#L302) with fresh samples from surviving subset domains. |
 | The search budget is exhausted | Error implies only the sampled subsets failed, without recovery. | Error states the budget and rejected count, explains that this is not proof of domain infeasibility, and suggests settings to investigate. |
 
 **Defense:**
@@ -122,7 +127,11 @@ still exhaust the budget. The loop stops at the first batch with any success;
 replenishment uses that batch's surviving subsets. This does not promise a uniform
 distribution over all globally feasible subsets, nor global candidate uniqueness.
 Rejected-subset caching relies on `InfeasibilityError` identifying an infeasible
-reduced problem. Batch-wide interpoint behavior is not established by these tests.
+reduced problem. Separately sampled groups can violate interpoint constraints
+across the final batch. The [shared-setting check](bofire/strategies/random.py#L178)
+raises a clear error if that happens, including after nonlinear rejection. It does
+not generate a replacement batch that satisfies interpoint constraints; a full
+batch-wide solution remains a separate issue.
 
 `max_iters` is reused rather than adding a new setting. Subset retries and nonlinear
 rejection have separate counters, so nesting can multiply work; it is not one shared
@@ -170,13 +179,15 @@ The `unit_scaled` flag and scaling algorithm existed in HEAD.
 
 | Test link | Purpose / defense |
 |---|---|
-| [Pinned mixture](tests/bofire/strategies/test_random.py#L34) | Tests constant contradiction with every component pinned and an out-of-bounds implied value with one free capped component. |
-| [Replenishment](tests/bofire/strategies/test_random.py#L55) | Deterministic supplied subset draws plus real polytope sampling check exact row counts, validity, immutability, and surviving multiplicities. |
-| [Fixed conflicts](tests/bofire/strategies/test_random.py#L98) | Separates bound, equality, inequality, and zero-after-substitution contradictions. The latter starts with nonzero coefficients; it is not an explicitly all-zero input row. |
-| [Chained equalities](tests/bofire/strategies/test_random.py#L141) | Preservation check for valid implied values through multiple equalities. |
-| [Decimal boundary](tests/bofire/strategies/test_random.py#L168) | Protects actual returned candidates against the rounding regression exposed by stricter bounds checks. |
-| [Retry/rejection cache](tests/bofire/strategies/test_random.py#L196) | Controlled draws prove recovery on the final allowed batch, budget exhaustion, and no repeated polytope work for cached rejected subsets. |
-| [One-candidate requests](tests/bofire/strategies/test_random.py#L257) | Three fixed seeds exercise actual subset drawing and `ask(1)`. These complement, rather than replace, deterministic retry tests. |
+| [Pinned mixture](tests/bofire/strategies/test_random.py#L35) | Tests constant contradiction with every component pinned and an out-of-bounds implied value with one free capped component. |
+| [Equivalent scaled constraints](tests/bofire/strategies/test_random.py#L57) | Checks that equality and inequality constraints behave identically at ordinary and small coefficient scales, including retrying after an impossible subset. |
+| [Replenishment](tests/bofire/strategies/test_random.py#L98) | Deterministic supplied subset draws plus real polytope sampling check exact row counts, validity, immutability, and surviving multiplicities. |
+| [Shared-setting guard](tests/bofire/strategies/test_random.py#L141) | Checks clear failure for whole-batch and grouped constraints, including with validation disabled; [valid batches](tests/bofire/strategies/test_random.py#L174) and [valid replenishment](tests/bofire/strategies/test_random.py#L201) remain accepted, and [nonlinear rejection](tests/bofire/strategies/test_random.py#L232) is checked after combining proposals. |
+| [Fixed conflicts](tests/bofire/strategies/test_random.py#L268) | Separates bound, equality, inequality, and zero-after-substitution contradictions. The latter starts with nonzero coefficients; it is not an explicitly all-zero input row. |
+| [Chained equalities](tests/bofire/strategies/test_random.py#L311) | Preservation check for valid implied values through multiple equalities. |
+| [Decimal boundary](tests/bofire/strategies/test_random.py#L338) | Protects actual returned candidates against the rounding regression exposed by stricter bounds checks. |
+| [Retry/rejection cache](tests/bofire/strategies/test_random.py#L366) | Controlled draws prove recovery on the final allowed batch, budget exhaustion, and no repeated polytope work for cached rejected subsets. |
+| [One-candidate requests](tests/bofire/strategies/test_random.py#L427) | Three fixed seeds exercise actual subset drawing and `ask(1)`. These complement, rather than replace, deterministic retry tests. |
 
 ### Conversion test
 
@@ -220,7 +231,16 @@ not fail this test; deterministic output and LP-call contracts do.
 
 ## Validation evidence and caveats
 
-Most recent combined focused run before the subsequent comment/docstring-only edits:
+Combined focused run after adding the shared-setting guard:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests\bofire\strategies\doe\test_utils.py tests\bofire\strategies\test_random.py tests\bofire\utils\test_torch_tools.py tests\bofire\strategies\doe\test_utils_performance.py -k "not test_n_zero_eigvals_unconstrained and not test_n_zero_eigvals_constrained" -q
+```
+
+**Result:** 141 passed, 16 skipped, two known environment-dependent failures
+deselected. The opt-in performance suite separately passed all 15 cases.
+
+The following earlier combined run predates the scaled-constraint fix:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest tests\bofire\strategies\doe\test_utils.py tests\bofire\strategies\test_random.py tests\bofire\utils\test_torch_tools.py -k "nchoosek or pseudo_fixed or fixed_conflict or get_linear_constraints" -q
@@ -246,5 +266,5 @@ reproduced with the original implementation; it is not fixed here.
   current all-pattern contradiction case?
 - Is the overlap between helper-level precision coverage and the end-to-end decimal
   test useful enough to retain?
-- Do any callers need stronger interpoint/fixed-candidate guarantees than this
-  per-pattern filter establishes?
+- How should RandomStrategy preserve shared settings across separately sampled
+  groups when an interpoint constraint applies to the complete batch?

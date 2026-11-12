@@ -44,6 +44,8 @@ class RandomStrategy(Strategy):
        subset in a draw is infeasible, new subsets are drawn for at most
        ``max_iters`` batches, remembering rejected subsets within that call.
        Exhausting this budget raises an error, not proof of domain infeasibility.
+       An assembled batch that violates an interpoint equality also raises an
+       error; independently sampled subsets are not guaranteed to share values.
     4. **Nonlinear or product constraints.** When constraints are present that
        cannot be enforced directly by the polytope sampler, regimes 1-3 are
        used as a proposal distribution and rejection sampling filters

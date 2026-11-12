@@ -73,6 +73,25 @@ def _reduce_fixed_constraints(
     return reduced
 
 
+def _normalize_linear_constraints(
+    constraints: List[Tuple[torch.Tensor, torch.Tensor, float]],
+    original: List[LinearEqualityConstraint | LinearInequalityConstraint],
+) -> List[Tuple[torch.Tensor, torch.Tensor, float]]:
+    """Scale converted constraints using their original coefficients."""
+    normalized = []
+    for (indices, coefficients, rhs), constraint in zip(constraints, original):
+        # Include coefficients of fixed features, which conversion has removed.
+        # Dividing the entire row by their original norm keeps equivalent
+        # constraints equivalent for both the constant check and the sampler,
+        # even when every coefficient and the right-hand side are very small.
+        norm = math.hypot(*constraint.coefficients)
+        if norm:
+            normalized.append((indices, coefficients / norm, rhs / norm))
+        else:
+            normalized.append((indices, coefficients, rhs))
+    return normalized
+
+
 class RandomStrategy(Strategy):
     """Strategy for randomly selecting new candidates.
 
@@ -150,7 +169,22 @@ class RandomStrategy(Strategy):
             n_found += np.sum(valid)
             valid_samples.append(samples[valid])
             n_iters += 1
-        return pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
+        candidates = pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
+        nchoosek_keys, allow_zero_keys = self._get_zeroable_keys(self.domain)
+        if nchoosek_keys or allow_zero_keys:
+            self._check_shared_settings(candidates)
+        return candidates
+
+    def _check_shared_settings(self, candidates: pd.DataFrame) -> None:
+        """Reject batches that violate interpoint equality constraints."""
+        for constraint in self.domain.constraints.get(InterpointEqualityConstraint):
+            if not constraint.is_fulfilled(candidates).all():
+                raise ValueError(
+                    "The generated batch violates the shared setting for "
+                    f"{constraint.feature!r}. Samples drawn separately may not "
+                    "satisfy interpoint constraints together; this does not prove "
+                    "that the domain is infeasible."
+                )
 
     @staticmethod
     def _get_zeroable_keys(domain: Domain) -> Tuple[set[str], set[str]]:
@@ -196,7 +230,8 @@ class RandomStrategy(Strategy):
 
         Raises:
             ValueError: If no sampled subset is feasible after ``max_iters``
-                batches of draws. This does not establish domain infeasibility.
+                batches of draws, or if the assembled batch violates a shared
+                setting. Neither establishes domain infeasibility.
 
         """
         nchoosek_keys, allow_zero_keys = self._get_zeroable_keys(self.domain)
@@ -289,12 +324,16 @@ class RandomStrategy(Strategy):
                             )
                         )
             samples = pd.concat(samples, axis=0, ignore_index=True)
-            return samples.sample(
+            candidates = samples.sample(
                 n=candidate_count,
                 replace=False,
                 ignore_index=True,
                 random_state=self._get_seed(),
             )
+            # Separate sampler calls and final shuffling can break constraints
+            # that relate rows, even when each sampled group was valid.
+            self._check_shared_settings(candidates)
+            return candidates
 
         return self._sample_from_polytope(
             domain=self.domain,
@@ -430,6 +469,9 @@ class RandomStrategy(Strategy):
             constraint=LinearEqualityConstraint,
             unit_scaled=False,
         )
+        eqs = _normalize_linear_constraints(
+            eqs, domain.constraints.get(LinearEqualityConstraint)
+        )
         fixed_features: Dict[str, float] = {  # ty: ignore[invalid-assignment]
             feat.key: feat.fixed_value()[0]  # ty: ignore[not-subscriptable]
             for feat in domain.inputs.get(ContinuousInput)
@@ -452,8 +494,15 @@ class RandomStrategy(Strategy):
                 feature = domain.inputs.get_by_key(all_keys[idx])
                 assert isinstance(feature, ContinuousInput)
                 # Permit arithmetic roundoff, not genuinely out-of-bounds values.
-                tolerance = 8 * np.finfo(float).eps * max(
-                    1, abs(value), abs(feature.lower_bound), abs(feature.upper_bound)
+                tolerance = (
+                    8
+                    * np.finfo(float).eps
+                    * max(
+                        1,
+                        abs(value),
+                        abs(feature.lower_bound),
+                        abs(feature.upper_bound),
+                    )
                 )
                 if not (
                     feature.lower_bound - tolerance
@@ -478,6 +527,9 @@ class RandomStrategy(Strategy):
             domain=domain,
             constraint=LinearInequalityConstraint,
             unit_scaled=False,
+        )
+        ineqs = _normalize_linear_constraints(
+            ineqs, domain.constraints.get(LinearInequalityConstraint)
         )
         ineqs = _reduce_fixed_constraints(ineqs, fixed_features_indices, equality=False)
 

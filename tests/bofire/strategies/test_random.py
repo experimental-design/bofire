@@ -1,5 +1,6 @@
 import warnings
 
+import pandas as pd
 import pytest
 from botorch.exceptions.errors import InfeasibilityError
 from pandas.testing import assert_frame_equal
@@ -51,6 +52,48 @@ def test_polytope_infeasible_pinned_mixture(free_count):
         strategies.RandomStrategy._sample_from_polytope(domain=domain, n=2, seed=1)
 
 
+@pytest.mark.parametrize("scale", [1.0, 1e-9], ids=["unscaled", "small-coefficients"])
+@pytest.mark.parametrize("equality", [True, False], ids=["equality", "inequality"])
+def test_nchoosek_retries_equivalent_scaled_constraints(monkeypatch, scale, equality):
+    """An impossible empty subset must be rejected regardless of coefficient scale.
+
+    Both a+b=1 and a+b>=1 require at least two components capped at 0.6.
+    Multiplying every coefficient and the right-hand side by the same positive
+    number does not change that requirement. The first draw is empty; the second
+    is the feasible pair, which must be returned by ask.
+    """
+    constraint = (
+        LinearEqualityConstraint(
+            features=["a", "b"], coefficients=[scale, scale], rhs=scale
+        )
+        if equality
+        else LinearInequalityConstraint(
+            features=["a", "b"], coefficients=[-scale, -scale], rhs=-scale
+        )
+    )
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 0.6)) for k in ["a", "b"]],
+        constraints=[
+            NChooseKConstraint(
+                features=["a", "b"], min_count=0, max_count=2, none_also_valid=False
+            ),
+            constraint,
+        ],
+    )
+    strategy = strategies.RandomStrategy(
+        data_model=data_models.RandomStrategy(
+            domain=domain, seed=1, max_iters=2, n_burnin=10, n_thinning=1
+        )
+    )
+    draws = iter([(), ("a", "b")])
+    monkeypatch.setattr(
+        strategy, "sample_valid_nchoosek_features", lambda **kwargs: [next(draws)]
+    )
+    candidates = strategy.ask(1)
+    assert len(candidates) == 1
+    domain.validate_candidates(candidates, only_inputs=True)
+
+
 @pytest.mark.parametrize("weighted", [False, True])
 def test_nchoosek_mixture_replenishes_samples(monkeypatch, weighted):
     """Issue #842: rejected subsets must not reduce ask's requested row count.
@@ -90,6 +133,133 @@ def test_nchoosek_mixture_replenishes_samples(monkeypatch, weighted):
         assert (candidates["x2"] > 0).sum() == 5
     domain.validate_candidates(candidates, only_inputs=True)
     assert domain.model_dump() == before
+
+
+@pytest.mark.parametrize(
+    "multiplicity", [None, 2], ids=["whole-batch", "groups-of-two"]
+)
+def test_nchoosek_replenishment_rejects_broken_shared_settings(
+    monkeypatch, multiplicity
+):
+    """Separately sampled replacements must not break shared settings silently.
+
+    The empty subset cannot sum to one; the three pair draws can. Replenishing
+    the missing row in a separate sampler call can give it a different value
+    for a. The final batch must be checked, even when ask validation is disabled.
+    """
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 0.6)) for k in ["a", "b"]],
+        constraints=[
+            NChooseKConstraint(
+                features=["a", "b"], min_count=0, max_count=2, none_also_valid=False
+            ),
+            LinearEqualityConstraint(features=["a", "b"], coefficients=[1, 1], rhs=1),
+            InterpointEqualityConstraint(features=["a"], multiplicity=multiplicity),
+        ],
+    )
+    strategy = strategies.RandomStrategy(
+        data_model=data_models.RandomStrategy(
+            domain=domain, seed=1, n_burnin=10, n_thinning=1
+        )
+    )
+    monkeypatch.setattr(
+        strategy,
+        "sample_valid_nchoosek_features",
+        lambda **kwargs: [(), ("a", "b"), ("a", "b"), ("a", "b")],
+    )
+    with pytest.raises(ValueError, match="shared.*a"):
+        strategy.ask(4, raise_validation_error=False)
+
+
+def test_nchoosek_sampling_preserves_valid_shared_settings(monkeypatch):
+    """A valid batch with a shared setting must still be returned normally."""
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 0.6)) for k in ["a", "b"]],
+        constraints=[
+            NChooseKConstraint(
+                features=["a", "b"], min_count=0, max_count=2, none_also_valid=False
+            ),
+            LinearEqualityConstraint(features=["a", "b"], coefficients=[1, 1], rhs=1),
+            InterpointEqualityConstraint(features=["a"]),
+        ],
+    )
+    strategy = strategies.RandomStrategy(
+        data_model=data_models.RandomStrategy(
+            domain=domain, seed=1, n_burnin=10, n_thinning=1
+        )
+    )
+    monkeypatch.setattr(
+        strategy,
+        "sample_valid_nchoosek_features",
+        lambda **kwargs: [("a", "b")] * 4,
+    )
+    candidates = strategy.ask(4)
+    assert len(candidates) == 4
+    domain.validate_candidates(candidates, only_inputs=True)
+
+
+def test_nchoosek_replenishment_allows_valid_shared_settings(monkeypatch):
+    """Replenishment remains allowed when every row shares the fixed setting."""
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key="a", bounds=(0, 0.6)),
+            ContinuousInput(key="b", bounds=(0, 0.6)),
+            ContinuousInput(key="temperature", bounds=(0.5, 0.5)),
+        ],
+        constraints=[
+            NChooseKConstraint(
+                features=["a", "b"], min_count=0, max_count=2, none_also_valid=False
+            ),
+            LinearEqualityConstraint(features=["a", "b"], coefficients=[1, 1], rhs=1),
+            InterpointEqualityConstraint(features=["temperature"]),
+        ],
+    )
+    strategy = strategies.RandomStrategy(
+        data_model=data_models.RandomStrategy(
+            domain=domain, seed=1, n_burnin=10, n_thinning=1
+        )
+    )
+    monkeypatch.setattr(
+        strategy,
+        "sample_valid_nchoosek_features",
+        lambda **kwargs: [(), ("a", "b"), ("a", "b"), ("a", "b")],
+    )
+    candidates = strategy.ask(4)
+    assert candidates["temperature"].tolist() == [0.5] * 4
+    domain.validate_candidates(candidates, only_inputs=True)
+
+
+def test_nchoosek_nonlinear_rejection_checks_final_shared_settings(monkeypatch):
+    """Individually valid proposal batches may disagree on a shared setting.
+
+    Both proposal batches satisfy the constraints on their own, but the first
+    uses a=0.4 and the second a=0.5. Combining them must fail clearly even
+    when ask's final domain validation is disabled.
+    """
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b"]],
+        constraints=[
+            NChooseKConstraint(
+                features=["a", "b"], min_count=1, max_count=2, none_also_valid=False
+            ),
+            InterpointEqualityConstraint(features=["a"]),
+            NonlinearInequalityConstraint(
+                features=["a", "b"], expression="a**2 + b**2 - 1"
+            ),
+        ],
+    )
+    strategy = strategies.RandomStrategy(
+        data_model=data_models.RandomStrategy(domain=domain, num_base_samples=2)
+    )
+    proposals = iter(
+        [
+            pd.DataFrame({"a": [0.4, 0.4], "b": [0.5, 0.5]}),
+            pd.DataFrame({"a": [0.5, 0.5], "b": [0.4, 0.4]}),
+        ]
+    )
+    monkeypatch.setattr(strategy, "_sample_with_nchooseks", lambda n: next(proposals))
+    with pytest.raises(ValueError, match="shared.*a"):
+        strategy.ask(4, raise_validation_error=False)
 
 
 @pytest.mark.parametrize(

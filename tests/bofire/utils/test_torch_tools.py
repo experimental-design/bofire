@@ -470,9 +470,7 @@ def test_get_linear_constraints_preserves_decimal_precision(unit_scaled):
     constraints = get_linear_constraints(
         domain, LinearEqualityConstraint, unit_scaled=unit_scaled
     )
-    expected = torch.tensor(
-        [-0.2, -2] if unit_scaled else [-0.1, -1], **tkwargs
-    )
+    expected = torch.tensor([-0.2, -2] if unit_scaled else [-0.1, -1], **tkwargs)
     assert torch.equal(constraints[0][1], expected)
 
 
