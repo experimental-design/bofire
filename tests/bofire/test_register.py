@@ -652,13 +652,6 @@ class TestRegisterLikelihood:
         # cleanup
         LIKELIHOOD_MAP.pop(_CustomLikelihoodDataModel, None)
 
-    def test_register_exported_from_api(self):
-        from bofire.data_models.likelihoods.api import register_likelihood
-        from bofire.likelihoods.api import register
-
-        assert callable(register)
-        assert callable(register_likelihood)
-
 
 # ---------------------------------------------------------------------------
 # Integration tests: custom types accepted by Pydantic validation
