@@ -3,7 +3,7 @@ title: Desirability Functions for Multi-Objective Optimization
 jupyter: python3
 ---
 
-This notebook demonstrates the use of desirability functions for multi-objective optimization. The desirability function is a scalar function that maps a vector of objective values to a scalar value, most often in the range [0, 1]. The desirability function is used to aggregate multiple objectives into a single objective value, e.g. by the multiplicative Sobo strategy.
+This notebook demonstrates the use of desirability functions for multi-objective optimization. The desirability function is a scalar function that maps a vector of objective values to a scalar value, most often in the range [0, 1]. The desirability function is used to aggregate multiple objectives into a single objective value, e.g. by a `SoboStrategy` with the `WeightedProductScalarization`.
 
 
 ```{python}

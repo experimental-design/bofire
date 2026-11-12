@@ -1,5 +1,5 @@
 import math
-from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -610,7 +610,7 @@ def get_objective_callable(
                 ),
                 t,
             )
-            return y * objective.w
+            return y
 
         return objective_callable_
 
@@ -623,7 +623,7 @@ def get_objective_callable(
             in_range = (x >= objective.lower_bound) & (x <= objective.upper_bound)
             y[in_range] = 1.0
 
-            return y * objective.w
+            return y
 
         return objective_callable_
 
@@ -632,61 +632,13 @@ def get_objective_callable(
     )
 
 
-def get_custom_botorch_objective(
-    outputs: Outputs,
-    f: Callable[
-        [
-            Tensor,
-            List[Callable[[Tensor, Optional[Tensor]], Tensor]],
-            List[float],
-            Tensor,
-        ],
-        Tensor,
-    ],
-    experiments: pd.DataFrame,
-    exclude_constraints: bool = True,
-) -> Callable[[Tensor, Tensor], Tensor]:
-    callables = [
-        get_objective_callable(
-            idx=i,
-            objective=feat.objective,
-            x_adapt=torch.from_numpy(
-                outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
-                    feat.key
-                ].values,
-            ).to(**tkwargs),
-        )
-        for i, feat in enumerate(outputs.get())
-        if feat.objective is not None
-        and (
-            not isinstance(feat.objective, ConstrainedObjective)
-            if exclude_constraints
-            else True
-        )
-    ]
-    weights = [
-        feat.objective.w
-        for i, feat in enumerate(outputs.get())
-        if feat.objective is not None
-        and (
-            not isinstance(feat.objective, ConstrainedObjective)
-            if exclude_constraints
-            else True
-        )
-    ]
-
-    def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
-        return f(samples, callables, weights, X)
-
-    return objective
-
-
 def _callables_and_weights(
     outputs: Outputs,
     experiments: pd.DataFrame,
     exclude_constraints: bool = False,
     allowed_objectives: Optional[List[Type[Objective]]] = None,
-    adapt_weights_to_1_inf: bool = False,
+    weights: Optional[Dict[str, float]] = None,
+    weight_normalization: Optional[Literal["min", "sum"]] = None,
 ) -> Tuple[List[Callable], List[float], List[str]]:
     """
     Extract callables and weights from outputs object
@@ -696,7 +648,9 @@ def _callables_and_weights(
         experiments (pd.DataFrame): DataFrame containing the experiments that are used for adapting the objectives
         exclude_constraints (bool): exclude constraints
         allowed_objectives (Optional[List[Type[Objective]]]): limit to allowed objectives
-        adapt_weights_to_1_inf (bool): transform weights from [0,1] to [1,inf) space
+        weights: Weight per output key; outputs not listed have weight 1.
+        weight_normalization: Rescale the weights so that the smallest is 1 ("min")
+            or so that they sum to 1 ("sum"). If None, they are used as given.
 
     Returns:
         callables (List[Callable]): list of callables
@@ -712,7 +666,7 @@ def _callables_and_weights(
         ].values
         return torch.from_numpy(x).to(**tkwargs)
 
-    callables, weights, keys = [], [], []
+    callables, weights_, keys = [], [], []
 
     for i, feat in enumerate(outputs.get()):
         if feat.objective is None:
@@ -734,27 +688,36 @@ def _callables_and_weights(
             )
         )
 
-        weights.append(feat.objective.w)
+        weights_.append(1.0 if weights is None else weights.get(feat.key, 1.0))
 
         keys.append(feat.key)
 
-    if adapt_weights_to_1_inf:
-        min_w = min(weights)
-        weights = [w / min_w for w in weights]
+    if weight_normalization == "min":
+        min_w = min(weights_)
+        weights_ = [w / min_w for w in weights_]
+    elif weight_normalization == "sum":
+        sum_w = sum(weights_)
+        weights_ = [w / sum_w for w in weights_]
 
-    return callables, weights, keys
+    return callables, weights_, keys
 
 
 def get_multiplicative_botorch_objective(
-    outputs: Outputs, experiments: pd.DataFrame, adapt_weights_to_1_inf: bool = True
+    outputs: Outputs,
+    experiments: pd.DataFrame,
+    weights: Optional[Dict[str, float]] = None,
+    weight_normalization: Optional[Literal["min", "sum"]] = "min",
 ) -> Callable[[Tensor, Tensor], Tensor]:
-    callables, weights, _ = _callables_and_weights(
-        outputs, experiments, adapt_weights_to_1_inf=adapt_weights_to_1_inf
+    callables, weights_, _ = _callables_and_weights(
+        outputs,
+        experiments,
+        weights=weights,
+        weight_normalization=weight_normalization,
     )
 
     def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
         val = torch.tensor(1.0).to(**tkwargs)
-        for c, w in zip(callables, weights):
+        for c, w in zip(callables, weights_):
             val = val * c(samples, None) ** w
         return val
 
@@ -765,17 +728,18 @@ def get_additive_botorch_objective(
     outputs: Outputs,
     experiments: pd.DataFrame,
     exclude_constraints: bool = True,
+    weights: Optional[Dict[str, float]] = None,
 ) -> Callable[[Tensor, Tensor], Tensor]:
-    callables, weights, _ = _callables_and_weights(
+    callables, weights_, _ = _callables_and_weights(
         outputs,
         experiments,
         exclude_constraints=exclude_constraints,
-        adapt_weights_to_1_inf=False,
+        weights=weights,
     )
 
     def objective(samples: Tensor, X: Tensor) -> Tensor:
         val = torch.tensor(0.0).to(**tkwargs)
-        for c, w in zip(callables, weights):
+        for c, w in zip(callables, weights_):
             val = val + c(samples, None) * w
         return val
 
@@ -804,7 +768,6 @@ def get_multiobjective_objective(
         outputs,
         experiments,
         allowed_objectives=allowed_objectives,
-        adapt_weights_to_1_inf=False,
     )
 
     def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
@@ -818,7 +781,8 @@ def get_multiplicative_additive_objective(
     experiments: pd.DataFrame,
     exclude_constraints: bool = True,
     additive_features: Optional[List[str]] = None,
-    adapt_weights_to_1_inf: bool = True,
+    weights: Optional[Dict[str, float]] = None,
+    weight_normalization: Optional[Literal["min", "sum"]] = "min",
 ) -> Callable[[Tensor, Tensor], Tensor]:
     """Computes the objective as a mix of multiplicative and additive objectives. By default, all objectives are multiplicative.
     Additive features (inputs or outputs) can be specified in the `additive_features` list.
@@ -836,18 +800,21 @@ def get_multiplicative_additive_objective(
         experiments
         exclude_constraints
         additive_features (List[str]): list of features that should be treated as additive
-        adapt_weights_to_1_inf (bool): will transform weights from [0,1] to [1,inf) space
+        weights: Weight per output key; outputs not listed have weight 1.
+        weight_normalization: Rescale the weights so that the smallest is 1 ("min")
+            or so that they sum to 1 ("sum"). If None, they are used as given.
 
     Returns:
         objective (callable): callable that can be used by botorch for optimization
 
     """
 
-    callables, weights, keys = _callables_and_weights(
+    callables, weights_, keys = _callables_and_weights(
         outputs,
         experiments,
         exclude_constraints=exclude_constraints,
-        adapt_weights_to_1_inf=adapt_weights_to_1_inf,
+        weights=weights,
+        weight_normalization=weight_normalization,
     )
 
     if additive_features is None:
@@ -875,7 +842,7 @@ def get_multiplicative_additive_objective(
         weights_additive,
         callables_multiplicative,
         weights_multiplicative,
-    ) = _differ_additive_and_multiplicative_features(callables, weights, keys)
+    ) = _differ_additive_and_multiplicative_features(callables, weights_, keys)
 
     def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
         additive_objective = torch.tensor(1.0).to(**tkwargs)

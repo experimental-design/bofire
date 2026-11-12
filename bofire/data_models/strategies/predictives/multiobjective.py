@@ -19,8 +19,8 @@ class MultiobjectiveStrategy(BotorchStrategy):
     """Bayesian optimization of several objectives at once, searching for the best
     trade-offs between them (the Pareto front).
 
-    At least two outputs need a maximize, minimize or close-to-target objective, all
-    with weight 1. Outputs with a sigmoid or target objective act as constraints.
+    At least two outputs need a maximize, minimize or close-to-target objective.
+    Outputs with a sigmoid or target objective act as constraints.
     """
 
     @field_validator("domain")
@@ -34,11 +34,6 @@ class MultiobjectiveStrategy(BotorchStrategy):
             raise ValueError(
                 "At least two output features with MaximizeObjective, MinimizeObjective or CloseToTargetObjective have to be defined in the domain.",
             )
-        for feat in feats:
-            if feat.objective.w != 1.0:
-                raise ValueError(
-                    f"Only objectives with weight 1 are supported. Violated by feature {feat.key}.",
-                )
         return v
 
     @classmethod

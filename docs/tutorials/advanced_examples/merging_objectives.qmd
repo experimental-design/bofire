@@ -31,23 +31,32 @@ domain = bench.domain
 ```{python}
 outputs = domain.outputs.get_by_objective()
 
-outputs[0].objective = objectives_data_model.MaximizeObjective(w=1.0, bounds=(0.0, 5.0))
-outputs[1].objective = objectives_data_model.MaximizeObjective(w=1.0, bounds=(0.0, 2.0))
-# outputs[1].objective = objectives_data_model.MaximizeSigmoidObjective(w = 0.5, tp=2.5, steepness=3.)
+outputs[0].objective = objectives_data_model.MaximizeObjective(bounds=(0.0, 5.0))
+outputs[1].objective = objectives_data_model.MaximizeObjective(bounds=(0.0, 2.0))
+# outputs[1].objective = objectives_data_model.MaximizeSigmoidObjective(tp=2.5, steepness=3.)
 ```
 
 ## Select Strategies
-We will use pure multiplicative and additive Sobo strategies, as well as a mixed one for this example:
+We will use a `SoboStrategy` with pure multiplicative and additive scalarizations, as well as a mixed one for this example:
 - Multiplicative: $f = f_0^{w_0} \cdot f_1^{w_1}$
 - Additive: $f = f_0 \cdot w_0 + f_1 \cdot w_1$
 - Mixed (with f1 being the additive objective): $f = f_0^{w_0} \cdot (1 + w_1 \cdot f_1)$
 
 ```{python}
 strategy_data_model = {
-    "multiplicative": strategies_data_model.MultiplicativeSoboStrategy(domain=domain),
-    "additive": strategies_data_model.AdditiveSoboStrategy(domain=domain),
-    "mixed": strategies_data_model.MultiplicativeAdditiveSoboStrategy(
-        domain=domain, additive_features=["f_1"]
+    "multiplicative": strategies_data_model.SoboStrategy(
+        domain=domain,
+        scalarization=strategies_data_model.WeightedProductScalarization(),
+    ),
+    "additive": strategies_data_model.SoboStrategy(
+        domain=domain,
+        scalarization=strategies_data_model.WeightedSumScalarization(),
+    ),
+    "mixed": strategies_data_model.SoboStrategy(
+        domain=domain,
+        scalarization=strategies_data_model.WeightedProductSumScalarization(
+            additive_features=["f_1"]
+        ),
     ),
 }
 ```
@@ -58,7 +67,7 @@ We see the following:
 - Additive: The objective is a sum of the objectives: We see a linear increase in the objective with increasing $f_0$ and $f_1$. This is useful for complementary objectives.
 - Mixed: The objective is more strict w.r.t. $f_0$ than the additive objective $f_1$. The overall desirability can also be high, if $f_1$ is low.
 
-Changing the weights $w_i$ in the objectives above will further change the preference of $f_0$ and $f_1$.
+Changing the weights $w_i$, given as `weights={"f_0": ..., "f_1": ...}` on the scalarizations above, will further change the preference of $f_0$ and $f_1$.
 
 ```{python}
 # map from the strategy data-model to the actual strategy object instances

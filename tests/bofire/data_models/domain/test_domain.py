@@ -40,7 +40,7 @@ def test_empty_domain():
     )
 
 
-obj = TargetObjective(target_value=1, steepness=2, tolerance=3, w=0.5)
+obj = TargetObjective(target_value=1, steepness=2, tolerance=3)
 
 if_ = CategoricalInput(key="if", categories=["a", "b"])
 of_ = ContinuousOutput(key="of", objective=obj)
@@ -63,7 +63,7 @@ def input_list():
 
 @fixture
 def output_list():
-    objective = TargetObjective(target_value=1, steepness=2, tolerance=3, w=0.5)
+    objective = TargetObjective(target_value=1, steepness=2, tolerance=3)
     return [
         ContinuousOutput(key="co1", objective=objective),
         ContinuousOutput(key="co2", objective=objective),
@@ -656,7 +656,7 @@ def test_is_fulfilled():
 def test_domain_to_description():
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x", bounds=(0, 1))],
-        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective())],
     )
     assert domain.to_description() == "\n## Objectives\n- y: Maximize"
 
@@ -664,7 +664,7 @@ def test_domain_to_description():
 def test_domain_to_description_with_context():
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x", bounds=(0, 1))],
-        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective())],
     )
     domain.context = "Optimizing a reaction"
     assert domain.to_description() == (
@@ -678,7 +678,7 @@ def test_domain_to_description_with_constraints():
             ContinuousInput(key="x1", bounds=(0, 1)),
             ContinuousInput(key="x2", bounds=(0, 1)),
         ],
-        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective())],
         constraints=[
             LinearInequalityConstraint(
                 features=["x1", "x2"],

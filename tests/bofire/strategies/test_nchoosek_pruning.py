@@ -223,7 +223,7 @@ def _make_simple_domain(
         )
         for i in range(n_features)
     ]
-    outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+    outputs = [ContinuousOutput(key="y", objective=MaximizeObjective())]
     return Domain.from_lists(inputs=inputs, outputs=outputs, constraints=constraints)
 
 
@@ -523,7 +523,7 @@ class TestVariantConstruction:
             ContinuousInput(key="x1", bounds=(0.0, 1.0)),
             ContinuousInput(key="x2", bounds=(0.0, 0.4)),
         ]
-        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective())]
         domain = Domain.from_lists(
             inputs=inputs,
             outputs=outputs,
@@ -1121,7 +1121,7 @@ class TestPruneNchoosekEndToEnd:
         # the pinned feature). The pruning should not touch x5.
         inputs = [ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(4)]
         inputs.append(ContinuousInput(key="x5", bounds=(0.0, 1.0)))
-        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective())]
         domain = Domain.from_lists(
             inputs=inputs,
             outputs=outputs,
@@ -1160,7 +1160,7 @@ class TestPruneNchoosekEndToEnd:
         # zero-action target (it is already zero by external decree)
         # and the final value must remain exactly 0.
         inputs = [ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(5)]
-        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective())]
         domain = Domain.from_lists(
             inputs=inputs,
             outputs=outputs,
@@ -1978,7 +1978,7 @@ class TestPinnedColumns:
         on the pinned column survives the QP projection exactly.
         """
         inputs = [ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(5)]
-        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective())]
         domain = Domain.from_lists(
             inputs=inputs,
             outputs=outputs,
@@ -2014,7 +2014,7 @@ class TestPinnedColumns:
         0.3, row 1 carries 0.8, both must survive pruning unchanged.
         """
         inputs = [ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(5)]
-        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective())]
         domain = Domain.from_lists(
             inputs=inputs,
             outputs=outputs,
@@ -2051,7 +2051,7 @@ class TestPinnedColumns:
         ``optimize_acqf`` polish; the pinned column must still survive.
         """
         inputs = [ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(5)]
-        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective())]
         domain = Domain.from_lists(
             inputs=inputs,
             outputs=outputs,
@@ -2081,7 +2081,7 @@ class TestPinnedColumns:
         action variant; pin must hold through every reopt call.
         """
         inputs = [ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(5)]
-        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective())]
         domain = Domain.from_lists(
             inputs=inputs,
             outputs=outputs,
@@ -2122,7 +2122,7 @@ class TestPinnedColumns:
             ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(4)
         ]
         inputs.append(CategoricalInput(key="cat", categories=["A", "B", "C"]))
-        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective())]
         domain = Domain.from_lists(
             inputs=inputs,
             outputs=outputs,
@@ -2221,7 +2221,7 @@ class TestPinnedColumns:
             ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(4)
         ]
         inputs.append(ContinuousInput(key="x5", bounds=(0.0, 1.0)))
-        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        outputs = [ContinuousOutput(key="y", objective=MaximizeObjective())]
         domain = Domain.from_lists(
             inputs=inputs,
             outputs=outputs,

@@ -18,13 +18,7 @@ from bofire.strategies.predictives.multi_fidelity_knowledge_gradient import (
 )
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.predictives.qparego import QparegoStrategy
-from bofire.strategies.predictives.sobo import (
-    AdditiveSoboStrategy,
-    CustomSoboStrategy,
-    MultiplicativeAdditiveSoboStrategy,
-    MultiplicativeSoboStrategy,
-    SoboStrategy,
-)
+from bofire.strategies.predictives.sobo import SoboStrategy
 from bofire.strategies.progress import AskProgressCallback, AskProgressData
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy

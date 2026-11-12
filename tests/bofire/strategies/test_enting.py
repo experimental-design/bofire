@@ -202,10 +202,10 @@ if4_ent = {"feat_type": "real", "bounds": (5.0, 6.0), "name": "if4"}
 
 if5 = ContinuousInput(key="if5", bounds=[0.0, 10.0])
 
-of1 = ContinuousOutput(key="of1", objective=MinimizeObjective(w=1.0))
+of1 = ContinuousOutput(key="of1", objective=MinimizeObjective())
 of1_ent = {"name": "of1"}
 
-of2 = ContinuousOutput(key="of2", objective=MaximizeObjective(w=1.0))
+of2 = ContinuousOutput(key="of2", objective=MaximizeObjective())
 of2_ent = {"name": "of2"}
 
 constr1 = LinearInequalityConstraint(

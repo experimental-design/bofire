@@ -2,13 +2,17 @@ from typing import List, Literal, Union
 
 from pydantic import Field, model_validator
 
+from bofire.data_models.acquisition_functions.api import qLogPF
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import CategoricalTaskInput
-from bofire.data_models.strategies.predictives.sobo import SoboStrategy, _ForbidPFMixin
+from bofire.data_models.strategies.predictives.scalarization import (
+    SingleObjectiveScalarization,
+)
+from bofire.data_models.strategies.predictives.sobo import SoboStrategy
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate
 
 
-class MultiFidelityVarianceBasedStrategy(SoboStrategy, _ForbidPFMixin):
+class MultiFidelityVarianceBasedStrategy(SoboStrategy):
     """Single-objective Bayesian optimization that also chooses the fidelity at
     which to run each candidate (Kandasamy et al., 2016; Folch et al., 2023).
 
@@ -32,6 +36,19 @@ class MultiFidelityVarianceBasedStrategy(SoboStrategy, _ForbidPFMixin):
         "for all fidelities, or a list with one value per task, the i-th applying "
         "to fidelity level i.",
     )
+
+    @model_validator(mode="after")
+    def validate_single_objective(self):
+        """Ensures a single objective without qLogPF."""
+        if not isinstance(self.scalarization, SingleObjectiveScalarization):
+            raise ValueError(
+                f"{self.type} only supports the SingleObjectiveScalarization.",
+            )
+        if isinstance(self.acquisition_function, qLogPF):
+            raise ValueError(
+                f"qLogPF acquisition function is not supported by {self.type}.",
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_tasks_and_fidelity_thresholds(self):
