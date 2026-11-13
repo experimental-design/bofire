@@ -30,7 +30,7 @@ def test_validate_batch_limit():
 
 
 def _make_outputs():
-    return [ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+    return [ContinuousOutput(key="y", objective=MaximizeObjective())]
 
 
 def test_validate_domain_lsrbo_with_nchoosek_is_rejected():

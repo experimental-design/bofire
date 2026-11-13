@@ -6,7 +6,6 @@ from pydantic import Field, PositiveFloat, PositiveInt, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints import api as constraints
-from bofire.data_models.constraints.api import InterpointConstraint
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -20,7 +19,15 @@ from bofire.data_models.unions import tagged_union
 
 
 class AcquisitionOptimizer(BaseModel):
-    prefer_exhaustive_search_for_purely_categorical_domains: bool = True
+    """Method that maximizes the acquisition function over the domain, i.e. finds
+    the candidates to propose."""
+
+    prefer_exhaustive_search_for_purely_categorical_domains: bool = Field(
+        default=True,
+        description="Whether, if every input is categorical or discrete, all "
+        "combinations are scored instead of running the optimizer. Required for "
+        "categorical exclude constraints.",
+    )
 
     @abstractmethod
     def is_constraint_implemented(self, my_type: Type[constraints.Constraint]) -> bool:
@@ -79,19 +86,27 @@ class LocalSearchConfig(BaseModel):
 
 
 class LSRBO(LocalSearchConfig):
-    """LSRBO implements the local search region method published in.
-    https://www.merl.com/publications/docs/TR2023-057.pdf
+    """Local search region Bayesian optimization (LSR-BO,
+    https://www.merl.com/publications/docs/TR2023-057.pdf).
 
-    Attributes:
-        gamma (float): The switsching parameter between local and global optimization.
-            Defaults to 0.1. . The default is chosen for `qEI` as acquisition function.
-            It has to be adapted to the acquisition function used, especially when log
-            based acqfs are used.
+    For processes that may only move by a limited step from the current point, as
+    set by `local_relative_bounds` on the continuous inputs. Each step maximizes the
+    acquisition function within the local region; if the value found there is too
+    low, the step instead heads for the global maximum along a feasible path. Only
+    used when one candidate is asked for.
 
+    Examples:
+        >>> BotorchOptimizer(local_search_config=LSRBO(gamma=0.1))
     """
 
     type: Literal["LSRBO"] = "LSRBO"
-    gamma: float = 0.1
+    gamma: float = Field(
+        default=0.1,
+        description="Threshold on the acquisition value at the local maximum: if it "
+        "is at least `gamma`, the local step is taken, otherwise a step towards the "
+        "global maximum. The default suits qEI; it has to be adapted to the "
+        "acquisition function, especially to log-based ones.",
+    )
 
     def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
         return acqf_local >= self.gamma
@@ -101,17 +116,53 @@ AnyLocalSearchConfig = LSRBO
 
 
 class BotorchOptimizer(AcquisitionOptimizer):
-    type: Literal["BotorchOptimizer"] = "BotorchOptimizer"
-    n_restarts: PositiveInt = 20  # same default as in Ax
-    n_raw_samples: IntPowerOfTwo = 1024  # same default as in Ax
-    maxiter: PositiveInt = 2000
-    batch_limit: Optional[PositiveInt] = Field(default=None, validate_default=True)
-    sequential: bool = False
-    # for a discussion on the use of sequential, have a look here
-    # https://github.com/pytorch/botorch/discussions/2810
+    """Gradient-based optimization of the acquisition function from several starting
+    points, with BoTorch.
 
-    # local search region params
-    local_search_config: Optional[AnyLocalSearchConfig] = None
+    Continuous inputs are optimized by gradients. Categorical and discrete inputs are
+    handled by trying every combination of their values if there are few, and
+    otherwise by optimizing them alternately with the continuous inputs. Supports all
+    constraints except nonlinear ones.
+
+    Examples:
+        >>> BotorchOptimizer(n_restarts=10, n_raw_samples=512)
+    """
+
+    type: Literal["BotorchOptimizer"] = "BotorchOptimizer"
+    n_restarts: PositiveInt = Field(
+        default=20,
+        description="Number of starting points from which the optimization is run. "
+        "More starts find better maxima at a higher cost.",
+    )
+    n_raw_samples: IntPowerOfTwo = Field(
+        default=1024,
+        description="Number of random points at which the acquisition function is "
+        "evaluated to choose the starting points; a power of two.",
+    )
+    maxiter: PositiveInt = Field(
+        default=2000,
+        description="Maximal number of iterations of each optimization run.",
+    )
+    batch_limit: Optional[PositiveInt] = Field(
+        default=None,
+        validate_default=True,
+        description="Number of starts optimized together in one batch; smaller "
+        "batches need less memory. At most, and if not provided equal to, "
+        "`n_restarts`.",
+    )
+    sequential: bool = Field(
+        default=False,
+        description="Whether the candidates of a batch are chosen one after another, "
+        "each given the ones before, instead of all jointly. Cheaper for large "
+        "batches and often as good, see "
+        "https://github.com/pytorch/botorch/discussions/2810.",
+    )
+    local_search_config: Optional[AnyLocalSearchConfig] = Field(
+        default=None,
+        description="Rule for taking steps within a local search region. Requires "
+        "a domain with only linear constraints and without semi-continuous inputs; "
+        "if not provided, every step maximizes over the whole domain.",
+    )
 
     # NChooseK / semi-continuous pruning hyperparameters. See
     # `bofire.strategies.predictives._nchoosek_pruning.prune_nchoosek` for
@@ -191,14 +242,6 @@ class BotorchOptimizer(AcquisitionOptimizer):
                             f"{feat.key!r} violates this."
                         )
 
-        def validate_interpoint_constraints(domain: Domain):
-            if domain.constraints.get(InterpointConstraint) and len(
-                domain.inputs.get(ContinuousInput),
-            ) != len(domain.inputs):
-                raise ValueError(
-                    "Interpoint constraints can only be used for pure continuous search spaces.",
-                )
-
         def validate_exclude_constraints(domain: Domain):
             if (
                 len(domain.constraints.get(constraints.CategoricalExcludeConstraint))
@@ -219,48 +262,57 @@ class BotorchOptimizer(AcquisitionOptimizer):
                     )
 
         validate_local_search_config(domain)
-        validate_interpoint_constraints(domain)
         validate_exclude_constraints(domain)
 
 
 class GeneticAlgorithmOptimizer(AcquisitionOptimizer):
-    """
-    Genetic Algorithm for acquisition function optimization, using the Pymoo mixed-type algorithm.
+    """Genetic algorithm for the acquisition function, with pymoo's mixed-variable
+    algorithm.
 
-    This optimizer uses a population-based approach to optimize acquisition functions. Currently, only
-    single-objective optimization is supported. The algorithm evolves a population of
-    candidate solutions over multiple generations using genetic operators such as mutation, crossover,
-    and selection.
-    Depending on the domain, the algorithm uses different encodings for the decision variables:
-    - Continuous features are encoded as continuous variables.
-    - Categorical features are encoded categories
-    - Discrete features are encoded as integers.
+    A population of candidates evolves over generations by mutation, crossover and
+    selection. It needs no gradients, so it handles categorical and discrete inputs
+    directly and supports nonlinear inequality constraints, which the gradient-based
+    optimizer cannot, at a higher cost. Only for
+    single-objective acquisition functions. The run stops at the first termination
+    criterion met.
 
-    Attributes:
-        population_size (int): The size of the population in each generation.
-        xtol (float): Tolerance for changes in the decision variables across generations.
-        cvtol (float): Tolerance for constraint violations.
-        ftol (float): Tolerance for changes in the objective function values across generations.
-        n_max_gen (int): Maximum number of generations to run the algorithm.
-        n_max_evals (int): Maximum number of function evaluations allowed.
+    Examples:
+        >>> GeneticAlgorithmOptimizer(population_size=500, n_max_gen=200)
     """
 
     type: Literal["GeneticAlgorithm"] = "GeneticAlgorithm"
 
-    # algorithm options
-    population_size: PositiveInt = 1000
-
-    # termination criteria
-    xtol: PositiveFloat = 0.0005
-    cvtol: PositiveFloat = 1e-8
-    ftol: PositiveFloat = 1e-6
-    n_max_gen: PositiveInt = 500
-    n_max_evals: PositiveInt = 100000
-
-    # verbosity
-    verbose: bool = False
-
-    # progress tracking
+    population_size: PositiveInt = Field(
+        default=1000,
+        description="Number of candidates in each generation.",
+    )
+    xtol: PositiveFloat = Field(
+        default=0.0005,
+        description="The run stops once the inputs of the population change less "
+        "than this between generations.",
+    )
+    cvtol: PositiveFloat = Field(
+        default=1e-8,
+        description="The run stops once the constraint violation changes less than "
+        "this between generations.",
+    )
+    ftol: PositiveFloat = Field(
+        default=1e-6,
+        description="The run stops once the acquisition values change less than this "
+        "between generations.",
+    )
+    n_max_gen: PositiveInt = Field(
+        default=500,
+        description="Maximal number of generations.",
+    )
+    n_max_evals: PositiveInt = Field(
+        default=100000,
+        description="Maximal number of evaluations of the acquisition function.",
+    )
+    verbose: bool = Field(
+        default=False,
+        description="Whether the progress of the generations is printed.",
+    )
     ga_progress_csv_path: Optional[str] = Field(
         default=None,
         description="Path to a CSV file where the progress of the genetic algorithm will be saved.",

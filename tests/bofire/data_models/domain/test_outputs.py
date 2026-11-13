@@ -29,7 +29,7 @@ data = pd.DataFrame.from_dict(
     },
 )
 
-obj = TargetObjective(target_value=1, steepness=2, tolerance=3, w=0.5)
+obj = TargetObjective(target_value=1, steepness=2, tolerance=3)
 
 
 of1 = ContinuousOutput(key="out1", objective=obj)
@@ -212,7 +212,7 @@ def test_get_outputs_by_objective_none():
             ContinuousOutput(key="a", objective=None),
             ContinuousOutput(
                 key="b",
-                objective=MaximizeSigmoidObjective(w=1, steepness=1, tp=0),
+                objective=MaximizeSigmoidObjective(steepness=1, tp=0),
             ),
             ContinuousOutput(key="c", objective=MaximizeObjective()),
         ],
@@ -307,7 +307,7 @@ def test_outputs_call_adapt_experiment():
             ContinuousOutput(key="of1", objective=MaximizeObjective()),
             ContinuousOutput(
                 key="of2",
-                objective=MovingMaximizeSigmoidObjective(tp=0, steepness=10, w=1.0),
+                objective=MovingMaximizeSigmoidObjective(tp=0, steepness=10),
             ),
         ],
     )

@@ -61,7 +61,7 @@ class DTLZ2(Benchmark):
         self.k = self.dim - self.num_objectives + 1
         for i in range(self.num_objectives):
             outputs.append(
-                ContinuousOutput(key=f"f_{i}", objective=MinimizeObjective(w=1.0)),
+                ContinuousOutput(key=f"f_{i}", objective=MinimizeObjective()),
             )
         domain = Domain(
             inputs=Inputs(features=inputs),
@@ -146,8 +146,8 @@ class BNH(Benchmark):
             ),
             outputs=Outputs(
                 features=[
-                    ContinuousOutput(key="f1", objective=MinimizeObjective(w=1.0)),
-                    ContinuousOutput(key="f2", objective=MinimizeObjective(w=1.0)),
+                    ContinuousOutput(key="f1", objective=MinimizeObjective()),
+                    ContinuousOutput(key="f2", objective=MinimizeObjective()),
                 ],
             ),
         )
@@ -201,8 +201,8 @@ class TNK(Benchmark):
             ),
             outputs=Outputs(
                 features=[
-                    ContinuousOutput(key="f1", objective=MinimizeObjective(w=1.0)),
-                    ContinuousOutput(key="f2", objective=MinimizeObjective(w=1.0)),
+                    ContinuousOutput(key="f1", objective=MinimizeObjective()),
+                    ContinuousOutput(key="f2", objective=MinimizeObjective()),
                     ContinuousOutput(
                         key="c1",
                         objective=MaximizeSigmoidObjective(tp=0.0, steepness=500),
@@ -246,7 +246,7 @@ class C2DTLZ2(DTLZ2):
         self._domain.outputs.features.append(
             ContinuousOutput(
                 key="slack",
-                objective=MaximizeSigmoidObjective(w=1.0, tp=0, steepness=1.0 / 1e-3),
+                objective=MaximizeSigmoidObjective(tp=0, steepness=1.0 / 1e-3),
             ),
         )
 
@@ -315,11 +315,11 @@ class SnarBenchmark(Benchmark):
         # Objectives
         # "space time yield (kg/m^3/h)"
         outputs = [
-            ContinuousOutput(key="sty", objective=MaximizeObjective(w=1.0)),
+            ContinuousOutput(key="sty", objective=MaximizeObjective()),
             # "E-factor"
             ContinuousOutput(
                 key="e_factor",
-                objective=MinimizeObjective(w=1.0),
+                objective=MinimizeObjective(),
             ),
         ]
         self.ref_point = {"e_factor": 10.7, "sty": 2957.0}
@@ -457,7 +457,7 @@ class ZDT1(Benchmark):
         ]
         inputs = Inputs(features=inputs)
         outputs = [
-            ContinuousOutput(key=f"y{i + 1}", objective=MinimizeObjective(w=1))
+            ContinuousOutput(key=f"y{i + 1}", objective=MinimizeObjective())
             for i in range(2)
         ]
         outputs = Outputs(features=outputs)
@@ -556,11 +556,11 @@ class CrossCoupling(Benchmark):
         outputs = [
             ContinuousOutput(
                 key="yield",
-                objective=MaximizeObjective(w=1.0, bounds=[0.0, 1.0]),
+                objective=MaximizeObjective(bounds=[0.0, 1.0]),
             ),
             ContinuousOutput(
                 key="cost",
-                objective=MinimizeObjective(w=1.0, bounds=[0.0, 1.0]),
+                objective=MinimizeObjective(bounds=[0.0, 1.0]),
             ),
         ]
         self.ref_point = {"yield": 0.0, "cost": 1.0}

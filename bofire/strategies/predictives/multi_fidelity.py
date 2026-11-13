@@ -9,6 +9,7 @@ from bofire.data_models.acquisition_functions.api import (
 )
 from bofire.data_models.api import Domain
 from bofire.data_models.features.api import CategoricalTaskInput
+from bofire.data_models.strategies.api import AnyScalarization
 from bofire.data_models.strategies.convergence_criteria.api import (
     AnyConvergenceCriterion,
 )
@@ -140,6 +141,7 @@ class MultiFidelityVarianceBasedStrategy(SoboStrategy):
         domain: Domain,
         fidelity_thresholds: List[float] | float | None = None,
         acquisition_function: AnySingleObjectiveAcquisitionFunction | None = None,
+        scalarization: AnyScalarization | None = None,
         acquisition_optimizer: AnyAcqfOptimizer | None = None,
         surrogate_specs: BotorchSurrogates | None = None,
         seed: int | None = None,
@@ -164,6 +166,8 @@ class MultiFidelityVarianceBasedStrategy(SoboStrategy):
             domain: The optimization domain of the strategy.
             fidelity_thresholds: The thresholds for the fidelity. If a single value is provided, it will be used for all fidelities.
             acquisition_function: The acquisition function to use.
+            scalarization: Only the default, `SingleObjectiveScalarization`, is
+                supported.
             acquisition_optimizer: The acquisition optimizer to use.
             surrogate_specs: The specifications for the surrogate model.
             seed: The random seed to use.

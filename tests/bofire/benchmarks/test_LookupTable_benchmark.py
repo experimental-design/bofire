@@ -34,9 +34,7 @@ def test_LookupTable_benchmark(cls_benchmark: LookupTableBenchmark):
         key="x2",
         categories=list(set(look_up["x2"].to_list())),
     )
-    objective = MaximizeObjective(
-        w=1.0,
-    )
+    objective = MaximizeObjective()
     inputs = Inputs(features=[input_feature1, input_feature2])
     output_feature = ContinuousOutput(key="y", objective=objective)
     outputs = Outputs(features=[output_feature])

@@ -1,4 +1,7 @@
-from bofire.data_models.strategies._register import register_strategy
+from bofire.data_models.strategies._register import (
+    register_scalarization,
+    register_strategy,
+)
 from bofire.data_models.strategies.actual_strategy_type import (
     _ACTUAL_STRATEGY_TYPES,
     ActualStrategy,
@@ -51,13 +54,15 @@ from bofire.data_models.strategies.predictives.multiobjective import (
 )
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
-from bofire.data_models.strategies.predictives.sobo import (
-    AdditiveSoboStrategy,
-    CustomSoboStrategy,
-    MultiplicativeAdditiveSoboStrategy,
-    MultiplicativeSoboStrategy,
-    SoboStrategy,
+from bofire.data_models.strategies.predictives.scalarization import (
+    AnyScalarization,
+    Scalarization,
+    SingleObjectiveScalarization,
+    WeightedProductScalarization,
+    WeightedProductSumScalarization,
+    WeightedSumScalarization,
 )
+from bofire.data_models.strategies.predictives.sobo import SoboStrategy
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
 from bofire.data_models.strategies.stepwise.conditions import (
@@ -84,10 +89,6 @@ AnyStrategy = tagged_union(*_ANY_STRATEGY_TYPES)
 AnyPredictive = tagged_union(
     SoboStrategy,
     ActiveLearningStrategy,
-    AdditiveSoboStrategy,
-    MultiplicativeSoboStrategy,
-    MultiplicativeAdditiveSoboStrategy,
-    CustomSoboStrategy,
     QparegoStrategy,
     EntingStrategy,
     MoboStrategy,

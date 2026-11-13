@@ -20,7 +20,10 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
 )
-from bofire.data_models.strategies.api import MultiplicativeSoboStrategy
+from bofire.data_models.strategies.api import (
+    SoboStrategy,
+    WeightedSumScalarization,
+)
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     CategoricalDeterministicSurrogate,
@@ -91,8 +94,9 @@ experiments
 Next we setup a `SoboStrategy` using the custom surrogates for outputs `y_x2` and `y_cat` and ask for a candidate. Note that the surrogate specs for output `y` is automatically generated and defaulted to be a `SingleTaskGPSurrogate`.
 
 ```{python}
-strategy_data = MultiplicativeSoboStrategy(
+strategy_data = SoboStrategy(
     domain=domain,
+    scalarization=WeightedSumScalarization(),
     surrogate_specs=BotorchSurrogates(
         surrogates=[surrogate_data, categorical_surrogate_data]
     ),

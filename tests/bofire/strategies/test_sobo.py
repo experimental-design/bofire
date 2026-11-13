@@ -45,15 +45,21 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
 )
-from bofire.data_models.strategies.api import BotorchOptimizer
+from bofire.data_models.strategies.api import (
+    BotorchOptimizer,
+    WeightedProductScalarization,
+    WeightedProductSumScalarization,
+    WeightedSumScalarization,
+)
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.predictives.acqf_optimization import LSRBO
 from bofire.data_models.unions import to_list
-from bofire.strategies.api import CustomSoboStrategy, RandomStrategy, SoboStrategy
+from bofire.strategies.api import RandomStrategy, SoboStrategy
 from bofire.strategies.predictives._nchoosek_pruning import (
     has_nchoosek_linear_overlap,
     is_nchoosek_pruning_applicable,
 )
+from bofire.utils.torch_tools import tkwargs
 
 
 def test_SOBO_not_fitted():
@@ -278,104 +284,94 @@ def test_get_acqf_input(acqf, num_candidates):
     )
 
 
-def test_custom_get_objective():
-    def f(samples, callables, weights, X):
-        outputs_list = []
-        for c, w in zip(callables, weights):
-            outputs_list.append(c(samples, None) ** w)
-        samples = torch.stack(outputs_list, dim=-1)
-
-        return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
-
-    benchmark = DTLZ2(3)
-    experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
-    data_model = data_models.CustomSoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qNEI(),
+def _domain_with_sigmoid_output() -> Domain:
+    return Domain(
+        inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+        outputs=Outputs(
+            features=[
+                ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+                ContinuousOutput(
+                    key="gamma",
+                    objective=MaximizeSigmoidObjective(steepness=10, tp=0.5),
+                ),
+            ]
+        ),
     )
-    strategy = CustomSoboStrategy(data_model=data_model)
-    strategy.f = f
-    strategy._experiments = experiments
-    generic_objective, _, _ = strategy._get_objective_and_constraints()
-    assert isinstance(generic_objective, GenericMCObjective)
 
 
-def test_custom_get_objective_invalid():
-    benchmark = DTLZ2(3)
-    data_model = data_models.CustomSoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qNEI(),
+@pytest.mark.parametrize(
+    "scalarization, separates",
+    [
+        (WeightedSumScalarization(use_output_constraints=True), True),
+        (WeightedSumScalarization(use_output_constraints=False), False),
+        (WeightedProductScalarization(), False),
+        (WeightedProductSumScalarization(additive_features=["beta"]), False),
+    ],
+)
+def test_sobo_scalarization_output_constraints(scalarization, separates):
+    domain = _domain_with_sigmoid_output()
+    strategy = SoboStrategy.make(
+        domain=domain, acquisition_function=qLogNEI(), scalarization=scalarization
     )
-    strategy = CustomSoboStrategy(data_model=data_model)
-    experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
-    strategy._experiments = experiments
-
-    with pytest.raises(ValueError):
-        strategy._get_objective_and_constraints()
-
-
-def test_custom_dumps_loads():
-    def f(samples, callables, weights, X):
-        outputs_list = []
-        for c, w in zip(callables, weights):
-            outputs_list.append(c(samples, None) ** w)
-        samples = torch.stack(outputs_list, dim=-1)
-
-        return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
-
-    benchmark = DTLZ2(3)
-    data_model1 = data_models.CustomSoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qNEI(),
-        use_output_constraints=False,
+    strategy._experiments = pd.DataFrame(
+        {
+            "a": [0.1, 0.5, 0.9],
+            "alpha": [0.2, 0.4, 0.6],
+            "beta": [0.3, 0.5, 0.7],
+            "gamma": [0.1, 0.5, 0.9],
+            **{f"valid_{k}": [1] * 3 for k in ["alpha", "beta", "gamma"]},
+        }
     )
-    strategy1 = CustomSoboStrategy(data_model=data_model1)
-    experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
-    strategy1._experiments = experiments
-    strategy1.f = f
-    f_str = strategy1.dumps()
+    objective, constraints, _ = strategy._get_objective_and_constraints()
+    assert isinstance(objective, GenericMCObjective)
+    assert (constraints is not None) == separates
 
-    data_model2 = data_models.CustomSoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qNEI(),
-        use_output_constraints=False,
-        dump=f_str,
+    # an absorbed constrained objective changes the value of the combination
+    samples = torch.full((4, 3), 0.5, **tkwargs)
+    samples[:, 2] = torch.tensor([0.0, 0.3, 0.7, 1.0], **tkwargs)
+    values = objective(samples)
+    assert (values.unique().numel() == 1) == separates
+
+
+@pytest.mark.parametrize(
+    "scalarization, expected",
+    [
+        (WeightedSumScalarization(weights={"alpha": 2.0}), lambda a, b: 2 * a + b),
+        (WeightedProductScalarization(weights={"alpha": 2.0}), lambda a, b: a**2 * b),
+        (
+            WeightedProductScalarization(
+                weights={"alpha": 2.0}, weight_normalization="sum"
+            ),
+            lambda a, b: a ** (2 / 3) * b ** (1 / 3),
+        ),
+    ],
+)
+def test_sobo_scalarization_weights(scalarization, expected):
+    domain = Domain(
+        inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+        outputs=Outputs(
+            features=[
+                ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+            ]
+        ),
     )
-    strategy2 = CustomSoboStrategy(data_model=data_model2)
-    strategy2._experiments = experiments
-
-    data_model3 = data_models.CustomSoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qNEI(),
+    strategy = SoboStrategy.make(domain=domain, scalarization=scalarization)
+    strategy._experiments = pd.DataFrame(
+        {
+            "a": [0.1, 0.9],
+            "alpha": [0.2, 0.6],
+            "beta": [0.3, 0.7],
+            "valid_alpha": [1, 1],
+            "valid_beta": [1, 1],
+        }
     )
-    strategy3 = CustomSoboStrategy(data_model=data_model3)
-    strategy3._experiments = experiments
-    strategy3.loads(f_str)
-
-    assert isinstance(strategy2.f, type(f))
-    assert isinstance(strategy3.f, type(f))
-
-    samples = torch.rand(30, 2, requires_grad=True) * 5
-    objective1, _, _ = strategy1._get_objective_and_constraints()
-    output1 = objective1.forward(samples)
-    objective2, _, _ = strategy2._get_objective_and_constraints()
-    output2 = objective2.forward(samples)
-    objective3, _, _ = strategy3._get_objective_and_constraints()
-    output3 = objective3.forward(samples)
-
-    torch.testing.assert_close(output1, output2)
-    torch.testing.assert_close(output1, output3)
-
-
-def test_custom_dumps_invalid():
-    benchmark = DTLZ2(3)
-    data_model = data_models.CustomSoboStrategy(
-        domain=benchmark.domain,
-        acquisition_function=qNEI(),
+    objective, _, _ = strategy._get_objective_and_constraints()
+    samples = torch.tensor([[0.5, 0.2], [0.9, 0.4]], **tkwargs)
+    torch.testing.assert_close(
+        objective(samples), expected(samples[:, 0], samples[:, 1])
     )
-    strategy = CustomSoboStrategy(data_model=data_model)
-    with pytest.raises(ValueError):
-        strategy.dumps()
 
 
 @pytest.mark.parametrize("candidate_count", [1, 2])
@@ -573,7 +569,7 @@ def test_nchoosek_pruning_sobo():
             ContinuousInput(key="x3", bounds=(0, 1)),
             ContinuousInput(key="x4", bounds=(0, 1)),
         ],
-        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],  # type: ignore
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective())],  # type: ignore
         constraints=[  # type: ignore
             NChooseKConstraint(
                 features=["x1", "x2", "x3", "x4"],
@@ -619,7 +615,7 @@ def test_nchoosek_pruning_with_mixture_constraint():
             ContinuousInput(key="x3", bounds=(0, 1)),
             ContinuousInput(key="x4", bounds=(0, 1)),
         ],
-        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],  # type: ignore
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective())],  # type: ignore
         constraints=[  # type: ignore
             NChooseKConstraint(
                 features=["x1", "x2", "x3", "x4"],
@@ -682,7 +678,7 @@ def test_sobo_semicontinuous_through_pruning():
             ContinuousInput(key=f"x{i + 1}", bounds=(lb, ub), allow_zero=True)
             for i in range(3)
         ],
-        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective())],
     )
 
     random_strategy = RandomStrategy(

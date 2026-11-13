@@ -13,7 +13,7 @@ from bofire.utils.naming_conventions import (
 )
 
 
-continuous_output = ContinuousOutput(key="cont", objective=MinimizeObjective(w=1))
+continuous_output = ContinuousOutput(key="cont", objective=MinimizeObjective())
 categorical_output = CategoricalOutput(
     key="cat",
     categories=["alpha", "beta"],

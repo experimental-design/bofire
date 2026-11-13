@@ -29,7 +29,7 @@ def _domain(task_input):
         task_input,
     ]
 
-    objective = MaximizeObjective(w=1)
+    objective = MaximizeObjective()
 
     inputs = Inputs(features=input_features)
 

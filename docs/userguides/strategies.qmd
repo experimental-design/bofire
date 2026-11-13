@@ -18,7 +18,7 @@ Predictive strategies are making use of (Bayesian) surrogate models to provide c
 
 The following predictive strategies are available:
 
-- `SoboStrategy`: Bayesian optimization strategy that optimizes a single-objective acquisition function. For multi-objective domains, different scalarizations are possible as implemented in the `AdditiveSoboStrategy`, `MultiplicativeSoboStrategy`, `AdditiveMultiplicativeSoboStrategy` and `CustomSoboStrategy`.
+- `SoboStrategy`: Bayesian optimization strategy that optimizes a single-objective acquisition function. For multi-objective domains, its `scalarization` combines the objectives into one: `WeightedSumScalarization`, `WeightedProductScalarization` or `WeightedProductSumScalarization`. Own scalarizations can be added with `bofire.strategies.api.register_scalarization`.
 - `MoboStrategy`: Bayesian optimization strategy that optimizes a hypervolume based acquisition function for pareto-based multi-objective optimization.
 - `QparegoStrategy`: Parallel ParEGO strategy for multiobjective optimization.
 - `MultiFidelityVarianceBasedStrategy:` Single objective multi-fidelity BO as described [here](https://www.sciencedirect.com/science/article/pii/S0098135423000637)

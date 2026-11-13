@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Callable, List, Type
+from typing import Callable, List, Optional, Type
 
 import numpy as np
 import pytest
@@ -129,6 +129,7 @@ class OptimizerBenchmark:
     )
     map_conti_inputs_to_discrete: bool = False  # for testing fully categorical problems
     n_add: int = 5
+    scalarization: Optional[data_models_strategies.Scalarization] = None
 
     def get_adapted_domain(self) -> Domain:
         domain = self.benchmark.domain
@@ -171,7 +172,12 @@ class OptimizerBenchmark:
                     "skipping nonlinear constraints / n-choose-k constr. / categorical exclude constr. for botorch optimizer"
                 )
 
-        strategy = self.strategy(domain=domain, acquisition_optimizer=optimizer)
+        kwargs = (
+            {} if self.scalarization is None else {"scalarization": self.scalarization}
+        )
+        strategy = self.strategy(
+            domain=domain, acquisition_optimizer=optimizer, **kwargs
+        )
         strategy = strategies.map(strategy)
 
         random_strategy = strategies.RandomStrategy.make(domain=domain)
@@ -209,12 +215,14 @@ class OptimizerBenchmark:
         OptimizerBenchmark(
             benchmarks.Detergent(),
             5,
-            data_models_strategies.AdditiveSoboStrategy,
+            data_models_strategies.SoboStrategy,
+            scalarization=data_models_strategies.WeightedSumScalarization(),
         ),
         OptimizerBenchmark(
             benchmarks.Detergent(),
             5,
-            data_models_strategies.MultiplicativeSoboStrategy,
+            data_models_strategies.SoboStrategy,
+            scalarization=data_models_strategies.WeightedProductScalarization(),
             additional_constraint_functions=[
                 ConstraintCollection.nchoosek_constr_for_detergent,
             ],
@@ -223,12 +231,14 @@ class OptimizerBenchmark:
         OptimizerBenchmark(
             benchmarks.CrossCoupling(),
             4,
-            data_models_strategies.AdditiveSoboStrategy,
+            data_models_strategies.SoboStrategy,
+            scalarization=data_models_strategies.WeightedSumScalarization(),
         ),
         OptimizerBenchmark(
             benchmarks.DTLZ2(dim=2, num_objectives=2),
             3,
-            data_models_strategies.AdditiveSoboStrategy,
+            data_models_strategies.SoboStrategy,
+            scalarization=data_models_strategies.WeightedSumScalarization(),
         ),
         OptimizerBenchmark(
             benchmarks.Ackley(num_categories=3, categorical=True, dim=4),

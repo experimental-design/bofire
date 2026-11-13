@@ -82,8 +82,11 @@ quartodoc:
             - MoboStrategy
             - MultiFidelityVarianceBasedStrategy
             - MultiobjectiveStrategy
-            - AdditiveSoboStrategy
-            - CustomSoboStrategy
+            - SoboStrategy
+            - SingleObjectiveScalarization
+            - WeightedSumScalarization
+            - WeightedProductScalarization
+            - WeightedProductSumScalarization
             - LLMStrategy
     - title: Data Models - Kernels
       desc: Kernel configuration data models
@@ -139,9 +142,7 @@ quartodoc:
             - DoEStrategy
             - FractionalFactorialStrategy
             - SoboStrategy
-            - AdditiveSoboStrategy
-            - MultiplicativeSoboStrategy
-            - CustomSoboStrategy
+            - register_scalarization
             - QparegoStrategy
             - MoboStrategy
             - BotorchStrategy

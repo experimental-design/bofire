@@ -64,7 +64,7 @@ of3 = ContinuousOutput(key="of3", objective=None)
 
 of4 = ContinuousOutput(
     key="of4",
-    objective=TargetObjective(w=1, target_value=5.0, tolerance=1.0, steepness=0.5),
+    objective=TargetObjective(target_value=5.0, tolerance=1.0, steepness=0.5),
 )
 
 c1 = LinearEqualityConstraint(

@@ -1,19 +1,54 @@
 from typing import List, Literal, Union
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 
+from bofire.data_models.acquisition_functions.api import qLogPF
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import CategoricalTaskInput
-from bofire.data_models.strategies.predictives.sobo import SoboStrategy, _ForbidPFMixin
+from bofire.data_models.strategies.predictives.scalarization import (
+    SingleObjectiveScalarization,
+)
+from bofire.data_models.strategies.predictives.sobo import SoboStrategy
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate
 
 
-class MultiFidelityVarianceBasedStrategy(SoboStrategy, _ForbidPFMixin):
+class MultiFidelityVarianceBasedStrategy(SoboStrategy):
+    """Single-objective Bayesian optimization that also chooses the fidelity at
+    which to run each candidate (Kandasamy et al., 2016; Folch et al., 2023).
+
+    The candidate is chosen for the target fidelity; it is then run at the cheapest
+    fidelity at which the model is still uncertain enough about it, so cheap
+    experiments are used as long as they are informative. Needs a categorical task
+    input with exactly one target fidelity, and a multi-task GP for every output.
+
+    Examples:
+        >>> MultiFidelityVarianceBasedStrategy(domain=domain, fidelity_thresholds=0.1)
+    """
+
     type: Literal["MultiFidelityVarianceBasedStrategy"] = (
         "MultiFidelityVarianceBasedStrategy"
     )
 
-    fidelity_thresholds: Union[List[float], float] = 0.1
+    fidelity_thresholds: Union[List[float], float] = Field(
+        default=0.1,
+        description="Predicted standard deviation, relative to that of the output, "
+        "above which a fidelity is still informative enough to be chosen. One value "
+        "for all fidelities, or a list with one value per task, the i-th applying "
+        "to fidelity level i.",
+    )
+
+    @model_validator(mode="after")
+    def validate_single_objective(self):
+        """Ensures a single objective without qLogPF."""
+        if not isinstance(self.scalarization, SingleObjectiveScalarization):
+            raise ValueError(
+                f"{self.type} only supports the SingleObjectiveScalarization.",
+            )
+        if isinstance(self.acquisition_function, qLogPF):
+            raise ValueError(
+                f"qLogPF acquisition function is not supported by {self.type}.",
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_tasks_and_fidelity_thresholds(self):

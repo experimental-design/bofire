@@ -24,31 +24,31 @@ if1 = specs.features.valid(ContinuousInput).obj(key="if1")
 if2 = specs.features.valid(ContinuousInput).obj(key="if2")
 
 of1 = ContinuousOutput(
-    objective=MaximizeObjective(w=1),
+    objective=MaximizeObjective(),
     key="of1",
 )
 of2 = ContinuousOutput(
-    objective=MinimizeObjective(w=1),
+    objective=MinimizeObjective(),
     key="of2",
 )
 of3 = ContinuousOutput(
-    objective=MaximizeObjective(w=1),
+    objective=MaximizeObjective(),
     key="of3",
 )
 of4 = ContinuousOutput(
-    objective=MinimizeObjective(w=1),
+    objective=MinimizeObjective(),
     key="of4",
 )
 of5 = ContinuousOutput(
-    objective=MaximizeSigmoidObjective(w=1, tp=1, steepness=1),
+    objective=MaximizeSigmoidObjective(tp=1, steepness=1),
     key="of5",
 )
 of6 = ContinuousOutput(
-    objective=MinimizeSigmoidObjective(w=1, tp=1, steepness=1),
+    objective=MinimizeSigmoidObjective(tp=1, steepness=1),
     key="of6",
 )
 of7 = ContinuousOutput(
-    objective=CloseToTargetObjective(w=1, target_value=5, exponent=1),
+    objective=CloseToTargetObjective(target_value=5, exponent=1),
     key="of7",
 )
 

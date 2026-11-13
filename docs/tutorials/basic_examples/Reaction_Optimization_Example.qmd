@@ -79,9 +79,7 @@ input_features = Inputs(
 from bofire.data_models.objectives.api import MaximizeObjective
 
 
-objective = MaximizeObjective(
-    w=1.0,
-)
+objective = MaximizeObjective()
 yield_feature = ContinuousOutput(key="Yield", objective=objective)
 # create an output feature
 output_features = Outputs(features=[yield_feature])

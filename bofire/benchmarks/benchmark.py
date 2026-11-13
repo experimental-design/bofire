@@ -333,9 +333,9 @@ class SyntheticBoTorch(Benchmark):
                 features=[
                     ContinuousOutput(
                         key="y",
-                        objective=MinimizeObjective(w=1)
+                        objective=MinimizeObjective()
                         if self.test_function._is_minimization_by_default
-                        else MaximizeObjective(w=1),
+                        else MaximizeObjective(),
                     )
                 ]
             ),

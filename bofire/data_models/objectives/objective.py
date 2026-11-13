@@ -3,27 +3,33 @@ from typing import Annotated, Any, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from bofire.data_models.base import BaseModel
 
 
 TGt0 = Annotated[float, Field(gt=0)]
 TGe0 = Annotated[float, Field(ge=0)]
-TWeight = Annotated[float, Field(gt=0, le=1)]
 
 
 class Objective(BaseModel):
     """The base class for all objectives"""
 
     type: Any
-    w: TWeight = Field(
-        default=1.0,
-        description="Relative weight of this objective. Only the strategies that "
-        "aggregate several objectives into one acquisition function read it, namely "
-        "the additive, multiplicative and custom SOBO strategies; the others ignore "
-        "it.",
-    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_no_weight(cls, data: Any) -> Any:
+        """Drops the former weight `w` of stored objectives if it is the neutral 1;
+        any other weight has to be set on the scalarization instead."""
+        if isinstance(data, dict) and "w" in data:
+            data = dict(data)
+            if data.pop("w") != 1:
+                raise ValueError(
+                    "Objective weights moved to the scalarization of SoboStrategy, "
+                    "e.g. WeightedSumScalarization(weights={...}).",
+                )
+        return data
 
     @abstractmethod
     def to_description(self) -> str:
