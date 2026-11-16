@@ -192,16 +192,6 @@ def find_local_max(
     return design
 
 
-def find_local_max_ipopt(*args, **kwargs) -> pd.DataFrame:
-    """Deprecated alias of ``find_local_max``."""
-    warnings.warn(
-        "`find_local_max_ipopt` is deprecated; use `find_local_max`.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return find_local_max(*args, **kwargs)
-
-
 def partially_fix_experiment(
     bounds: list,
     fixed_experiments: Union[pd.DataFrame, None],

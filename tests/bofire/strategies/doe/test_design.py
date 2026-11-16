@@ -958,11 +958,3 @@ def test_partially_fixed_experiments():
         assert e == ValueError(
             "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column.",
         )
-
-
-def test_find_local_max_ipopt_is_deprecated_alias(monkeypatch):
-    import bofire.strategies.doe.design as design_module
-
-    monkeypatch.setattr(design_module, "find_local_max", lambda *a, **k: "called")
-    with pytest.warns(DeprecationWarning, match="find_local_max"):
-        assert design_module.find_local_max_ipopt(1, b=2) == "called"
