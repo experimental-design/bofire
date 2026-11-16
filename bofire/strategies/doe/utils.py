@@ -34,6 +34,7 @@ from bofire.strategies.doe.objective_base import Objective
 from bofire.strategies.doe.utils_categorical_discrete import (
     map_categorical_to_continuous,
 )
+from bofire.strategies.progress import AskProgressCallback, scipy_progress_callback
 from bofire.strategies.random import RandomStrategy
 
 
@@ -950,6 +951,7 @@ def _solve(
     constraints: Optional[List[dict]],
     optimizer: str = "pounce",
     optimizer_options: Optional[dict] = None,
+    callback: Optional[AskProgressCallback] = None,
 ) -> opt.OptimizeResult:
     """Minimize the objective over the given bounds and constraints.
 
@@ -972,6 +974,9 @@ def _solve(
         constraints: dict constraints (``constraints_as_scipy_constraints`` output).
         optimizer: ``"pounce"``, ``"ipopt"`` or ``"scipy"``.
         optimizer_options: options forwarded to the chosen backend.
+        callback: Called with an `AskProgressData` once per solver iteration
+            (pounce also reports the starting point). Not supported with
+            ``"ipopt"``, which warns and ignores it.
 
     Returns:
         The backend's ``OptimizeResult``; ``x`` is the flattened design.
@@ -989,6 +994,16 @@ def _solve(
         options = {**POUNCE_DOE_DEFAULTS, **options}
     elif optimizer == "ipopt":
         method = _ipopt_method
+        if callback is not None:
+            # cyipopt.minimize_ipopt raises on a callback and has no other
+            # per-iteration hook.
+            warnings.warn(
+                "Progress is not reported with optimizer='ipopt'; use 'pounce' or "
+                "'scipy' to receive progress callbacks.",
+                UserWarning,
+                stacklevel=2,
+            )
+            callback = None
     else:
         method = "SLSQP"
         constraints = _densify_jacobians(constraints)
@@ -1002,6 +1017,7 @@ def _solve(
         constraints=constraints,
         method=method,
         options=options,
+        callback=None if callback is None else scipy_progress_callback(callback),
     )
 
 
@@ -1012,6 +1028,7 @@ def _minimize(
     constraints: Optional[List[dict]],
     optimizer: str = "pounce",
     optimizer_options: Optional[dict] = None,
+    callback: Optional[AskProgressCallback] = None,
 ) -> np.ndarray:
     """Like ``_solve``, but return only the optimized flattened design."""
     return _solve(
@@ -1021,4 +1038,5 @@ def _minimize(
         constraints=constraints,
         optimizer=optimizer,
         optimizer_options=optimizer_options,
+        callback=callback,
     ).x

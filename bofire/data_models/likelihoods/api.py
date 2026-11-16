@@ -1,5 +1,6 @@
 import math
 
+from bofire.data_models.likelihoods._register import register_likelihood  # noqa: F401
 from bofire.data_models.likelihoods.likelihood import (
     GaussianLikelihood,
     Likelihood,
@@ -15,18 +16,30 @@ from bofire.data_models.priors.api import (
 from bofire.data_models.unions import tagged_union
 
 
-AnyLikelihood = tagged_union(
-    GaussianLikelihood, SparseOutlierGaussianLikelihood, TaskwiseLikelihood
-)
+_LIKELIHOOD_TYPES: list[type[Likelihood]] = [
+    GaussianLikelihood,
+    SparseOutlierGaussianLikelihood,
+    TaskwiseLikelihood,
+]
+
+AnyLikelihood = tagged_union(*_LIKELIHOOD_TYPES)
 
 # the likelihoods a single-task GP takes
-AnySingleTaskLikelihood = tagged_union(
-    GaussianLikelihood, SparseOutlierGaussianLikelihood
-)
+_SINGLE_TASK_LIKELIHOOD_TYPES: list[type[Likelihood]] = [
+    GaussianLikelihood,
+    SparseOutlierGaussianLikelihood,
+]
+
+AnySingleTaskLikelihood = tagged_union(*_SINGLE_TASK_LIKELIHOOD_TYPES)
 
 # the likelihoods a multi-task GP takes: a plain Gaussian likelihood is shared by all
 # tasks
-AnyMultiTaskLikelihood = tagged_union(GaussianLikelihood, TaskwiseLikelihood)
+_MULTI_TASK_LIKELIHOOD_TYPES: list[type[Likelihood]] = [
+    GaussianLikelihood,
+    TaskwiseLikelihood,
+]
+
+AnyMultiTaskLikelihood = tagged_union(*_MULTI_TASK_LIKELIHOOD_TYPES)
 
 
 # likelihoods of interest, built anew on every call so that no two models share them

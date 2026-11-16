@@ -958,3 +958,43 @@ def test_partially_fixed_experiments():
         assert e == ValueError(
             "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column.",
         )
+
+
+def _progress_events(optimizer):
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    events = []
+    find_local_max(
+        domain,
+        objective_function=get_objective_function(
+            criterion=DOptimalityCriterion(formula="linear"),
+            domain=domain,
+            n_experiments=8,
+        ),
+        optimizer_options={"max_iter": 20},
+        optimizer=optimizer,
+        seed=1,
+        callback=events.append,
+    )
+    return events
+
+
+@pytest.mark.parametrize("optimizer", ["pounce", "scipy"])
+def test_find_local_max_reports_progress(optimizer):
+    if optimizer == "pounce" and not POUNCE_AVAILABLE:
+        pytest.skip("requires pounce")
+    events = _progress_events(optimizer)
+    assert len(events) > 0
+    assert [e.step for e in events] == list(range(1, len(events) + 1))
+    # max_iter=20; pounce, like Ipopt, also reports the starting point
+    assert len(events) <= 21
+    assert all(e.value is None or np.isfinite(e.value) for e in events)
+
+
+def test_find_local_max_ipopt_progress_warns_and_reports_nothing():
+    pytest.importorskip("cyipopt")
+    with pytest.warns(UserWarning, match="Progress is not reported"):
+        events = _progress_events("ipopt")
+    assert events == []

@@ -18,6 +18,7 @@ from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
     nchoosek_constraints_as_bounds,
 )
+from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.random import RandomStrategy
 
 
@@ -30,6 +31,7 @@ def find_local_max(
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     optimizer: str = "pounce",
     seed: Optional[int] = None,
+    callback: Optional[AskProgressCallback] = None,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
 
@@ -49,6 +51,7 @@ def find_local_max(
         optimizer: NLP solver: "pounce" (default), "ipopt" (requires cyipopt) or
             "scipy" (SLSQP).
         seed: Random seed for sampling. Defaults to None, in this case no seed is given to the
+        callback: Called with an `AskProgressData` once per iteration of the solver.
 
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
@@ -168,6 +171,7 @@ def find_local_max(
         constraints=constraints,
         optimizer=optimizer,
         optimizer_options=_options,
+        callback=callback,
     )
 
     design = pd.DataFrame(

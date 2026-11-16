@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from pydantic import Field
 
 from bofire.data_models.encodings.encoding import CategoricalEncoding
 from bofire.data_models.encodings.naming import get_encoded_name
@@ -14,15 +15,15 @@ if TYPE_CHECKING:
 
 
 class OneHotEncoding(CategoricalEncoding):
-    """One-hot encode a category into one binary column per category.
-
-    Attributes:
-        drop_first: If True, drop the first category's column (dummy encoding),
-            yielding ``len(categories) - 1`` columns.
-    """
+    """One-hot encode a category into one binary column per category."""
 
     type: Literal["OneHotEncoding"] = "OneHotEncoding"
-    drop_first: bool = False
+    drop_first: bool = Field(
+        default=False,
+        description="Whether to drop the first category's column (dummy encoding), "
+        "giving one column fewer than there are categories and so a lower-"
+        "dimensional encoding.",
+    )
 
     def _categories(self, feature: "CategoricalInput") -> list:
         return feature.categories[1:] if self.drop_first else feature.categories

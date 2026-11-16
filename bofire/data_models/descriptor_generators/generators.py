@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Annotated, Any, List, Literal, Optional
 
 import pandas as pd
-from pydantic import Field, field_validator
+from pydantic import Field, PositiveInt, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.descriptor_generators import names
@@ -14,13 +14,9 @@ from bofire.utils.cheminformatics import (  # smiles2bag_of_characters,
 
 
 class DescriptorGenerator(BaseModel):
-    """Base class for all descriptor generators.
+    """Computes numeric descriptor columns from molecular structures (SMILES).
 
-    A ``DescriptorGenerator`` is a pure, stateless transform: given a series of
-    structure identifiers (e.g. SMILES) it returns a dataframe of numeric descriptor
-    columns. Correlation-based decorrelation is *not* done here — it lives on the
-    consuming descriptor encoding / engineered feature (``DescriptorSpec``), applied
-    across the whole assembled descriptor block.
+    The same structure always gives the same descriptors.
     """
 
     type: Any
@@ -35,9 +31,19 @@ class DescriptorGenerator(BaseModel):
 
 
 class Fingerprints(DescriptorGenerator):
+    """Morgan (circular) fingerprints: one bit per hashed substructure, set if the
+    substructure occurs in the molecule."""
+
     type: Literal["Fingerprints"] = "Fingerprints"
-    bond_radius: int = 5
-    n_bits: int = 2048
+    bond_radius: PositiveInt = Field(
+        default=5,
+        description="Radius, in bonds, of the substructures around each atom.",
+    )
+    n_bits: PositiveInt = Field(
+        default=2048,
+        description="Length of the fingerprint. Fewer bits mean more distinct "
+        "substructures share a bit.",
+    )
 
     def get_descriptor_names(self) -> List[str]:
         return [f"fingerprint_{i}" for i in range(self.n_bits)]
@@ -55,8 +61,15 @@ class Fingerprints(DescriptorGenerator):
 
 
 class Fragments(DescriptorGenerator):
+    """Counts of functional groups and other substructures, as RDKit's fragment
+    descriptors (`fr_...`) count them."""
+
     type: Literal["Fragments"] = "Fragments"
-    fragments: Optional[Annotated[List[str], Field(min_length=1)]] = None
+    fragments: Optional[Annotated[List[str], Field(min_length=1)]] = Field(
+        default=None,
+        description="Names of the RDKit fragment descriptors to compute, e.g. "
+        "'fr_Al_OH'. If not provided, all 85 of them.",
+    )
 
     @field_validator("fragments")
     @classmethod
@@ -79,7 +92,8 @@ class Fragments(DescriptorGenerator):
 
             if not all(user_fragment in names.fragments for user_fragment in fragments):
                 raise ValueError(
-                    "Not all provided fragments were not found in the RDKit list",
+                    "Unknown fragments, not in RDKit's list: "
+                    f"{sorted(set(fragments) - set(names.fragments))}",
                 )
 
         return fragments
@@ -96,9 +110,19 @@ class Fragments(DescriptorGenerator):
 
 
 class MordredDescriptors(DescriptorGenerator):
+    """Molecular descriptors computed by Mordred, e.g. molecular weight, logP or
+    topological indices; real-valued, unlike fingerprints and fragment counts."""
+
     type: Literal["MordredDescriptors"] = "MordredDescriptors"
-    descriptors: Optional[Annotated[List[str], Field(min_length=1)]] = None
-    ignore_3D: bool = False
+    descriptors: Optional[Annotated[List[str], Field(min_length=1)]] = Field(
+        default=None,
+        description="Names of the Mordred descriptors to compute. If not provided, "
+        "all 1826 of them.",
+    )
+    ignore_3D: bool = Field(
+        default=False,
+        description="Whether to skip descriptors that need a 3D conformation.",
+    )
 
     @field_validator("descriptors")
     @classmethod
@@ -121,7 +145,8 @@ class MordredDescriptors(DescriptorGenerator):
 
             if not all(desc in names.mordred for desc in descriptors):
                 raise ValueError(
-                    "Not all provided descriptors were not found in the Mordred list",
+                    "Unknown descriptors, not in Mordred's list: "
+                    f"{sorted(set(descriptors) - set(names.mordred))}",
                 )
         return descriptors
 

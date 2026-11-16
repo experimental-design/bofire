@@ -743,7 +743,8 @@ def run_ga(
             must be set to the sum of the number of outputs of each callable.
         verbose (bool, optional): Whether to print the QP iterations. Defaults to False.
         callback (Optional[Callable[..., Any]], optional): Callback passed to `pymoo.optimize.minimize`.
-            The callback is invoked by pymoo during optimization. Defaults to None.
+            The callback is invoked by pymoo during optimization. Runs in addition to the CSV
+            progress writer configured by `ga_progress_csv_path`. Defaults to None.
 
     Returns
         x_opt (Union[Tensor, pd.DataFrame]): optimized experiments
@@ -762,7 +763,13 @@ def run_ga(
         optimization_direction=optimization_direction,
     )
 
-    resolved_callback = callback or _resolve_ga_callback(data_model)
+    callbacks = [c for c in (callback, _resolve_ga_callback(data_model)) if c]
+
+    def run_callbacks(algorithm) -> None:
+        for c in callbacks:
+            c(algorithm)
+
+    resolved_callback = run_callbacks if callbacks else None
 
     pymoo_kwargs = {"verbose": verbose}
     if resolved_callback is not None:

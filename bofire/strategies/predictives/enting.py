@@ -43,6 +43,7 @@ from bofire.data_models.strategies.convergence_criteria.api import (
     AnyConvergenceCriterion,
 )
 from bofire.strategies.predictives.predictive import PredictiveStrategy
+from bofire.strategies.progress import AskProgressCallback
 
 
 def domain_to_problem_config(
@@ -310,7 +311,11 @@ class EntingStrategy(PredictiveStrategy):
 
         return as_experiment
 
-    def _ask(self, candidate_count: PositiveInt = 1) -> pd.DataFrame:
+    def _ask(
+        self,
+        candidate_count: PositiveInt = 1,
+        progress_callback: Optional[AskProgressCallback] = None,
+    ) -> pd.DataFrame:
         """Generates candidates.
 
         If `candidate_count == 1`, then the globally optimal solution is returned.
