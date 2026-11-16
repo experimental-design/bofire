@@ -433,7 +433,7 @@ def test_ConstraintWrapper():
     c = ConstraintWrapper(domain.constraints[0], domain, n_experiments=3)
     assert np.allclose(c(x), np.array([1.5, 0.5, 2.5]))
     assert np.allclose(
-        c.jacobian(x),
+        c.jacobian_coo(x).toarray(),
         0.5
         * np.array(
             [
@@ -448,7 +448,7 @@ def test_ConstraintWrapper():
     c = ConstraintWrapper(domain.constraints[1], domain, n_experiments=3)
     assert np.allclose(c(x), np.array([1.5, 0.5, 2.5]))
     assert np.allclose(
-        c.jacobian(x),
+        c.jacobian_coo(x).toarray(),
         0.5
         * np.array(
             [
@@ -463,7 +463,7 @@ def test_ConstraintWrapper():
     c = ConstraintWrapper(domain.constraints[2], domain, n_experiments=3)
     assert np.allclose(c(x), np.array([3, 0, 13]))
     assert np.allclose(
-        c.jacobian(x),
+        c.jacobian_coo(x).toarray(),
         np.array(
             [
                 [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -477,7 +477,7 @@ def test_ConstraintWrapper():
     c = ConstraintWrapper(domain.constraints[3], domain, n_experiments=3)
     assert np.allclose(c(x), np.array([3, 0, 13]))
     assert np.allclose(
-        c.jacobian(x),
+        c.jacobian_coo(x).toarray(),
         np.array(
             [
                 [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -491,7 +491,7 @@ def test_ConstraintWrapper():
     c = ConstraintWrapper(domain.constraints[4], domain, n_experiments=3)
     assert np.allclose(c(x), np.array([1, -0.5, 8]))
     assert np.allclose(
-        c.jacobian(x),
+        c.jacobian_coo(x).toarray(),
         np.array(
             [
                 [2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -499,23 +499,6 @@ def test_ConstraintWrapper():
                 [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0],
             ],
         ),
-    )
-    assert np.allclose(
-        c.hessian(x),
-        [
-            [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
-        ],
     )
 
 
@@ -636,6 +619,17 @@ def test_solve_raises_if_backend_missing(monkeypatch, flag, optimizer, match):
     obj, x0, bounds, constraints, _ = _mixture_doe_setup()
     with pytest.raises(ImportError, match=match):
         _solve(obj, x0, bounds, constraints, optimizer=optimizer)
+
+
+def test_scipy_options_explicit_maxiter_wins_over_default_max_iter():
+    from bofire.strategies.doe.utils import _scipy_options
+
+    # find_local_max always sets max_iter=500; a user's scipy-style maxiter wins
+    assert _scipy_options({"max_iter": 500, "maxiter": 50}) == {"maxiter": 50}
+    assert _scipy_options({"max_iter": 500, "print_level": 0}) == {
+        "maxiter": 500,
+        "disp": False,
+    }
 
 
 def test_solve_raises_on_unknown_optimizer():
@@ -759,28 +753,31 @@ def test_pounce_regression_d_optimal_mixture():
     assert obj.evaluate(res.x) <= 72.60 * 1.005
 
 
-def test_doestrategy_datamodel_legacy_kwargs_deprecated():
-    """The public deprecation surface is the DoEStrategy data model: legacy
-    `use_cyipopt`/`ipopt_options`/`use_hessian` are mapped to `optimizer`/
-    `optimizer_options` with a DeprecationWarning."""
+@pytest.mark.parametrize(
+    "removed", [{"use_cyipopt": True}, {"ipopt_options": {}}, {"use_hessian": True}]
+)
+def test_doestrategy_rejects_removed_solver_fields(removed):
+    """`optimizer`/`optimizer_options` replaced these fields; they now fail as
+    unknown fields instead of being mapped."""
+    from pydantic import ValidationError
+
     from bofire.data_models.strategies.api import DoEStrategy as _DoEStrategyDM
-    from bofire.data_models.strategies.api import DOptimalityCriterion as _DOptDM
 
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in (1, 2, 3)],
         outputs=[ContinuousOutput(key="y")],
     )
-    with pytest.warns(DeprecationWarning):
-        dm = _DoEStrategyDM(
-            domain=domain,
-            criterion=_DOptDM(formula="linear"),
-            use_cyipopt=False,
-            ipopt_options={"max_iter": 200},
-            use_hessian=True,
-        )
-    assert dm.optimizer == "scipy"
-    assert dm.optimizer_options == {"max_iter": 200}
-    assert not hasattr(dm, "use_cyipopt")
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        _DoEStrategyDM(domain=domain, **removed)
+
+
+def test_ioptimality_criterion_rejects_ipopt_options():
+    from pydantic import ValidationError
+
+    from bofire.data_models.strategies.doe import IOptimalityCriterion
+
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        IOptimalityCriterion(formula="linear", ipopt_options={})
 
 
 def test_nchoosek_constraints_as_bounds():

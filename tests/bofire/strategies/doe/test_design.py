@@ -993,7 +993,7 @@ def test_find_local_max_reports_progress(optimizer):
     assert all(e.value is None or np.isfinite(e.value) for e in events)
 
 
-def test_find_local_max_ipopt_progress_warns_and_reports_nothing():
+def test_find_local_max_progress_with_ipopt_warns_and_reports_nothing():
     pytest.importorskip("cyipopt")
     with pytest.warns(UserWarning, match="Progress is not reported"):
         events = _progress_events("ipopt")

@@ -11,7 +11,6 @@ import pandas as pd
 import scipy.optimize as opt
 from formulaic import Formula
 from scipy import sparse
-from scipy.optimize import NonlinearConstraint
 
 from bofire.data_models.constraints.api import (
     Constraint,
@@ -339,7 +338,8 @@ def _linear_constraint_dicts(A: sparse.coo_array, lb, ub) -> List[dict]:
         )
     up = np.isfinite(ub) & ~eq  # A x <= ub  ->  ub - A x >= 0
     if up.any():
-        Au, bu, Au_neg = _row_subset(A, up), ub[up], -_row_subset(A, up)
+        Au, bu = _row_subset(A, up), ub[up]
+        Au_neg = -Au
         out.append(
             {
                 "type": "ineq",
@@ -561,7 +561,7 @@ class ConstraintWrapper:
 
     def __init__(
         self,
-        constraint: NonlinearConstraint,
+        constraint: Constraint,
         domain: Domain,
         n_experiments: int = 0,
     ) -> None:
@@ -573,13 +573,13 @@ class ConstraintWrapper:
         self.names = domain.inputs.get_keys()
         self.D = len(domain.inputs)
         self.n_experiments = n_experiments
-        if constraint.features is None:  # ty: ignore[unresolved-attribute]
+        if constraint.features is None:
             raise ValueError(
                 f"The features attribute of constraint {constraint} is not set, but has to be set.",
             )
         self.constraint_feature_indices = np.searchsorted(
             self.names,
-            self.constraint.features,  # ty: ignore[unresolved-attribute]
+            self.constraint.features,
         )
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
@@ -591,25 +591,14 @@ class ConstraintWrapper:
         violation[np.abs(violation) < 0] = 0
         return violation
 
-    def jacobian(self, x: np.ndarray) -> np.ndarray:
-        """Dense constraint Jacobian of shape ``(n_experiments, D * n_experiments)``.
-
-        Used as the ``jac`` of the scipy ``NonlinearConstraint`` objects (the
-        SLSQP path needs a dense Jacobian); the IPM backends use the sparse
-        ``jacobian_coo`` directly. This is just ``jacobian_coo`` densified — the
-        COO intermediate is negligible against the gradient evaluation and the
-        (unavoidable, on the dense SLSQP path) dense allocation.
-        """
-        return self.jacobian_coo(x).toarray()
-
     def jacobian_coo(self, x: np.ndarray) -> sparse.coo_array:
         """Constraint Jacobian as a ``scipy.sparse.coo_array`` of shape
         ``(n_experiments, D * n_experiments)``.
 
         Block-diagonal: only the constraint's feature columns of each
-        experiment's block are nonzero. Built directly as COO (no dense
-        intermediate), so the sparse Jacobian carries through to the IPM
-        solvers (cyipopt's / pounce's scipy interface) per iteration.
+        experiment's block are nonzero. The entries are the structural
+        nonzeros, kept even where their value is 0, so the sparsity pattern
+        stays fixed between iterations.
         """
         xdf = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)
         gradient_compressed = self.constraint.jacobian(xdf).to_numpy()
@@ -623,26 +612,6 @@ class ConstraintWrapper:
             (gradient_compressed.flatten(), (rows, cols)),
             shape=(self.n_experiments, self.D * self.n_experiments),
         )
-
-    def hessian(self, x: np.ndarray, *args):
-        """Call constraint hessian with flattened numpy array."""
-        x = pd.DataFrame(
-            x.reshape(len(x) // self.D, self.D), columns=self.names
-        )  # ty: ignore[invalid-assignment]
-        hessian_dict = self.constraint.hessian(x)
-
-        hessian = np.zeros(
-            shape=(self.D * self.n_experiments, self.D * self.n_experiments)
-        )
-
-        cols, rows = np.meshgrid(
-            self.constraint_feature_indices,
-            self.constraint_feature_indices,
-        )
-        for i, idx in enumerate(hessian_dict.keys()):
-            hessian[i * self.D + cols, i * self.D + rows] = hessian_dict[idx]
-
-        return hessian
 
 
 def _constraint_patterns(
@@ -881,13 +850,15 @@ def _densify_jacobians(constraints: List[dict]) -> List[dict]:
 
 
 def _scipy_options(optimizer_options: dict) -> dict:
-    """Map Ipopt-style option names to scipy.optimize names."""
+    """Map Ipopt-style option names to scipy.optimize names. A scipy-style
+    ``maxiter`` takes precedence over ``max_iter``, which ``find_local_max``
+    always sets as a default."""
     options: dict = {}
     if optimizer_options:
-        if "maxiter" in optimizer_options:
-            options["maxiter"] = optimizer_options["maxiter"]
         if "max_iter" in optimizer_options:
             options["maxiter"] = optimizer_options["max_iter"]
+        if "maxiter" in optimizer_options:
+            options["maxiter"] = optimizer_options["maxiter"]
         if "print_level" in optimizer_options:
             options["disp"] = bool(optimizer_options["print_level"])
     return options

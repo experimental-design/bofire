@@ -1,9 +1,8 @@
-import warnings
 from typing import Annotated, Any, Dict, List, Literal, Optional, Type, Union
 
 from formulaic import Formula
 from formulaic.errors import FormulaSyntaxError
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
@@ -12,19 +11,6 @@ from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.strategy import Strategy
 from bofire.data_models.types import Bounds
 from bofire.data_models.unions import tagged_union
-
-
-def _pop_legacy_ipopt_options(data: dict) -> dict:
-    """Move a legacy ``ipopt_options`` entry to ``optimizer_options``."""
-    if "ipopt_options" in data:
-        legacy = data.pop("ipopt_options")
-        warnings.warn(
-            "`ipopt_options` is deprecated; use `optimizer_options`.",
-            DeprecationWarning,
-            stacklevel=4,
-        )
-        data.setdefault("optimizer_options", legacy)
-    return data
 
 
 PREDEFINED_MODEL_TYPES = Literal[
@@ -97,14 +83,6 @@ class IOptimalityCriterion(DoEOptimalityCriterion):
         ),
     )
 
-    @model_validator(mode="before")
-    @classmethod
-    def validate_legacy_ipopt_options(cls, data):
-        """Accept the deprecated ``ipopt_options`` as ``optimizer_options``."""
-        if not isinstance(data, dict):
-            return data
-        return _pop_legacy_ipopt_options({**data})
-
 
 AnyDoEOptimalityCriterion = tagged_union(
     KOptimalityCriterion,
@@ -165,39 +143,6 @@ class DoEStrategy(Strategy):
         sampling: dataframe containing the initial guess.
         return_fixed_candidates: Should fixed candidates be also returned?
     """
-
-    @model_validator(mode="before")
-    @classmethod
-    def validate_legacy_solver_fields(cls, data):
-        """Accept the deprecated ``use_cyipopt``, ``ipopt_options`` and
-        ``use_hessian`` fields.
-
-        ``use_cyipopt=True`` maps to ``optimizer="ipopt"``, ``False`` to
-        ``"scipy"`` and ``None`` to the default; ``ipopt_options`` becomes
-        ``optimizer_options``. Explicit new fields win. ``use_hessian`` is
-        ignored. Each legacy field emits a ``DeprecationWarning``.
-        """
-        if not isinstance(data, dict):
-            return data
-        data = _pop_legacy_ipopt_options({**data})
-        if "use_cyipopt" in data:
-            use_cyipopt = data.pop("use_cyipopt")
-            warnings.warn(
-                "`use_cyipopt` is deprecated; use `optimizer` "
-                "('pounce', 'ipopt' or 'scipy').",
-                DeprecationWarning,
-                stacklevel=3,
-            )
-            if use_cyipopt is not None:
-                data.setdefault("optimizer", "ipopt" if use_cyipopt else "scipy")
-        if "use_hessian" in data:
-            data.pop("use_hessian")
-            warnings.warn(
-                "`use_hessian` is deprecated and ignored.",
-                DeprecationWarning,
-                stacklevel=3,
-            )
-        return data
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return True
