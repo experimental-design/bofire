@@ -22,7 +22,8 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - SHAP feature importance supports categorical outputs by explaining every category probability, including multiclass and mixed continuous/categorical output predictors.
 
 ### Deprecated
-- `DoEStrategy.use_cyipopt`, `DoEStrategy.ipopt_options`, `DoEStrategy.use_hessian` and `IOptimalityCriterion.ipopt_options` emit a `DeprecationWarning`, so serialized strategies keep loading. `use_cyipopt=True`/`False` maps to `optimizer="ipopt"`/`"scipy"`, `ipopt_options` to `optimizer_options`; `use_hessian` is ignored.
+- `DoEStrategy.use_cyipopt`, `DoEStrategy.ipopt_options`, `DoEStrategy.use_hessian` and `IOptimalityCriterion.ipopt_options` emit a `DeprecationWarning`, so serialized strategies keep loading.
+- `find_local_max_ipopt` is renamed to `find_local_max`, since it no longer depends on Ipopt; the old name remains as an alias that emits a `DeprecationWarning`. `use_cyipopt=True`/`False` maps to `optimizer="ipopt"`/`"scipy"`, `ipopt_options` to `optimizer_options`; `use_hessian` is ignored.
 - The non-log acquisition functions `qEI`, `qNEI`, `qEHVI` and `qNEHVI` now emit a `DeprecationWarning` on construction and will be removed in a future release. Use `qLogEI`, `qLogNEI`, `qLogEHVI` and `qLogNEHVI` instead: they optimize the same quantity in log space, which keeps a usable gradient where the plain formulations underflow to zero.
 
 ### Changed

@@ -668,6 +668,7 @@ def test_solve_pounce_defaults_overridable(monkeypatch):
     )
     assert seen["mu_strategy"] == "adaptive"
     assert seen["acceptable_obj_change_tol"] == 1e-6
+    assert seen["acceptable_constr_viol_tol"] == 1e-4
     assert seen["acceptable_tol"] == 1e-4
 
 

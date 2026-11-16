@@ -13,7 +13,7 @@ from bofire.data_models.strategies.doe import (
     AnyOptimalityCriterion,
     DoEOptimalityCriterion,
 )
-from bofire.strategies.doe.design import find_local_max_ipopt, get_n_experiments
+from bofire.strategies.doe.design import find_local_max, get_n_experiments
 from bofire.strategies.doe.objective import ModelBasedObjective, get_objective_function
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 from bofire.strategies.doe.utils_categorical_discrete import (
@@ -113,7 +113,7 @@ class DoEStrategy(Strategy):
         )
         assert objective_function is not None, "Criterion type is not supported!"
 
-        design = find_local_max_ipopt(
+        design = find_local_max(
             relaxed_domain,
             fixed_experiments=None,  # effectively deprecated, but others use it so we have not removed it yet
             partially_fixed_experiments=relaxed_candidates,  # technically fixed experiments are also partially_fixed, so we only use this

@@ -21,7 +21,7 @@ from bofire.strategies.doe.utils import (
 from bofire.strategies.random import RandomStrategy
 
 
-def find_local_max_ipopt(
+def find_local_max(
     domain: Domain,
     objective_function: Objective,
     optimizer_options: Optional[Dict] = None,
@@ -190,6 +190,16 @@ def find_local_max_ipopt(
         )
 
     return design
+
+
+def find_local_max_ipopt(*args, **kwargs) -> pd.DataFrame:
+    """Deprecated alias of ``find_local_max``."""
+    warnings.warn(
+        "`find_local_max_ipopt` is deprecated; use `find_local_max`.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return find_local_max(*args, **kwargs)
 
 
 def partially_fix_experiment(

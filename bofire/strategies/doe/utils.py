@@ -845,6 +845,10 @@ POUNCE_DOE_DEFAULTS = {
     "acceptable_tol": 1e-3,
     "acceptable_iter": 5,
     "acceptable_obj_change_tol": 1e-6,
+    # The acceptable exit may otherwise stop at a constraint violation up to
+    # 1e-2 (Ipopt's default); keep it within the tolerance find_local_max
+    # validates the design with.
+    "acceptable_constr_viol_tol": 1e-4,
 }
 
 OPTIMIZERS = ("pounce", "ipopt", "scipy")
