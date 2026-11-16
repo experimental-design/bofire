@@ -1,4 +1,6 @@
 import inspect
+import types
+import typing
 
 import pytest
 
@@ -86,6 +88,37 @@ def features(data_model_cls):
     return Inputs(features=inputs), Outputs(features=[ContinuousOutput(key="y")])
 
 
+def _annotation_matches(make_annotation, model_annotation) -> bool:
+    """Structural annotation equality, indifferent to spelling (`Optional[str]` vs
+    `str | None`, `List[int]` vs `list[int]`, union member order) and to dynamic
+    registration: a data-model union may gain members registered after import (e.g.
+    via `register_kernel`) that the import-time `make` annotation cannot know about,
+    so union members declared outside `bofire.` may be missing from `make`."""
+    make_origin = typing.get_origin(make_annotation)
+    model_origin = typing.get_origin(model_annotation)
+    if make_origin is None and model_origin is None:
+        return make_annotation == model_annotation
+    union_origins = (typing.Union, types.UnionType)
+    if make_origin in union_origins and model_origin in union_origins:
+        make_args = set(typing.get_args(make_annotation))
+        model_args = set(typing.get_args(model_annotation))
+        if not make_args <= model_args:
+            return False
+        return all(
+            extra is not type(None)
+            and not getattr(extra, "__module__", "bofire").startswith("bofire")
+            for extra in model_args - make_args
+        )
+    if make_origin is not model_origin:
+        return False
+    make_args = typing.get_args(make_annotation)
+    model_args = typing.get_args(model_annotation)
+    return len(make_args) == len(model_args) and all(
+        _annotation_matches(make_arg, model_arg)
+        for make_arg, model_arg in zip(make_args, model_args)
+    )
+
+
 def test_make_covers_registered_surrogates():
     assert {(spec, runtime) for spec, runtime, _ in FACTORIES} == set(
         SURROGATE_MAP.items()
@@ -113,9 +146,17 @@ def test_make_defaults_and_signature(data_model_cls, runtime_cls):
         f"missing={fields.keys() - parameters.keys()}, "
         f"extra={parameters.keys() - fields.keys()}"
     )
+    # get_type_hints strips Annotated metadata on both sides, so pydantic
+    # constraints (e.g. Field(ge=1)) and discriminated unions reduce to the types.
+    make_hints = typing.get_type_hints(runtime_cls.make)
+    model_hints = typing.get_type_hints(data_model_cls)
     for name, parameter in parameters.items():
         field = fields[name]
         location = f"{runtime_cls.__name__}.make({name}=...)"
+        assert _annotation_matches(make_hints[name], model_hints[name]), (
+            f"{location}: annotation differs from data model; "
+            f"make={make_hints[name]!r}, data_model={model_hints[name]!r}"
+        )
         if field.is_required():
             assert (
                 parameter.default is inspect.Parameter.empty

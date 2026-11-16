@@ -21,10 +21,10 @@ from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.kernels.api import AnyKernel, RBFKernel
 from bofire.data_models.likelihoods.api import (
     HVARFNER_LIKELIHOOD,
-    AnyLikelihood,
+    AnySingleTaskLikelihood,
     SparseOutlierGaussianLikelihood,
 )
-from bofire.data_models.means.api import AnyMean, ConstantMean
+from bofire.data_models.means.api import AnySingleTaskMean, ConstantMean
 from bofire.data_models.priors.api import HVARFNER_LENGTHSCALE_PRIOR, GreaterThan
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.optimizer import LBFGSB
@@ -51,8 +51,8 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
             lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),  # noqa: B008 - copied by make_surrogate
             lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),  # noqa: B008 - copied by make_surrogate
         ),
-        mean: AnyMean = ConstantMean(),  # noqa: B008 - copied by make_surrogate
-        likelihood: AnyLikelihood = HVARFNER_LIKELIHOOD(),  # noqa: B008 - copied by make_surrogate
+        mean: AnySingleTaskMean = ConstantMean(),  # noqa: B008 - copied by make_surrogate
+        likelihood: AnySingleTaskLikelihood = HVARFNER_LIKELIHOOD(),  # noqa: B008 - copied by make_surrogate
         optimizer: LBFGSB = LBFGSB(),  # noqa: B008 - copied by make_surrogate
     ) -> Self:
         """Create a runtime GP using validated data-model settings.
