@@ -134,7 +134,7 @@ dump = strategy.surrogates.surrogates[0].dumps()
 
 ## MOBO Strategy
 
-As example for a multiobjective strategy we are using here the `MoboStrategy`. Related strategies would be Qparego, MultiplicativeSobo etc. To use it, we have to first generate a multiobjective domain.
+As example for a multiobjective strategy we are using here the `MoboStrategy`. Related strategies would be Qparego, or a `SoboStrategy` with a scalarization such as `WeightedProductScalarization`. To use it, we have to first generate a multiobjective domain.
 
 ```{python}
 #| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}

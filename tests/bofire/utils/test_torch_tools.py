@@ -52,7 +52,6 @@ from bofire.utils.torch_tools import (
     constrained_objective2botorch,
     get_additive_botorch_objective,
     get_categorical_encoder,
-    get_custom_botorch_objective,
     get_initial_conditions_generator,
     get_interpoint_constraints,
     get_linear_constraints,
@@ -118,14 +117,14 @@ c3 = LinearInequalityConstraint(
 @pytest.mark.parametrize(
     "objective",
     [
-        MaximizeObjective(w=0.5),
-        MaximizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
-        MinimizeObjective(w=0.5),
-        MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
-        TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3, w=0.5),
-        CloseToTargetObjective(target_value=2.0, exponent=1.0, w=0.5),
-        MovingMaximizeSigmoidObjective(steepness=1, tp=-1, w=1),
-        # ConstantObjective(w=0.5, value=1.0),
+        MaximizeObjective(),
+        MaximizeSigmoidObjective(steepness=1.0, tp=1.0),
+        MinimizeObjective(),
+        MinimizeSigmoidObjective(steepness=1.0, tp=1.0),
+        TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3),
+        CloseToTargetObjective(target_value=2.0, exponent=1.0),
+        MovingMaximizeSigmoidObjective(steepness=1, tp=-1),
+        # ConstantObjective(value=1.0),
         IncreasingDesirabilityObjective(
             bounds=(0, 2.5), log_shape_factor=0.0, clip=False
         ),
@@ -223,121 +222,16 @@ def test_moving_maximize_sigmoid_objective():
     samples = (torch.rand(50, 3, requires_grad=True) * 5.0).to(**tkwargs)
     a_samples = samples.detach().numpy()
     x_adapt = torch.tensor([1.0, 2.0, 3.0]).to(**tkwargs)
-    o1 = MovingMaximizeSigmoidObjective(steepness=1, tp=-1, w=1)
-    o2 = MaximizeSigmoidObjective(steepness=1.0, tp=2, w=1)
+    o1 = MovingMaximizeSigmoidObjective(steepness=1, tp=-1)
+    o2 = MaximizeSigmoidObjective(steepness=1.0, tp=2)
     assert np.allclose(
         o1.__call__(a_samples[:, 1], x_adapt=x_adapt.numpy()),
         o2.__call__(a_samples[:, 1], x_adapt=x_adapt.numpy()),
     )
 
 
-def f1(samples, callables, weights, X):
-    outputs_list = []
-    for c, w in zip(callables, weights):
-        outputs_list.append(c(samples, None) ** w)
-    samples = torch.stack(outputs_list, dim=-1)
-
-    return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
-
-
-def f2(samples, callables, weights, X):
-    outputs_list = []
-    for c, w in zip(callables, weights):
-        outputs_list.append(c(samples, None) ** w)
-    samples = torch.stack(outputs_list, dim=-1)
-
-    return (
-        (samples[..., 0] + samples[..., 1])
-        * (samples[..., 0] * samples[..., 1])
-        * (samples[..., 0] * samples[..., 2])
-    )
-
-
-@pytest.mark.parametrize("f, exclude_constraints", [(f1, True), (f2, False)])
-def test_get_custom_botorch_objective(f, exclude_constraints):
-    experiments = pd.DataFrame(
-        {
-            "alpha": np.random.rand(10),
-            "beta": np.random.rand(10),
-            "gamma": np.random.rand(10),
-            "valid_alpha": [1] * 10,
-            "valid_beta": [1] * 10,
-            "valid_gamma": [1] * 10,
-        },
-    )
-    samples = (torch.rand(30, 3, requires_grad=True) * 5).to(**tkwargs)
-    a_samples = samples.detach().numpy()
-    obj1 = MaximizeObjective(w=1.0)
-    obj2 = MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=1.0)
-    obj3 = CloseToTargetObjective(w=1.0, target_value=2, exponent=1)
-    outputs = Outputs(
-        features=[
-            ContinuousOutput(
-                key="alpha",
-                objective=obj1,
-            ),
-            ContinuousOutput(
-                key="beta",
-                objective=obj2,
-            ),
-            ContinuousOutput(
-                key="gamma",
-                objective=obj3,
-            ),
-        ],
-    )
-    objective = get_custom_botorch_objective(
-        outputs,
-        f=f,
-        exclude_constraints=exclude_constraints,
-        experiments=experiments,
-    )
-    generic_objective = GenericMCObjective(objective=objective)
-    objective_forward = generic_objective.forward(samples)
-
-    # calc with numpy
-    reward1 = obj1(a_samples[:, 0])
-    reward2 = obj2(a_samples[:, 1])
-    reward3 = obj3(a_samples[:, 2])
-    # do the comparison
-    assert np.allclose(
-        (
-            (reward1**obj1.w + reward3**obj3.w) * (reward1**obj1.w * reward3**obj3.w)
-            if exclude_constraints
-            else (reward1**obj1.w + reward2**obj2.w)
-            * (reward1**obj1.w * reward2**obj2.w)
-            * (reward1**obj1.w * reward3**obj3.w)
-        ),
-        objective_forward.detach().numpy(),
-        rtol=1e-06,
-    )
-    if exclude_constraints:
-        constraints, etas = get_output_constraints(
-            outputs=outputs,
-            experiments=experiments,
-        )
-        generic_objective = ConstrainedMCObjective(
-            objective=objective,
-            constraints=constraints,
-            eta=torch.tensor(etas).to(**tkwargs),
-        )
-        objective_forward = generic_objective.forward(samples)
-        assert np.allclose(
-            np.clip(
-                (
-                    (reward1**obj1.w + reward3**obj3.w)
-                    * (reward1**obj1.w * reward3**obj3.w)
-                )
-                * reward2,
-                0,
-                None,
-            ),
-            objective_forward.detach().numpy(),
-            rtol=1e-06,
-        )
-
-
-def test_get_multiplicative_botorch_objective():
+@pytest.mark.parametrize("weight_normalization", ["min", "sum"])
+def test_get_multiplicative_botorch_objective(weight_normalization):
     experiments = pd.DataFrame(
         {
             "alpha": np.random.rand(10),
@@ -346,15 +240,19 @@ def test_get_multiplicative_botorch_objective():
             "valid_beta": [1] * 10,
         },
     )
+    non_negative = [
+        MaximizeObjective(),
+        MaximizeSigmoidObjective(steepness=1.0, tp=1.0),
+        MinimizeSigmoidObjective(steepness=1.0, tp=1.0),
+        TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3),
+    ]
+    negative = [
+        MinimizeObjective(),
+        CloseToTargetObjective(target_value=2.0, exponent=1.0),
+    ]
+    # fractional exponents ("sum") need non-negative objective values
     (obj1, obj2) = random.choices(
-        [
-            MaximizeObjective(w=0.5),
-            MaximizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
-            MinimizeObjective(w=1),
-            MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
-            TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3, w=0.5),
-            CloseToTargetObjective(target_value=2.0, exponent=1.0, w=1.0),
-        ],
+        non_negative + negative if weight_normalization == "min" else non_negative,
         k=2,
     )
     outputs = Outputs(
@@ -363,7 +261,13 @@ def test_get_multiplicative_botorch_objective():
             ContinuousOutput(key="beta", objective=obj2),
         ],
     )
-    objective = get_multiplicative_botorch_objective(outputs, experiments=experiments)
+    weights = {"alpha": 0.5, "beta": 2.0}
+    objective = get_multiplicative_botorch_objective(
+        outputs,
+        experiments=experiments,
+        weights=weights,
+        weight_normalization=weight_normalization,
+    )
     generic_objective = GenericMCObjective(objective=objective)
     samples = (torch.rand(30, 2, requires_grad=True) * 5).to(**tkwargs)
     a_samples = samples.detach().numpy()
@@ -372,8 +276,9 @@ def test_get_multiplicative_botorch_objective():
     reward1 = obj1(a_samples[:, 0])
     reward2 = obj2(a_samples[:, 1])
     # do the comparison
-    w1, w2 = obj1.w, obj2.w
-    w1, w2 = [w / min(w1, w2) for w in [w1, w2]]
+    w1, w2 = weights["alpha"], weights["beta"]
+    norm = min(w1, w2) if weight_normalization == "min" else w1 + w2
+    w1, w2 = w1 / norm, w2 / norm
 
     assert np.allclose(
         # objective.reward(samples, desFunc)[0].detach().numpy(),
@@ -397,10 +302,9 @@ def test_get_additive_botorch_objective(exclude_constraints):
     )
     samples = (torch.rand(30, 3, requires_grad=True) * 5).to(**tkwargs)
     a_samples = samples.detach().numpy()
-    obj1 = MaximizeObjective(w=0.5)
-    obj2 = MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5)
-    obj3 = CloseToTargetObjective(w=0.5, target_value=2, exponent=1)
-    # obj3 = MaximizeObjective(w=0.7)
+    obj1 = MaximizeObjective()
+    obj2 = MinimizeSigmoidObjective(steepness=1.0, tp=1.0)
+    obj3 = CloseToTargetObjective(target_value=2, exponent=1)
     outputs = Outputs(
         features=[
             ContinuousOutput(
@@ -417,10 +321,12 @@ def test_get_additive_botorch_objective(exclude_constraints):
             ),
         ],
     )
+    w1, w2, w3 = 0.5, 2.0, 0.7
     objective = get_additive_botorch_objective(
         outputs,
         exclude_constraints=exclude_constraints,
         experiments=experiments,
+        weights={"alpha": w1, "beta": w2, "gamma": w3},
     )
     generic_objective = GenericMCObjective(objective=objective)
     objective_forward = generic_objective.forward(samples)
@@ -433,9 +339,9 @@ def test_get_additive_botorch_objective(exclude_constraints):
     assert np.allclose(
         # objective.reward(samples, desFunc)[0].detach().numpy(),
         (
-            reward1 * obj1.w + reward3 * obj3.w
+            reward1 * w1 + reward3 * w3
             if exclude_constraints
-            else reward1 * obj1.w + reward3 * obj3.w + reward2 * obj2.w
+            else reward1 * w1 + reward3 * w3 + reward2 * w2
         ),
         objective_forward.detach().numpy(),
         rtol=1e-06,
@@ -452,7 +358,7 @@ def test_get_additive_botorch_objective(exclude_constraints):
         )
         objective_forward = generic_objective.forward(samples)
         assert np.allclose(
-            np.clip((reward1 * obj1.w + reward3 * obj3.w) * reward2, 0, None),
+            np.clip((reward1 * w1 + reward3 * w3) * reward2, 0, None),
             objective_forward.detach().numpy(),
             rtol=1e-06,
         )
@@ -623,18 +529,17 @@ def test_get_linear_constraints_unit_scaled():
     assert torch.allclose(constraints[0][0], torch.tensor([1, 2, 0]))
 
 
-of1 = ContinuousOutput(key="of1", objective=MaximizeObjective(w=1.0))
+of1 = ContinuousOutput(key="of1", objective=MaximizeObjective())
 of2 = ContinuousOutput(
     key="of2",
     objective=MaximizeSigmoidObjective(
-        w=1.0,
         tp=0,
         steepness=2,
     ),
 )
 of3 = ContinuousOutput(
     key="of3",
-    objective=TargetObjective(w=1.0, tolerance=2, target_value=5, steepness=4),
+    objective=TargetObjective(tolerance=2, target_value=5, steepness=4),
 )
 
 
@@ -936,13 +841,18 @@ def test_get_nonlinear_constraints():
     assert len(get_nonlinear_constraints(domain=domain)) == 2
 
 
+# the multiplied outputs get integer exponents after rescaling, as the
+# close-to-target objective is negative
+WEIGHTS = {"alpha": 0.5, "beta": 2.0, "gamma": 1.5, "omega": 1.0}
+
+
 @pytest.fixture
 def mutiobjective_data():
     samples = (torch.rand(30, 4, requires_grad=True) * 5).to(**tkwargs)
     samples2 = (torch.rand(30, 512, 4, requires_grad=True) * 5).to(**tkwargs)
     a_samples = samples.detach().numpy()
     obj1 = MaximizeObjective()
-    obj2 = MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5)
+    obj2 = MinimizeSigmoidObjective(steepness=1.0, tp=1.0)
     obj3 = MinimizeObjective()
     obj4 = CloseToTargetObjective(target_value=2.5, exponent=1)
     outputs = Outputs(
@@ -982,7 +892,7 @@ def mutiobjective_data():
 
 
 @pytest.fixture(
-    params=["default", "exclude_constraints", "allowed_objectives", "adapt_weights"]
+    params=["default", "exclude_constraints", "allowed_objectives", "normalize_weights"]
 )
 def _callables_and_weights_kwargs_testcase(request):
     return request.param
@@ -991,13 +901,13 @@ def _callables_and_weights_kwargs_testcase(request):
 def test_callables_and_weights(
     mutiobjective_data, _callables_and_weights_kwargs_testcase: str
 ):
-    kwargs = {}
+    kwargs = {"weights": WEIGHTS}
     if _callables_and_weights_kwargs_testcase == "exclude_constraints":
         kwargs["exclude_constraints"] = True
     elif _callables_and_weights_kwargs_testcase == "allowed_objectives":
         kwargs["allowed_objectives"] = [MaximizeObjective]
-    elif _callables_and_weights_kwargs_testcase == "adapt_weights":
-        kwargs["adapt_weights_to_1_inf"] = True
+    elif _callables_and_weights_kwargs_testcase == "normalize_weights":
+        kwargs["weight_normalization"] = "min"
 
     samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs = (
         mutiobjective_data
@@ -1011,8 +921,8 @@ def test_callables_and_weights(
     elif _callables_and_weights_kwargs_testcase == "allowed_objectives":
         testkeys = ["alpha"]
 
-    weights_data_model = [outputs.get_by_key(k).objective.w for k in testkeys]
-    if _callables_and_weights_kwargs_testcase == "adapt_weights":
+    weights_data_model = [WEIGHTS[k] for k in testkeys]
+    if _callables_and_weights_kwargs_testcase == "normalize_weights":
         weights_data_model = [w / min(weights_data_model) for w in weights_data_model]
 
     assert testkeys == keys
@@ -1047,7 +957,10 @@ def test_get_additive_objective(mutiobjective_data):
     )
 
     objective = get_additive_botorch_objective(
-        outputs=outputs, experiments=experiments, exclude_constraints=False
+        outputs=outputs,
+        experiments=experiments,
+        exclude_constraints=False,
+        weights=WEIGHTS,
     )
     generic_objective = GenericMCObjective(objective=objective)
     # check the shape
@@ -1057,10 +970,10 @@ def test_get_additive_objective(mutiobjective_data):
     assert objective_forward.shape == torch.Size((30,))
     # check what is in
     # calc with numpy
-    reward1 = obj1(a_samples[:, 0]) * obj1.w
-    reward2 = obj2(a_samples[:, 1]) * obj2.w
-    reward3 = obj3(a_samples[:, 2]) * obj3.w
-    reward4 = obj4(a_samples[:, 3]) * obj4.w
+    reward1 = obj1(a_samples[:, 0]) * WEIGHTS["alpha"]
+    reward2 = obj2(a_samples[:, 1]) * WEIGHTS["beta"]
+    reward3 = obj3(a_samples[:, 2]) * WEIGHTS["gamma"]
+    reward4 = obj4(a_samples[:, 3]) * WEIGHTS["omega"]
     assert np.allclose(
         reward1 + reward2 + reward3 + reward4, objective_forward.detach().numpy()
     )
@@ -1076,6 +989,7 @@ def test_get_multiplicative_additive_objective(mutiobjective_data):
         experiments=experiments,
         exclude_constraints=False,
         additive_features=["gamma", "alpha"],
+        weights=WEIGHTS,
     )
     generic_objective = GenericMCObjective(objective=objective)
     # check the shape
@@ -1089,7 +1003,9 @@ def test_get_multiplicative_additive_objective(mutiobjective_data):
     reward_beta = obj2(a_samples[:, 1])
     reward_gamma = obj3(a_samples[:, 2])
     reward_omega = obj4(a_samples[:, 3])
-    w_alpha, w_beta, w_gamma, w_omega = obj1.w, obj2.w, obj3.w, obj4.w
+    w_alpha, w_beta, w_gamma, w_omega = (
+        WEIGHTS[k] for k in ["alpha", "beta", "gamma", "omega"]
+    )
     w_alpha, w_beta, w_gamma, w_omega = [
         w / min([w_alpha, w_beta, w_gamma, w_omega])
         for w in [w_alpha, w_beta, w_gamma, w_omega]
@@ -1154,10 +1070,10 @@ def test_get_initial_conditions_generator(sequential: bool):
 @pytest.mark.parametrize(
     "objective",
     [
-        (MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)),
-        (MinimizeSigmoidObjective(w=1, tp=15, steepness=0.5)),
-        (TargetObjective(w=1, target_value=15, steepness=2, tolerance=5)),
-        (MovingMaximizeSigmoidObjective(w=1, tp=-1, steepness=0.5)),
+        (MaximizeSigmoidObjective(tp=15, steepness=0.5)),
+        (MinimizeSigmoidObjective(tp=15, steepness=0.5)),
+        (TargetObjective(target_value=15, steepness=2, tolerance=5)),
+        (MovingMaximizeSigmoidObjective(tp=-1, steepness=0.5)),
     ],
 )
 def test_constrained_objective2botorch(objective):
@@ -1185,7 +1101,7 @@ def test_constrained_objective2botorch(objective):
     )
     if isinstance(objective, MovingMaximizeSigmoidObjective):
         objective2 = MaximizeSigmoidObjective(
-            w=1, tp=x_adapt.max().item() + objective.tp, steepness=objective.steepness
+            tp=x_adapt.max().item() + objective.tp, steepness=objective.steepness
         )
         assert np.allclose(
             objective2.__call__(np.linspace(0, 30, 500), x_adapt=x_adapt.numpy()),

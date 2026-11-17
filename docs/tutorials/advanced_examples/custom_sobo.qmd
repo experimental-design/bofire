@@ -1,65 +1,70 @@
 ---
-title: Custom SOBO Strategy
+title: Custom Scalarization
 jupyter: python3
 ---
 
 
-The `CustomSoboStrategy` can be used to design custom objectives or objective combinations for optimizations. In this tutorial notebook, it is shown how to use it to optimize a quantity that depends on a combination of an inferred quantity and one of the inputs.
+A `SoboStrategy` combines several objectives into the single value it maximizes by its `scalarization`. Besides the built-in ones (`WeightedSumScalarization`, `WeightedProductScalarization`, `WeightedProductSumScalarization`), you can register your own. In this tutorial notebook, it is shown how to use this to optimize a quantity that depends on a combination of an inferred quantity and one of the inputs.
 
 
 ## Imports
 
 ```{python}
-import torch
+from typing import Literal
 
 import bofire.strategies.api as strategies
 from bofire.benchmarks.api import Himmelblau
-from bofire.data_models.strategies.api import CustomSoboStrategy
-from bofire.utils.torch_tools import tkwargs
+from bofire.data_models.strategies.api import Scalarization, SoboStrategy
+from bofire.utils.torch_tools import get_additive_botorch_objective
 ```
 
-## Setup the optimization
+## Define the scalarization
 
-For the optimization, we want to subtract the inferred quantity by the value of feature `x_0`.
+A scalarization consists of a data model, which makes it serializable, and a function that maps it to a callable for BoTorch. The callable receives the sampled output values (`samples`, outputs in the order of `domain.outputs`) and the corresponding inputs `X`, transformed for the model, and returns one value per sample to maximize.
+
+For the optimization, we want to subtract the value of feature `x_1` from the objective of the inferred quantity. `penalty` is a parameter of the scalarization, stored with the strategy.
+
+```{python}
+class InputPenaltyScalarization(Scalarization):
+    """Subtracts `penalty` times an input from the sum of the objectives."""
+
+    type: Literal["InputPenaltyScalarization"] = "InputPenaltyScalarization"
+    feature: str
+    penalty: float = 1.0
+
+
+@strategies.register_scalarization(InputPenaltyScalarization)
+def map_input_penalty(data_model, domain, experiments, input_preprocessing_specs):
+    # the column of the input in the tensor `X`
+    feature2index, _ = domain.inputs._get_transform_info(input_preprocessing_specs)
+    feat_idx = feature2index[data_model.feature][0]
+    objective = get_additive_botorch_objective(
+        outputs=domain.outputs, experiments=experiments
+    )
+
+    def f(samples, X):
+        return objective(samples, X) - data_model.penalty * X[..., feat_idx]
+
+    return f
+```
+
+## Run the optimization
 
 ```{python}
 benchmark = Himmelblau()
 experiments = benchmark.f(benchmark.domain.inputs.sample(10), return_complete=True)
 
-strategy_data = CustomSoboStrategy(domain=benchmark.domain)
-strategy = strategies.map(strategy_data)
-
-
-# here we find out what is the index of the input feature in the input tensor `X`
-# in the manipulation function below
-feature2index, _ = strategy.domain.inputs._get_transform_info(
-    strategy.input_preprocessing_specs
+strategy_data = SoboStrategy(
+    domain=benchmark.domain,
+    scalarization=InputPenaltyScalarization(feature="x_1"),
 )
-feat_idx = feature2index["x_1"][0]
-
-
-# we assign now a torch based function to the strategy which performs the custom manipulation of the objective
-# the signature has to be understood in the following way:
-# - samples: the samples to evaluate the objective on, these are the predicted Y/output values of the model(s)
-# - callables: the botorch callables associated to objectives associated to the features
-#   (have a look at `get_objective_callable` in `bofire/utils/torch_tools.py`)
-# - weights: the weights associated to the objectives
-#   (have a look here: `_callables_and_weights` in `bofire/utils/torch_tools.py`)
-# - X: a tensor of input values associated to the output values  samples, associated to the Y/output values (`samples`)
-
-
-def f(samples, callables, weights, X):
-    val = torch.tensor(0.0).to(**tkwargs)
-    for c, w in zip(callables, weights):
-        val = val + c(samples, None) * w
-    # here, you have to implement the custom manipulation of the objective
-    # in this example, we subtract the value of the first feature from the objective
-    val = val - X[..., feat_idx]
-    return val
-
-
-strategy.f = f
-
+strategy = strategies.map(strategy_data)
 strategy.tell(experiments)
 strategy.ask(1)
+```
+
+The data model, including the scalarization, can be serialized and loaded again like any other strategy, once the scalarization is registered.
+
+```{python}
+SoboStrategy.model_validate_json(strategy_data.model_dump_json())
 ```

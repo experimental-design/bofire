@@ -13,14 +13,14 @@ from bofire.plot.objective import plot_objective_plotly
         (
             ContinuousOutput(
                 key="of1",
-                objective=MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5),
+                objective=MaximizeSigmoidObjective(tp=15, steepness=0.5),
             ),
             None,
         ),
         (
             ContinuousOutput(
                 key="of1",
-                objective=MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5),
+                objective=MaximizeSigmoidObjective(tp=15, steepness=0.5),
             ),
             pd.DataFrame(
                 columns=["of1", "of2", "of3"],

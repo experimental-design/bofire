@@ -211,7 +211,7 @@ Different classes for the objectives are implemented in BoFire. These are used t
 - `ConstrainedCategoricalObjective`: Categorical objective where for each output variable a probability vector for the categories is given.
 
 
-If many outputs are defined, then different weights can be attributed as optional argument `w`. More detailed descriptions for the individual objecrives can be found in the [API documentation](https://experimental-design.github.io/bofire/ref-objectives/).
+If several objectives are combined into one by a `SoboStrategy`, their relative weights are set on its scalarization, e.g. `WeightedSumScalarization(weights={"y1": 2.0})`. More detailed descriptions for the individual objecrives can be found in the [API documentation](https://experimental-design.github.io/bofire/ref-objectives/).
 
 ## Constraints
 The optimization problem in BoFire can be solved subject to a variety of different constraint types in the input space. These constraints are currently categorized as linear, non-linear, n choose k and interpoint constraints.

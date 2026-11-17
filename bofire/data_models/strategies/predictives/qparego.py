@@ -5,41 +5,34 @@ from pydantic import Field
 from bofire.data_models.acquisition_functions.api import qEI, qLogEI, qLogNEI, qNEI
 from bofire.data_models.constraints.api import Constraint, InterpointConstraint
 from bofire.data_models.features.api import Feature
-from bofire.data_models.objectives.api import (
-    CloseToTargetObjective,
-    MaximizeObjective,
-    MaximizeSigmoidObjective,
-    MinimizeObjective,
-    MinimizeSigmoidObjective,
-    Objective,
-    TargetObjective,
-)
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
 
 
 class QparegoStrategy(MultiobjectiveStrategy):
+    """Multi-objective Bayesian optimization by random scalarizations (qParEGO).
+
+    Each candidate of a batch optimizes its own randomly weighted Chebyshev
+    combination of the objectives with a single-objective acquisition function, so
+    the batch spreads along the Pareto front. Cheaper than the hypervolume-based
+    `MoboStrategy` with many objectives or large batches. Interpoint constraints are
+    not supported.
+
+    Examples:
+        >>> QparegoStrategy(domain=domain, acquisition_function=qLogNEI())
+    """
+
     type: Literal["QparegoStrategy"] = "QparegoStrategy"
     acquisition_function: Union[qEI, qLogEI, qLogNEI, qNEI] = Field(
+        # a factory, as constructing the deprecated qNEI warns
         default_factory=lambda: qNEI(),
+        description="Single-objective acquisition function applied to each "
+        "scalarization.",
     )
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
-        return True
-
-    @classmethod
-    def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        if my_type not in [
-            MaximizeObjective,
-            MinimizeObjective,
-            TargetObjective,
-            MinimizeSigmoidObjective,
-            MaximizeSigmoidObjective,
-            CloseToTargetObjective,
-        ]:
-            return False
         return True
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:

@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Type
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import Output
@@ -14,7 +14,21 @@ from bofire.data_models.strategies.strategy import Strategy
 
 
 class PredictiveStrategy(Strategy):
-    convergence_criterion: AnyConvergenceCriterion | None = None
+    """Strategy that fits models to the experiments and proposes candidates from
+    their predictions.
+
+    The domain needs at least one output with an objective, and every objective has
+    to be one the strategy can handle. The proposed candidates come with the
+    predictions of the models.
+    """
+
+    convergence_criterion: AnyConvergenceCriterion | None = Field(
+        default=None,
+        description="Criterion by which the strategy reports, via `has_converged()`, "
+        "that further experiments are unlikely to pay off. It has to suit the "
+        "strategy, e.g. a single-objective criterion for a single-objective "
+        "strategy. If not provided, the strategy never reports convergence.",
+    )
 
     @field_validator("domain")
     @classmethod
