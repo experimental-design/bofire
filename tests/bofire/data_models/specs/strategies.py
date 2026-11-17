@@ -795,11 +795,34 @@ specs.add_invalid(
             ],
         ),
         "acquisition_function": qLogPF(),
-        "scalarization": WeightedSumScalarization(),
+        "scalarization": WeightedSumScalarization(use_output_constraints=False),
     },
     error=ValueError,
-    message="qLogPF acquisition function is only allowed with the "
-    "SingleObjectiveScalarization.",
+    message="qLogPF acquisition function needs a scalarization that keeps "
+    "constrained objectives apart as constraints.",
+)
+
+# qLogPF on a domain with several plain objectives, as a feasibility step
+specs.add_valid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(
+                        key="alpha",
+                        objective=MaximizeSigmoidObjective(tp=1, steepness=100),
+                    ),
+                    ContinuousOutput(key="beta", objective=MaximizeObjective()),
+                    ContinuousOutput(key="gamma", objective=MaximizeObjective()),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qLogPF().model_dump(),
+        "scalarization": WeightedSumScalarization().model_dump(),
+    },
 )
 
 specs.add_invalid(
@@ -832,7 +855,7 @@ specs.add_invalid(
         ),
     },
     error=ValueError,
-    message="SOBO strategy can only deal with one no-constraint objective.",
+    message="SingleObjectiveScalarization can only optimize one objective",
 )
 
 specs.add_invalid(
@@ -943,7 +966,7 @@ specs.add_invalid(
         ),
     },
     error=ValueError,
-    message="SOBO strategy can only deal with one no-constraint objective.",
+    message="SingleObjectiveScalarization can only optimize one objective",
 )
 specs.add_invalid(
     strategies.SoboStrategy,

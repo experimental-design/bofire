@@ -6,6 +6,7 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
+    ConstrainedObjective,
     MinimizeObjective,
     Objective,
 )
@@ -41,34 +42,26 @@ class Scalarization(BaseModel):
         return False
 
 
-def _validate_multiple_objectives(scalarization: Scalarization, domain: Domain):
-    if len(domain.outputs.get_by_objective(Objective)) < 2:
-        raise ValueError(
-            f"{type(scalarization).__name__} requires at least 2 outputs with "
-            "objectives. Consider SingleObjectiveScalarization instead.",
-        )
-
-
-def _validate_objective_keys(keys, name: str, domain: Domain):
-    objective_keys = domain.outputs.get_keys_by_objective(Objective)
-    for key in keys:
-        if key not in objective_keys:
-            raise ValueError(
-                f"{name} given for {key}, which is not an output with an objective.",
-            )
-
-
 class SingleObjectiveScalarization(Scalarization):
     """Optimizes the one output whose objective is not a constrained one.
 
     Further outputs with a constrained objective, such as a sigmoid one, act as
-    constraints the candidates should satisfy.
+    constraints the candidates should satisfy. If all objectives are constrained,
+    the first one is optimized.
 
     Examples:
         >>> SingleObjectiveScalarization()
     """
 
     type: Literal["SingleObjectiveScalarization"] = "SingleObjectiveScalarization"
+
+    def validate_domain(self, domain: Domain) -> None:
+        if len(domain.outputs.get_by_objective(excludes=ConstrainedObjective)) > 1:
+            raise ValueError(
+                "SingleObjectiveScalarization can only optimize one objective that "
+                "is not a constrained one. Combine several with another "
+                "scalarization, e.g. WeightedSumScalarization.",
+            )
 
     def separates_output_constraints(self) -> bool:
         return True
@@ -85,8 +78,22 @@ class _WeightedScalarization(Scalarization):
     )
 
     def validate_domain(self, domain: Domain) -> None:
-        _validate_multiple_objectives(self, domain)
-        _validate_objective_keys(self.weights, "Weight", domain)
+        if len(domain.outputs.get_by_objective(Objective)) < 2:
+            raise ValueError(
+                f"{type(self).__name__} requires at least 2 outputs with objectives. "
+                "Consider SingleObjectiveScalarization instead.",
+            )
+        self._validate_objective_keys(self.weights, "Weight", domain)
+
+    @staticmethod
+    def _validate_objective_keys(keys, name: str, domain: Domain) -> None:
+        objective_keys = domain.outputs.get_keys_by_objective(Objective)
+        for key in keys:
+            if key not in objective_keys:
+                raise ValueError(
+                    f"{name} given for {key}, which is not an output with an "
+                    "objective.",
+                )
 
     def get_weights(self, domain: Domain) -> Dict[str, float]:
         """Returns the weight of every output with an objective.
@@ -115,8 +122,10 @@ class _MultiplicativeScalarization(_WeightedScalarization):
         default="min",
         description="How the weights are rescaled before they become exponents: "
         "'min' so that the smallest is 1, 'sum' so that they sum to 1, which makes "
-        "the product a weighted geometric mean. The best candidate is the same either "
-        "way, but the acquisition values, and with them the proposals, differ.",
+        "the product a weighted geometric mean, which keeps desirabilities in [0, 1] "
+        "within [0, 1]. One product is a power of the other, so the optimum of the "
+        "combination is the same, but the acquisition function sees it differently "
+        "curved and proposes different candidates.",
     )
 
     def _multiplied_keys(self, domain: Domain) -> List[str]:
@@ -183,8 +192,8 @@ class WeightedProductSumScalarization(_MultiplicativeScalarization):
 
         f1^w1 * f2^w2 * (1 + w3 * f3 + w4 * f4)
 
-    so the multiplicative objectives all have to be good, while the additive ones can
-    make up for each other. Constrained objectives, such as sigmoid ones, enter the
+    so a candidate is only good if every multiplied objective is good, while the summed
+    ones can make up for each other. Constrained objectives, such as sigmoid ones, enter the
     combination like any other.
 
     Examples:
@@ -206,7 +215,9 @@ class WeightedProductSumScalarization(_MultiplicativeScalarization):
         ]
 
     def validate_domain(self, domain: Domain) -> None:
-        _validate_objective_keys(self.additive_features, "Additive feature", domain)
+        self._validate_objective_keys(
+            self.additive_features, "Additive feature", domain
+        )
         super().validate_domain(domain)
 
 

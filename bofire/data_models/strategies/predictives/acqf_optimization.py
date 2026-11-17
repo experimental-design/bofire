@@ -92,11 +92,7 @@ class LSRBO(LocalSearchConfig):
     For processes that may only move by a limited step from the current point, as
     set by `local_relative_bounds` on the continuous inputs. Each step maximizes the
     acquisition function within the local region; if the value found there is too
-    low, the step instead heads for the global maximum along a feasible path. Only
-    used when one candidate is asked for.
-
-    Examples:
-        >>> BotorchOptimizer(local_search_config=LSRBO(gamma=0.1))
+    low, the step instead heads for the global maximum along a feasible path.
     """
 
     type: Literal["LSRBO"] = "LSRBO"
@@ -121,8 +117,7 @@ class BotorchOptimizer(AcquisitionOptimizer):
 
     Continuous inputs are optimized by gradients. Categorical and discrete inputs are
     handled by trying every combination of their values if there are few, and
-    otherwise by optimizing them alternately with the continuous inputs. Supports all
-    constraints except nonlinear ones.
+    otherwise by optimizing them alternately with the continuous inputs.
 
     Examples:
         >>> BotorchOptimizer(n_restarts=10, n_raw_samples=512)

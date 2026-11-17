@@ -23,12 +23,7 @@ from bofire.data_models.unions import tagged_union
 
 class ReferenceValue(BaseModel):
     """Reference value of one objective, the value an objective has to beat for a
-    candidate to add to the hypervolume.
-
-    Moving reference values follow the experiments: they are computed from the best
-    and the worst value of the objective seen so far, so they shift as the
-    optimization proceeds.
-    """
+    candidate to add to the hypervolume."""
 
     type: Any
 
@@ -65,7 +60,22 @@ class FixedReferenceValue(ReferenceValue):
         return self.value
 
 
-class AbsoluteMovingReferenceValue(ReferenceValue):
+class MovingReferenceValue(ReferenceValue):
+    """Reference value that follows the experiments: it is placed relative to the
+    best or the worst value of the objective seen so far, so it shifts as the
+    optimization proceeds."""
+
+    orient_at_best: bool = Field(
+        default=True,
+        description="Whether the reference value is placed relative to the best value "
+        "seen so far, or else relative to the worst one.",
+    )
+
+    def _anchor(self, best: float, worst: float) -> float:
+        return best if self.orient_at_best else worst
+
+
+class AbsoluteMovingReferenceValue(MovingReferenceValue):
     """Reference value at a fixed distance from the best or the worst value seen so
     far.
 
@@ -78,23 +88,16 @@ class AbsoluteMovingReferenceValue(ReferenceValue):
     """
 
     type: Literal["AbsoluteMovingReferenceValue"] = "AbsoluteMovingReferenceValue"
-    orient_at_best: bool = Field(
-        default=True,
-        description="Whether the reference value is placed relative to the best value "
-        "seen so far, or else relative to the worst one.",
-    )
     offset: float = Field(
         description="Distance from the best or worst value, in units of the output; "
         "positive towards better values.",
     )
 
     def get_reference_value(self, best: float, worst: float) -> float:
-        if self.orient_at_best:
-            return best + self.offset
-        return worst + self.offset
+        return self._anchor(best, worst) + self.offset
 
 
-class RelativeMovingReferenceValue(ReferenceValue):
+class RelativeMovingReferenceValue(MovingReferenceValue):
     """Reference value at a distance from the best or the worst value seen so far
     that is a multiple of the range between them.
 
@@ -108,11 +111,6 @@ class RelativeMovingReferenceValue(ReferenceValue):
     """
 
     type: Literal["RelativeMovingReferenceValue"] = "RelativeMovingReferenceValue"
-    orient_at_best: bool = Field(
-        default=True,
-        description="Whether the reference value is placed relative to the best value "
-        "seen so far, or else relative to the worst one.",
-    )
     scaling: float = Field(
         default=1.0,
         description="Distance from the best or worst value, as a multiple of the "
@@ -120,12 +118,10 @@ class RelativeMovingReferenceValue(ReferenceValue):
     )
 
     def get_reference_value(self, best: float, worst: float) -> float:
-        if self.orient_at_best:
-            return best + self.scaling * (best - worst)
-        return worst + self.scaling * (best - worst)
+        return self._anchor(best, worst) + self.scaling * (best - worst)
 
 
-class RelativeToMaxMovingReferenceValue(ReferenceValue):
+class RelativeToMaxMovingReferenceValue(MovingReferenceValue):
     """Reference value at a multiple of the best or the worst value seen so far.
 
     The reference value is `best * (1 + scaling)`, or `worst * (1 + scaling)` if not
@@ -140,11 +136,6 @@ class RelativeToMaxMovingReferenceValue(ReferenceValue):
     type: Literal["RelativeToMaxMovingReferenceValue"] = (
         "RelativeToMaxMovingReferenceValue"
     )
-    orient_at_best: bool = Field(
-        default=True,
-        description="Whether the reference value is placed relative to the best value "
-        "seen so far, or else relative to the worst one.",
-    )
     scaling: float = Field(
         default=1.0,
         description="Relative change of the best or worst value, e.g. -0.3 for 70% "
@@ -152,9 +143,7 @@ class RelativeToMaxMovingReferenceValue(ReferenceValue):
     )
 
     def get_reference_value(self, best: float, worst: float) -> float:
-        if self.orient_at_best:
-            return best + best * self.scaling
-        return worst + worst * self.scaling
+        return self._anchor(best, worst) * (1 + self.scaling)
 
 
 AnyReferenceValue = tagged_union(

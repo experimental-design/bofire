@@ -99,12 +99,13 @@ def map_SingleObjectiveScalarization(
     experiments: pd.DataFrame,
     input_preprocessing_specs: InputTransformSpecs,
 ) -> ObjectiveCallable:
-    try:
-        target_feature = domain.outputs.get_by_objective(
-            excludes=ConstrainedObjective,
-        )[0]
-    except IndexError:
-        target_feature = domain.outputs.get_by_objective(includes=Objective)[0]
+    unconstrained = domain.outputs.get_by_objective(excludes=ConstrainedObjective)
+    # if all objectives are constrained (e.g. for qLogPF), the first one is the target
+    target_feature = (
+        unconstrained[0]
+        if len(unconstrained) > 0
+        else domain.outputs.get_by_objective(includes=Objective)[0]
+    )
     target_index = domain.outputs.get_keys().index(target_feature.key)
     x_adapt = torch.from_numpy(
         domain.outputs.preprocess_experiments_one_valid_output(

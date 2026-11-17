@@ -1,3 +1,4 @@
+import pytest
 from pydantic import TypeAdapter
 
 from bofire.data_models.objectives.api import (
@@ -7,10 +8,14 @@ from bofire.data_models.objectives.api import (
 )
 
 
-def test_stored_neutral_weight_is_dropped():
+def test_stored_neutral_weight_is_dropped_with_warning():
     # objectives stored before the weights moved to the scalarizations carry w=1.0
     stored = {"type": "MaximizeSigmoidObjective", "w": 1.0, "tp": 0.5, "steepness": 2}
-    objective = TypeAdapter(AnyObjective).validate_python(stored)
+    with pytest.warns(DeprecationWarning, match="no longer have a weight"):
+        objective = TypeAdapter(AnyObjective).validate_python(stored)
     assert objective == MaximizeSigmoidObjective(tp=0.5, steepness=2)
     assert "w" not in objective.model_dump()
-    assert MaximizeObjective(w=1) == MaximizeObjective()  # ty: ignore[unknown-argument]
+    with pytest.warns(DeprecationWarning, match="no longer have a weight"):
+        assert (
+            MaximizeObjective(w=1) == MaximizeObjective()
+        )  # ty: ignore[unknown-argument]

@@ -1,3 +1,4 @@
+import warnings
 from abc import abstractmethod
 from typing import Annotated, Any, Optional, Union
 
@@ -20,8 +21,9 @@ class Objective(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_no_weight(cls, data: Any) -> Any:
-        """Drops the former weight `w` of stored objectives if it is the neutral 1;
-        any other weight has to be set on the scalarization instead."""
+        """Drops the former weight `w` with a deprecation warning if it is the
+        neutral 1, so stored objectives keep loading; any other weight has to be set
+        on the scalarization instead."""
         if isinstance(data, dict) and "w" in data:
             data = dict(data)
             if data.pop("w") != 1:
@@ -29,6 +31,12 @@ class Objective(BaseModel):
                     "Objective weights moved to the scalarization of SoboStrategy, "
                     "e.g. WeightedSumScalarization(weights={...}).",
                 )
+            warnings.warn(
+                "Objectives no longer have a weight `w`; it is ignored. Set weights "
+                "on the scalarization of SoboStrategy instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         return data
 
     @abstractmethod

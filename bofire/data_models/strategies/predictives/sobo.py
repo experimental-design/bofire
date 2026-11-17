@@ -24,7 +24,8 @@ class SoboStrategy(BotorchStrategy):
     By default exactly one output has an objective to optimize; further outputs may
     have constrained objectives, such as sigmoid ones, which act as constraints the
     candidates should satisfy. With `qLogPF` as acquisition function, the strategy
-    only searches for candidates that satisfy those constraints.
+    ignores the objectives and only searches for candidates that satisfy those
+    constraints.
 
     Examples:
         >>> SoboStrategy(domain=domain, acquisition_function=qLogEI())
@@ -40,31 +41,22 @@ class SoboStrategy(BotorchStrategy):
     scalarization: AnyScalarization = Field(
         default=SingleObjectiveScalarization(),
         description="How the objectives are combined into the single value that is "
-        "maximized. By default, the domain has a single objective to optimize.",
+        "maximized.",
     )
 
     @model_validator(mode="after")
     def validate_scalarization(self):
         self.scalarization.validate_domain(self.domain)
-        is_single = isinstance(self.scalarization, SingleObjectiveScalarization)
         if isinstance(self.acquisition_function, qLogPF):
-            if not is_single:
+            if not self.scalarization.separates_output_constraints():
                 raise ValueError(
-                    "qLogPF acquisition function is only allowed with the "
-                    "SingleObjectiveScalarization.",
+                    "qLogPF acquisition function needs a scalarization that keeps "
+                    "constrained objectives apart as constraints.",
                 )
             if len(self.domain.outputs.get_by_objective(ConstrainedObjective)) == 0:
                 raise ValueError(
                     "At least one constrained objective is required for qLogPF.",
                 )
-        elif (
-            is_single
-            and len(self.domain.outputs.get_by_objective(excludes=ConstrainedObjective))
-            > 1
-        ):
-            raise ValueError(
-                "SOBO strategy can only deal with one no-constraint objective.",
-            )
         return self
 
     @classmethod
