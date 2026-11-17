@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, cast
+from typing import Dict, Literal, Optional, cast
 
 import pandas as pd
 import torch
@@ -13,7 +13,7 @@ from bofire.data_models.strategies.doe import (
     AnyOptimalityCriterion,
     DoEOptimalityCriterion,
 )
-from bofire.strategies.doe.design import find_local_max_ipopt, get_n_experiments
+from bofire.strategies.doe.design import find_local_max, get_n_experiments
 from bofire.strategies.doe.objective import ModelBasedObjective, get_objective_function
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 from bofire.strategies.doe.utils_categorical_discrete import (
@@ -43,11 +43,6 @@ class DoEStrategy(Strategy):
         self._data_model = data_model
         self._partially_fixed_candidates = None
         self._fixed_candidates = None
-        self._sampling = (
-            pd.DataFrame(self._data_model.sampling)
-            if self._data_model.sampling is not None
-            else None
-        )
         self._return_fixed_candidates = (
             data_model.return_fixed_candidates
         )  # this defaults to False in the data model
@@ -112,14 +107,16 @@ class DoEStrategy(Strategy):
             domain=relaxed_domain,
             n_experiments=_total_count,
             inputs_for_formula=self.domain.inputs,
+            optimizer=self._data_model.optimizer,
         )
         assert objective_function is not None, "Criterion type is not supported!"
 
-        design = find_local_max_ipopt(
+        design = find_local_max(
             relaxed_domain,
             fixed_experiments=None,  # effectively deprecated, but others use it so we have not removed it yet
             partially_fixed_experiments=relaxed_candidates,  # technically fixed experiments are also partially_fixed, so we only use this
-            ipopt_options=self._data_model.ipopt_options,
+            optimizer=self._data_model.optimizer,
+            optimizer_options=self._data_model.optimizer_options,
             objective_function=objective_function,
             seed=self.seed,
             callback=progress_callback,
@@ -219,6 +216,7 @@ class DoEStrategy(Strategy):
             domain=relaxed_domain,
             n_experiments=n_candidates,
             inputs_for_formula=self.domain.inputs,
+            optimizer=self._data_model.optimizer,
         )
 
         # Step 4 & 5: Combined tensor_to_model_matrix + rank calculation
@@ -288,12 +286,9 @@ class DoEStrategy(Strategy):
         domain: Domain,
         seed: int | None = None,
         criterion: AnyOptimalityCriterion | None = None,
-        verbose: bool | None = None,
-        ipopt_options: Dict | None = None,
+        optimizer: Literal["pounce", "ipopt", "scipy"] | None = None,
+        optimizer_options: Dict | None = None,
         scip_params: Dict | None = None,
-        use_hessian: bool | None = None,
-        use_cyipopt: bool | None = None,
-        sampling: List[List[float]] | None = None,
         return_fixed_candidates: bool | None = None,
     ) -> Self:
         """
@@ -302,13 +297,10 @@ class DoEStrategy(Strategy):
             domain: The domain for the strategy.
             seed: Random seed for reproducibility.
             criterion: Optimality criterion for the strategy. Default is d-optimality.
-            verbose: Verbosity level.
-            ipopt_options: Options for IPOPT solver. IPOPT is used to minize the optimality criterion.
+            optimizer: NLP solver: "pounce" (default), "ipopt" or "scipy".
+            optimizer_options: Options forwarded to the solver.
             scip_params: Parameters for SCIP solver. SCIP is used to for backprojection of
                          discrete and categorical variables.
-            use_hessian: Whether to use Hessian information.
-            use_cyipopt: Whether to use cyipopt.
-            sampling: Initial points for the strategy.
             return_fixed_candidates: Whether to return fixed candidates.
         Returns:
             DoEStrategy: A new instance of the DoEStrategy class.

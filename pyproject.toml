@@ -36,6 +36,7 @@ dependencies = [
 [project.optional-dependencies]
 optimization = [
     "botorch[fully_bayesian]>=0.18.1",
+    "pounce-solver>=0.16,<1",
     "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
     "multiprocess",
     "plotly",
@@ -57,10 +58,11 @@ tests = ["pytest", "pytest-cov", "papermill"]
 docs = ["jupyter", "jupyter-cache", "matplotlib", "seaborn"]
 all = [
     "botorch[fully_bayesian]>=0.18.1",
+    "pounce-solver>=0.16,<1",
     "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
     "multiprocess",
     "plotly",
-    "formulaic==1.0.1",
+    "formulaic>=1.0.1,<1.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL,SCIP]<=1.8.2",
