@@ -412,7 +412,6 @@ for criterion in [
                 strategies.DoEStrategy,
                 lambda criterion=criterion, formula=formula, optimizer=optimizer: {
                     "domain": domain.valid().obj().model_dump(),
-                    "verbose": False,
                     "seed": 42,
                     "criterion": criterion(
                         formula=formula, transform_range=None
@@ -420,7 +419,6 @@ for criterion in [
                     "optimizer": optimizer,
                     "optimizer_options": None,
                     "scip_params": None,
-                    "sampling": None,
                     "return_fixed_candidates": False,
                 },
             )
@@ -430,15 +428,13 @@ for optimizer in ["ipopt", "pounce", "scipy"]:
         strategies.DoEStrategy,
         lambda optimizer=optimizer: {
             "domain": domain.valid().obj().model_dump(),
-            "verbose": False,
             "optimizer": optimizer,
             "optimizer_options": {"max_iter": 200, "print_level": 0},
             "criterion": strategies.SpaceFillingCriterion(
-                sampling_fraction=0.3, transform_range=[-1, 1]
+                transform_range=[-1, 1]
             ).model_dump(),
             "seed": 42,
             "scip_params": None,
-            "sampling": None,
             "return_fixed_candidates": False,
         },
     )

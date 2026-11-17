@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, Optional, cast
+from typing import Dict, Literal, Optional, cast
 
 import pandas as pd
 import torch
@@ -43,11 +43,6 @@ class DoEStrategy(Strategy):
         self._data_model = data_model
         self._partially_fixed_candidates = None
         self._fixed_candidates = None
-        self._sampling = (
-            pd.DataFrame(self._data_model.sampling)
-            if self._data_model.sampling is not None
-            else None
-        )
         self._return_fixed_candidates = (
             data_model.return_fixed_candidates
         )  # this defaults to False in the data model
@@ -291,11 +286,9 @@ class DoEStrategy(Strategy):
         domain: Domain,
         seed: int | None = None,
         criterion: AnyOptimalityCriterion | None = None,
-        verbose: bool | None = None,
         optimizer: Literal["pounce", "ipopt", "scipy"] | None = None,
         optimizer_options: Dict | None = None,
         scip_params: Dict | None = None,
-        sampling: List[List[float]] | None = None,
         return_fixed_candidates: bool | None = None,
     ) -> Self:
         """
@@ -304,12 +297,10 @@ class DoEStrategy(Strategy):
             domain: The domain for the strategy.
             seed: Random seed for reproducibility.
             criterion: Optimality criterion for the strategy. Default is d-optimality.
-            verbose: Verbosity level.
             optimizer: NLP solver: "pounce" (default), "ipopt" or "scipy".
             optimizer_options: Options forwarded to the solver.
             scip_params: Parameters for SCIP solver. SCIP is used to for backprojection of
                          discrete and categorical variables.
-            sampling: Initial points for the strategy.
             return_fixed_candidates: Whether to return fixed candidates.
         Returns:
             DoEStrategy: A new instance of the DoEStrategy class.

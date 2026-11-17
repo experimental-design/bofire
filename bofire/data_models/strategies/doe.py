@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal, Optional, Type, Union
+from typing import Any, Dict, Literal, Optional, Type, Union
 
 from formulaic import Formula
 from formulaic.errors import FormulaSyntaxError
@@ -53,9 +53,6 @@ class SpaceFillingCriterion(OptimalityCriterion):
     """
 
     type: Literal["SpaceFillingCriterion"] = "SpaceFillingCriterion"
-    sampling_fraction: float = Field(
-        default=0.3, gt=0, lt=1, description="Has no effect."
-    )
 
 
 class DoEOptimalityCriterion(OptimalityCriterion):
@@ -216,7 +213,6 @@ class DoEStrategy(Strategy):
         ),
     )
 
-    verbose: bool = Field(default=False, description="Has no effect.")
     optimizer: Literal["pounce", "ipopt", "scipy"] = Field(
         default="pounce",
         description=(
@@ -240,9 +236,6 @@ class DoEStrategy(Strategy):
             "Parameters for the SCIP solver that projects categorical and discrete "
             "inputs onto allowed values. `None` uses `{'numerics/feastol': 1e-8}`."
         ),
-    )
-    sampling: Optional[List[List[float]]] = Field(
-        default=None, description="Has no effect."
     )
     return_fixed_candidates: bool = Field(
         default=False,

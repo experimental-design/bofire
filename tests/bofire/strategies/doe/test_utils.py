@@ -807,11 +807,17 @@ def test_pounce_regression_d_optimal_mixture():
 
 
 @pytest.mark.parametrize(
-    "removed", [{"use_cyipopt": True}, {"ipopt_options": {}}, {"use_hessian": True}]
+    "removed",
+    [
+        {"use_cyipopt": True},
+        {"ipopt_options": {}},
+        {"use_hessian": True},
+        {"verbose": True},
+        {"sampling": [[0.1, 0.2, 0.7]]},
+    ],
 )
-def test_doestrategy_rejects_removed_solver_fields(removed):
-    """`optimizer`/`optimizer_options` replaced these fields; they now fail as
-    unknown fields instead of being mapped."""
+def test_doestrategy_rejects_removed_fields(removed):
+    """Removed fields fail as unknown fields instead of being ignored."""
     from pydantic import ValidationError
 
     from bofire.data_models.strategies.api import DoEStrategy as _DoEStrategyDM
@@ -831,6 +837,15 @@ def test_ioptimality_criterion_rejects_ipopt_options():
 
     with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
         IOptimalityCriterion(formula="linear", ipopt_options={})
+
+
+def test_space_filling_criterion_rejects_sampling_fraction():
+    from pydantic import ValidationError
+
+    from bofire.data_models.strategies.doe import SpaceFillingCriterion
+
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        SpaceFillingCriterion(sampling_fraction=0.3)
 
 
 def test_nchoosek_constraints_as_bounds():
