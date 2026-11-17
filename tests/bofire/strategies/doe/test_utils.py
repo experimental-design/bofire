@@ -2,6 +2,7 @@ import importlib.util
 import sys
 
 import numpy as np
+import pandas as pd
 import pytest
 from scipy import sparse
 
@@ -602,6 +603,58 @@ def test_minimize_box_only(optimizer):
     )
     assert (res.x >= -1e-6).all() and (res.x <= 1 + 1e-6).all()
     assert obj.evaluate(res.x) < obj.evaluate(x0)
+
+
+@pytest.mark.parametrize("optimizer", ["ipopt", "pounce", "scipy"])
+def test_solve_linear_and_nonlinear_inequalities(optimizer):
+    """Each backend returns a feasible design for a mixture with a
+    linear and a nonlinear inequality (sparse dict Jacobians for pounce and
+    cyipopt, densified ones for SLSQP)."""
+    if optimizer == "ipopt" and not CYIPOPT_AVAILABLE:
+        pytest.skip("cyipopt required")
+    if optimizer == "pounce" and not POUNCE_AVAILABLE:
+        pytest.skip("pounce required")
+    n_experiments = 8
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in (1, 2, 3)],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearEqualityConstraint(
+                features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=1
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2"], coefficients=[1, 1], rhs=0.8
+            ),
+            NonlinearInequalityConstraint(
+                expression="x1**2 + x3**2 - 0.5",
+                features=["x1", "x3"],
+                jacobian_expression="[2*x1, 2*x3]",
+            ),
+        ],
+    )
+    obj = get_objective_function(
+        DOptimalityCriterion(formula="linear"),
+        domain=domain,
+        n_experiments=n_experiments,
+    )
+    x0 = (
+        domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM, seed=1)
+        .to_numpy()
+        .flatten()
+    )
+    res = _solve(
+        obj,
+        x0,
+        nchoosek_constraints_as_bounds(domain, n_experiments),
+        constraints_as_scipy_constraints(domain, n_experiments),
+        optimizer=optimizer,
+        optimizer_options={"max_iter": 500, "print_level": 0},
+    )
+    design = pd.DataFrame(res.x.reshape(n_experiments, 3), columns=["x1", "x2", "x3"])
+    assert domain.constraints.is_fulfilled(design, tol=1e-5).all()
+    # x0 violates the mixture constraint, so its objective is no reference;
+    # a finite D-criterion means the design is not degenerate
+    assert np.isfinite(obj.evaluate(res.x))
 
 
 @pytest.mark.parametrize(

@@ -1621,3 +1621,21 @@ def test_doe_strategy_ask_reports_progress():
     assert len(events) > 0
     assert [e.step for e in events] == list(range(1, len(events) + 1))
     assert all(np.isfinite(e.value) for e in events)
+
+
+@pytest.mark.parametrize("optimizer", ["pounce", "ipopt", "scipy"])
+def test_doe_strategy_ask_with_each_optimizer(optimizer):
+    """DoEStrategy.ask runs end to end with every solver backend: data model,
+    strategy, find_local_max and the solver, on a mixture with linear
+    inequalities."""
+    if optimizer == "ipopt":
+        pytest.importorskip("cyipopt")
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        optimizer=optimizer,
+        seed=42,
+    )
+    candidates = DoEStrategy(data_model=data_model).ask(candidate_count=12)
+    assert candidates.shape == (12, 3)
+    assert domain.constraints.is_fulfilled(candidates, tol=1e-4).all()
