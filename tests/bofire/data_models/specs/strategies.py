@@ -31,6 +31,11 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
 )
+from bofire.data_models.samplers.api import (
+    LatinHypercubeSampler,
+    SobolSampler,
+    UniformSampler,
+)
 from bofire.data_models.strategies.api import (
     AbsoluteMovingReferenceValue,
     ExplicitReferencePoint,
@@ -369,8 +374,7 @@ specs.add_valid(
         "num_base_samples": 1000,
         "n_burnin": 1000,
         "n_thinning": 32,
-        "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
-        "sampler_kwargs": {},
+        "fallback_sampler": UniformSampler().model_dump(),
     },
 )
 
@@ -379,19 +383,30 @@ specs.add_valid(
     lambda: {
         "domain": domain.valid().obj().model_dump(),
         "seed": 42,
+        "fallback_sampler": SobolSampler(optimization="random-cd").model_dump(),
+    },
+)
+
+specs.add_valid(
+    strategies.RandomStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "seed": 42,
+        "fallback_sampler": LatinHypercubeSampler(
+            scramble=False, strength=2
+        ).model_dump(),
+    },
+)
+
+specs.add_invalid(
+    strategies.RandomStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "fallback_sampler": UniformSampler(),
         "fallback_sampling_method": SamplingMethodEnum.SOBOL,
-        "sampler_kwargs": {"scramble": True},
     },
-)
-
-specs.add_valid(
-    strategies.RandomStrategy,
-    lambda: {
-        "domain": domain.valid().obj().model_dump(),
-        "seed": 42,
-        "fallback_sampling_method": SamplingMethodEnum.LHS,
-        "sampler_kwargs": {"scramble": True, "strength": 2},
-    },
+    error=ValueError,
+    message="Use either fallback_sampler or the former",
 )
 
 for criterion in [
@@ -867,9 +882,26 @@ specs.add_valid(
         "n_repetitions": 1,
         "n_center": 0,
         "n_generators": 0,
-        "generator": "",
+        "generator": None,
         "randomize_runorder": False,
     },
+)
+
+specs.add_invalid(
+    strategies.FractionalFactorialStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ],
+            ),
+        ).model_dump(),
+        "n_generators": 2,
+        "generator": "a b ab",
+    },
+    error=ValueError,
+    message="n_generators is 2, but the generator sets 1 inputs to products",
 )
 
 specs.add_invalid(

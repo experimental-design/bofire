@@ -23,12 +23,12 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     DiscreteInput,
 )
+from bofire.data_models.samplers.api import AnySampler, UniformSampler
 from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.strategy import Strategy, make_strategy
 from bofire.utils.torch_tools import (
@@ -60,12 +60,11 @@ class RandomStrategy(Strategy):
         super().__init__(data_model=data_model, **kwargs)
         self.num_base_samples = data_model.num_base_samples
         self.max_iters = data_model.max_iters
-        self.fallback_sampling_method = data_model.fallback_sampling_method
+        self.fallback_sampler = data_model.fallback_sampler
         self.n_burnin = data_model.n_burnin
         self.n_thinning = data_model.n_thinning
         self.max_combinations = data_model.max_combinations
         self.nchoosek_max_iters = data_model.nchoosek_max_iters
-        self.sampler_kwargs = data_model.sampler_kwargs
 
     def has_sufficient_experiments(self) -> bool:
         """Check if there are sufficient experiments for the strategy.
@@ -195,12 +194,11 @@ class RandomStrategy(Strategy):
                     samples.append(
                         self._sample_from_polytope(
                             domain=domain,
-                            fallback_sampling_method=self.fallback_sampling_method,
+                            fallback_sampler=self.fallback_sampler,
                             n_burnin=self.n_burnin,
                             n_thinning=self.n_thinning,
                             seed=self._get_seed(),
                             n=count * sampling_multiplier,
-                            sampler_kwargs=self.sampler_kwargs,
                         ),
                     )
                 except InfeasibilityError:
@@ -229,12 +227,11 @@ class RandomStrategy(Strategy):
 
         return self._sample_from_polytope(
             domain=self.domain,
-            fallback_sampling_method=self.fallback_sampling_method,
+            fallback_sampler=self.fallback_sampler,
             n_burnin=self.n_burnin,
             n_thinning=self.n_thinning,
             seed=self._get_seed(),
             n=candidate_count,
-            sampler_kwargs=self.sampler_kwargs,
         )
 
     @staticmethod
@@ -315,23 +312,21 @@ class RandomStrategy(Strategy):
     def _sample_from_polytope(
         domain: Domain,
         n: int,
-        fallback_sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM,
+        fallback_sampler: Optional[AnySampler] = None,
         n_burnin: int = 1000,
         n_thinning: int = 32,
         seed: Optional[int] = None,
-        sampler_kwargs: Optional[dict] = None,
     ) -> pd.DataFrame:
         """Sample points from a polytope defined by the given domain.
 
         Args:
             n (int): The number of points to sample.
             domain (Domain): The domain defining the polytope.
-            fallback_sampling_method (SamplingMethodEnum, optional): The fallback sampling method to use when the domain has no constraints.
-                Defaults to SamplingMethodEnum.UNIFORM.
+            fallback_sampler: The sampler for inputs without constraints. Defaults to
+                a UniformSampler.
             n_burnin (int, optional): The number of burn-in samples for the polytope sampler. Defaults to 1000.
             n_thinning (int, optional): The thinning factor for the polytope sampler. Defaults to 32.
             seed (Optional[int], optional): The seed value for random number generation. Defaults to None.
-            sampler_kwargs (Optional[Dict], optional): Additional arguments for the sampler. Defaults to None.
 
         Returns:
             pd.DataFrame: A DataFrame containing the sampled points.
@@ -340,14 +335,12 @@ class RandomStrategy(Strategy):
         if seed is None:
             seed = int(np.random.default_rng().integers(1, 1000000))
 
-        if sampler_kwargs is None:
-            sampler_kwargs = {}
+        if fallback_sampler is None:
+            fallback_sampler = UniformSampler()
 
         # here we have to adapt for categoricals
         if len(domain.constraints.get(AnyContinuousConstraint)) == 0:
-            return domain.inputs.sample(
-                n, fallback_sampling_method, seed=seed, sampler_kwargs=sampler_kwargs
-            )
+            return domain.inputs.sample(n, fallback_sampler, seed=seed)
 
         # check if we have pseudo fixed features in the linear equality constraints
         # a pseudo fixed is a linear euquality constraint with only one feature included
@@ -472,7 +465,7 @@ class RandomStrategy(Strategy):
                 .get_free()
                 .sample(
                     n,
-                    method=fallback_sampling_method,
+                    method=fallback_sampler,
                     seed=seed,
                 ),
             ],
@@ -493,7 +486,7 @@ class RandomStrategy(Strategy):
     def make(
         cls,
         domain: Domain,
-        fallback_sampling_method: SamplingMethodEnum | None = None,
+        fallback_sampler: AnySampler | None = None,
         n_burnin: int | None = None,
         n_thinning: int | None = None,
         num_base_samples: int | None = None,
@@ -501,12 +494,11 @@ class RandomStrategy(Strategy):
         max_combinations: int | None = None,
         nchoosek_max_iters: int | None = None,
         seed: int | None = None,
-        sampler_kwargs: Optional[dict] = None,
     ) -> Self:
         """Create a new instance of the RandomStrategy class.
         Args:
             domain: The domain we randomly sample from.
-            fallback_sampling_method: The fallback sampling method to use when the domain has no constraints.
+            fallback_sampler: The sampler for inputs without constraints.
             n_burnin: The number of burn-in samples for the polytope sampler.
             n_thinning: The thinning factor for the polytope sampler.
             num_base_samples: The number of base samples for rejection sampling.
@@ -514,7 +506,6 @@ class RandomStrategy(Strategy):
             max_combinations: The maximum number of distinct NChooseK feature combinations to draw per ask.
             nchoosek_max_iters: The maximum number of rejection-sampling attempts per drawn NChooseK combination.
             seed: The seed value for random number generation.
-            sampler_kwargs: Additional arguments for the sampler. Defaults to None.
         Returns:
             RandomStrategy: A new instance of the RandomStrategy class.
         """

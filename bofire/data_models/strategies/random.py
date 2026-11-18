@@ -1,6 +1,6 @@
-from typing import Annotated, Literal, Optional, Type
+from typing import Any, Literal, Optional, Type
 
-from pydantic import Field
+from pydantic import Field, PositiveInt, model_validator
 
 from bofire.data_models.constraints.api import (
     CategoricalExcludeConstraint,
@@ -15,66 +15,91 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import Objective
+from bofire.data_models.samplers.api import (
+    AnySampler,
+    UniformSampler,
+    sampler_from_method,
+)
 from bofire.data_models.strategies.strategy import Strategy
 
 
 class RandomStrategy(Strategy):
-    """Strategy for drawing random samples from a domain subject to its constraints.
+    """Draws random candidates that satisfy the constraints of the domain.
 
-    Sampling proceeds in four regimes, picked automatically based on the
-    constraints present in the domain:
+    Use it for initial designs before a model-based strategy takes over. How the
+    candidates are drawn depends on the constraints:
 
-    1. **Unconstrained / categorical-only domains.** Samples are drawn directly
-       from each input feature using ``fallback_sampling_method`` (uniform,
-       Sobol, or LHS).
-    2. **Linear/interpoint-constrained domains.** A hit-and-run polytope sampler
-       (``botorch.sample_q_batches_from_polytope``) draws candidates that
-       satisfy linear equality, linear inequality, and interpoint equality
-       constraints. Categorical and discrete inputs are sampled independently
-       with the fallback method.
-    3. **NChooseK and/or ``allow_zero`` features.** The strategy draws up to
-       ``max_combinations`` distinct active-feature subsets uniformly from all
-       valid subsets (one group per ``NChooseKConstraint``, plus one singleton
-       group per ``ContinuousInput`` with ``allow_zero=True`` outside any
-       NChooseK). For each drawn subset the unselected zeroable features are
-       pinned to ``0`` and the remaining features are sampled via the polytope
-       sampler. Final candidates are concatenated and uniformly subsampled.
-    4. **Nonlinear or product constraints.** When constraints are present that
-       cannot be enforced directly by the polytope sampler, regimes 1-3 are
-       used as a proposal distribution and rejection sampling filters
-       candidates until ``candidate_count`` valid samples are found.
+    1. Without constraints, every input is sampled by `fallback_sampler`.
+    2. With linear or interpoint constraints, the continuous inputs are
+       drawn by a random walk inside the feasible region (hit-and-run); categorical
+       and discrete inputs are still sampled by `fallback_sampler`.
+    3. With NChooseK constraints or inputs that may be zero (`allow_zero`), the
+       strategy first draws up to `max_combinations` sets of active inputs, sets the
+       other ones to zero and samples each set as in 2.
+    4. Nonlinear and product constraints can't be built into the sampling; candidates
+       drawn as above are kept only if they satisfy them (rejection sampling).
 
-    Attributes:
-        fallback_sampling_method: Sampling method for unconstrained / fixed
-            inputs and for categorical and discrete features.
-        n_burnin: Burn-in length for the hit-and-run polytope sampler.
-        n_thinning: Thinning factor for the hit-and-run polytope sampler.
-        num_base_samples: Batch size used when drawing proposals during
-            rejection sampling. If ``None``, the requested ``candidate_count``
-            is used.
-        max_iters: Maximum number of rejection-sampling iterations before the
-            strategy gives up. Each iteration draws ``num_base_samples``
-            candidates.
-        max_combinations: Maximum number of distinct active-feature subsets to
-            draw per ``ask`` when NChooseK or ``allow_zero`` features are
-            present. Larger values give a better mix of subsets at the cost of
-            more polytope-sampler invocations.
-        nchoosek_max_iters: Maximum number of rejection-sampling attempts when
-            drawing a single valid active-feature subset under overlapping
-            ``NChooseKConstraint``s. Independent from ``max_iters``.
-        sampler_kwargs: Extra keyword arguments forwarded to the fallback
-            sampler (e.g. ``{"scramble": True}`` for Sobol).
+    Examples:
+        >>> RandomStrategy(domain=domain, fallback_sampler=SobolSampler(), seed=42)
     """
 
     type: Literal["RandomStrategy"] = "RandomStrategy"
-    fallback_sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
-    n_burnin: Annotated[int, Field(ge=1)] = 1000
-    n_thinning: Annotated[int, Field(ge=1)] = 32
-    num_base_samples: Optional[Annotated[int, Field(gt=0)]] = None
-    max_iters: Annotated[int, Field(gt=0)] = 1000
-    max_combinations: Annotated[int, Field(gt=0)] = 64
-    nchoosek_max_iters: Annotated[int, Field(gt=0)] = 1000
-    sampler_kwargs: Optional[dict] = None
+    fallback_sampler: AnySampler = Field(
+        default=UniformSampler(),
+        description="How inputs without constraints, and categorical and discrete "
+        "inputs, are sampled.",
+    )
+    n_burnin: PositiveInt = Field(
+        default=1000,
+        description="Number of initial steps of the random walk that are discarded, "
+        "so the samples no longer depend on its starting point.",
+    )
+    n_thinning: PositiveInt = Field(
+        default=32,
+        description="Only every n-th step of the random walk is kept, so consecutive "
+        "samples are less correlated.",
+    )
+    num_base_samples: Optional[PositiveInt] = Field(
+        default=None,
+        description="Number of candidates drawn in each round of rejection sampling. "
+        "If not provided, as many as are asked for.",
+    )
+    max_iters: PositiveInt = Field(
+        default=1000,
+        description="Maximal number of rounds of rejection sampling before the "
+        "strategy gives up.",
+    )
+    max_combinations: PositiveInt = Field(
+        default=64,
+        description="Maximal number of distinct sets of active inputs drawn per ask "
+        "under NChooseK constraints or `allow_zero` inputs. More sets mix the "
+        "combinations better, at a higher cost.",
+    )
+    nchoosek_max_iters: PositiveInt = Field(
+        default=1000,
+        description="Maximal number of attempts to draw one valid set of active "
+        "inputs under overlapping NChooseK constraints.",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_fallback_sampling_method(cls, data: Any) -> Any:
+        """Turns the former `fallback_sampling_method` and `sampler_kwargs` into a
+        `fallback_sampler`, so stored strategies keep loading."""
+        if isinstance(data, dict) and (
+            "fallback_sampling_method" in data or "sampler_kwargs" in data
+        ):
+            data = dict(data)
+            if "fallback_sampler" in data:
+                raise ValueError(
+                    "Use either fallback_sampler or the former "
+                    "fallback_sampling_method and sampler_kwargs, not both.",
+                )
+            data["fallback_sampler"] = sampler_from_method(
+                data.pop("fallback_sampling_method", SamplingMethodEnum.UNIFORM),
+                data.pop("sampler_kwargs", None),
+            )
+        return data
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return my_type in [

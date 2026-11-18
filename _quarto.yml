@@ -59,6 +59,15 @@ quartodoc:
             - OneHotEncoding
             - OrdinalEncoding
             - DescriptorEncoding
+    - title: Data Models - Samplers
+      desc: How sample points are spread over the inputs, e.g. for initial designs
+      contents:
+        - name: data_models.samplers.api
+          members:
+            - Sampler
+            - UniformSampler
+            - SobolSampler
+            - LatinHypercubeSampler
     - title: Data Models - Descriptor Generators
       desc: Descriptor columns generated from molecular structures
       contents:

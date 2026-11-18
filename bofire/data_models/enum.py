@@ -3,9 +3,17 @@ from typing import Literal
 
 
 class SamplingMethodEnum(str, Enum):
+    """Shorthand for a sampler with default options; `Inputs.sample` turns it into
+    the corresponding sampler of `bofire.data_models.samplers.api`."""
+
     UNIFORM = "UNIFORM"
+    """`UniformSampler`: independent uniform draws per input."""
+
     SOBOL = "SOBOL"
+    """`SobolSampler`: points of a scrambled Sobol sequence."""
+
     LHS = "LHS"
+    """`LatinHypercubeSampler`: a Latin hypercube design."""
 
 
 class ClassificationMetricsEnum(str, Enum):

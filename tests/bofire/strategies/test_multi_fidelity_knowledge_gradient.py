@@ -1,7 +1,7 @@
 from bofire.benchmarks.api import MOMFBraninCurrin
 from bofire.data_models.acquisition_functions.api import qMFHVKG
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import ContinuousTaskInput
+from bofire.data_models.samplers.api import SobolSampler
 from bofire.data_models.strategies.api import BotorchOptimizer
 from bofire.data_models.surrogates.api import LinearDeterministicSurrogate
 from bofire.strategies.api import MultiFidelityHVKGStrategy, RandomStrategy
@@ -12,7 +12,7 @@ def test_mfhvkg_fidelity_selection():
 
     random_strategy = RandomStrategy.make(
         domain=benchmark.domain,
-        fallback_sampling_method=SamplingMethodEnum.SOBOL,
+        fallback_sampler=SobolSampler(),
         seed=42,
     )
 

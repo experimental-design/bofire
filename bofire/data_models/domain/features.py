@@ -4,7 +4,6 @@ import functools
 import itertools
 import operator
 import re
-import warnings
 from collections.abc import Iterator, Sequence
 from typing import (
     Dict,
@@ -22,7 +21,6 @@ from typing import (
 import numpy as np
 import pandas as pd
 from pydantic import Field, create_model, field_validator, validate_call
-from scipy.stats.qmc import LatinHypercube, Sobol
 from typing_extensions import Self
 
 from bofire.data_models.base import BaseModel
@@ -49,6 +47,11 @@ from bofire.data_models.objectives.api import (
     AbstractObjective,
     ConstrainedCategoricalObjective,
     Objective,
+)
+from bofire.data_models.samplers.api import (
+    AnySampler,
+    UniformSampler,
+    sampler_from_method,
 )
 from bofire.data_models.types import InputTransformSpecs
 from bofire.data_models.unions import to_list
@@ -377,20 +380,20 @@ class Inputs(_BaseFeatures[AnyInput]):
     def sample(
         self,
         n: int = 1,
-        method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM,
+        method: Union[AnySampler, SamplingMethodEnum] = SamplingMethodEnum.UNIFORM,
         seed: Optional[int] = None,
         sampler_kwargs: Optional[Dict] = None,
     ) -> pd.DataFrame:
-        """Draw sobol samples
+        """Draws samples of the inputs; fixed inputs keep their value.
 
         Args:
-            n (int, optional): Number of samples, has to be larger than 0.
-                Defaults to 1.
-            method (SamplingMethodEnum, optional): Method to use, implemented
-                methods are `UNIFORM`, `SOBOL` and `LHS`. Defaults to `UNIFORM`.
-            reference_value
-            seed (int, optional): random seed. Defaults to None.
-            sampler_kwargs (Dict, optional): Additional arguments for the sampler. Defaults to None.
+            n: Number of samples, larger than 0.
+            method: The sampler, e.g. `SobolSampler()`. A `SamplingMethodEnum` is
+                turned into the corresponding sampler, with `sampler_kwargs` as its
+                options.
+            seed: Seed for reproducible samples; random if not provided.
+            sampler_kwargs: Options of the sampler, only used with a
+                `SamplingMethodEnum`.
 
         Returns:
             pd.DataFrame: Dataframe containing the samples.
@@ -399,10 +402,13 @@ class Inputs(_BaseFeatures[AnyInput]):
         if len(self) == 0:
             return pd.DataFrame()
 
-        if sampler_kwargs is None:
-            sampler_kwargs = {}
+        sampler = (
+            sampler_from_method(method, sampler_kwargs)
+            if isinstance(method, SamplingMethodEnum)
+            else method
+        )
 
-        if method == SamplingMethodEnum.UNIFORM:
+        if isinstance(sampler, UniformSampler):
             # we cannot just propagate the provided seed to the sample methods
             # as they would then sample always the same value if the bounds
             # are the same for a feature.
@@ -418,14 +424,7 @@ class Inputs(_BaseFeatures[AnyInput]):
             )
 
         free_features = self.get_free()
-        if method == SamplingMethodEnum.SOBOL:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                X = Sobol(len(free_features), seed=seed, **sampler_kwargs).random(n)
-        else:
-            X = LatinHypercube(len(free_features), seed=seed, **sampler_kwargs).random(
-                n
-            )
+        X = sampler.unit_samples(len(free_features), n, seed)
 
         res = []
         for i, feat in enumerate(free_features):
