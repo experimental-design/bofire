@@ -5,6 +5,7 @@ import torch
 from botorch.models.ensemble import EnsembleModel
 from botorch.models.transforms.input import InputTransform
 from botorch.models.transforms.outcome import OutcomeTransform
+from pydantic import PositiveInt
 from torch import Tensor, nn
 from torch.utils.data import DataLoader, Dataset
 from typing_extensions import Self
@@ -18,7 +19,7 @@ from bofire.data_models.surrogates.api import MLPEnsemble as DataModel
 from bofire.data_models.surrogates.api import (
     RegressionMLPEnsemble as DataModelRegression,
 )
-from bofire.data_models.surrogates.scaler import AnyScaler, ScalerEnum
+from bofire.data_models.surrogates.scaler import AnyScaler, ScalerEnum, Standardize
 from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import TrainableBotorchSurrogate
 from bofire.surrogates.surrogate import make_surrogate
@@ -217,19 +218,18 @@ class RegressionMLPEnsemble(MLPEnsemble):
         dump: str | None = None,
         categorical_encodings: InputTransformSpecs = {},  # noqa: B006 - copied by make_surrogate
         engineered_features: EngineeredFeatures = EngineeredFeatures(),  # noqa: B008 - copied by make_surrogate
-        scaler: AnyScaler = None,
+        scaler: AnyScaler = Standardize(),  # noqa: B008 - copied by make_surrogate
         output_scaler: ScalerEnum = ScalerEnum.IDENTITY,
         n_estimators: int = 5,
-        hidden_layer_sizes: Sequence = (100,),
+        hidden_layer_sizes: Sequence[PositiveInt] = (100,),
         activation: Literal["relu", "logistic", "tanh"] = "relu",
         dropout: float = 0.0,
         batch_size: int = 10,
         n_epochs: int = 200,
         lr: float = 1e-4,
-        weight_decay: float = 0.0,
+        weight_decay: float = 1e-4,
         subsample_fraction: float = 1.0,
         shuffle: bool = True,
-        final_activation: Literal["identity"] = "identity",
     ) -> Self:
         """Create a regression MLP ensemble using validated data-model settings.
 
@@ -251,7 +251,6 @@ class RegressionMLPEnsemble(MLPEnsemble):
             weight_decay: Optimizer weight decay.
             subsample_fraction: Training sample fraction per network.
             shuffle: Whether to shuffle training batches.
-            final_activation: identity activation for regression.
 
         Defaults mirror the data model and are copied for each call. Call ``fit`` to train.
         """
@@ -322,19 +321,18 @@ class ClassificationMLPEnsemble(MLPEnsemble):
         dump: str | None = None,
         categorical_encodings: InputTransformSpecs = {},  # noqa: B006 - copied by make_surrogate
         engineered_features: EngineeredFeatures = EngineeredFeatures(),  # noqa: B008 - copied by make_surrogate
-        scaler: AnyScaler = None,
+        scaler: AnyScaler = Standardize(),  # noqa: B008 - copied by make_surrogate
         output_scaler: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY,
         n_estimators: int = 5,
-        hidden_layer_sizes: Sequence = (100,),
+        hidden_layer_sizes: Sequence[PositiveInt] = (100,),
         activation: Literal["relu", "logistic", "tanh"] = "relu",
         dropout: float = 0.0,
         batch_size: int = 10,
         n_epochs: int = 200,
         lr: float = 1e-4,
-        weight_decay: float = 0.0,
+        weight_decay: float = 1e-4,
         subsample_fraction: float = 1.0,
         shuffle: bool = True,
-        final_activation: Literal["softmax"] = "softmax",
     ) -> Self:
         """Create a classification MLP ensemble using validated data-model settings.
 
@@ -356,7 +354,6 @@ class ClassificationMLPEnsemble(MLPEnsemble):
             weight_decay: Optimizer weight decay.
             subsample_fraction: Training sample fraction per network.
             shuffle: Whether to shuffle training batches.
-            final_activation: softmax activation for classification.
 
         Defaults mirror the data model and are copied for each call. Call ``fit`` to train.
         """

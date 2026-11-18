@@ -109,11 +109,10 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
         min_samples_split: int | float = 2,
         min_samples_leaf: int | float = 1,
         min_weight_fraction_leaf: float = 0.0,
-        max_features: int | float | Literal["auto", "sqrt", "log2"] = 1.0,
+        max_features: int | float | Literal["sqrt", "log2"] = 1.0,
         max_leaf_nodes: int | None = None,
         min_impurity_decrease: float = 0.0,
         bootstrap: bool = True,
-        oob_score: bool = False,
         random_state: int | None = None,
         ccp_alpha: float = 0.0,
         max_samples: int | float | None = None,
@@ -138,7 +137,6 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
             max_leaf_nodes: Maximum leaf count per tree.
             min_impurity_decrease: Minimum impurity decrease needed to split.
             bootstrap: Whether trees use bootstrap samples.
-            oob_score: Whether to compute an out-of-bag score.
             random_state: Random seed for the forest.
             ccp_alpha: Cost-complexity pruning parameter.
             max_samples: Sample count or fraction drawn for each bootstrap tree.
