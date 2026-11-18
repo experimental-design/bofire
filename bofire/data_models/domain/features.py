@@ -59,15 +59,12 @@ FeatureSequence = Sequence[F]
 
 
 class _BaseFeatures(BaseModel, Generic[F]):
-    """Container of features, both input and output features are allowed.
-
-    Attributes:
-        features: list of the features.
-
-    """
+    """Container of features, both input and output features are allowed."""
 
     type: Literal["Features"] = "Features"
-    features: FeatureSequence = Field(default_factory=list)
+    features: FeatureSequence = Field(
+        default=[], description="Sequence of features with unique keys."
+    )
 
     @field_validator("features")
     @classmethod
@@ -254,19 +251,12 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
 
 class Features(_BaseFeatures[AnyFeature]):
-    pass
+    """Container of features of any kind, input and output alike."""
 
 
 class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
-    """Container of engineered (input) features, only engineered features
-    are allowed.
-
-    Engineered features can be used in surrogate models to enhance the
-    learning capabilities.
-
-    Attributes:
-        features: list of the engineered features.
-    """
+    """Container of engineered features: quantities derived from the inputs that a
+    surrogate sees as further inputs."""
 
     type: Literal["EngineeredFeatures"] = "EngineeredFeatures"
 
@@ -344,12 +334,7 @@ class EngineeredFeatures(_BaseFeatures[AnyEngineeredFeature]):
 
 
 class Inputs(_BaseFeatures[AnyInput]):
-    """Container of input features, only input features are allowed.
-
-    Attributes:
-        features (List(Inputs)): list of the features.
-
-    """
+    """Container of input features."""
 
     type: Literal["Inputs"] = "Inputs"
 
@@ -892,12 +877,7 @@ class Inputs(_BaseFeatures[AnyInput]):
 
 
 class Outputs(_BaseFeatures[AnyOutput]):
-    """Container of output features, only output features are allowed.
-
-    Attributes:
-        features (List(Outputs)): list of the features.
-
-    """
+    """Container of output features."""
 
     type: Literal["Outputs"] = "Outputs"
 

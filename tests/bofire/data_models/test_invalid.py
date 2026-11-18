@@ -32,6 +32,10 @@ def test_mean_should_be_invalid(invalid_mean_spec: InvalidSpec):
     _invalidate(invalid_mean_spec)
 
 
+def test_likelihood_should_be_invalid(invalid_likelihood_spec: InvalidSpec):
+    _invalidate(invalid_likelihood_spec)
+
+
 def test_constraint_should_be_invalid(invalid_constraint_spec: InvalidSpec):
     _invalidate(invalid_constraint_spec)
 

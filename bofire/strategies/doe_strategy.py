@@ -23,6 +23,7 @@ from bofire.strategies.doe.utils_categorical_discrete import (
     filter_out_discrete_auxilliary_vars,
     project_candidates_into_domain,
 )
+from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.strategy import Strategy, make_strategy
 
 
@@ -76,7 +77,9 @@ class DoEStrategy(Strategy):
         self._candidates = candidates
 
     def _ask(
-        self, candidate_count: PositiveInt
+        self,
+        candidate_count: PositiveInt,
+        progress_callback: Optional[AskProgressCallback] = None,
     ) -> (
         pd.DataFrame
     ):  # due to inheriting from Strategy, we then later call this using self.candidates
@@ -119,6 +122,7 @@ class DoEStrategy(Strategy):
             ipopt_options=self._data_model.ipopt_options,
             objective_function=objective_function,
             seed=self.seed,
+            callback=progress_callback,
         )
 
         # if cats or discrete var present, need to filture out all the aux vars and project back into original domain

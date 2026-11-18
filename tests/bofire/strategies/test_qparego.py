@@ -1,5 +1,6 @@
 import random
 from itertools import chain
+from unittest.mock import patch
 
 import pytest
 import torch
@@ -19,6 +20,83 @@ from bofire.data_models.acquisition_functions.api import qEI, qLogEI, qLogNEI, q
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.strategies.api import QparegoStrategy, RandomStrategy
 from tests.bofire.utils.test_multiobjective import invalid_domains
+
+
+@pytest.mark.parametrize("acquisition", [qEI, qLogEI, qNEI, qLogNEI])
+@pytest.mark.parametrize("n", [1, 3])
+def test_qparego_independent_scalarizations(acquisition, n):
+    benchmark = DTLZ2(dim=6, num_objectives=3)
+    experiments = benchmark.f(
+        benchmark.domain.inputs.sample(12, seed=123), return_complete=True
+    )
+    strategy = QparegoStrategy(
+        data_model=data_models.QparegoStrategy(
+            domain=benchmark.domain,
+            acquisition_function=acquisition(n_mc_samples=32),
+            seed=123,
+        )
+    )
+    strategy.tell(experiments)
+    predictions = strategy.predict(experiments)
+    Y = torch.tensor(
+        predictions[
+            [f"{key}_pred" for key in benchmark.domain.outputs.get_keys()]
+        ].to_numpy(copy=True),
+        dtype=torch.double,
+    )
+    # Each prescribed weight vector should favor a different minimization
+    # trade-off, regardless of the predicted scale of each output.
+    low, high = Y.min(dim=0).values, Y.max(dim=0).values
+    normalized_probes = 0.8 - 0.6 * torch.eye(3, dtype=torch.double)
+    probes = (low + normalized_probes * (high - low)).unsqueeze(0)
+    weights = 0.1 + 0.7 * torch.eye(3, dtype=torch.double)
+    with (
+        patch(
+            "bofire.strategies.predictives.qparego.sample_simplex",
+            side_effect=list(weights[:n]),
+        ) as draw_weights,
+        patch.object(strategy, "predict", wraps=strategy.predict) as predict,
+    ):
+        acqfs = strategy._get_acqfs(n)
+
+    assert draw_weights.call_count == n
+    predict.assert_called_once()
+    assert len(acqfs) == n
+    assert len({id(acqf.objective) for acqf in acqfs}) == n
+    assert [acqf.objective(probes).argmax().item() for acqf in acqfs] == list(range(n))
+
+
+def test_qparego_batch_conditions_on_pending_candidates():
+    benchmark = DTLZ2(dim=6, num_objectives=3)
+    experiments = benchmark.f(
+        benchmark.domain.inputs.sample(12, seed=123), return_complete=True
+    )
+    strategy = QparegoStrategy(
+        data_model=data_models.QparegoStrategy(
+            domain=benchmark.domain,
+            acquisition_function=qLogEI(n_mc_samples=32),
+            seed=123,
+        )
+    )
+    strategy.tell(experiments)
+    pending = experiments[benchmark.domain.inputs.get_keys()].iloc[[0]].copy()
+    strategy.set_candidates(pending)
+    selected = []
+
+    def optimize_one(acq_function, q, **kwargs):
+        assert q == 1
+        expected_pending = torch.cat(
+            [torch.tensor(pending.to_numpy(copy=True), dtype=torch.double), *selected]
+        )
+        torch.testing.assert_close(acq_function.X_pending, expected_pending)
+        candidate = torch.full((1, 6), 0.2 * (len(selected) + 1), dtype=torch.double)
+        selected.append(candidate)
+        return candidate, torch.tensor(0.0, dtype=torch.double)
+
+    with patch("botorch.optim.optimize.optimize_acqf", side_effect=optimize_one):
+        candidates = strategy.ask(3)
+    assert len(candidates) == 3
+    assert len(selected) == 3
 
 
 @pytest.mark.parametrize(
@@ -63,7 +141,7 @@ def test_qparego(num_test_candidates):
     preds = my_strategy.predict(experiments)
     assert len(preds) == len(experiments)
     # test get objective
-    objective, _, _ = my_strategy._get_objective_and_constraints()
+    [objective], _, _ = my_strategy._get_objectives_and_constraints(1)
     assert isinstance(objective, GenericMCObjective)
     acqfs = my_strategy._get_acqfs(2)
     assert len(acqfs) == 2
@@ -94,7 +172,7 @@ def test_qparego_constraints(num_test_candidates):
         my_strategy = QparegoStrategy(data_model=data_model)
         my_strategy.tell(experiments)
         # test get objective
-        objective, _, _ = my_strategy._get_objective_and_constraints()
+        [objective], _, _ = my_strategy._get_objectives_and_constraints(1)
         assert isinstance(objective, GenericMCObjective)
         # ask
         candidates = my_strategy.ask(num_test_candidates)

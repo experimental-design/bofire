@@ -205,7 +205,6 @@ class MLPEnsemble(TrainableBotorchSurrogate):
 
 class RegressionMLPEnsemble(MLPEnsemble):
     def __init__(self, data_model: DataModelRegression, **kwargs):
-        self.final_activation = "identity"
         super().__init__(data_model, **kwargs)
 
     def _fit_botorch(
@@ -263,7 +262,6 @@ class RegressionMLPEnsemble(MLPEnsemble):
 
 class ClassificationMLPEnsemble(MLPEnsemble):
     def __init__(self, data_model: DataModelClassification, **kwargs):
-        self.final_activation = "softmax"
         super().__init__(data_model, **kwargs)
 
     def _fit_botorch(

@@ -49,7 +49,8 @@ def test_categorical_input_feature_get_possible_categories(input_feature, expect
     [
         (
             specs.features.valid(CategoricalInput).obj(categories=["a", "b", "c"]),
-            pd.Series([random.choice(["a", "b", "c"]) for _ in range(20)]),
+            # strict: every category has to occur in the data
+            pd.Series(["a", "b", "c"] * 7),
             True,
         ),
         (
@@ -62,9 +63,8 @@ def test_categorical_input_feature_get_possible_categories(input_feature, expect
                 categories=["a", "b", "c"],
                 allowed=[True, False, False],
             ),
-            pd.Series([random.choice(["a", "b", "c"]) for _ in range(20)]),
-            # CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
-            # pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
+            # strict: every category has to occur in the data
+            pd.Series(["a", "b", "c"] * 7),
             True,
         ),
         (

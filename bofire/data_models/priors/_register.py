@@ -35,8 +35,9 @@ def _rebuild_dependent_models() -> None:
     from bofire.data_models.likelihoods.likelihood import (
         GaussianLikelihood,
         SparseOutlierGaussianLikelihood,
+        TaskwiseLikelihood,
     )
-    from bofire.data_models.means.mean import ConstantMean
+    from bofire.data_models.means.mean import ConstantMean, TaskwiseMean
     from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates
     from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
     from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
@@ -65,7 +66,6 @@ def _rebuild_dependent_models() -> None:
         (ExactWassersteinKernel, "lengthscale_prior"),
         (ConstantMean, "prior"),
         (GaussianLikelihood, "noise_prior"),
-        (MultiTaskGPSurrogate, "noise_prior"),
         (SparseOutlierGaussianLikelihood, "noise_prior"),
     ]:
         patch_field(model_cls, field_name, AnyPrior)
@@ -81,7 +81,6 @@ def _rebuild_dependent_models() -> None:
         (WedgeKernel, "lengthscale_constraint"),
         (ScaleKernel, "outputscale_constraint"),
         (GaussianLikelihood, "noise_constraint"),
-        (MultiTaskGPSurrogate, "noise_constraint"),
         (SparseOutlierGaussianLikelihood, "noise_constraint"),
     ]:
         patch_field(model_cls, field_name, AnyPriorConstraint)
@@ -116,6 +115,10 @@ def _rebuild_dependent_models() -> None:
 
     # 4. Means and likelihoods, which surrogates hold
     for cls in [ConstantMean, GaussianLikelihood, SparseOutlierGaussianLikelihood]:
+        cls.model_rebuild(force=True)
+
+    # 4b. Taskwise wrappers, which embed means and likelihoods
+    for cls in [TaskwiseMean, TaskwiseLikelihood]:
         cls.model_rebuild(force=True)
 
     # 5. Surrogate models

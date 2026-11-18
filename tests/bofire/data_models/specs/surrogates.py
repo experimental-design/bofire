@@ -29,8 +29,9 @@ from bofire.data_models.likelihoods.api import (
     THREESIX_LIKELIHOOD,
     GaussianLikelihood,
     SparseOutlierGaussianLikelihood,
+    TaskwiseLikelihood,
 )
-from bofire.data_models.means.api import ConstantMean
+from bofire.data_models.means.api import ConstantMean, TaskwiseMean
 from bofire.data_models.priors.api import (
     PAIRWISEGP_LENGTHSCALE_CONSTRAINT,
     PAIRWISEGP_LENGTHSCALE_PRIOR,
@@ -413,7 +414,6 @@ specs.add_valid(
         "max_leaf_nodes": None,
         "min_impurity_decrease": 0.0,
         "bootstrap": True,
-        "oob_score": False,
         "random_state": None,
         "ccp_alpha": 0.0,
         "max_samples": None,
@@ -439,7 +439,6 @@ specs.add_valid(
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
         "activation": "relu",
-        "final_activation": "identity",
         "dropout": 0.0,
         "batch_size": 10,
         "n_epochs": 200,
@@ -469,7 +468,6 @@ specs.add_invalid(
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
         "activation": "relu",
-        "final_activation": "softmax",
         "dropout": 0.0,
         "batch_size": 10,
         "n_epochs": 200,
@@ -502,7 +500,6 @@ specs.add_valid(
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
         "activation": "relu",
-        "final_activation": "softmax",
         "dropout": 0.0,
         "batch_size": 10,
         "n_epochs": 200,
@@ -532,7 +529,6 @@ specs.add_invalid(
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
         "activation": "relu",
-        "final_activation": "identity",
         "dropout": 0.0,
         "batch_size": 10,
         "n_epochs": 200,
@@ -779,9 +775,50 @@ specs.add_valid(
         "engineered_features": EngineeredFeatures().model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "task_prior": None,
+        "mean": TaskwiseMean(mean=ConstantMean()).model_dump(),
+        "likelihood": TaskwiseLikelihood(
+            likelihood=GaussianLikelihood(
+                noise_prior=THREESIX_NOISE_PRIOR(),
+                noise_constraint=GreaterThan(lower_bound=1e-4),
+            )
+        ).model_dump(),
+        "categorical_encodings": {
+            "task": OrdinalEncoding().model_dump(),
+        },
+        "optimizer": LBFGSB().model_dump(),
+        "dump": None,
+    },
+)
+
+# all tasks share one mean and one noise level
+specs.add_valid(
+    models.MultiTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+            + [CategoricalTaskInput(key="task", categories=["a", "b", "c"])],
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ],
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
+            ),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
+        ).model_dump(),
+        "engineered_features": EngineeredFeatures().model_dump(),
+        "scaler": Normalize().model_dump(),
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "mean": ConstantMean().model_dump(),
+        "likelihood": GaussianLikelihood(
+            noise_prior=THREESIX_NOISE_PRIOR(),
+            noise_constraint=GreaterThan(lower_bound=1e-4),
+        ).model_dump(),
         "categorical_encodings": {
             "task": OrdinalEncoding().model_dump(),
         },
@@ -812,9 +849,6 @@ specs.add_invalid(
         ).model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "task_prior": None,
         "dump": None,
     },
     error=ValueError,
@@ -843,9 +877,6 @@ specs.add_invalid(
         ).model_dump(),
         "scaler": Normalize().model_dump(),
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
-        "noise_constraint": GreaterThan(lower_bound=1e-4).model_dump(),
-        "task_prior": None,
         "categorical_encodings": {
             "task": OneHotEncoding().model_dump(),
         },
@@ -1024,3 +1055,19 @@ specs.add_invalid(
     error=ValueError,
     message="Option 1 has different inputs.",
 )
+
+# surrogates for continuous outputs reject a categorical one
+for surrogate_cls in [models.SingleTaskGPSurrogate, models.RandomForestSurrogate]:
+    specs.add_invalid(
+        surrogate_cls,
+        lambda: {
+            "inputs": Inputs(
+                features=[features.valid(ContinuousInput).obj()]
+            ).model_dump(),
+            "outputs": Outputs(
+                features=[features.valid(CategoricalOutput).obj()]
+            ).model_dump(),
+        },
+        error=ValueError,
+        message="Invalid output type passed.",
+    )

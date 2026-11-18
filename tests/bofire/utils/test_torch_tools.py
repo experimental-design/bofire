@@ -1,4 +1,5 @@
 import importlib
+import math
 import random
 
 import numpy as np
@@ -149,6 +150,73 @@ def test_get_objective_callable(objective):
         objective.__call__(a_samples[:, 1], x_adapt=x_adapt.numpy()),
         rtol=1e-06,
     )
+
+
+@pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
+@pytest.mark.parametrize(
+    "objective",
+    [
+        MaximizeSigmoidObjective(tp=2, steepness=2),
+        MinimizeSigmoidObjective(tp=2, steepness=2),
+        MovingMaximizeSigmoidObjective(tp=-1, steepness=2),
+        TargetObjective(target_value=2, tolerance=1, steepness=2),
+    ],
+)
+def test_sigmoid_objective_saturation(objective, dtype):
+    def sigmoid_and_derivative(logit):
+        tail = math.exp(-abs(logit))
+        value = 1 / (1 + tail) if logit >= 0 else tail / (1 + tail)
+        return value, tail / (1 + tail) ** 2
+
+    is_target = isinstance(objective, TargetObjective)
+    xs = [-1000, -19, 1, 2, 3, 23, 1000] if is_target else [-1000, -18, 2, 22, 1000]
+    expected_values, expected_gradients = [], []
+    for x in xs:
+        if is_target:
+            lower, lower_grad = sigmoid_and_derivative(2 * (x - 1))
+            upper, upper_grad = sigmoid_and_derivative(2 * (3 - x))
+            expected_values.append(lower * upper)
+            expected_gradients.append(2 * (lower_grad * upper - lower * upper_grad))
+        else:
+            sign = -1 if isinstance(objective, MinimizeSigmoidObjective) else 1
+            value, gradient = sigmoid_and_derivative(sign * 2 * (x - 2))
+            expected_values.append(value)
+            expected_gradients.append(sign * 2 * gradient)
+
+    samples = torch.tensor(
+        [[[17, x, -11] for x in xs]] * 2,
+        dtype=dtype,
+        requires_grad=True,
+    )
+    x_adapt = torch.tensor([1, 3], dtype=dtype)
+    values = get_objective_callable(1, objective, x_adapt)(samples)
+    gradients = torch.autograd.grad(values.sum(), samples)[0]
+    assert torch.isfinite(gradients).all()
+    eps = torch.finfo(dtype).eps
+    torch.testing.assert_close(
+        values,
+        torch.tensor(expected_values, dtype=dtype).expand_as(values),
+        rtol=8 * eps,
+        atol=0,
+    )
+    expected = torch.zeros_like(samples)
+    expected[..., 1] = torch.tensor(expected_gradients, dtype=dtype)
+    torch.testing.assert_close(gradients, expected, rtol=8 * eps, atol=16 * eps)
+    tail_idx = -2 if is_target or isinstance(objective, MinimizeSigmoidObjective) else 1
+    assert (values[..., tail_idx] > 0).all()
+    assert (gradients[..., tail_idx, 1].abs() > 0).all()
+
+    series = pd.Series(xs, index=[f"experiment-{i}" for i in range(len(xs))], name="y")
+    with np.errstate(over="raise", invalid="raise"):
+        rewards = objective(series, x_adapt=pd.Series([1, 3]))
+        array_rewards = objective(series.to_numpy(), x_adapt=np.array([1, 3]))
+    pd.testing.assert_series_equal(
+        rewards,
+        pd.Series(expected_values, index=series.index, name=series.name),
+        rtol=1e-14,
+        atol=0,
+    )
+    np.testing.assert_allclose(array_rewards, expected_values, rtol=1e-14, atol=0)
 
 
 def test_moving_maximize_sigmoid_objective():

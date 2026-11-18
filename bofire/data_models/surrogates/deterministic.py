@@ -46,7 +46,7 @@ class CategoricalDeterministicSurrogate(BotorchSurrogate):
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        return isinstance(my_type, type(ContinuousOutput))
+        return issubclass(my_type, ContinuousOutput)
 
     @model_validator(mode="after")
     def validate_mapping(self):
@@ -78,7 +78,7 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        return isinstance(my_type, type(ContinuousOutput))
+        return issubclass(my_type, ContinuousOutput)
 
     @model_validator(mode="after")
     def validate_input_types(self):

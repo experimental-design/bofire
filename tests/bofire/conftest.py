@@ -190,6 +190,11 @@ def likelihood_spec(request) -> specs.Spec:
     return request.param
 
 
+@fixture(params=specs.likelihoods.invalids)
+def invalid_likelihood_spec(request) -> specs.InvalidSpec:
+    return request.param
+
+
 @fixture(params=specs.conditions.valids)
 def condition_spec(request) -> specs.Spec:
     return request.param

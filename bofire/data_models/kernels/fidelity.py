@@ -4,6 +4,7 @@ from pydantic import Field, field_validator
 
 from bofire.data_models.kernels.kernel import FeatureSpecificKernel
 from bofire.data_models.priors.api import AnyPrior, AnyPriorConstraint
+from bofire.data_models.priors.constraint import Positive
 
 
 class FidelityKernel(FeatureSpecificKernel):
@@ -39,7 +40,7 @@ class DownsamplingKernel(FidelityKernel):
         "observation still says about the target fidelity.",
     )
     offset_constraint: AnyPriorConstraint | None = Field(
-        default=None,
+        default=Positive(),
         description="Bounds the offset $c$ is restricted to during fitting.",
     )
     power_prior: AnyPrior | None = Field(
@@ -48,7 +49,7 @@ class DownsamplingKernel(FidelityKernel):
         "approximation improves as the fidelity rises.",
     )
     power_constraint: AnyPriorConstraint | None = Field(
-        default=None,
+        default=Positive(),
         description="Bounds the power $\\delta$ is restricted to during fitting.",
     )
 

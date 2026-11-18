@@ -48,7 +48,7 @@ class PairwiseGPSurrogate(BotorchSurrogate, LBFGSBFitted):
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
-        return isinstance(my_type, type(ContinuousOutput))
+        return issubclass(my_type, ContinuousOutput)
 
     @model_validator(mode="after")
     def validate_single_output(self):

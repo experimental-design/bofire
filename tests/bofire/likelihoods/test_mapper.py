@@ -1,10 +1,18 @@
 import gpytorch
+import pytest
+import torch
 from botorch.models.utils.gpytorch_modules import (
     get_gaussian_likelihood_with_lognormal_prior,
 )
+from gpytorch.distributions import MultivariateNormal
+from gpytorch.likelihoods.hadamard_gaussian_likelihood import HadamardGaussianLikelihood
 
 import bofire.likelihoods.api as likelihoods
-from bofire.data_models.likelihoods.api import HVARFNER_LIKELIHOOD, GaussianLikelihood
+from bofire.data_models.likelihoods.api import (
+    HVARFNER_LIKELIHOOD,
+    GaussianLikelihood,
+    TaskwiseLikelihood,
+)
 from bofire.data_models.priors.api import THREESIX_NOISE_PRIOR, GreaterThan
 
 
@@ -56,3 +64,25 @@ def test_gaussian_likelihood_without_constraint():
     constraint = ours.noise_covar.raw_noise_constraint
     assert isinstance(constraint, gpytorch.constraints.GreaterThan)
     assert abs(float(constraint.lower_bound) - 1e-4) < 1e-9
+
+
+@pytest.mark.parametrize("task_feature_index", [0, 1])
+def test_taskwise_likelihood_selects_noise_for_each_observation(task_feature_index):
+    ours = likelihoods.map(
+        TaskwiseLikelihood(likelihood=HVARFNER_LIKELIHOOD()),
+        d=1,
+        num_tasks=2,
+        task_feature_index=task_feature_index,
+    )
+    assert isinstance(ours, HadamardGaussianLikelihood)
+    assert _describe(ours) == _describe(get_gaussian_likelihood_with_lognormal_prior())
+    torch.testing.assert_close(ours.noise, torch.exp(torch.tensor(-5.0)).expand(2))
+
+    ours.noise = torch.tensor([0.1, 0.7])
+    inputs = torch.zeros(4, 2)
+    inputs[:, task_feature_index] = torch.tensor([1, 0, 1, 0])
+    latent = MultivariateNormal(torch.zeros(4), torch.eye(4))
+    observed = ours(latent, inputs)
+    torch.testing.assert_close(
+        observed.variance - latent.variance, torch.tensor([0.7, 0.1, 0.7, 0.1])
+    )
