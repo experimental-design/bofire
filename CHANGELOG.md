@@ -7,7 +7,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 ## [Unreleased]
 
 ### Added
-- Opt-in NChooseK pattern-filter performance measurements: set `BOFIRE_RUN_PERFORMANCE_TESTS=1` and run `pytest -q -s tests/bofire/strategies/doe/test_utils_performance.py`.
+- To run the optional performance tests for filtering patterns with NChooseK constraints, set `BOFIRE_RUN_PERFORMANCE_TESTS=1` and run `pytest -q -s tests/bofire/strategies/doe/test_utils_performance.py`.
 - The GPs fitted by maximizing the marginal likelihood (`SingleTaskGPSurrogate`, `MultiTaskGPSurrogate`, `EnsembleMapSaasSingleTaskGPSurrogate`, `PairwiseGPSurrogate`) take `optimizer=LBFGSB(maxiter, ftol, gtol, max_attempts)`, so the fit budget is part of the serializable spec and can be set from a strategy. Options left at None keep BoTorch's defaults.
 - `AdditiveMapSaasKernel`: a sum of sparse (SAAS-prior) Matern kernels at different sparsity levels, the kernel of BoTorch's `AdditiveMapSaasSingleTaskGP`. It is usable in any single-task GP and inside `AdditiveKernel`, `MultiplicativeKernel`, `ScaleKernel` and `PolynomialFeatureInteractionKernel`, e.g. restricted to descriptor features next to a categorical kernel.
 - Factories on `SingleTaskGPSurrogate` for common models: `linear(inputs, outputs)`, `polynomial(inputs, outputs, power=2)` and `additive_map_saas(inputs, outputs, n_taus=4)`. They return ordinary single-task GPs, so they can also be options of a `SelectionSurrogate`. Like `SingleTaskGPSurrogate.options`, they take optional `engineered_features`.
