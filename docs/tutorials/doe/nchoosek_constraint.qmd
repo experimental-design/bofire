@@ -11,21 +11,30 @@ N-K decision variables $x_{i_1,j},...,x_{i_{N-K,j}}$ from the NChooseK constrain
 that are forced to be zero. This is done by setting the upper and lower bounds of the picked variables are set to 0
 in the corresponding experiments. This causes IPOPT to treat them as "fixed variables" (i.e. it will not optimize for them)
 and will always stick to the only feasible value (which is 0 here).
-However, this constraint is stricter than the original NChooseK constraint. In combination with other
-constraints on the same decision variables this can result in a situation where the constraints cannot be fulfilled
-even though the original constraints would allow for a solution. For example consider a problem with four decision
-variables $x_1, x_2, x_3, x_4$, an NChooseK constraint on the first four variable that restricts the number of nonzero variables
-to two. Additionally, we have a linear constraint
+Before assigning these zero-pinning patterns to experiments, BoFire checks whether each pattern
+can satisfy all intrapoint linear equalities and inequalities together within the input bounds.
+For example, consider four decision variables $x_1, x_2, x_3, x_4$, an NChooseK constraint
+allowing at most two nonzero variables, and the additional linear constraint
 $$
 x_3 + x_4 \geq 0.1
 $$
-We can easily find points that fulfill both constraints (e.g. $(0,0,0,0.1)$). Now consider the stricter, linear constraint
-from above. Eventually, it will happen that $x_3$ and $x_4$ are chosen to be zero for one experiment. For this experiment
-it is impossible to fulfill the linear constraint $x_3 + x_4 \geq 0.1$ since $x_3 = x_4 = 0$.
+Patterns pinning both $x_3$ and $x_4$ to zero are discarded because they cannot satisfy
+this inequality. Similarly, a mixture summing to one with each component capped at 0.6
+cannot use a pattern with only one unpinned component.
 
-Therefore one has to be very careful when imposing linear constraints upon decision variables that already show up in an NChooseK constraint.
+Single linear constraints can be checked using their attainable range over the bounds.
+For multiple linear constraints, individually impossible patterns are rejected first;
+the remaining patterns are checked jointly with a linear program. If none survive,
+BoFire raises an error before design optimization.
 
-For practical reasons it necessary that two NChooseK constraints of the same problem must not share any variables.
+Surviving patterns are reused when more experiments than patterns are requested.
+The checks and zero-pinning change only local optimizer bounds, not the domain's feature bounds.
+They do not guarantee distinct experiments or feasibility under nonlinear constraints,
+interpoint constraints, or additional fixed-candidate restrictions. Unpinned variables
+can still become zero during optimization, so minimum active counts are not guaranteed
+by the linear check alone.
+
+Overlapping NChooseK constraints are merged consistently before the linear checks.
 
 You can find an example for a problem with NChooseK constraints and additional linear constraints imposed on the same variables.
 
