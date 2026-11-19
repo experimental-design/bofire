@@ -1,5 +1,6 @@
+import functools
 import itertools
-from typing import List, Literal, Optional, Type
+from typing import Callable, List, Literal, Optional, Type
 
 from pydantic import Field, model_validator
 
@@ -40,6 +41,7 @@ from bofire.data_models.priors.api import (
     ROBUSTGP_LENGTHSCALE_CONSTRAINT,
     THREESIX_LENGTHSCALE_PRIOR,
     THREESIX_SCALE_PRIOR,
+    AnyPrior,
     GreaterThan,
     NonTransformedInterval,
     NormalPrior,
@@ -48,16 +50,20 @@ from bofire.data_models.surrogates.optimizer import LBFGSBFitted
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-# base kernels tried by `SingleTaskGPSurrogate.options`, built from ARD and a
-# lengthscale prior
+# base kernels tried by `SingleTaskGPSurrogate.options` and `.mixed_options`, built
+# from ARD and a lengthscale prior; further keyword arguments go to the kernel
 _BASE_KERNELS = [
-    lambda ard, prior: RBFKernel(ard=ard, lengthscale_prior=prior),
-    lambda ard, prior: MaternKernel(nu=1.5, ard=ard, lengthscale_prior=prior),
-    lambda ard, prior: MaternKernel(nu=2.5, ard=ard, lengthscale_prior=prior),
+    lambda ard, prior, **kwargs: RBFKernel(ard=ard, lengthscale_prior=prior, **kwargs),
+    lambda ard, prior, **kwargs: MaternKernel(
+        nu=1.5, ard=ard, lengthscale_prior=prior, **kwargs
+    ),
+    lambda ard, prior, **kwargs: MaternKernel(
+        nu=2.5, ard=ard, lengthscale_prior=prior, **kwargs
+    ),
 ]
 
 # (likelihood, lengthscale prior, outputscale prior) tried by
-# `SingleTaskGPSurrogate.options`
+# `SingleTaskGPSurrogate.options` and `.mixed_options`
 _PRIOR_SETS = [
     (MBO_LIKELIHOOD, MBO_LENGTHSCALE_PRIOR, MBO_OUTPUTSCALE_PRIOR),
     (THREESIX_LIKELIHOOD, THREESIX_LENGTHSCALE_PRIOR, THREESIX_SCALE_PRIOR),
@@ -275,64 +281,63 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
             ValueError: If no categorical input lacks descriptor data, or if an
                 engineered feature replaces the features it is computed from.
         """
-        engineered_features = engineered_features or EngineeredFeatures()
-        if any(not feat.keep_features for feat in engineered_features.get()):
-            raise ValueError(
-                "The mixed GP needs every engineered feature to keep the features it "
-                "is computed from (keep_features=True)."
-            )
-        categorical = [
-            feat.key
-            for feat in inputs.get(CategoricalInput, exact=False)
-            if feat.descriptors is None
-        ]
-        if not categorical:
-            raise ValueError(
-                "The mixed GP needs at least one categorical input without "
-                "descriptor data."
-            )
-        continuous = [
-            key for key in inputs.get_keys() if key not in categorical
-        ] + engineered_features.get_keys()
-
-        def continuous_kernel() -> RBFKernel:
-            return RBFKernel(
-                ard=True,
-                lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
-                lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),
-                features=continuous,
-            )
-
-        def categorical_kernel() -> HammingDistanceKernel:
-            return HammingDistanceKernel(ard=True, features=categorical)
-
-        if continuous:
-            kernel = AdditiveKernel(
-                kernels=[
-                    ScaleKernel(
-                        base_kernel=AdditiveKernel(
-                            kernels=[
-                                continuous_kernel(),
-                                ScaleKernel(base_kernel=categorical_kernel()),
-                            ]
-                        )
-                    ),
-                    ScaleKernel(
-                        base_kernel=MultiplicativeKernel(
-                            kernels=[continuous_kernel(), categorical_kernel()]
-                        )
-                    ),
-                ]
-            )
-        else:
-            kernel = ScaleKernel(base_kernel=categorical_kernel())
-        return SingleTaskGPSurrogate(
-            inputs=inputs,
-            outputs=outputs,
-            engineered_features=engineered_features,
-            categorical_encodings={key: OrdinalEncoding() for key in categorical},
-            kernel=kernel,
+        return _mixed(
+            inputs,
+            outputs,
+            engineered_features,
+            continuous_kernel=functools.partial(
+                _bounded_kernel, _BASE_KERNELS[0], True, HVARFNER_LENGTHSCALE_PRIOR
+            ),
+            likelihood=HVARFNER_LIKELIHOOD(),
         )
+
+    @staticmethod
+    def mixed_options(
+        inputs: Inputs,
+        outputs: Outputs,
+        *,
+        engineered_features: Optional[EngineeredFeatures] = None,
+    ) -> List["SingleTaskGPSurrogate"]:
+        """Mixed GPs that differ in the continuous kernel and the priors, as options to
+        choose from.
+
+        Every option has the structure of `mixed`. They differ in the kernel over the
+        continuous inputs (RBF, Matern 1.5, Matern 2.5), with and without ARD, and in
+        the set of noise and lengthscale priors (MBO, THREESIX, HVARFNER): 18 in all.
+        The Hamming kernel over the categorical inputs is the same in all of them, and
+        the continuous lengthscales are at least 0.025 throughout.
+
+        Args:
+            inputs: The input features of every option, at least one of them
+                categorical without descriptor data.
+            outputs: The output feature of every option.
+            engineered_features: Quantities derived from the inputs that every option
+                sees as well; the continuous kernel works on them. If not provided,
+                none.
+
+        Returns:
+            The options, each with its own kernels and likelihood.
+
+        Raises:
+            ValueError: If no categorical input lacks descriptor data, or if an
+                engineered feature replaces the features it is computed from.
+        """
+        options = []
+        for base_kernel, (likelihood, lengthscale_prior, _), ard in itertools.product(
+            _BASE_KERNELS, _PRIOR_SETS, [True, False]
+        ):
+            options.append(
+                _mixed(
+                    inputs,
+                    outputs,
+                    engineered_features,
+                    continuous_kernel=functools.partial(
+                        _bounded_kernel, base_kernel, ard, lengthscale_prior
+                    ),
+                    likelihood=likelihood(),
+                )
+            )
+        return options
 
     @staticmethod
     def robust(
@@ -458,3 +463,81 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate, LBFGSBFitted):
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
         return issubclass(my_type, ContinuousOutput)
+
+
+def _bounded_kernel(
+    base_kernel: Callable[..., AnyKernel],
+    ard: bool,
+    lengthscale_prior: Callable[[], AnyPrior],
+    features: List[str],
+) -> AnyKernel:
+    """A base kernel over `features` with a prior of its own and lengthscales of at
+    least 0.025, as the continuous kernel of the mixed GP."""
+    return base_kernel(
+        ard,
+        lengthscale_prior(),
+        lengthscale_constraint=GreaterThan(lower_bound=2.5e-2),
+        features=features,
+    )
+
+
+def _mixed(
+    inputs: Inputs,
+    outputs: Outputs,
+    engineered_features: Optional[EngineeredFeatures],
+    continuous_kernel: Callable[[List[str]], AnyKernel],
+    likelihood: AnySingleTaskLikelihood,
+) -> SingleTaskGPSurrogate:
+    """The mixed GP of `SingleTaskGPSurrogate.mixed` with the given kernel over the
+    continuous inputs, built anew for each place it occurs, and likelihood."""
+    engineered_features = engineered_features or EngineeredFeatures()
+    if any(not feat.keep_features for feat in engineered_features.get()):
+        raise ValueError(
+            "The mixed GP needs every engineered feature to keep the features it "
+            "is computed from (keep_features=True)."
+        )
+    categorical = [
+        feat.key
+        for feat in inputs.get(CategoricalInput, exact=False)
+        if feat.descriptors is None
+    ]
+    if not categorical:
+        raise ValueError(
+            "The mixed GP needs at least one categorical input without "
+            "descriptor data."
+        )
+    continuous = [
+        key for key in inputs.get_keys() if key not in categorical
+    ] + engineered_features.get_keys()
+
+    def categorical_kernel() -> HammingDistanceKernel:
+        return HammingDistanceKernel(ard=True, features=categorical)
+
+    if continuous:
+        kernel = AdditiveKernel(
+            kernels=[
+                ScaleKernel(
+                    base_kernel=AdditiveKernel(
+                        kernels=[
+                            continuous_kernel(continuous),
+                            ScaleKernel(base_kernel=categorical_kernel()),
+                        ]
+                    )
+                ),
+                ScaleKernel(
+                    base_kernel=MultiplicativeKernel(
+                        kernels=[continuous_kernel(continuous), categorical_kernel()]
+                    )
+                ),
+            ]
+        )
+    else:
+        kernel = ScaleKernel(base_kernel=categorical_kernel())
+    return SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        engineered_features=engineered_features,
+        categorical_encodings={key: OrdinalEncoding() for key in categorical},
+        kernel=kernel,
+        likelihood=likelihood,
+    )

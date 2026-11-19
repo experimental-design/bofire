@@ -150,6 +150,30 @@ MIXED_INPUTS = Inputs(
 )
 
 
+def test_mixed_options_are_the_18_combinations():
+    engineered = EngineeredFeatures(
+        features=[SumFeature(key="s", features=["x0", "x1"])]
+    )
+
+    options = SingleTaskGPSurrogate.mixed_options(
+        MIXED_INPUTS, OUTPUTS, engineered_features=engineered
+    )
+
+    assert len(options) == 18
+    assert len({o.model_dump_json() for o in options}) == 18
+    # every option has components of its own
+    assert len({id(o.kernel) for o in options}) == 18
+    assert len({id(o.likelihood) for o in options}) == 18
+    assert all(o.engineered_features == engineered for o in options)
+    # the default mixed GP is one of them
+    assert (
+        SingleTaskGPSurrogate.mixed(
+            MIXED_INPUTS, OUTPUTS, engineered_features=engineered
+        )
+        in options
+    )
+
+
 def test_mixed_routes_plain_categoricals_to_the_hamming_kernel():
     engineered = EngineeredFeatures(
         features=[SumFeature(key="s", features=["x0", "x1"])]

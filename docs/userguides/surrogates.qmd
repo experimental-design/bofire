@@ -54,7 +54,9 @@ processes.
 See [Model Building with BoFire](../tutorials/basic_examples/Model_Fitting_and_analysis.qmd#select-a-surrogate-by-cross-validation)
 for a worked example. `SingleTaskGPSurrogate.options(inputs, outputs)` provides the
 36 GP configurations comprising different kernels, priors, scale-kernel settings,
-and ARD settings. Filtering that list or constructing a smaller list of options
+and ARD settings; for inputs that include plain categoricals,
+`SingleTaskGPSurrogate.mixed_options(inputs, outputs)` provides 18 mixed GPs with
+different continuous kernels, priors and ARD settings. Filtering that list or constructing a smaller list of options
 reduces the number of cross-validation fits performed during each model fit.
 
 ## Customization
