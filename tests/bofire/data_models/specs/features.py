@@ -66,6 +66,23 @@ specs.add_valid(
         "filter_descriptors": False,
         "correlation_cutoff": 0.95,
         "normalize": False,
+        "power": 1.0,
+        "keep_features": True,
+        "context": None,
+    },
+)
+
+specs.add_valid(
+    features.WeightedSumFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b", "c"],
+        "columns": ["alpha", "beta"],
+        "generators": [],
+        "filter_descriptors": False,
+        "correlation_cutoff": 0.95,
+        "normalize": True,
+        "power": 0.0,
         "keep_features": True,
         "context": None,
     },
@@ -535,4 +552,16 @@ specs.add_invalid(
     },
     error=ValueError,
     message="descriptor names must be unique",
+)
+
+specs.add_invalid(
+    features.WeightedSumFeature,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "features": ["a", "b"],
+        "columns": ["logP"],
+        "power": float("inf"),
+    },
+    error=ValueError,
+    message="Input should be a finite number",
 )
