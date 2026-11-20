@@ -17,7 +17,6 @@ from bofire.data_models.constraints.api import (
     SelectionCondition,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalTaskInput,
@@ -402,11 +401,10 @@ specs.add_invalid(
     strategies.RandomStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
-        "fallback_sampler": UniformSampler(),
-        "fallback_sampling_method": SamplingMethodEnum.SOBOL,
+        "fallback_sampling_method": "SOBOL",
     },
     error=ValueError,
-    message="Use either fallback_sampler or the former",
+    message="Extra inputs are not permitted",
 )
 
 for criterion in [
@@ -897,11 +895,11 @@ specs.add_invalid(
                 ],
             ),
         ).model_dump(),
-        "n_generators": 2,
+        "n_generators": 1,
         "generator": "a b ab",
     },
     error=ValueError,
-    message="n_generators is 2, but the generator sets 1 inputs to products",
+    message="Provide either a generator or n_generators, not both.",
 )
 
 specs.add_invalid(
@@ -1006,7 +1004,7 @@ specs.add_invalid(
         "n_repetitions": 1,
         "n_center": 0,
         "n_generators": 1,
-        "generator": "",
+        "generator": None,
     },
     error=ValueError,
     message="Design not possible, as main factors are confounded with each other.",

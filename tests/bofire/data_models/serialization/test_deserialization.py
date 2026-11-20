@@ -131,6 +131,14 @@ def test_encoding_should_be_deserializable(encoding_spec: Spec):
     assert obj == deserialized
 
 
+def test_sampler_should_be_deserializable(sampler_spec: Spec):
+    from bofire.data_models.samplers.api import AnySampler
+
+    obj = sampler_spec.obj()
+    deserialized = TypeAdapter(AnySampler).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
 def test_inputs_should_be_deserializable(inputs_spec: Spec):
     obj = inputs_spec.obj()
     deserialized = TypeAdapter(Inputs).validate_python(obj.model_dump())

@@ -10,7 +10,7 @@ from bofire.data_models.features.api import Feature
 
 
 class Strategy(BaseModel):
-    """Method that proposes the next experiments for a domain.
+    """Method that proposes candidates, the next experiments to run, for a domain.
 
     Every strategy checks that it supports the inputs, outputs, objectives and
     constraints of its domain, and rejects the domain otherwise.
@@ -23,7 +23,7 @@ class Strategy(BaseModel):
     )
     seed: Optional[NonNegativeInt] = Field(
         default=None,
-        description="Seed of the random number generator, for reproducible proposals. "
+        description="Seed of the random number generator, for reproducible candidates. "
         "If not provided, a random seed is drawn.",
     )
 

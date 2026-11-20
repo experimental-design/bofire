@@ -465,7 +465,7 @@ class RandomStrategy(Strategy):
                 .get_free()
                 .sample(
                     n,
-                    method=fallback_sampler,
+                    sampler=fallback_sampler,
                     seed=seed,
                 ),
             ],

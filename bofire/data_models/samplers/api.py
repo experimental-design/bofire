@@ -3,7 +3,6 @@ from bofire.data_models.samplers.sampler import (  # noqa: F401
     Sampler,
     SobolSampler,
     UniformSampler,
-    sampler_from_method,
 )
 from bofire.data_models.unions import tagged_union
 

@@ -8,7 +8,6 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.strategies.doe.doe_problem import (
     FirstOrderDoEProblem,
@@ -54,11 +53,7 @@ def test_FirstOrderDoEProblem():
     )
     assert objective_function is not None, "Criterion type is not supported!"
 
-    x0 = (
-        domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM)
-        .to_numpy()
-        .flatten()
-    )
+    x0 = domain.inputs.sample(n=n_experiments).to_numpy().flatten()
 
     constraints = constraints_as_scipy_constraints(
         domain,
@@ -116,11 +111,7 @@ def test_SecondOrderDoEProblem():
     )
     assert objective_function is not None, "Criterion type is not supported!"
 
-    x0 = (
-        domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM)
-        .to_numpy()
-        .flatten()
-    )
+    x0 = domain.inputs.sample(n=n_experiments).to_numpy().flatten()
 
     constraints = constraints_as_scipy_constraints(
         domain,

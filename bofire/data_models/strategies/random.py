@@ -1,6 +1,6 @@
-from typing import Any, Literal, Optional, Type
+from typing import Literal, Optional, Type
 
-from pydantic import Field, PositiveInt, model_validator
+from pydantic import Field, PositiveInt
 
 from bofire.data_models.constraints.api import (
     CategoricalExcludeConstraint,
@@ -12,14 +12,9 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
     ProductInequalityConstraint,
 )
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import Objective
-from bofire.data_models.samplers.api import (
-    AnySampler,
-    UniformSampler,
-    sampler_from_method,
-)
+from bofire.data_models.samplers.api import AnySampler, UniformSampler
 from bofire.data_models.strategies.strategy import Strategy
 
 
@@ -80,26 +75,6 @@ class RandomStrategy(Strategy):
         description="Maximal number of attempts to draw one valid set of active "
         "inputs under overlapping NChooseK constraints.",
     )
-
-    @model_validator(mode="before")
-    @classmethod
-    def validate_fallback_sampling_method(cls, data: Any) -> Any:
-        """Turns the former `fallback_sampling_method` and `sampler_kwargs` into a
-        `fallback_sampler`, so stored strategies keep loading."""
-        if isinstance(data, dict) and (
-            "fallback_sampling_method" in data or "sampler_kwargs" in data
-        ):
-            data = dict(data)
-            if "fallback_sampler" in data:
-                raise ValueError(
-                    "Use either fallback_sampler or the former "
-                    "fallback_sampling_method and sampler_kwargs, not both.",
-                )
-            data["fallback_sampler"] = sampler_from_method(
-                data.pop("fallback_sampling_method", SamplingMethodEnum.UNIFORM),
-                data.pop("sampler_kwargs", None),
-            )
-        return data
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return my_type in [

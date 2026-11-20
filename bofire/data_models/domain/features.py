@@ -18,14 +18,12 @@ from typing import (
     cast,
 )
 
-import numpy as np
 import pandas as pd
-from pydantic import Field, create_model, field_validator, validate_call
+from pydantic import Field, PositiveInt, create_model, field_validator, validate_call
 from typing_extensions import Self
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.encodings.encoding import CategoricalEncoding
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     AnyEngineeredFeature,
     AnyFeature,
@@ -48,11 +46,7 @@ from bofire.data_models.objectives.api import (
     ConstrainedCategoricalObjective,
     Objective,
 )
-from bofire.data_models.samplers.api import (
-    AnySampler,
-    UniformSampler,
-    sampler_from_method,
-)
+from bofire.data_models.samplers.api import AnySampler, UniformSampler
 from bofire.data_models.types import InputTransformSpecs
 from bofire.data_models.unions import to_list
 
@@ -379,21 +373,16 @@ class Inputs(_BaseFeatures[AnyInput]):
     @validate_call
     def sample(
         self,
-        n: int = 1,
-        method: Union[AnySampler, SamplingMethodEnum] = SamplingMethodEnum.UNIFORM,
+        n: PositiveInt = 1,
+        sampler: AnySampler = UniformSampler(),  # noqa: B008 (samplers are frozen)
         seed: Optional[int] = None,
-        sampler_kwargs: Optional[Dict] = None,
     ) -> pd.DataFrame:
         """Draws samples of the inputs; fixed inputs keep their value.
 
         Args:
-            n: Number of samples, larger than 0.
-            method: The sampler, e.g. `SobolSampler()`. A `SamplingMethodEnum` is
-                turned into the corresponding sampler, with `sampler_kwargs` as its
-                options.
+            n: Number of samples.
+            sampler: How the samples are spread, e.g. `SobolSampler()`.
             seed: Seed for reproducible samples; random if not provided.
-            sampler_kwargs: Options of the sampler, only used with a
-                `SamplingMethodEnum`.
 
         Returns:
             pd.DataFrame: Dataframe containing the samples.
@@ -401,57 +390,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         """
         if len(self) == 0:
             return pd.DataFrame()
-
-        sampler = (
-            sampler_from_method(method, sampler_kwargs)
-            if isinstance(method, SamplingMethodEnum)
-            else method
-        )
-
-        if isinstance(sampler, UniformSampler):
-            # we cannot just propagate the provided seed to the sample methods
-            # as they would then sample always the same value if the bounds
-            # are the same for a feature.
-            rng = np.random.default_rng(seed=seed)
-            return self.validate_candidates(
-                pd.concat(
-                    [
-                        feat.sample(n, seed=int(rng.integers(1, 1000000)))
-                        for feat in self.get(Input)
-                    ],
-                    axis=1,
-                ),
-            )
-
-        free_features = self.get_free()
-        X = sampler.unit_samples(len(free_features), n, seed)
-
-        res = []
-        for i, feat in enumerate(free_features):
-            if isinstance(feat, ContinuousInput):
-                x = feat.from_unit_range(X[:, i])
-            elif isinstance(feat, (DiscreteInput, CategoricalInput)):
-                levels = (
-                    feat.values
-                    if isinstance(feat, DiscreteInput)
-                    else feat.get_allowed_categories()
-                )
-                bins = np.linspace(0, 1, len(levels) + 1)
-                idx = np.digitize(X[:, i], bins) - 1
-                x = np.array(levels)[idx]
-            else:
-                raise ValueError(
-                    f"Unknown input feature with key {feat.key} of type {feat.type}",
-                )
-            res.append(pd.Series(x, name=feat.key))
-
-        samples = pd.concat(res, axis=1)
-
-        for feat in self.get_fixed():
-            val = feat.fixed_value()
-            assert val is not None
-            samples[feat.key] = val[0]
-
+        samples = sampler.sample(self, n, seed)
         return self.validate_candidates(samples)[self.get_keys(Input)]
 
     def validate_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:

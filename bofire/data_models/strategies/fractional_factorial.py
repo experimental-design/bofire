@@ -1,6 +1,6 @@
-from typing import Any, Literal, Optional, Type
+from typing import Literal, Optional, Type
 
-from pydantic import Field, NonNegativeInt, field_validator, model_validator
+from pydantic import Field, NonNegativeInt, model_validator
 
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import (
@@ -15,15 +15,14 @@ from bofire.utils.doe import get_generator, get_n_blocks, validate_generator
 
 
 class FractionalFactorialStrategy(Strategy):
-    """Two-level (fractional) factorial design, for screening which continuous inputs
-    matter with few experiments.
+    """Two-level (fractional) factorial design: few experiments to screen which
+    continuous inputs have an effect, repeated for every combination of the
+    categorical and discrete inputs.
 
     Every continuous input is set to its lower or upper bound. A full factorial design
     runs all 2^k combinations of k inputs; a fractional one runs a fraction 2^(k-p) of
     them by setting p inputs to products of others, at the price of confounding
-    effects with interactions. Center points add runs in the middle of the range. The
-    continuous design is repeated for every combination of the categorical and
-    discrete inputs.
+    effects with interactions. Center points add runs in the middle of the range.
 
     Examples:
         >>> FractionalFactorialStrategy(domain=domain, n_generators=1, n_center=2)
@@ -32,8 +31,7 @@ class FractionalFactorialStrategy(Strategy):
     type: Literal["FractionalFactorialStrategy"] = "FractionalFactorialStrategy"
     n_repetitions: NonNegativeInt = Field(
         default=1,
-        description="How often the two-level design of the continuous inputs is run; "
-        "0 runs only the center points.",
+        description="How often the two-level design of the continuous inputs is run.",
     )
     n_center: NonNegativeInt = Field(
         default=1,
@@ -51,25 +49,20 @@ class FractionalFactorialStrategy(Strategy):
         description="The design as one term per continuous input, in their order, "
         "e.g. 'a b c ab': single letters are independent factors, a product of "
         "letters sets the input to the product of those factors, and a leading '-' "
-        "flips its sign. If not provided, derived from `n_generators`.",
+        "flips its sign. If not provided, derived from `n_generators`; can't be "
+        "combined with `n_generators`.",
     )
     n_generators: NonNegativeInt = Field(
         default=0,
         description="Number of continuous inputs set to products of the others, p in "
-        "the 2^(k-p) runs; 0 is a full factorial design. With a `generator`, it has "
-        "to match the generator or be 0.",
+        "the 2^(k-p) runs; 0 is a full factorial design. Has to be 0 if a "
+        "`generator` is given.",
     )
     randomize_runorder: bool = Field(
         default=False,
         description="Whether the runs are returned in random order, else in the "
         "standard order of the design.",
     )
-
-    @field_validator("generator", mode="before")
-    @classmethod
-    def validate_empty_generator(cls, generator: Any) -> Any:
-        """Treats the former empty string, meaning no generator, as None."""
-        return None if generator == "" else generator
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
         return False
@@ -86,13 +79,9 @@ class FractionalFactorialStrategy(Strategy):
     @model_validator(mode="after")
     def validate_generator(self):
         if self.generator is not None:
-            n_products = sum(
-                len(term.lstrip("+-")) > 1 for term in self.generator.split()
-            )
-            if self.n_generators not in (0, n_products):
+            if self.n_generators > 0:
                 raise ValueError(
-                    f"n_generators is {self.n_generators}, but the generator sets "
-                    f"{n_products} inputs to products of others.",
+                    "Provide either a generator or n_generators, not both.",
                 )
             validate_generator(
                 len(self.domain.inputs.get(ContinuousInput)), self.generator

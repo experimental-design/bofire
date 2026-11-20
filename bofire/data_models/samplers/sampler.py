@@ -1,35 +1,46 @@
 import warnings
-from typing import Any, Dict, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 import numpy as np
-from pydantic import Field
+import pandas as pd
+from pydantic import ConfigDict, Field
 from scipy.stats.qmc import LatinHypercube, Sobol
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.enum import SamplingMethodEnum
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    DiscreteInput,
+    Input,
+)
+
+
+if TYPE_CHECKING:
+    from bofire.data_models.domain.api import Inputs
 
 
 class Sampler(BaseModel):
     """Method that spreads sample points over the inputs, e.g. for an initial design.
 
-    Categorical and discrete inputs take their values from equally wide bins of the
-    sampled unit interval, so the samplers spread those values evenly too.
+    Samplers are immutable: their options can't be changed after construction.
     """
+
+    model_config = ConfigDict(frozen=True)
 
     type: Any
 
-    def unit_samples(self, n_dims: int, n: int, seed: Optional[int]) -> np.ndarray:
-        """Draws `n` points from the unit cube of dimension `n_dims`.
+    def sample(self, inputs: "Inputs", n: int, seed: Optional[int]) -> pd.DataFrame:
+        """Draws `n` samples of the inputs; fixed inputs keep their value.
 
         Args:
-            n_dims: Number of dimensions.
-            n: Number of points.
-            seed: Seed for reproducible points; random if not provided.
+            inputs: The inputs to sample.
+            n: Number of samples.
+            seed: Seed for reproducible samples; random if not provided.
 
         Returns:
-            An array of shape `(n, n_dims)` with values in [0, 1].
+            A dataframe with one column per input.
         """
-        return np.random.default_rng(seed).uniform(size=(n, n_dims))
+        raise NotImplementedError
 
 
 class UniformSampler(Sampler):
@@ -43,10 +54,26 @@ class UniformSampler(Sampler):
 
     type: Literal["UniformSampler"] = "UniformSampler"
 
+    def sample(self, inputs: "Inputs", n: int, seed: Optional[int]) -> pd.DataFrame:
+        # every input gets a seed of its own, so inputs with the same bounds are
+        # not sampled identically
+        rng = np.random.default_rng(seed=seed)
+        return pd.concat(
+            [
+                feat.sample(n, seed=int(rng.integers(1, 1000000)))
+                for feat in inputs.get(Input)
+            ],
+            axis=1,
+        )
+
 
 class _QuasiRandomSampler(Sampler):
     """Spreads the points more evenly than independent random draws, by a
-    low-discrepancy design on the unit cube."""
+    low-discrepancy design on the unit cube.
+
+    Categorical and discrete inputs take their values from equally wide bins of the
+    unit interval, so their values are spread evenly too.
+    """
 
     scramble: bool = Field(
         default=True,
@@ -59,6 +86,39 @@ class _QuasiRandomSampler(Sampler):
         "evenly: 'random-cd' lowers their centered discrepancy, 'lloyd' moves them "
         "apart by Lloyd-Max iterations. If not provided, none.",
     )
+
+    def _unit_samples(self, n_dims: int, n: int, seed: Optional[int]) -> np.ndarray:
+        raise NotImplementedError
+
+    def sample(self, inputs: "Inputs", n: int, seed: Optional[int]) -> pd.DataFrame:
+        free_features = inputs.get_free()
+        X = self._unit_samples(len(free_features), n, seed)
+
+        res = []
+        for i, feat in enumerate(free_features):
+            if isinstance(feat, ContinuousInput):
+                x = feat.from_unit_range(X[:, i])
+            elif isinstance(feat, (DiscreteInput, CategoricalInput)):
+                levels = (
+                    feat.values
+                    if isinstance(feat, DiscreteInput)
+                    else feat.get_allowed_categories()
+                )
+                bins = np.linspace(0, 1, len(levels) + 1)
+                idx = np.digitize(X[:, i], bins) - 1
+                x = np.array(levels)[idx]
+            else:
+                raise ValueError(
+                    f"Unknown input feature with key {feat.key} of type {feat.type}",
+                )
+            res.append(pd.Series(x, name=feat.key))
+
+        samples = pd.concat(res, axis=1)
+        for feat in inputs.get_fixed():
+            val = feat.fixed_value()
+            assert val is not None
+            samples[feat.key] = val[0]
+        return samples
 
 
 class SobolSampler(_QuasiRandomSampler):
@@ -73,7 +133,7 @@ class SobolSampler(_QuasiRandomSampler):
 
     type: Literal["SobolSampler"] = "SobolSampler"
 
-    def unit_samples(self, n_dims: int, n: int, seed: Optional[int]) -> np.ndarray:
+    def _unit_samples(self, n_dims: int, n: int, seed: Optional[int]) -> np.ndarray:
         with warnings.catch_warnings():
             # scipy warns if n is not a power of two
             warnings.simplefilter("ignore")
@@ -101,7 +161,7 @@ class LatinHypercubeSampler(_QuasiRandomSampler):
         "of a prime and at most that prime plus one inputs.",
     )
 
-    def unit_samples(self, n_dims: int, n: int, seed: Optional[int]) -> np.ndarray:
+    def _unit_samples(self, n_dims: int, n: int, seed: Optional[int]) -> np.ndarray:
         return LatinHypercube(
             n_dims,
             scramble=self.scramble,
@@ -109,26 +169,3 @@ class LatinHypercubeSampler(_QuasiRandomSampler):
             optimization=self.optimization,
             seed=seed,
         ).random(n)
-
-
-def sampler_from_method(
-    method: SamplingMethodEnum, sampler_kwargs: Optional[Dict[str, Any]] = None
-) -> Sampler:
-    """Returns the sampler of a sampling method and its options.
-
-    Args:
-        method: The sampling method.
-        sampler_kwargs: Options of the sampler, e.g. `{"scramble": False}`.
-
-    Raises:
-        ValidationError: if an option is not one of the sampler's fields.
-
-    Returns:
-        The sampler.
-    """
-    sampler_cls = {
-        SamplingMethodEnum.UNIFORM: UniformSampler,
-        SamplingMethodEnum.SOBOL: SobolSampler,
-        SamplingMethodEnum.LHS: LatinHypercubeSampler,
-    }[SamplingMethodEnum(method)]
-    return sampler_cls(**(sampler_kwargs or {}))

@@ -20,7 +20,6 @@ or the [BoTorch tutorial](https://botorch.org/docs/tutorials/Multi_objective_mul
 
 ```{python}
 from bofire.data_models.acquisition_functions.api import qMFHVKG
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import ContinuousTaskInput
 from bofire.data_models.strategies.api import BotorchOptimizer
 from bofire.data_models.surrogates.api import LinearDeterministicSurrogate
