@@ -1149,7 +1149,7 @@ specs.add_valid(
             api_key_env_var="ANTHROPIC_API_KEY",
         ).model_dump(),
         "seed": 42,
-        "model_settings": None,
+        "model_settings": {},
         "output_retries": 3,
         "n_recent_experiments": None,
         "n_top_experiments": None,

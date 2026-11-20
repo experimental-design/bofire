@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Dict, Literal, Optional, Type
+from typing import Any, Dict, Literal, Optional, Type
 
 from pydantic import Field, PositiveInt, model_validator
 
@@ -15,84 +15,65 @@ from bofire.data_models.strategies.strategy import Strategy
 
 
 class LLMStrategy(Strategy):
-    """Strategy that uses a large language model to propose optimization candidates.
+    """Lets a large language model propose the candidates.
 
-    Instead of fitting a surrogate and optimizing an acquisition function,
-    this strategy lets an LLM read the optimization problem — feature bounds,
-    constraints, objectives, contextual descriptions, and prior experiments —
-    and directly propose candidate points. It is useful for cold-start
-    designs, mixed / categorical / molecular spaces where domain knowledge
-    helps, and exploration informed by written context (``Feature.context``
-    and ``Domain.context``).
+    Instead of fitting a surrogate and optimizing an acquisition function, the model
+    reads a description of the problem (inputs with their bounds and values,
+    constraints, the objective, and the `context` of the domain and its features)
+    together with previous experiments, and proposes candidates with a short
+    reasoning for each. Useful for cold starts, for categorical or molecular inputs
+    where domain knowledge helps, and when written context matters. There is no
+    uncertainty model behind the proposals, so they are informed guesses rather
+    than optima.
 
-    It is not a replacement for a Bayesian optimizer on well-understood
-    numerical problems: there is no calibrated uncertainty model and no
-    acquisition function. Treat candidates as informed heuristics, not
-    optima.
+    Proposed candidates are checked against the bounds and constraints of the
+    domain; violations are sent back to the model, which gets `output_retries`
+    attempts to correct them. Supports a single output with a maximize or minimize
+    objective, all input types, and linear and NChooseK constraints. The returned
+    candidates carry the model's reasoning in an extra column.
 
-    On each ``ask()``, a pydantic output schema is generated from the
-    domain's input features and the LLM is prompted with a textual problem
-    description plus, optionally, a selection of prior experiments. Returned
-    candidates are validated against the domain; bound or constraint
-    violations are sent back to the LLM as retry messages via pydantic-ai's
-    ``output_retries``.
-
-    Currently supports single-objective optimization with ``MaximizeObjective``
-    or ``MinimizeObjective``, and ``LinearEquality``, ``LinearInequality``,
-    and ``NChooseK`` constraints. All feature types are supported.
-
-    Example:
-        Basic usage::
-
-            strategy = LLMStrategy.make(
-                domain=domain,
-                llm=AnthropicLLMProvider(model="claude-sonnet-4-5"),
-            )
-
-        Enable extended reasoning for harder problems (many constraints,
-        rich context). ``thinking`` is pydantic-ai's cross-provider
-        capability key — it maps to Anthropic's extended thinking, OpenAI's
-        ``reasoning_effort``, and similar mechanisms on other providers.
-        Reasoning increases cost and latency considerably, so it is not
-        enabled by default::
-
-            strategy = LLMStrategy.make(
-                domain=domain,
-                llm=AnthropicLLMProvider(model="claude-sonnet-4-5"),
-                model_settings={"thinking": "high"},
-            )
-
-    Attributes:
-        llm: LLM provider configuration.
-        model_settings: Optional dict forwarded directly to pydantic-ai's
-            ``model_settings``. Useful keys include ``temperature``,
-            ``max_tokens``, ``top_p``, ``seed``, ``timeout``, and the
-            cross-provider capability ``thinking`` (``"low"`` / ``"medium"``
-            / ``"high"``). Provider-prefixed keys such as
-            ``anthropic_thinking`` or ``openai_reasoning_effort`` are also
-            accepted as escape hatches for finer control. Keys are not
-            validated by BoFire — pydantic-ai and the underlying provider
-            SDK are the source of truth.
-        output_retries: Number of retries when output validation fails
-            (constraint or bound violations). Each retry sends the LLM the
-            invalid candidates and the error so it can correct.
-        n_recent_experiments: If set, only the most recent N experiments
-            are shown to the LLM. Keeps prompt size bounded on long
-            campaigns.
-        n_top_experiments: If set, the top N experiments by objective
-            value are shown to the LLM. Combine with
-            ``n_recent_experiments`` to mix recency and quality.
-        system_prompt: Optional override for the default system prompt.
+    Examples:
+        >>> LLMStrategy(
+        ...     domain=domain,
+        ...     llm=AnthropicLLMProvider(model="claude-sonnet-5-5"),
+        ...     model_settings={"thinking": "high"},
+        ... )
     """
 
     type: Literal["LLMStrategy"] = "LLMStrategy"
 
-    llm: AnyLLMProvider
-    model_settings: Optional[Dict[str, Any]] = None
-    output_retries: PositiveInt = 3
-    n_recent_experiments: Optional[Annotated[int, Field(gt=0)]] = None
-    n_top_experiments: Optional[Annotated[int, Field(gt=0)]] = None
-    system_prompt: Optional[str] = None
+    llm: AnyLLMProvider = Field(
+        description="The LLM service and model that propose the candidates.",
+    )
+    model_settings: Dict[str, Any] = Field(
+        default={},
+        description="Settings passed on to the model, as understood by pydantic-ai "
+        "and the provider, e.g. 'temperature', 'max_tokens', 'seed', 'timeout', or "
+        "'thinking' ('low', 'medium' or 'high') for extended reasoning on hard "
+        "problems, at a considerably higher cost and latency. BoFire does not check "
+        "the keys.",
+    )
+    output_retries: PositiveInt = Field(
+        default=3,
+        description="How often the model may correct candidates that violate bounds "
+        "or constraints; each retry shows it the invalid candidates and the error.",
+    )
+    n_recent_experiments: Optional[PositiveInt] = Field(
+        default=None,
+        description="If provided, only this many of the most recent experiments are "
+        "shown to the model, to bound the prompt on long campaigns.",
+    )
+    n_top_experiments: Optional[PositiveInt] = Field(
+        default=None,
+        description="If provided, this many experiments with the best objective "
+        "values are shown, in addition to the recent ones if `n_recent_experiments` "
+        "is also given. If neither is provided, all experiments are shown.",
+    )
+    system_prompt: Optional[str] = Field(
+        default=None,
+        description="Instructions replacing BoFire's default system prompt. The "
+        "problem description and the experiments are added to it in any case.",
+    )
 
     @model_validator(mode="after")
     def validate_single_objective(self):
