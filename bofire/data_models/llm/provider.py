@@ -7,12 +7,17 @@ from bofire.data_models.base import BaseModel
 
 class LLMProvider(BaseModel):
     """Connection settings for an LLM service, which can be passed to any BoFire
-    component that uses an LLM."""
+    component that uses an LLM.
+
+    The API key is never part of the settings: only the name of the environment
+    variable holding it is stored, and the variable is read when a component first
+    calls the model. Serialized settings therefore contain no secrets.
+    """
 
     type: Any
     model: str = Field(
         description="Identifier of the model at the service, e.g. "
-        "'claude-sonnet-4-20250514' or 'gpt-4o'.",
+        "'claude-sonnet-5-5' or 'gpt-4o'.",
     )
     api_key_env_var: str = Field(
         description="Name of the environment variable holding the API key.",
@@ -24,7 +29,7 @@ class AnthropicLLMProvider(LLMProvider):
 
     type: Literal["AnthropicLLMProvider"] = "AnthropicLLMProvider"
     model: str = Field(
-        default="claude-sonnet-4-20250514", description="Anthropic model identifier."
+        default="claude-sonnet-5-5", description="Anthropic model identifier."
     )
     api_key_env_var: str = Field(
         default="ANTHROPIC_API_KEY",
@@ -41,7 +46,7 @@ class AnthropicFoundryLLMProvider(LLMProvider):
 
     type: Literal["AnthropicFoundryLLMProvider"] = "AnthropicFoundryLLMProvider"
     model: str = Field(
-        default="claude-sonnet-4-20250514",
+        default="claude-sonnet-5-5",
         description="Anthropic model identifier on Azure.",
     )
     api_key_env_var: str = Field(

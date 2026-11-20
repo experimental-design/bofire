@@ -10,7 +10,6 @@ from bofire.data_models.constraints.api import (
     NonlinearConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.strategies.doe.objective import Objective
 from bofire.strategies.doe.utils import (
@@ -121,13 +120,7 @@ def find_local_max_ipopt(
                       Providing a custom sampling strategy compatible with the problem can \
                       possibly improve performance.",
         )
-        x0 = (
-            domain.inputs.sample(
-                n=n_experiments, method=SamplingMethodEnum.UNIFORM, seed=seed
-            )
-            .to_numpy()
-            .flatten()
-        )
+        x0 = domain.inputs.sample(n=n_experiments, seed=seed).to_numpy().flatten()
 
     # write constraints as scipy constraints
     constraints = constraints_as_scipy_constraints(

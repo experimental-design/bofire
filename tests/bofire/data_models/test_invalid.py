@@ -92,6 +92,10 @@ def test_encoding_should_be_invalid(invalid_encoding_spec: InvalidSpec):
     _invalidate(invalid_encoding_spec)
 
 
+def test_sampler_should_be_invalid(invalid_sampler_spec: InvalidSpec):
+    _invalidate(invalid_sampler_spec)
+
+
 def test_local_search_config_should_be_invalid(
     invalid_local_search_config_spec: InvalidSpec,
 ):

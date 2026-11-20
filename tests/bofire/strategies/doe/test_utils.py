@@ -14,7 +14,6 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain, Inputs
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -543,11 +542,7 @@ def test_minimize():
         criterion, domain=domain, n_experiments=n_experiments
     )
 
-    x0 = (
-        domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM)
-        .to_numpy()
-        .flatten()
-    )
+    x0 = domain.inputs.sample(n=n_experiments).to_numpy().flatten()
     constraints = constraints_as_scipy_constraints(
         domain,
         n_experiments,

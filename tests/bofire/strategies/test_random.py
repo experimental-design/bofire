@@ -17,7 +17,6 @@ from bofire.data_models.constraints.api import (
     ThresholdCondition,
 )
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -25,6 +24,11 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.data_models.features.descriptors import Descriptors
+from bofire.data_models.samplers.api import (
+    LatinHypercubeSampler,
+    SobolSampler,
+    UniformSampler,
+)
 
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -306,21 +310,18 @@ def test_sample_from_polytope():
 
 
 @pytest.mark.parametrize(
-    "method,kwargs,n_samples",
+    "sampler,n_samples",
     [
-        (SamplingMethodEnum.SOBOL, {"scramble": True}, 10),
-        (SamplingMethodEnum.SOBOL, {"scramble": False}, 10),
-        (SamplingMethodEnum.LHS, {"scramble": True, "strength": 1}, 10),
-        (
-            SamplingMethodEnum.LHS,
-            {"strength": 2},
-            9,
-        ),  # strength=2 requires n to be square of prime
-        (SamplingMethodEnum.UNIFORM, {}, 10),
+        (SobolSampler(scramble=True), 10),
+        (SobolSampler(scramble=False), 10),
+        (SobolSampler(optimization="random-cd"), 10),
+        (LatinHypercubeSampler(scramble=True, strength=1), 10),
+        # strength=2 requires n to be square of prime
+        (LatinHypercubeSampler(strength=2), 9),
+        (UniformSampler(), 10),
     ],
 )
-def test_sampler_kwargs_various_methods(method, kwargs, n_samples):
-    """Test sampler_kwargs with various sampling methods."""
+def test_fallback_samplers(sampler, n_samples):
     test_domain = Domain(
         inputs=Inputs(
             features=[
@@ -332,7 +333,7 @@ def test_sampler_kwargs_various_methods(method, kwargs, n_samples):
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
     )
     sampler_data_model = data_models.RandomStrategy(
-        domain=test_domain, fallback_sampling_method=method, sampler_kwargs=kwargs
+        domain=test_domain, fallback_sampler=sampler
     )
     sampler_strategy = strategies.RandomStrategy(data_model=sampler_data_model)
     candidates = sampler_strategy.ask(n_samples)

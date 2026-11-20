@@ -17,7 +17,6 @@ from bofire.data_models.constraints.api import (
     SelectionCondition,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalTaskInput,
@@ -30,6 +29,11 @@ from bofire.data_models.llm.provider import AnthropicLLMProvider
 from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
+)
+from bofire.data_models.samplers.api import (
+    LatinHypercubeSampler,
+    SobolSampler,
+    UniformSampler,
 )
 from bofire.data_models.strategies.api import (
     AbsoluteMovingReferenceValue,
@@ -369,8 +373,7 @@ specs.add_valid(
         "num_base_samples": 1000,
         "n_burnin": 1000,
         "n_thinning": 32,
-        "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
-        "sampler_kwargs": {},
+        "fallback_sampler": UniformSampler().model_dump(),
     },
 )
 
@@ -379,8 +382,7 @@ specs.add_valid(
     lambda: {
         "domain": domain.valid().obj().model_dump(),
         "seed": 42,
-        "fallback_sampling_method": SamplingMethodEnum.SOBOL,
-        "sampler_kwargs": {"scramble": True},
+        "fallback_sampler": SobolSampler(optimization="random-cd").model_dump(),
     },
 )
 
@@ -389,9 +391,20 @@ specs.add_valid(
     lambda: {
         "domain": domain.valid().obj().model_dump(),
         "seed": 42,
-        "fallback_sampling_method": SamplingMethodEnum.LHS,
-        "sampler_kwargs": {"scramble": True, "strength": 2},
+        "fallback_sampler": LatinHypercubeSampler(
+            scramble=False, strength=2
+        ).model_dump(),
     },
+)
+
+specs.add_invalid(
+    strategies.RandomStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "fallback_sampling_method": "SOBOL",
+    },
+    error=ValueError,
+    message="Extra inputs are not permitted",
 )
 
 for criterion in [
@@ -867,9 +880,26 @@ specs.add_valid(
         "n_repetitions": 1,
         "n_center": 0,
         "n_generators": 0,
-        "generator": "",
+        "generator": None,
         "randomize_runorder": False,
     },
+)
+
+specs.add_invalid(
+    strategies.FractionalFactorialStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "c"]
+                ],
+            ),
+        ).model_dump(),
+        "n_generators": 1,
+        "generator": "a b ab",
+    },
+    error=ValueError,
+    message="Provide either a generator or n_generators, not both.",
 )
 
 specs.add_invalid(
@@ -974,7 +1004,7 @@ specs.add_invalid(
         "n_repetitions": 1,
         "n_center": 0,
         "n_generators": 1,
-        "generator": "",
+        "generator": None,
     },
     error=ValueError,
     message="Design not possible, as main factors are confounded with each other.",
@@ -1119,7 +1149,7 @@ specs.add_valid(
             api_key_env_var="ANTHROPIC_API_KEY",
         ).model_dump(),
         "seed": 42,
-        "model_settings": None,
+        "model_settings": {},
         "output_retries": 3,
         "n_recent_experiments": None,
         "n_top_experiments": None,

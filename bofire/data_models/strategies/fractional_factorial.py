@@ -1,6 +1,6 @@
-from typing import Annotated, Literal, Optional, Type
+from typing import Literal, Optional, Type
 
-from pydantic import Field, model_validator
+from pydantic import Field, NonNegativeInt, model_validator
 
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import (
@@ -15,46 +15,53 @@ from bofire.utils.doe import get_generator, get_n_blocks, validate_generator
 
 
 class FractionalFactorialStrategy(Strategy):
-    """Fractional factorial design strategy.
+    """Two-level (fractional) factorial design: few experiments to screen which
+    continuous inputs have an effect, repeated for every combination of the
+    categorical and discrete inputs.
 
-    This strategy generates a fractional factorial two level design for the continuous
-    part of the domain, which is then combined with the categorical part of the domain.
-    For every categorical combination, the continuous part of the design is repeated.
+    Every continuous input is set to its lower or upper bound. A full factorial design
+    runs all 2^k combinations of k inputs; a fractional one runs a fraction 2^(k-p) of
+    them by setting p inputs to products of others, at the price of confounding
+    effects with interactions. Center points add runs in the middle of the range.
+
+    Examples:
+        >>> FractionalFactorialStrategy(domain=domain, n_generators=1, n_center=2)
     """
 
     type: Literal["FractionalFactorialStrategy"] = "FractionalFactorialStrategy"
-    n_repetitions: Annotated[
-        int,
-        Field(
-            description="Number of repetitions of the continuous part of the design",
-            ge=0,
-        ),
-    ] = 1
-    n_center: Annotated[
-        int,
-        Field(
-            description="Number of center points in the continuous part of the design per block",
-            ge=0,
-        ),
-    ] = 1
-    block_feature_key: Optional[
-        Annotated[
-            str,
-            Field(
-                description="Feature key to use for blocking the design. If not provided, no blocking is used."
-            ),
-        ]
-    ] = None
-    generator: Annotated[
-        str, Field(description="Generator for the continuous part of the design.")
-    ] = ""
-    n_generators: Annotated[
-        int,
-        Field(description="Number of reducing factors", ge=0),
-    ] = 0
+    n_repetitions: NonNegativeInt = Field(
+        default=1,
+        description="How often the two-level design of the continuous inputs is run.",
+    )
+    n_center: NonNegativeInt = Field(
+        default=1,
+        description="Number of center points per block, at the middle of every "
+        "continuous input's range.",
+    )
+    block_feature_key: Optional[str] = Field(
+        default=None,
+        description="Key of a categorical or discrete input whose values label the "
+        "blocks the design is split into, e.g. days or batches. Its number of values "
+        "has to be a possible number of blocks. If not provided, no blocking.",
+    )
+    generator: Optional[str] = Field(
+        default=None,
+        description="The design as one term per continuous input, in their order, "
+        "e.g. 'a b c ab': single letters are independent factors, a product of "
+        "letters sets the input to the product of those factors, and a leading '-' "
+        "flips its sign. If not provided, derived from `n_generators`; can't be "
+        "combined with `n_generators`.",
+    )
+    n_generators: NonNegativeInt = Field(
+        default=0,
+        description="Number of continuous inputs set to products of the others, p in "
+        "the 2^(k-p) runs; 0 is a full factorial design. Has to be 0 if a "
+        "`generator` is given.",
+    )
     randomize_runorder: bool = Field(
         default=False,
-        description="If true, the run order is randomized, else it is deterministic.",
+        description="Whether the runs are returned in random order, else in the "
+        "standard order of the design.",
     )
 
     def is_constraint_implemented(self, my_type: Type[Constraint]) -> bool:
@@ -71,7 +78,11 @@ class FractionalFactorialStrategy(Strategy):
 
     @model_validator(mode="after")
     def validate_generator(self):
-        if len(self.generator) > 0:
+        if self.generator is not None:
+            if self.n_generators > 0:
+                raise ValueError(
+                    "Provide either a generator or n_generators, not both.",
+                )
             validate_generator(
                 len(self.domain.inputs.get(ContinuousInput)), self.generator
             )
@@ -102,7 +113,7 @@ class FractionalFactorialStrategy(Strategy):
                     f"Feature {self.block_feature_key} has only one allowed category/value, blocking is not possible."
                 )
 
-            if len(self.generator) > 0:
+            if self.generator is not None:
                 raise NotImplementedError(
                     "Blocking is not implemented for custom generators."
                 )

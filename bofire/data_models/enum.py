@@ -2,12 +2,6 @@ from enum import Enum
 from typing import Literal
 
 
-class SamplingMethodEnum(str, Enum):
-    UNIFORM = "UNIFORM"
-    SOBOL = "SOBOL"
-    LHS = "LHS"
-
-
 class ClassificationMetricsEnum(str, Enum):
     """Enumeration class for classification metrics."""
 

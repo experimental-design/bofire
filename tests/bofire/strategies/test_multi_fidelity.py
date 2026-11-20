@@ -2,8 +2,8 @@ import pytest
 
 from bofire.benchmarks.api import MultiTaskHimmelblau
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import CategoricalTaskInput
+from bofire.data_models.samplers.api import SobolSampler
 from bofire.data_models.strategies.api import (
     MultiFidelityVarianceBasedStrategy as MFVarianceBasedStrategyDataModel,
 )
@@ -19,7 +19,7 @@ def test_mf_requires_all_fidelities_observed():
     random_strategy = RandomStrategy(
         data_model=RandomStrategyDataModel(
             domain=benchmark.domain,
-            fallback_sampling_method=SamplingMethodEnum.SOBOL,
+            fallback_sampler=SobolSampler(),
             seed=42,
         ),
     )
@@ -70,7 +70,7 @@ def test_mf_fidelity_selection():
     random_strategy = RandomStrategy(
         data_model=RandomStrategyDataModel(
             domain=benchmark.domain,
-            fallback_sampling_method=SamplingMethodEnum.SOBOL,
+            fallback_sampler=SobolSampler(),
             seed=42,
         ),
     )
@@ -111,7 +111,7 @@ def test_mf_point_selection():
     random_strategy = RandomStrategy(
         data_model=RandomStrategyDataModel(
             domain=benchmark.domain,
-            fallback_sampling_method=SamplingMethodEnum.SOBOL,
+            fallback_sampler=SobolSampler(),
             seed=42,
         ),
     )
