@@ -242,6 +242,12 @@ class ContinuousInput(NumericalInput):
             )
         return values
 
+    def from_unit_samples(self, u: np.ndarray) -> pd.Series:
+        return pd.Series(
+            self.lower_bound + np.asarray(u) * (self.upper_bound - self.lower_bound),
+            name=self.key,
+        )
+
     def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.
 

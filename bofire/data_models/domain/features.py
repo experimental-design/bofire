@@ -390,7 +390,21 @@ class Inputs(_BaseFeatures[AnyInput]):
         """
         if len(self) == 0:
             return pd.DataFrame()
-        samples = sampler.sample(self, n, seed)
+        free_features = self.get_free()
+        samples = pd.DataFrame(index=range(n))
+        if len(free_features) > 0:
+            X = sampler.unit_samples(len(free_features), n, seed)
+            samples = pd.concat(
+                [
+                    feat.from_unit_samples(X[:, i])
+                    for i, feat in enumerate(free_features)
+                ],
+                axis=1,
+            )
+        for feat in self.get_fixed():
+            val = feat.fixed_value()
+            assert val is not None
+            samples[feat.key] = val[0]
         return self.validate_candidates(samples)[self.get_keys(Input)]
 
     def validate_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:

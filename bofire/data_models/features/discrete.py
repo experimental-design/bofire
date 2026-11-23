@@ -160,6 +160,11 @@ class DiscreteInput(NumericalInput):
             )
         return values
 
+    def from_unit_samples(self, u: np.ndarray) -> pd.Series:
+        levels = self.values
+        idx = np.minimum((np.asarray(u) * len(levels)).astype(int), len(levels) - 1)
+        return pd.Series(np.array(levels)[idx], name=self.key)
+
     def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.
 

@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from typing import Any, ClassVar, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 from pydantic import Field
 from pydantic.fields import FieldInfo
@@ -124,6 +125,18 @@ class Input(Feature):
         Returns:
             pd.Series: The passed dataFrame with candidates
 
+        """
+
+    @abstractmethod
+    def from_unit_samples(self, u: np.ndarray) -> pd.Series:
+        """Maps points of the unit interval onto values of the feature, so that
+        uniformly spread points give uniformly spread values.
+
+        Args:
+            u: Points in [0, 1].
+
+        Returns:
+            pd.Series: The corresponding values.
         """
 
     @abstractmethod
