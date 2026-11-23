@@ -791,11 +791,11 @@ specs.add_invalid(
             ],
         ),
         "acquisition_function": qLogPF(),
-        "scalarization": WeightedScalarization(use_output_constraints=False),
+        "scalarization": WeightedScalarization(),
     },
     error=ValueError,
-    message="qLogPF acquisition function needs a scalarization that keeps "
-    "constrained objectives apart as constraints.",
+    message="qLogPF acquisition function ignores the objectives, so it can't be "
+    "combined with a scalarization.",
 )
 
 # qLogPF on a domain with several plain objectives, as a feasibility step
@@ -817,7 +817,7 @@ specs.add_valid(
         ).model_dump(),
         **strategy_commons,
         "acquisition_function": qLogPF().model_dump(),
-        "scalarization": WeightedScalarization().model_dump(),
+        "scalarization": None,
     },
 )
 

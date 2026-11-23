@@ -44,7 +44,18 @@ class SoboStrategy(BotorchStrategy):
 
     @model_validator(mode="after")
     def validate_scalarization(self):
-        if self.scalarization is None:
+        if isinstance(self.acquisition_function, qLogPF):
+            # qLogPF only searches for feasible candidates and ignores the objectives
+            if self.scalarization is not None:
+                raise ValueError(
+                    "qLogPF acquisition function ignores the objectives, so it can't "
+                    "be combined with a scalarization.",
+                )
+            if len(self.domain.outputs.get_by_objective(ConstrainedObjective)) == 0:
+                raise ValueError(
+                    "At least one constrained objective is required for qLogPF.",
+                )
+        elif self.scalarization is None:
             if (
                 len(self.domain.outputs.get_by_objective(excludes=ConstrainedObjective))
                 > 1
@@ -56,19 +67,6 @@ class SoboStrategy(BotorchStrategy):
                 )
         else:
             self.scalarization.validate_domain(self.domain)
-        if isinstance(self.acquisition_function, qLogPF):
-            if (
-                self.scalarization is not None
-                and not self.scalarization.separates_output_constraints()
-            ):
-                raise ValueError(
-                    "qLogPF acquisition function needs a scalarization that keeps "
-                    "constrained objectives apart as constraints.",
-                )
-            if len(self.domain.outputs.get_by_objective(ConstrainedObjective)) == 0:
-                raise ValueError(
-                    "At least one constrained objective is required for qLogPF.",
-                )
         return self
 
     @classmethod
