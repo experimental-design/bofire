@@ -4,7 +4,7 @@ jupyter: python3
 ---
 
 
-A `SoboStrategy` combines several objectives into the single value it maximizes by its `scalarization`. Besides the built-in ones (`WeightedSumScalarization`, `WeightedProductScalarization`, `WeightedProductSumScalarization`), you can register your own. In this tutorial notebook, it is shown how to use this to optimize a quantity that depends on a combination of an inferred quantity and one of the inputs.
+A `SoboStrategy` combines several objectives into the single value it maximizes by its `scalarization`. Besides the built-in `WeightedScalarization`, you can register your own. In this tutorial notebook, it is shown how to use this to optimize a quantity that depends on a combination of an inferred quantity and one of the inputs.
 
 
 ## Imports

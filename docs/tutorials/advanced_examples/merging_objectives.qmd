@@ -46,15 +46,17 @@ We will use a `SoboStrategy` with pure multiplicative and additive scalarization
 strategy_data_model = {
     "multiplicative": strategies_data_model.SoboStrategy(
         domain=domain,
-        scalarization=strategies_data_model.WeightedProductScalarization(),
+        scalarization=strategies_data_model.WeightedScalarization(),
     ),
     "additive": strategies_data_model.SoboStrategy(
         domain=domain,
-        scalarization=strategies_data_model.WeightedSumScalarization(),
+        scalarization=strategies_data_model.WeightedScalarization(
+            additive_features=["f_0", "f_1"]
+        ),
     ),
     "mixed": strategies_data_model.SoboStrategy(
         domain=domain,
-        scalarization=strategies_data_model.WeightedProductSumScalarization(
+        scalarization=strategies_data_model.WeightedScalarization(
             additive_features=["f_1"]
         ),
     ),

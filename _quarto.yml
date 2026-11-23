@@ -83,10 +83,7 @@ quartodoc:
             - MultiFidelityVarianceBasedStrategy
             - MultiobjectiveStrategy
             - SoboStrategy
-            - SingleObjectiveScalarization
-            - WeightedSumScalarization
-            - WeightedProductScalarization
-            - WeightedProductSumScalarization
+            - WeightedScalarization
             - LLMStrategy
     - title: Data Models - Kernels
       desc: Kernel configuration data models

@@ -22,7 +22,7 @@ from bofire.data_models.objectives.api import (
 )
 from bofire.data_models.strategies.api import (
     SoboStrategy,
-    WeightedSumScalarization,
+    WeightedScalarization,
 )
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
@@ -96,7 +96,7 @@ Next we setup a `SoboStrategy` using the custom surrogates for outputs `y_x2` an
 ```{python}
 strategy_data = SoboStrategy(
     domain=domain,
-    scalarization=WeightedSumScalarization(),
+    scalarization=WeightedScalarization(additive_features=["y", "y_cat"]),
     surrogate_specs=BotorchSurrogates(
         surrogates=[surrogate_data, categorical_surrogate_data]
     ),
