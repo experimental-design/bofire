@@ -50,14 +50,12 @@ from bofire.utils.torch_tools import (
     Encoder,
     _callables_and_weights,
     constrained_objective2botorch,
-    get_additive_botorch_objective,
     get_categorical_encoder,
     get_initial_conditions_generator,
     get_interpoint_constraints,
     get_linear_constraints,
     get_multiobjective_objective,
     get_multiplicative_additive_botorch_objective,
-    get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
     get_nonlinear_constraints,
     get_NumericToCategorical_input_transform,
@@ -230,7 +228,7 @@ def test_moving_maximize_sigmoid_objective():
     )
 
 
-def test_get_multiplicative_botorch_objective():
+def test_get_multiplicative_additive_botorch_objective_product():
     experiments = pd.DataFrame(
         {
             "alpha": np.random.rand(10),
@@ -255,7 +253,8 @@ def test_get_multiplicative_botorch_objective():
         ],
     )
     weights = {"alpha": 0.5, "beta": 2.0}
-    objective = get_multiplicative_botorch_objective(
+    # without additive features, the scalarization is a weighted product
+    objective = get_multiplicative_additive_botorch_objective(
         outputs,
         experiments=experiments,
         weights=weights,
@@ -280,7 +279,7 @@ def test_get_multiplicative_botorch_objective():
 
 
 @pytest.mark.parametrize("exclude_constraints", [True, False])
-def test_get_additive_botorch_objective(exclude_constraints):
+def test_get_multiplicative_additive_botorch_objective_sum(exclude_constraints):
     experiments = pd.DataFrame(
         {
             "alpha": np.random.rand(10),
@@ -313,10 +312,12 @@ def test_get_additive_botorch_objective(exclude_constraints):
         ],
     )
     w1, w2, w3 = 0.5, 2.0, 0.7
-    objective = get_additive_botorch_objective(
+    # with all objectives additive, the scalarization is 1 plus a weighted sum
+    objective = get_multiplicative_additive_botorch_objective(
         outputs,
         exclude_constraints=exclude_constraints,
         experiments=experiments,
+        additive_features=["alpha", "beta", "gamma"],
         weights={"alpha": w1, "beta": w2, "gamma": w3},
     )
     generic_objective = GenericMCObjective(objective=objective)
@@ -330,9 +331,9 @@ def test_get_additive_botorch_objective(exclude_constraints):
     assert np.allclose(
         # objective.reward(samples, desFunc)[0].detach().numpy(),
         (
-            reward1 * w1 + reward3 * w3
+            1 + (reward1 * w1 + reward3 * w3) / (w1 + w3)
             if exclude_constraints
-            else reward1 * w1 + reward3 * w3 + reward2 * w2
+            else 1 + (reward1 * w1 + reward3 * w3 + reward2 * w2) / (w1 + w2 + w3)
         ),
         objective_forward.detach().numpy(),
         rtol=1e-06,
@@ -349,7 +350,7 @@ def test_get_additive_botorch_objective(exclude_constraints):
         )
         objective_forward = generic_objective.forward(samples)
         assert np.allclose(
-            np.clip((reward1 * w1 + reward3 * w3) * reward2, 0, None),
+            np.clip((1 + (reward1 * w1 + reward3 * w3) / (w1 + w3)) * reward2, 0, None),
             objective_forward.detach().numpy(),
             rtol=1e-06,
         )
@@ -938,34 +939,6 @@ def test_get_multiobjective_objective(mutiobjective_data):
     assert np.allclose(objective_forward[..., 0].detach().numpy(), reward1)
     assert np.allclose(objective_forward[..., 1].detach().numpy(), reward3)
     assert np.allclose(objective_forward[..., 2].detach().numpy(), reward4)
-
-
-def test_get_additive_objective(mutiobjective_data):
-    samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs = (
-        mutiobjective_data
-    )
-
-    objective = get_additive_botorch_objective(
-        outputs=outputs,
-        experiments=experiments,
-        exclude_constraints=False,
-        weights=WEIGHTS,
-    )
-    generic_objective = GenericMCObjective(objective=objective)
-    # check the shape
-    objective_forward = generic_objective.forward(samples2, None)
-    assert objective_forward.shape == torch.Size((30, 512))
-    objective_forward = generic_objective.forward(samples, None)
-    assert objective_forward.shape == torch.Size((30,))
-    # check what is in
-    # calc with numpy
-    reward1 = obj1(a_samples[:, 0]) * WEIGHTS["alpha"]
-    reward2 = obj2(a_samples[:, 1]) * WEIGHTS["beta"]
-    reward3 = obj3(a_samples[:, 2]) * WEIGHTS["gamma"]
-    reward4 = obj4(a_samples[:, 3]) * WEIGHTS["omega"]
-    assert np.allclose(
-        reward1 + reward2 + reward3 + reward4, objective_forward.detach().numpy()
-    )
 
 
 def test_get_multiplicative_additive_botorch_objective(mutiobjective_data):

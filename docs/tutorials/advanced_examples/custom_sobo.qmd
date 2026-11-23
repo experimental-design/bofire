@@ -15,7 +15,7 @@ from typing import Literal
 import bofire.strategies.api as strategies
 from bofire.benchmarks.api import Himmelblau
 from bofire.data_models.strategies.api import Scalarization, SoboStrategy
-from bofire.utils.torch_tools import get_additive_botorch_objective
+from bofire.utils.torch_tools import get_multiplicative_additive_botorch_objective
 ```
 
 ## Define the scalarization
@@ -38,8 +38,11 @@ def map_input_penalty(data_model, domain, experiments, input_preprocessing_specs
     # the column of the input in the tensor `X`
     feature2index, _ = domain.inputs._get_transform_info(input_preprocessing_specs)
     feat_idx = feature2index[data_model.feature][0]
-    objective = get_additive_botorch_objective(
-        outputs=domain.outputs, experiments=experiments
+    # all objectives additive: one plus their weighted sum
+    objective = get_multiplicative_additive_botorch_objective(
+        outputs=domain.outputs,
+        experiments=experiments,
+        additive_features=domain.outputs.get_keys_by_objective(),
     )
 
     def f(samples, X):

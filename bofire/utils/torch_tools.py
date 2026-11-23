@@ -698,51 +698,6 @@ def _callables_and_weights(
     return callables, weights_, keys
 
 
-def get_multiplicative_botorch_objective(
-    outputs: Outputs,
-    experiments: pd.DataFrame,
-    weights: Optional[Dict[str, float]] = None,
-) -> Callable[[Tensor, Tensor], Tensor]:
-    """Returns the weighted geometric mean of the objectives, with the weights
-    normalized to sum to 1."""
-    callables, weights_, _ = _callables_and_weights(
-        outputs,
-        experiments,
-        weights=weights,
-        normalize_weights=True,
-    )
-
-    def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
-        val = torch.tensor(1.0).to(**tkwargs)
-        for c, w in zip(callables, weights_):
-            val = val * c(samples, None) ** w
-        return val
-
-    return objective
-
-
-def get_additive_botorch_objective(
-    outputs: Outputs,
-    experiments: pd.DataFrame,
-    exclude_constraints: bool = True,
-    weights: Optional[Dict[str, float]] = None,
-) -> Callable[[Tensor, Tensor], Tensor]:
-    callables, weights_, _ = _callables_and_weights(
-        outputs,
-        experiments,
-        exclude_constraints=exclude_constraints,
-        weights=weights,
-    )
-
-    def objective(samples: Tensor, X: Tensor) -> Tensor:
-        val = torch.tensor(0.0).to(**tkwargs)
-        for c, w in zip(callables, weights_):
-            val = val + c(samples, None) * w
-        return val
-
-    return objective
-
-
 def get_multiobjective_objective(
     outputs: Outputs,
     experiments: pd.DataFrame,
