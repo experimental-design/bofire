@@ -45,12 +45,7 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
 )
-from bofire.data_models.strategies.api import (
-    BotorchOptimizer,
-    WeightedProductScalarization,
-    WeightedProductSumScalarization,
-    WeightedSumScalarization,
-)
+from bofire.data_models.strategies.api import BotorchOptimizer, WeightedScalarization
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.predictives.acqf_optimization import LSRBO
 from bofire.data_models.unions import to_list
@@ -303,10 +298,15 @@ def _domain_with_sigmoid_output() -> Domain:
 @pytest.mark.parametrize(
     "scalarization, separates",
     [
-        (WeightedSumScalarization(use_output_constraints=True), True),
-        (WeightedSumScalarization(use_output_constraints=False), False),
-        (WeightedProductScalarization(), False),
-        (WeightedProductSumScalarization(additive_features=["beta"]), False),
+        (WeightedScalarization(), True),
+        (WeightedScalarization(additive_features=["alpha", "beta"]), True),
+        (WeightedScalarization(use_output_constraints=False), False),
+        (
+            WeightedScalarization(
+                additive_features=["beta"], use_output_constraints=False
+            ),
+            False,
+        ),
     ],
 )
 def test_sobo_scalarization_output_constraints(scalarization, separates):
@@ -327,7 +327,7 @@ def test_sobo_scalarization_output_constraints(scalarization, separates):
     assert isinstance(objective, GenericMCObjective)
     assert (constraints is not None) == separates
 
-    # an absorbed constrained objective changes the value of the combination
+    # an absorbed constrained objective changes the value of the scalarization
     samples = torch.full((4, 3), 0.5, **tkwargs)
     samples[:, 2] = torch.tensor([0.0, 0.3, 0.7, 1.0], **tkwargs)
     values = objective(samples)
@@ -337,13 +337,19 @@ def test_sobo_scalarization_output_constraints(scalarization, separates):
 @pytest.mark.parametrize(
     "scalarization, expected",
     [
-        (WeightedSumScalarization(weights={"alpha": 2.0}), lambda a, b: 2 * a + b),
-        (WeightedProductScalarization(weights={"alpha": 2.0}), lambda a, b: a**2 * b),
         (
-            WeightedProductScalarization(
-                weights={"alpha": 2.0}, weight_normalization="sum"
+            WeightedScalarization(
+                weights={"alpha": 2.0}, additive_features=["alpha", "beta"]
             ),
+            lambda a, b: 1 + 2 / 3 * a + 1 / 3 * b,
+        ),
+        (
+            WeightedScalarization(weights={"alpha": 2.0}),
             lambda a, b: a ** (2 / 3) * b ** (1 / 3),
+        ),
+        (
+            WeightedScalarization(weights={"alpha": 2.0}, additive_features=["beta"]),
+            lambda a, b: a ** (2 / 3) * (1 + 1 / 3 * b),
         ),
     ],
 )

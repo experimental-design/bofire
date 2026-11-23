@@ -56,7 +56,7 @@ from bofire.utils.torch_tools import (
     get_interpoint_constraints,
     get_linear_constraints,
     get_multiobjective_objective,
-    get_multiplicative_additive_objective,
+    get_multiplicative_additive_botorch_objective,
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
     get_nonlinear_constraints,
@@ -230,8 +230,7 @@ def test_moving_maximize_sigmoid_objective():
     )
 
 
-@pytest.mark.parametrize("weight_normalization", ["min", "sum"])
-def test_get_multiplicative_botorch_objective(weight_normalization):
+def test_get_multiplicative_botorch_objective():
     experiments = pd.DataFrame(
         {
             "alpha": np.random.rand(10),
@@ -246,15 +245,9 @@ def test_get_multiplicative_botorch_objective(weight_normalization):
         MinimizeSigmoidObjective(steepness=1.0, tp=1.0),
         TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3),
     ]
-    negative = [
-        MinimizeObjective(),
-        CloseToTargetObjective(target_value=2.0, exponent=1.0),
-    ]
-    # fractional exponents ("sum") need non-negative objective values
-    (obj1, obj2) = random.choices(
-        non_negative + negative if weight_normalization == "min" else non_negative,
-        k=2,
-    )
+    # the normalized weights are fractional exponents, which need non-negative
+    # objective values
+    (obj1, obj2) = random.choices(non_negative, k=2)
     outputs = Outputs(
         features=[
             ContinuousOutput(key="alpha", objective=obj1),
@@ -266,7 +259,6 @@ def test_get_multiplicative_botorch_objective(weight_normalization):
         outputs,
         experiments=experiments,
         weights=weights,
-        weight_normalization=weight_normalization,
     )
     generic_objective = GenericMCObjective(objective=objective)
     samples = (torch.rand(30, 2, requires_grad=True) * 5).to(**tkwargs)
@@ -277,8 +269,7 @@ def test_get_multiplicative_botorch_objective(weight_normalization):
     reward2 = obj2(a_samples[:, 1])
     # do the comparison
     w1, w2 = weights["alpha"], weights["beta"]
-    norm = min(w1, w2) if weight_normalization == "min" else w1 + w2
-    w1, w2 = w1 / norm, w2 / norm
+    w1, w2 = w1 / (w1 + w2), w2 / (w1 + w2)
 
     assert np.allclose(
         # objective.reward(samples, desFunc)[0].detach().numpy(),
@@ -841,8 +832,6 @@ def test_get_nonlinear_constraints():
     assert len(get_nonlinear_constraints(domain=domain)) == 2
 
 
-# the multiplied outputs get integer exponents after rescaling, as the
-# close-to-target objective is negative
 WEIGHTS = {"alpha": 0.5, "beta": 2.0, "gamma": 1.5, "omega": 1.0}
 
 
@@ -907,7 +896,7 @@ def test_callables_and_weights(
     elif _callables_and_weights_kwargs_testcase == "allowed_objectives":
         kwargs["allowed_objectives"] = [MaximizeObjective]
     elif _callables_and_weights_kwargs_testcase == "normalize_weights":
-        kwargs["weight_normalization"] = "min"
+        kwargs["normalize_weights"] = True
 
     samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs = (
         mutiobjective_data
@@ -923,7 +912,7 @@ def test_callables_and_weights(
 
     weights_data_model = [WEIGHTS[k] for k in testkeys]
     if _callables_and_weights_kwargs_testcase == "normalize_weights":
-        weights_data_model = [w / min(weights_data_model) for w in weights_data_model]
+        weights_data_model = [w / sum(weights_data_model) for w in weights_data_model]
 
     assert testkeys == keys
     assert weights == weights_data_model
@@ -979,16 +968,17 @@ def test_get_additive_objective(mutiobjective_data):
     )
 
 
-def test_get_multiplicative_additive_objective(mutiobjective_data):
+def test_get_multiplicative_additive_botorch_objective(mutiobjective_data):
     samples, samples2, a_samples, obj1, obj2, obj3, obj4, experiments, outputs = (
         mutiobjective_data
     )
 
-    objective = get_multiplicative_additive_objective(
+    objective = get_multiplicative_additive_botorch_objective(
         outputs=outputs,
         experiments=experiments,
         exclude_constraints=False,
-        additive_features=["gamma", "alpha"],
+        # the close-to-target objective `omega` is negative, so it is summed
+        additive_features=["gamma", "alpha", "omega"],
         weights=WEIGHTS,
     )
     generic_objective = GenericMCObjective(objective=objective)
@@ -1006,16 +996,16 @@ def test_get_multiplicative_additive_objective(mutiobjective_data):
     w_alpha, w_beta, w_gamma, w_omega = (
         WEIGHTS[k] for k in ["alpha", "beta", "gamma", "omega"]
     )
+    w_sum = w_alpha + w_beta + w_gamma + w_omega
     w_alpha, w_beta, w_gamma, w_omega = [
-        w / min([w_alpha, w_beta, w_gamma, w_omega])
-        for w in [w_alpha, w_beta, w_gamma, w_omega]
+        w / w_sum for w in [w_alpha, w_beta, w_gamma, w_omega]
     ]
 
-    additive_objective = 1.0 + reward_gamma * w_gamma + reward_alpha * w_alpha
-
-    multiplicative_objective = (
-        (reward_beta**w_beta) * (reward_omega**w_omega) * additive_objective
+    additive_objective = (
+        1.0 + reward_gamma * w_gamma + reward_alpha * w_alpha + reward_omega * w_omega
     )
+
+    multiplicative_objective = (reward_beta**w_beta) * additive_objective
 
     objective_forward = objective_forward.detach().numpy()
 

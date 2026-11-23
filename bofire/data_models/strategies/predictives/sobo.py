@@ -1,4 +1,4 @@
-from typing import Literal, Type
+from typing import Literal, Optional, Type
 
 from pydantic import Field, model_validator
 
@@ -11,25 +11,22 @@ from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.convergence_criteria.api import ConvergenceCriterion
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
-from bofire.data_models.strategies.predictives.scalarization import (
-    AnyScalarization,
-    SingleObjectiveScalarization,
-)
+from bofire.data_models.strategies.predictives.scalarization import AnyScalarization
 
 
 class SoboStrategy(BotorchStrategy):
     """Single-objective Bayesian optimization, of one objective or of several
     combined into one by a scalarization.
 
-    By default exactly one output has an objective to optimize; further outputs may
-    have constrained objectives, such as sigmoid ones, which act as constraints the
-    candidates should satisfy. With `qLogPF` as acquisition function, the strategy
-    ignores the objectives and only searches for candidates that satisfy those
-    constraints.
+    Without a scalarization, exactly one output has an objective to optimize;
+    further outputs may have constrained objectives, such as sigmoid ones, which act
+    as constraints the candidates should satisfy. With `qLogPF` as acquisition
+    function, the strategy ignores the objectives and only searches for candidates
+    that satisfy those constraints.
 
     Examples:
         >>> SoboStrategy(domain=domain, acquisition_function=qLogEI())
-        >>> SoboStrategy(domain=domain, scalarization=WeightedProductScalarization())
+        >>> SoboStrategy(domain=domain, scalarization=WeightedScalarization())
     """
 
     type: Literal["SoboStrategy"] = "SoboStrategy"
@@ -38,17 +35,32 @@ class SoboStrategy(BotorchStrategy):
         description="Acquisition function that scores candidates by the predicted "
         "value of the objective.",
     )
-    scalarization: AnyScalarization = Field(
-        default=SingleObjectiveScalarization(),
-        description="How the objectives are combined into the single value that is "
-        "maximized.",
+    scalarization: Optional[AnyScalarization] = Field(
+        default=None,
+        description="How the objectives of several outputs are combined into the "
+        "single value that is maximized. If not provided, the domain has exactly one "
+        "objective that is not a constrained one.",
     )
 
     @model_validator(mode="after")
     def validate_scalarization(self):
-        self.scalarization.validate_domain(self.domain)
+        if self.scalarization is None:
+            if (
+                len(self.domain.outputs.get_by_objective(excludes=ConstrainedObjective))
+                > 1
+            ):
+                raise ValueError(
+                    "SoboStrategy without a scalarization can only optimize one "
+                    "objective that is not a constrained one. Combine several with "
+                    "a scalarization, e.g. WeightedScalarization.",
+                )
+        else:
+            self.scalarization.validate_domain(self.domain)
         if isinstance(self.acquisition_function, qLogPF):
-            if not self.scalarization.separates_output_constraints():
+            if (
+                self.scalarization is not None
+                and not self.scalarization.separates_output_constraints()
+            ):
                 raise ValueError(
                     "qLogPF acquisition function needs a scalarization that keeps "
                     "constrained objectives apart as constraints.",

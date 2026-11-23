@@ -1,3 +1,4 @@
+import math
 import warnings
 from abc import abstractmethod
 from typing import Literal, Optional, Type
@@ -26,7 +27,7 @@ class AcquisitionOptimizer(BaseModel):
         default=True,
         description="Whether, if every input is categorical or discrete, all "
         "combinations are scored instead of running the optimizer. Required for "
-        "categorical exclude constraints.",
+        "`CategoricalExcludeConstraint`s.",
     )
 
     @abstractmethod
@@ -97,11 +98,11 @@ class LSRBO(LocalSearchConfig):
 
     type: Literal["LSRBO"] = "LSRBO"
     gamma: float = Field(
-        default=0.1,
+        default=math.log(0.1),
         description="Threshold on the acquisition value at the local maximum: if it "
         "is at least `gamma`, the local step is taken, otherwise a step towards the "
-        "global maximum. The default suits qEI; it has to be adapted to the "
-        "acquisition function, especially to log-based ones.",
+        "global maximum. The default, log(0.1), suits log acquisition functions "
+        "such as qLogEI and qLogNEI; for a plain one such as qEI, use e.g. 0.1.",
     )
 
     def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
@@ -115,9 +116,10 @@ class BotorchOptimizer(AcquisitionOptimizer):
     """Gradient-based optimization of the acquisition function from several starting
     points, with BoTorch.
 
-    Continuous inputs are optimized by gradients. Categorical and discrete inputs are
-    handled by trying every combination of their values if there are few, and
-    otherwise by optimizing them alternately with the continuous inputs.
+    Continuous inputs are optimized by gradient ascent. Categorical and discrete
+    inputs are optimized by enumerating every combination of their values; if there
+    are too many combinations, they are instead optimized alternately with the
+    continuous inputs, by a local search.
 
     Examples:
         >>> BotorchOptimizer(n_restarts=10, n_raw_samples=512)
@@ -146,11 +148,11 @@ class BotorchOptimizer(AcquisitionOptimizer):
         "`n_restarts`.",
     )
     sequential: bool = Field(
-        default=False,
+        default=True,
         description="Whether the candidates of a batch are chosen one after another, "
         "each given the ones before, instead of all jointly. Cheaper for large "
-        "batches and often as good, see "
-        "https://github.com/pytorch/botorch/discussions/2810.",
+        "batches and usually as good. Candidates coupled by interpoint constraints "
+        "are always optimized jointly.",
     )
     local_search_config: Optional[AnyLocalSearchConfig] = Field(
         default=None,

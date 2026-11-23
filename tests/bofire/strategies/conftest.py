@@ -216,13 +216,15 @@ class OptimizerBenchmark:
             benchmarks.Detergent(),
             5,
             data_models_strategies.SoboStrategy,
-            scalarization=data_models_strategies.WeightedSumScalarization(),
+            scalarization=data_models_strategies.WeightedScalarization(
+                additive_features=["y1", "y2", "y3", "y4", "y5"]
+            ),
         ),
         OptimizerBenchmark(
             benchmarks.Detergent(),
             5,
             data_models_strategies.SoboStrategy,
-            scalarization=data_models_strategies.WeightedProductScalarization(),
+            scalarization=data_models_strategies.WeightedScalarization(),
             additional_constraint_functions=[
                 ConstraintCollection.nchoosek_constr_for_detergent,
             ],
@@ -232,13 +234,17 @@ class OptimizerBenchmark:
             benchmarks.CrossCoupling(),
             4,
             data_models_strategies.SoboStrategy,
-            scalarization=data_models_strategies.WeightedSumScalarization(),
+            scalarization=data_models_strategies.WeightedScalarization(
+                additive_features=["cost", "yield"]
+            ),
         ),
         OptimizerBenchmark(
             benchmarks.DTLZ2(dim=2, num_objectives=2),
             3,
             data_models_strategies.SoboStrategy,
-            scalarization=data_models_strategies.WeightedSumScalarization(),
+            scalarization=data_models_strategies.WeightedScalarization(
+                additive_features=["f_0", "f_1"]
+            ),
         ),
         OptimizerBenchmark(
             benchmarks.Ackley(num_categories=3, categorical=True, dim=4),

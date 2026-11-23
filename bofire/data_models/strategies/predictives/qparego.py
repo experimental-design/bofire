@@ -25,8 +25,7 @@ class QparegoStrategy(MultiobjectiveStrategy):
 
     type: Literal["QparegoStrategy"] = "QparegoStrategy"
     acquisition_function: Union[qEI, qLogEI, qLogNEI, qNEI] = Field(
-        # a factory, as constructing the deprecated qNEI warns
-        default_factory=lambda: qNEI(),
+        default=qLogNEI(),
         description="Single-objective acquisition function applied to each "
         "scalarization.",
     )

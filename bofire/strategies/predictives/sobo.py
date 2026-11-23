@@ -80,17 +80,25 @@ class SoboStrategy(BotorchStrategy):
         Union[List, float],
     ]:
         assert self.experiments is not None, "No experiments available."
-        objective_callable = scalarization.map(
-            self.scalarization,
-            domain=self.domain,
-            experiments=self.experiments,
-            input_preprocessing_specs=self.input_preprocessing_specs,
-        )
+        if self.scalarization is None:
+            objective_callable = scalarization.single_objective_callable(
+                self.domain, self.experiments
+            )
+        else:
+            objective_callable = scalarization.map(
+                self.scalarization,
+                domain=self.domain,
+                experiments=self.experiments,
+                input_preprocessing_specs=self.input_preprocessing_specs,
+            )
 
         # constrained objectives are separate constraints only if the scalarization
         # keeps them apart and there is something else to optimize
         if (
-            self.scalarization.separates_output_constraints()
+            (
+                self.scalarization is None
+                or self.scalarization.separates_output_constraints()
+            )
             and len(self.domain.outputs.get_by_objective(ConstrainedObjective)) > 0
             and len(self.domain.outputs.get_by_objective(Objective)) > 1
         ):
@@ -146,8 +154,8 @@ class SoboStrategy(BotorchStrategy):
         Args:
             domain: The optimization domain of the strategy.
             acquisition_function: The acquisition function to use.
-            scalarization: How the objectives are combined into one; by default the
-                domain has a single objective to optimize.
+            scalarization: How the objectives are combined into one; if not
+                provided, the domain has a single objective to optimize.
             acquisition_optimizer: The optimizer to use for the acquisition function.
             surrogate_specs: The specifications for the surrogate model.
             seed: The random seed to use.

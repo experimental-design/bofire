@@ -5,9 +5,6 @@ from pydantic import Field, model_validator
 from bofire.data_models.acquisition_functions.api import qLogPF
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import CategoricalTaskInput
-from bofire.data_models.strategies.predictives.scalarization import (
-    SingleObjectiveScalarization,
-)
 from bofire.data_models.strategies.predictives.sobo import SoboStrategy
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate
 
@@ -40,9 +37,10 @@ class MultiFidelityVarianceBasedStrategy(SoboStrategy):
     @model_validator(mode="after")
     def validate_single_objective(self):
         """Ensures a single objective without qLogPF."""
-        if not isinstance(self.scalarization, SingleObjectiveScalarization):
+        if self.scalarization is not None:
             raise ValueError(
-                f"{self.type} only supports the SingleObjectiveScalarization.",
+                f"{self.type} only supports a single objective, without a "
+                "scalarization.",
             )
         if isinstance(self.acquisition_function, qLogPF):
             raise ValueError(

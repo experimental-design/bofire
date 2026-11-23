@@ -1,5 +1,5 @@
 import math
-from typing import Callable, Dict, List, Literal, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -638,7 +638,7 @@ def _callables_and_weights(
     exclude_constraints: bool = False,
     allowed_objectives: Optional[List[Type[Objective]]] = None,
     weights: Optional[Dict[str, float]] = None,
-    weight_normalization: Optional[Literal["min", "sum"]] = None,
+    normalize_weights: bool = False,
 ) -> Tuple[List[Callable], List[float], List[str]]:
     """
     Extract callables and weights from outputs object
@@ -649,8 +649,7 @@ def _callables_and_weights(
         exclude_constraints (bool): exclude constraints
         allowed_objectives (Optional[List[Type[Objective]]]): limit to allowed objectives
         weights: Weight per output key; outputs not listed have weight 1.
-        weight_normalization: Rescale the weights so that the smallest is 1 ("min")
-            or so that they sum to 1 ("sum"). If None, they are used as given.
+        normalize_weights: Whether the weights are rescaled to sum to 1.
 
     Returns:
         callables (List[Callable]): list of callables
@@ -692,10 +691,7 @@ def _callables_and_weights(
 
         keys.append(feat.key)
 
-    if weight_normalization == "min":
-        min_w = min(weights_)
-        weights_ = [w / min_w for w in weights_]
-    elif weight_normalization == "sum":
+    if normalize_weights:
         sum_w = sum(weights_)
         weights_ = [w / sum_w for w in weights_]
 
@@ -706,13 +702,14 @@ def get_multiplicative_botorch_objective(
     outputs: Outputs,
     experiments: pd.DataFrame,
     weights: Optional[Dict[str, float]] = None,
-    weight_normalization: Optional[Literal["min", "sum"]] = "min",
 ) -> Callable[[Tensor, Tensor], Tensor]:
+    """Returns the weighted geometric mean of the objectives, with the weights
+    normalized to sum to 1."""
     callables, weights_, _ = _callables_and_weights(
         outputs,
         experiments,
         weights=weights,
-        weight_normalization=weight_normalization,
+        normalize_weights=True,
     )
 
     def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
@@ -776,13 +773,12 @@ def get_multiobjective_objective(
     return objective
 
 
-def get_multiplicative_additive_objective(
+def get_multiplicative_additive_botorch_objective(
     outputs: Outputs,
     experiments: pd.DataFrame,
     exclude_constraints: bool = False,
     additive_features: Optional[List[str]] = None,
     weights: Optional[Dict[str, float]] = None,
-    weight_normalization: Optional[Literal["min", "sum"]] = "min",
 ) -> Callable[[Tensor, Tensor], Tensor]:
     """Computes the objective as a mix of multiplicative and additive objectives. By default, all objectives are multiplicative.
     Additive features (inputs or outputs) can be specified in the `additive_features` list.
@@ -801,8 +797,8 @@ def get_multiplicative_additive_objective(
         exclude_constraints
         additive_features (List[str]): list of features that should be treated as additive
         weights: Weight per output key; outputs not listed have weight 1.
-        weight_normalization: Rescale the weights so that the smallest is 1 ("min")
-            or so that they sum to 1 ("sum"). If None, they are used as given.
+        weights: Weight per output key, normalized to sum to 1; outputs not listed
+            have weight 1.
 
     Returns:
         objective (callable): callable that can be used by botorch for optimization
@@ -814,7 +810,7 @@ def get_multiplicative_additive_objective(
         experiments,
         exclude_constraints=exclude_constraints,
         weights=weights,
-        weight_normalization=weight_normalization,
+        normalize_weights=True,
     )
 
     if additive_features is None:

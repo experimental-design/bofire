@@ -807,7 +807,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
                 options=self._get_optimizer_options(domain, callback=callback),
-                sequential=self.sequential,
+                # interpoint constraints couple the candidates, so they are
+                # always optimized jointly
+                sequential=self.sequential and len(interpoints) == 0,
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints + interpoints,
                 nonlinear_inequality_constraints=nonlinear_constraints,

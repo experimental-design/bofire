@@ -1,10 +1,9 @@
-import warnings
 from abc import abstractmethod
 from typing import Annotated, Any, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, model_validator
+from pydantic import Field
 
 from bofire.data_models.base import BaseModel
 
@@ -17,27 +16,6 @@ class Objective(BaseModel):
     """The base class for all objectives"""
 
     type: Any
-
-    @model_validator(mode="before")
-    @classmethod
-    def validate_no_weight(cls, data: Any) -> Any:
-        """Drops the former weight `w` with a deprecation warning if it is the
-        neutral 1, so stored objectives keep loading; any other weight has to be set
-        on the scalarization instead."""
-        if isinstance(data, dict) and "w" in data:
-            data = dict(data)
-            if data.pop("w") != 1:
-                raise ValueError(
-                    "Objective weights moved to the scalarization of SoboStrategy, "
-                    "e.g. WeightedSumScalarization(weights={...}).",
-                )
-            warnings.warn(
-                "Objectives no longer have a weight `w`; it is ignored. Set weights "
-                "on the scalarization of SoboStrategy instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-        return data
 
     @abstractmethod
     def to_description(self) -> str:

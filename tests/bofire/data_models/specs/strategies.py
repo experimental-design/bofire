@@ -38,10 +38,7 @@ from bofire.data_models.strategies.api import (
     FixedReferenceValue,
     RelativeMovingReferenceValue,
     RelativeToMaxMovingReferenceValue,
-    SingleObjectiveScalarization,
-    WeightedProductScalarization,
-    WeightedProductSumScalarization,
-    WeightedSumScalarization,
+    WeightedScalarization,
 )
 from bofire.data_models.strategies.convergence_criteria.api import (
     ExpMinRegretGapCriterion,
@@ -78,7 +75,7 @@ strategy_commons = {
 }
 sobo_commons = {
     **strategy_commons,
-    "scalarization": SingleObjectiveScalarization().model_dump(),
+    "scalarization": None,
 }
 
 
@@ -230,7 +227,7 @@ specs.add_valid(
             ga_progress_csv_path="ga_progress_specs.csv",
         ).model_dump(),
         "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
-        "scalarization": SingleObjectiveScalarization().model_dump(),
+        "scalarization": None,
         "seed": 42,
         "include_infeasible_exps_in_acqf_calc": False,
         "acquisition_function": qPI(tau=0.1).model_dump(),
@@ -250,19 +247,18 @@ specs.add_valid(
             ga_progress_csv_path="ga_progress_specs_2.csv",
         ).model_dump(),
         "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
-        "scalarization": SingleObjectiveScalarization().model_dump(),
+        "scalarization": None,
         "seed": 42,
         "include_infeasible_exps_in_acqf_calc": False,
         "acquisition_function": qPI(tau=0.1).model_dump(),
     },
 )
 for _scalarization in [
-    WeightedSumScalarization(use_output_constraints=True),
-    WeightedSumScalarization(use_output_constraints=False),
-    WeightedSumScalarization(weights={"o1": 0.5, "o2": 2.0}),
-    WeightedProductScalarization(),
-    WeightedProductScalarization(weights={"o1": 2.0}, weight_normalization="sum"),
-    WeightedProductSumScalarization(additive_features=["o1"]),
+    WeightedScalarization(),
+    WeightedScalarization(use_output_constraints=False),
+    WeightedScalarization(weights={"o1": 0.5, "o2": 2.0}),
+    WeightedScalarization(additive_features=["o1", "o2"]),
+    WeightedScalarization(additive_features=["o1"], weights={"o2": 3.0}),
 ]:
     specs.add_valid(
         strategies.SoboStrategy,
@@ -795,7 +791,7 @@ specs.add_invalid(
             ],
         ),
         "acquisition_function": qLogPF(),
-        "scalarization": WeightedSumScalarization(use_output_constraints=False),
+        "scalarization": WeightedScalarization(use_output_constraints=False),
     },
     error=ValueError,
     message="qLogPF acquisition function needs a scalarization that keeps "
@@ -821,7 +817,7 @@ specs.add_valid(
         ).model_dump(),
         **strategy_commons,
         "acquisition_function": qLogPF().model_dump(),
-        "scalarization": WeightedSumScalarization().model_dump(),
+        "scalarization": WeightedScalarization().model_dump(),
     },
 )
 
@@ -836,10 +832,10 @@ specs.add_invalid(
                 ContinuousOutput(key="gamma", objective=None),
             ],
         ),
-        "scalarization": WeightedProductScalarization(weights={"gamma": 2.0}),
+        "scalarization": WeightedScalarization(weights={"gamma": 2.0}),
     },
     error=ValueError,
-    message="Weight given for gamma, which is not an output with an objective.",
+    message="Weight given for gamma, which is not an objective of the scalarization.",
 )
 
 specs.add_invalid(
@@ -855,7 +851,7 @@ specs.add_invalid(
         ),
     },
     error=ValueError,
-    message="SingleObjectiveScalarization can only optimize one objective",
+    message="SoboStrategy without a scalarization can only optimize one objective",
 )
 
 specs.add_invalid(
@@ -868,10 +864,10 @@ specs.add_invalid(
                 ContinuousOutput(key="beta", objective=MinimizeObjective()),
             ],
         ),
-        "scalarization": WeightedProductSumScalarization(additive_features=["alpha"]),
+        "scalarization": WeightedScalarization(additive_features=["alpha"]),
     },
     error=ValueError,
-    message="WeightedProductSumScalarization can't multiply the objective of beta",
+    message="WeightedScalarization can't multiply the objective of beta",
 )
 
 specs.add_valid(
@@ -888,9 +884,7 @@ specs.add_valid(
         ).model_dump(),
         **strategy_commons,
         "acquisition_function": qPI(tau=0.1).model_dump(),
-        "scalarization": WeightedProductSumScalarization(
-            additive_features=["beta"]
-        ).model_dump(),
+        "scalarization": WeightedScalarization(additive_features=["beta"]).model_dump(),
     },
 )
 
@@ -901,10 +895,10 @@ specs.add_invalid(
             inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
             outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
         ),
-        "scalarization": WeightedProductSumScalarization(),
+        "scalarization": WeightedScalarization(),
     },
     error=ValueError,
-    message="WeightedProductSumScalarization requires at least 2 outputs",
+    message="WeightedScalarization requires at least 2 objectives to combine",
 )
 
 specs.add_invalid(
@@ -917,11 +911,11 @@ specs.add_invalid(
                 ContinuousOutput(key="beta", objective=MaximizeObjective()),
             ],
         ),
-        "scalarization": WeightedProductSumScalarization(additive_features=["gamma"]),
+        "scalarization": WeightedScalarization(additive_features=["gamma"]),
     },
     error=ValueError,
-    message="Additive feature given for gamma, which is not an output with an "
-    "objective.",
+    message="Additive feature given for gamma, which is not an objective of the "
+    "scalarization.",
 )
 
 specs.add_invalid(
@@ -943,11 +937,10 @@ specs.add_invalid(
                 ]
             ),
         ),
-        "scalarization": WeightedSumScalarization(),
+        "scalarization": WeightedScalarization(),
     },
     error=ValueError,
-    message="MultiFidelityVarianceBasedStrategy only supports the "
-    "SingleObjectiveScalarization.",
+    message="MultiFidelityVarianceBasedStrategy only supports a single objective",
 )
 
 specs.add_invalid(
@@ -966,7 +959,7 @@ specs.add_invalid(
         ),
     },
     error=ValueError,
-    message="SingleObjectiveScalarization can only optimize one objective",
+    message="SoboStrategy without a scalarization can only optimize one objective",
 )
 specs.add_invalid(
     strategies.SoboStrategy,

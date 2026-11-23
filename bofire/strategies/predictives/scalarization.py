@@ -11,9 +11,7 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.types import InputTransformSpecs
 from bofire.utils.torch_tools import (
-    get_additive_botorch_objective,
-    get_multiplicative_additive_objective,
-    get_multiplicative_botorch_objective,
+    get_multiplicative_additive_botorch_objective,
     get_objective_callable,
     tkwargs,
 )
@@ -92,15 +90,22 @@ def map(
     )
 
 
-@register(data_models.SingleObjectiveScalarization)
-def map_SingleObjectiveScalarization(
-    data_model: data_models.SingleObjectiveScalarization,
-    domain: Domain,
-    experiments: pd.DataFrame,
-    input_preprocessing_specs: InputTransformSpecs,
+def single_objective_callable(
+    domain: Domain, experiments: pd.DataFrame
 ) -> ObjectiveCallable:
+    """Returns the objective callable of the one output whose objective is not a
+    constrained one.
+
+    If all objectives are constrained (e.g. for qLogPF), the first one is the target.
+
+    Args:
+        domain: The domain of the strategy.
+        experiments: The experiments, used to adapt objectives to the data.
+
+    Returns:
+        A callable mapping sampled outputs to the objective value to maximize.
+    """
     unconstrained = domain.outputs.get_by_objective(excludes=ConstrainedObjective)
-    # if all objectives are constrained (e.g. for qLogPF), the first one is the target
     target_feature = (
         unconstrained[0]
         if len(unconstrained) > 0
@@ -120,48 +125,17 @@ def map_SingleObjectiveScalarization(
     )
 
 
-@register(data_models.WeightedSumScalarization)
-def map_WeightedSumScalarization(
-    data_model: data_models.WeightedSumScalarization,
+@register(data_models.WeightedScalarization)
+def map_WeightedScalarization(
+    data_model: data_models.WeightedScalarization,
     domain: Domain,
     experiments: pd.DataFrame,
     input_preprocessing_specs: InputTransformSpecs,
 ) -> ObjectiveCallable:
-    return get_additive_botorch_objective(
+    return get_multiplicative_additive_botorch_objective(
         outputs=domain.outputs,
         experiments=experiments,
         exclude_constraints=data_model.separates_output_constraints(),
-        weights=data_model.get_weights(domain),
-    )
-
-
-@register(data_models.WeightedProductScalarization)
-def map_WeightedProductScalarization(
-    data_model: data_models.WeightedProductScalarization,
-    domain: Domain,
-    experiments: pd.DataFrame,
-    input_preprocessing_specs: InputTransformSpecs,
-) -> ObjectiveCallable:
-    return get_multiplicative_botorch_objective(
-        outputs=domain.outputs,
-        experiments=experiments,
-        weights=data_model.get_weights(domain),
-        weight_normalization=data_model.weight_normalization,
-    )
-
-
-@register(data_models.WeightedProductSumScalarization)
-def map_WeightedProductSumScalarization(
-    data_model: data_models.WeightedProductSumScalarization,
-    domain: Domain,
-    experiments: pd.DataFrame,
-    input_preprocessing_specs: InputTransformSpecs,
-) -> ObjectiveCallable:
-    return get_multiplicative_additive_objective(
-        outputs=domain.outputs,
-        experiments=experiments,
-        exclude_constraints=False,
         additive_features=data_model.additive_features,
         weights=data_model.get_weights(domain),
-        weight_normalization=data_model.weight_normalization,
     )

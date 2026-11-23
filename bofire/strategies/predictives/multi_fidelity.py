@@ -166,8 +166,7 @@ class MultiFidelityVarianceBasedStrategy(SoboStrategy):
             domain: The optimization domain of the strategy.
             fidelity_thresholds: The thresholds for the fidelity. If a single value is provided, it will be used for all fidelities.
             acquisition_function: The acquisition function to use.
-            scalarization: Only the default, `SingleObjectiveScalarization`, is
-                supported.
+            scalarization: Not supported; only a single objective is.
             acquisition_optimizer: The acquisition optimizer to use.
             surrogate_specs: The specifications for the surrogate model.
             seed: The random seed to use.

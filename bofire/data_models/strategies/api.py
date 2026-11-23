@@ -57,10 +57,7 @@ from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.scalarization import (
     AnyScalarization,
     Scalarization,
-    SingleObjectiveScalarization,
-    WeightedProductScalarization,
-    WeightedProductSumScalarization,
-    WeightedSumScalarization,
+    WeightedScalarization,
 )
 from bofire.data_models.strategies.predictives.sobo import SoboStrategy
 from bofire.data_models.strategies.random import RandomStrategy

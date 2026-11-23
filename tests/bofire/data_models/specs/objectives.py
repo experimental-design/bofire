@@ -25,7 +25,7 @@ specs.add_invalid(
     objectives.MaximizeObjective,
     lambda: {"w": 0.5},
     error=ValueError,
-    message="Objective weights moved to the scalarization of SoboStrategy",
+    message="Extra inputs are not permitted",
 )
 specs.add_valid(
     objectives.MaximizeSigmoidObjective,
