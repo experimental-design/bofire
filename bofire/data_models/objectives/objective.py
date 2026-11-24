@@ -10,20 +10,12 @@ from bofire.data_models.base import BaseModel
 
 TGt0 = Annotated[float, Field(gt=0)]
 TGe0 = Annotated[float, Field(ge=0)]
-TWeight = Annotated[float, Field(gt=0, le=1)]
 
 
 class Objective(BaseModel):
     """The base class for all objectives"""
 
     type: Any
-    w: TWeight = Field(
-        default=1.0,
-        description="Relative weight of this objective. Only the strategies that "
-        "aggregate several objectives into one acquisition function read it, namely "
-        "the additive, multiplicative and custom SOBO strategies; the others ignore "
-        "it.",
-    )
 
     @abstractmethod
     def to_description(self) -> str:

@@ -43,9 +43,29 @@ def _traverse_kernels(kernel: AnyKernel) -> Generator[AnyKernel, None, None]:
 
 
 class MultiFidelityHVKGStrategy(MoboStrategy):
+    """Multi-objective Bayesian optimization with continuous fidelities, by the
+    multi-fidelity hypervolume knowledge gradient.
+
+    Each candidate includes the fidelity at which to run it, chosen by how much the
+    experiment is expected to improve the Pareto front at the target fidelity per
+    unit of cost. The target fidelity is the most expensive end of each fidelity's
+    range. Needs at least one continuous task input, and a single-task GP with a
+    fidelity kernel on the task inputs for every output.
+
+    Examples:
+        >>> MultiFidelityHVKGStrategy(domain=domain, ref_point={"y1": 0.0, "y2": 0.0})
+    """
+
     type: Literal["MultiFidelityHVKGStrategy"] = "MultiFidelityHVKGStrategy"
-    acquisition_function: qMFHVKG = Field(default_factory=lambda: qMFHVKG())
-    fidelity_cost_model_spec: LinearDeterministicSurrogate | None = None
+    acquisition_function: qMFHVKG = Field(
+        default=qMFHVKG(),
+        description="The multi-fidelity hypervolume knowledge gradient.",
+    )
+    fidelity_cost_model_spec: LinearDeterministicSurrogate | None = Field(
+        default=None,
+        description="Cost of an experiment as a linear function of all fidelities, "
+        "and of nothing else. If not provided, 1 plus the sum of the fidelities.",
+    )
 
     @field_validator("domain", mode="after")
     @classmethod
@@ -65,7 +85,7 @@ class MultiFidelityHVKGStrategy(MoboStrategy):
         if self.fidelity_cost_model_spec is None:  # required to prevent RecursionError
             self.fidelity_cost_model_spec = (
                 MultiFidelityHVKGStrategy._generate_fidelity_cost_model_spec(
-                    self.domain, self.fidelity_cost_model_spec
+                    self.domain
                 )
             )
         fidelity_inputs = self.fidelity_cost_model_spec.inputs
@@ -83,11 +103,7 @@ class MultiFidelityHVKGStrategy(MoboStrategy):
     @staticmethod
     def _generate_fidelity_cost_model_spec(
         domain: Domain,
-        fidelity_cost_model_spec: LinearDeterministicSurrogate | None,
     ) -> LinearDeterministicSurrogate:
-        if fidelity_cost_model_spec is not None:
-            return fidelity_cost_model_spec
-
         fidelity_inputs = domain.inputs.get(TaskInput)
         fidelity_outputs = Outputs(
             features=[ContinuousOutput(key="fidelity cost", objective=None)]

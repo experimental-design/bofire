@@ -84,7 +84,7 @@ def test_active_learning_with_categorical():
         ),
         outputs=Outputs(
             features=[
-                ContinuousOutput(key="yield", objective=MaximizeObjective(w=1.0)),
+                ContinuousOutput(key="yield", objective=MaximizeObjective()),
             ]
         ),
     )
@@ -146,8 +146,8 @@ def test_active_learning_categorical_multiobjective_weighted():
         ),
         outputs=Outputs(
             features=[
-                ContinuousOutput(key="yield", objective=MaximizeObjective(w=1.0)),
-                ContinuousOutput(key="impurity", objective=MaximizeObjective(w=0.5)),
+                ContinuousOutput(key="yield", objective=MaximizeObjective()),
+                ContinuousOutput(key="impurity", objective=MaximizeObjective()),
             ]
         ),
     )
@@ -234,7 +234,7 @@ def test_active_learning_multiple_categorical():
         ),
         outputs=Outputs(
             features=[
-                ContinuousOutput(key="conversion", objective=MaximizeObjective(w=1.0)),
+                ContinuousOutput(key="conversion", objective=MaximizeObjective()),
             ]
         ),
     )
@@ -279,7 +279,7 @@ def test_active_learning_only_categorical():
         ),
         outputs=Outputs(
             features=[
-                ContinuousOutput(key="quality", objective=MaximizeObjective(w=1.0)),
+                ContinuousOutput(key="quality", objective=MaximizeObjective()),
             ]
         ),
     )
@@ -331,7 +331,7 @@ def test_active_learning_check_preds_have_high_uncertainties():
         ),
         outputs=Outputs(
             features=[
-                ContinuousOutput(key="yield", objective=MaximizeObjective(w=1.0)),
+                ContinuousOutput(key="yield", objective=MaximizeObjective()),
             ]
         ),
     )

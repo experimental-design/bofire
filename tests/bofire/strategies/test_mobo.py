@@ -334,7 +334,7 @@ def test_mobo_with_multitask(acqf, target_task):
         ),
     ]
 
-    objective = MaximizeObjective(w=1)
+    objective = MaximizeObjective()
 
     inputs = Inputs(features=input_features)
 
