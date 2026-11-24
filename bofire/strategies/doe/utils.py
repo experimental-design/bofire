@@ -3,15 +3,14 @@ import re
 import sys
 import warnings
 from copy import copy
-from itertools import combinations, count
-from typing import List, Optional, Tuple, Union, cast
+from itertools import combinations
+from typing import List, Optional, Tuple, Union, cast, get_args
 
 import numpy as np
 import pandas as pd
 import scipy.optimize as opt
 from formulaic import Formula
-from scipy.optimize import LinearConstraint, NonlinearConstraint
-from scipy.optimize._minimize import standardize_constraints
+from scipy import sparse
 
 from bofire.data_models.constraints.api import (
     Constraint,
@@ -30,23 +29,17 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.strategies.doe.doe_problem import (
-    FirstOrderDoEProblem,
-    SecondOrderDoEProblem,
-)
+from bofire.data_models.strategies.doe import DEFAULT_DOE_OPTIMIZER, DoEOptimizer
 from bofire.strategies.doe.objective_base import Objective
 from bofire.strategies.doe.utils_categorical_discrete import (
     map_categorical_to_continuous,
 )
-from bofire.strategies.progress import (
-    AskProgressCallback,
-    AskProgressData,
-    scipy_progress_callback,
-)
+from bofire.strategies.progress import AskProgressCallback, scipy_progress_callback
 from bofire.strategies.random import RandomStrategy
 
 
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
+POUNCE_AVAILABLE = importlib.util.find_spec("pounce") is not None
 
 
 def represent_categories_as_by_their_states(
@@ -319,59 +312,127 @@ def n_zero_eigvals(
     return len(eigvals) - len(eigvals[eigvals > epsilon])
 
 
+def _row_subset(A: sparse.coo_array, mask: np.ndarray) -> sparse.coo_array:
+    """Select rows of a COO matrix by a boolean mask, returning COO."""
+    return A.tocsr()[mask].tocoo()
+
+
+def _linear_constraint_dicts(A: sparse.coo_array, lb, ub) -> List[dict]:
+    """Old-style dict constraints for a (two-sided) linear constraint ``lb <= A x <= ub``.
+
+    scipy single-sided convention: ``eq`` → ``g == 0``, ``ineq`` → ``g >= 0``.
+    Each ``jac`` returns a (constant) ``coo_array``.
+    """
+    m = A.shape[0]
+    lb = np.broadcast_to(np.asarray(lb, dtype=float), (m,))
+    ub = np.broadcast_to(np.asarray(ub, dtype=float), (m,))
+    out: List[dict] = []
+    eq = np.isclose(lb, ub) & np.isfinite(lb)
+    if eq.any():  # A x = b
+        Ae, be = _row_subset(A, eq), lb[eq]
+        out.append(
+            {
+                "type": "eq",
+                "fun": (lambda x, Ae=Ae, be=be: Ae @ x - be),
+                "jac": (lambda x, Ae=Ae: Ae),
+            }
+        )
+    up = np.isfinite(ub) & ~eq  # A x <= ub  ->  ub - A x >= 0
+    if up.any():
+        Au, bu = _row_subset(A, up), ub[up]
+        Au_neg = -Au
+        out.append(
+            {
+                "type": "ineq",
+                "fun": (lambda x, Au=Au, bu=bu: bu - Au @ x),
+                "jac": (lambda x, Au_neg=Au_neg: Au_neg),
+            }
+        )
+    lo = np.isfinite(lb) & ~eq  # A x >= lb  ->  A x - lb >= 0
+    if lo.any():
+        Al, bl = _row_subset(A, lo), lb[lo]
+        out.append(
+            {
+                "type": "ineq",
+                "fun": (lambda x, Al=Al, bl=bl: Al @ x - bl),
+                "jac": (lambda x, Al=Al: Al),
+            }
+        )
+    return out
+
+
+def _nonlinear_constraint_dicts(fun: "ConstraintWrapper", lb, ub) -> List[dict]:
+    """Old-style dict constraint(s) for a nonlinear constraint, with a coo ``jac``
+    from ``fun.jacobian_coo``. DoE nonlinear constraints are single-sided
+    (equality ``g == b`` or upper-sided inequality ``g <= ub``)."""
+    lb = np.atleast_1d(np.asarray(lb, dtype=float))
+    ub = np.atleast_1d(np.asarray(ub, dtype=float))
+    if np.all(np.isclose(lb, ub)):  # g(x) = b
+        return [
+            {
+                "type": "eq",
+                "fun": (lambda x, fun=fun, b=lb: np.atleast_1d(fun(x)) - b),
+                "jac": (lambda x, fun=fun: fun.jacobian_coo(x)),
+            }
+        ]
+    # g(x) <= ub  ->  ub - g(x) >= 0
+    return [
+        {
+            "type": "ineq",
+            "fun": (lambda x, fun=fun, ub=ub: ub - np.atleast_1d(fun(x))),
+            "jac": (lambda x, fun=fun: -fun.jacobian_coo(x)),
+        }
+    ]
+
+
 def constraints_as_scipy_constraints(
     domain: Domain,
     n_experiments: int,
     ignore_nchoosek: bool = True,
-) -> List:
-    """Formulates bofire constraints as scipy constraints.
+) -> List[dict]:
+    """Formulate bofire constraints as scipy old-style **dict** constraints with a
+    **sparse (coo) Jacobian**: ``{"type": "eq"|"ineq", "fun": ..., "jac": -> coo_array}``.
+
+    This is the single representation used by all solver backends: it is consumed
+    directly (sparse) by ``cyipopt.minimize_ipopt`` and ``pounce.minimize``, and
+    densified on the fly for scipy/SLSQP (which needs a dense jac — see
+    ``_densify_jacobians``). scipy's single-sided convention applies: ``eq`` means
+    ``g(x) == 0`` and ``ineq`` means ``g(x) >= 0``.
 
     Args:
-        domain (Domain): Domain whose constraints should be formulated as scipy constraints.
-        n_experiments (int): Number of instances of inputs for problem that are evaluated together.
-        ingore_nchoosek (bool): NChooseK constraints are ignored if set to true. Defaults to True.
+        domain (Domain): Domain whose constraints should be formulated.
+        n_experiments (int): Number of experiments evaluated together.
+        ignore_nchoosek (bool): NChooseK constraints are ignored if True. Default True.
 
     Returns:
-        A list of scipy constraints corresponding to the constraints of the given opti problem.
-
+        A list of dict constraints corresponding to the domain's constraints.
     """
-    # reformulate constraints
-    constraints = []
-    if len(domain.constraints) == 0:
-        return constraints
+    constraints: List[dict] = []
     for c in domain.constraints:
-        if isinstance(c, LinearEqualityConstraint) or isinstance(
+        if isinstance(
             c,
-            LinearInequalityConstraint,
+            (
+                LinearEqualityConstraint,
+                LinearInequalityConstraint,
+                InterpointEqualityConstraint,
+            ),
         ):
             A, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
-            constraints.append(LinearConstraint(A, lb, ub))
+            A_coo = sparse.coo_array(np.atleast_2d(np.asarray(A, dtype=float)))
+            constraints.extend(_linear_constraint_dicts(A_coo, lb, ub))
 
-        elif isinstance(c, NonlinearEqualityConstraint) or isinstance(
-            c,
-            NonlinearInequalityConstraint,
+        elif isinstance(
+            c, (NonlinearEqualityConstraint, NonlinearInequalityConstraint)
         ):
             fun, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
-            constraints.append(
-                NonlinearConstraint(fun, lb, ub, jac=fun.jacobian, hess=fun.hessian)
-            )
+            constraints.extend(_nonlinear_constraint_dicts(fun, lb, ub))
 
         elif isinstance(c, NChooseKConstraint):
-            if ignore_nchoosek:
-                pass
-            else:
+            if not ignore_nchoosek:
                 fun, lb, ub = get_constraint_function_and_bounds(
-                    c,
-                    domain,
-                    n_experiments,
+                    c, domain, n_experiments
                 )
-                constraints.append(
-                    NonlinearConstraint(fun, lb, ub, jac=fun.jacobian, hess=fun.hessian)
-                )
-
-        elif isinstance(c, InterpointEqualityConstraint):
-            A, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
-            constraints.append(LinearConstraint(A, lb, ub))
+                constraints.extend(_nonlinear_constraint_dicts(fun, lb, ub))
 
         else:
             raise NotImplementedError(f"No implementation for this constraint: {c}")
@@ -501,7 +562,7 @@ class ConstraintWrapper:
 
     def __init__(
         self,
-        constraint: NonlinearConstraint,
+        constraint: Constraint,
         domain: Domain,
         n_experiments: int = 0,
     ) -> None:
@@ -513,13 +574,13 @@ class ConstraintWrapper:
         self.names = domain.inputs.get_keys()
         self.D = len(domain.inputs)
         self.n_experiments = n_experiments
-        if constraint.features is None:  # ty: ignore[unresolved-attribute]
+        if constraint.features is None:
             raise ValueError(
                 f"The features attribute of constraint {constraint} is not set, but has to be set.",
             )
         self.constraint_feature_indices = np.searchsorted(
             self.names,
-            self.constraint.features,  # ty: ignore[unresolved-attribute]
+            self.constraint.features,
         )
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
@@ -531,52 +592,27 @@ class ConstraintWrapper:
         violation[np.abs(violation) < 0] = 0
         return violation
 
-    def jacobian(self, x: np.ndarray, sparse: bool = False) -> np.ndarray:
-        """Call constraint gradient with flattened numpy array.  If sparse is set to True, the output is a vector containing the entries of the sparse matrix representation of the jacobian."""
-        x = pd.DataFrame(
-            x.reshape(len(x) // self.D, self.D), columns=self.names
-        )  # ty: ignore[invalid-assignment]
-        gradient_compressed = self.constraint.jacobian(x).to_numpy()
+    def jacobian_coo(self, x: np.ndarray) -> sparse.coo_array:
+        """Constraint Jacobian as a ``scipy.sparse.coo_array`` of shape
+        ``(n_experiments, D * n_experiments)``.
 
-        cols = np.repeat(
-            self.D * np.arange(self.n_experiments),
-            len(self.constraint_feature_indices),
-        ).reshape((self.n_experiments, len(self.constraint_feature_indices)))
+        Block-diagonal: only the constraint's feature columns of each
+        experiment's block are nonzero. The entries are the structural
+        nonzeros, kept even where their value is 0, so the sparsity pattern
+        stays fixed between iterations.
+        """
+        xdf = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)
+        gradient_compressed = self.constraint.jacobian(xdf).to_numpy()
+        n_feat = len(self.constraint_feature_indices)
+        rows = np.repeat(np.arange(self.n_experiments), n_feat)
+        cols = np.repeat(self.D * np.arange(self.n_experiments), n_feat).reshape(
+            (self.n_experiments, n_feat)
+        )
         cols = (cols + self.constraint_feature_indices).flatten()
-
-        if sparse:
-            jacobian = np.zeros(shape=(self.D * self.n_experiments))
-            jacobian[cols] = gradient_compressed.flatten()
-            return jacobian
-
-        rows = np.repeat(
-            np.arange(self.n_experiments),
-            len(self.constraint_feature_indices),
+        return sparse.coo_array(
+            (gradient_compressed.flatten(), (rows, cols)),
+            shape=(self.n_experiments, self.D * self.n_experiments),
         )
-        jacobian = np.zeros(shape=(self.n_experiments, self.D * self.n_experiments))
-        jacobian[rows, cols] = gradient_compressed.flatten()
-
-        return jacobian
-
-    def hessian(self, x: np.ndarray, *args):
-        """Call constraint hessian with flattened numpy array."""
-        x = pd.DataFrame(
-            x.reshape(len(x) // self.D, self.D), columns=self.names
-        )  # ty: ignore[invalid-assignment]
-        hessian_dict = self.constraint.hessian(x)
-
-        hessian = np.zeros(
-            shape=(self.D * self.n_experiments, self.D * self.n_experiments)
-        )
-
-        cols, rows = np.meshgrid(
-            self.constraint_feature_indices,
-            self.constraint_feature_indices,
-        )
-        for i, idx in enumerate(hessian_dict.keys()):
-            hessian[i * self.D + cols, i * self.D + rows] = hessian_dict[idx]
-
-        return hessian
 
 
 def _constraint_patterns(
@@ -770,82 +806,209 @@ def nchoosek_constraints_as_bounds(
     return bounds
 
 
+# BoFire's settings for pounce's limited-memory (L-BFGS) path. An explicit
+# ``mu_strategy`` also disables pounce's default-on fallback re-solve; the
+# acceptable-level exit needs both a small error and a small relative change of
+# the objective, so objectives of small magnitude (I-, E-optimality) are not cut
+# short. Overridable via ``optimizer_options``.
+POUNCE_DOE_DEFAULTS = {
+    "mu_strategy": "adaptive",
+    "acceptable_tol": 1e-3,
+    "acceptable_iter": 5,
+    "acceptable_obj_change_tol": 1e-6,
+    # The acceptable exit may otherwise stop at a constraint violation up to
+    # 1e-2 (Ipopt's default); keep it within the tolerance find_local_max
+    # validates the design with.
+    "acceptable_constr_viol_tol": 1e-4,
+}
+
+OPTIMIZERS = get_args(DoEOptimizer)
+
+
+# Constraints are scipy dict constraints with a sparse ``jac``. Dicts are the only
+# format that stays sparse for both interior-point backends:
+# ``cyipopt.minimize_ipopt`` densifies ``LinearConstraint`` and
+# ``NonlinearConstraint`` objects, and ``pounce.minimize`` accepts nonlinear
+# constraints only as dicts. SLSQP rejects sparse dict Jacobians, hence
+# ``_densify_jacobians``. Dropping SLSQP removes ``_densify_jacobians``; dropping
+# cyipopt removes ``_ipopt_method`` and lets linear constraints become
+# ``LinearConstraint`` objects. Nonlinear constraints stay dicts until pounce
+# accepts ``NonlinearConstraint``.
+def _densify_jacobians(constraints: List[dict]) -> List[dict]:
+    """Return copies of the dict constraints with their sparse ``jac`` densified.
+
+    SLSQP rejects sparse Jacobians in dict constraints.
+    """
+
+    def densify(jac):
+        def wrapped(x, jac=jac):
+            J = jac(x)
+            return J.toarray() if sparse.issparse(J) else np.asarray(J)
+
+        return wrapped
+
+    return [{**c, "jac": densify(c["jac"])} for c in constraints]
+
+
+def _scipy_options(optimizer_options: dict) -> dict:
+    """Map Ipopt-style option names to scipy.optimize names. A scipy-style
+    ``maxiter`` takes precedence over ``max_iter``, which ``find_local_max``
+    always sets as a default."""
+    options: dict = {}
+    if optimizer_options:
+        if "max_iter" in optimizer_options:
+            options["maxiter"] = optimizer_options["max_iter"]
+        if "maxiter" in optimizer_options:
+            options["maxiter"] = optimizer_options["maxiter"]
+        if "print_level" in optimizer_options:
+            options["disp"] = bool(optimizer_options["print_level"])
+    return options
+
+
+def _check_optimizer(optimizer: str) -> None:
+    """Raise if ``optimizer`` is unknown or its backend is not installed."""
+    if optimizer not in OPTIMIZERS:
+        raise ValueError(
+            f"Unknown optimizer {optimizer!r}; choose one of {', '.join(OPTIMIZERS)}."
+        )
+    if optimizer == "pounce" and not POUNCE_AVAILABLE:
+        raise ImportError(
+            "optimizer='pounce' requires pounce. Install it via "
+            "`pip install pounce-solver` (included in `bofire[optimization]`), or "
+            "choose optimizer='scipy'."
+        )
+    if optimizer == "ipopt" and not CYIPOPT_AVAILABLE:
+        raise ImportError(
+            "optimizer='ipopt' requires cyipopt. Install it via "
+            "`conda install -c conda-forge cyipopt`, or use the default "
+            "optimizer='pounce'."
+        )
+
+
+def _ipopt_method(
+    fun,
+    x0,
+    args=(),
+    jac=None,
+    hess=None,
+    hessp=None,
+    bounds=None,
+    constraints=(),
+    callback=None,
+    **options,
+):
+    """``cyipopt.minimize_ipopt`` with the signature of a
+    ``scipy.optimize.minimize`` custom method, which passes options as keyword
+    arguments rather than as one ``options`` dict."""
+    from cyipopt import minimize_ipopt  # ty: ignore[unresolved-import]
+
+    return minimize_ipopt(
+        fun,
+        x0,
+        args=args,
+        jac=jac,
+        hess=hess,
+        hessp=hessp,
+        bounds=bounds,
+        constraints=constraints,
+        callback=callback,
+        options=options,
+    )
+
+
+def _solve(
+    objective_function: Objective,
+    x0: np.ndarray,
+    bounds: List[Tuple[float, float]],
+    constraints: Optional[List[dict]],
+    optimizer: str = DEFAULT_DOE_OPTIMIZER,
+    optimizer_options: Optional[dict] = None,
+    callback: Optional[AskProgressCallback] = None,
+) -> opt.OptimizeResult:
+    """Minimize the objective over the given bounds and constraints.
+
+    Every backend runs through ``scipy.optimize.minimize`` with the same
+    problem: the objective and its gradient, per-variable bounds, and the dict
+    constraints from ``constraints_as_scipy_constraints``, whose ``jac`` returns
+    a sparse ``coo_array``. scipy hands bounds and constraints unchanged to a
+    callable ``method``, so the Jacobians stay sparse for pounce and cyipopt.
+
+    - ``"pounce"``: ``method=pounce.minimize``, with ``POUNCE_DOE_DEFAULTS``
+      underneath ``optimizer_options``.
+    - ``"ipopt"``: ``method=_ipopt_method`` (cyipopt).
+    - ``"scipy"``: ``method="SLSQP"`` with the Jacobians densified; Ipopt-style
+      ``max_iter``/``print_level`` are translated.
+
+    Args:
+        objective_function: Objective providing ``evaluate``/``evaluate_jacobian``.
+        x0: Initial guess (flattened design).
+        bounds: Per-variable ``(lower, upper)`` bounds.
+        constraints: dict constraints (``constraints_as_scipy_constraints`` output).
+        optimizer: ``"pounce"``, ``"ipopt"`` or ``"scipy"``.
+        optimizer_options: options forwarded to the chosen backend.
+        callback: Called with an `AskProgressData` once per solver iteration
+            (pounce also reports the starting point). Not supported with
+            ``"ipopt"``, which warns and ignores it.
+
+    Returns:
+        The backend's ``OptimizeResult``; ``x`` is the flattened design.
+
+    Raises:
+        ValueError: If ``optimizer`` is unknown.
+        ImportError: If the backend for ``optimizer`` is not installed.
+    """
+    _check_optimizer(optimizer)
+    options = dict(optimizer_options or {})
+    constraints = constraints or []
+    if optimizer == "pounce":
+        from pounce import minimize as method
+
+        options = {**POUNCE_DOE_DEFAULTS, **options}
+    elif optimizer == "ipopt":
+        method = _ipopt_method
+        if callback is not None:
+            # cyipopt.minimize_ipopt raises on a callback and has no other
+            # per-iteration hook.
+            warnings.warn(
+                "Progress is not reported with optimizer='ipopt'; use 'pounce' or "
+                "'scipy' to receive progress callbacks.",
+                UserWarning,
+                stacklevel=2,
+            )
+            callback = None
+    else:
+        method = "SLSQP"
+        constraints = _densify_jacobians(constraints)
+        options = _scipy_options(options)
+
+    return opt.minimize(
+        objective_function.evaluate,
+        x0,
+        jac=objective_function.evaluate_jacobian,
+        bounds=bounds,
+        constraints=constraints,
+        method=method,
+        options=options,
+        callback=None if callback is None else scipy_progress_callback(callback),
+    )
+
+
 def _minimize(
     objective_function: Objective,
     x0: np.ndarray,
     bounds: List[Tuple[float, float]],
-    constraints: Optional[List[Union[NonlinearConstraint, LinearConstraint]]],
-    ipopt_options: dict,
-    use_hessian: bool,
-    use_cyipopt: Optional[bool] = CYIPOPT_AVAILABLE,
+    constraints: Optional[List[dict]],
+    optimizer: str = DEFAULT_DOE_OPTIMIZER,
+    optimizer_options: Optional[dict] = None,
     callback: Optional[AskProgressCallback] = None,
 ) -> np.ndarray:
-    """Minimize the objective function using the given constraints and bounds.
-    Uses Ipopt if available, otherwise uses SLSQP.
-
-    Args:
-        objective_function (Objective): Objective function to minimize.
-        x0 (np.ndarray): Initial guess for the minimization.
-        bounds (List[Tuple[float, float]]): Bounds for the decision variables.
-        constraints (Optional[List[Union[NonlinearConstraint, LinearConstraint]]]): Constraints for the optimization problem.
-        ipopt_options (dict): Options for Ipopt solver. If Ipopt is not available, only the fields "max_iter" and "print_level" of this argument are used.
-        use_hessian (bool): Use hessian if set to True.
-        use_cyipopt (bool): Use cyipopt if set to True. Defaults to true if cyipopt is available.
-        callback: Called with an `AskProgressData` once per solver iteration.
-
-    Returns:
-        np.ndarray: The optimized design as flattened numpy array.
-    """
-    if use_cyipopt is None:
-        use_cyipopt = CYIPOPT_AVAILABLE
-
-    if use_cyipopt:
-        if use_hessian:
-            problem = SecondOrderDoEProblem(
-                doe_objective=objective_function,
-                bounds=bounds,
-                constraints=constraints,
-            )
-        else:
-            problem = FirstOrderDoEProblem(
-                doe_objective=objective_function,
-                bounds=bounds,
-                constraints=constraints,
-            )
-        for key in ipopt_options.keys():
-            problem.add_option(key, ipopt_options[key])
-
-        steps = count(1)
-        if callback is not None:
-            problem.on_iteration = lambda obj_value: callback(
-                AskProgressData(
-                    step=next(steps),
-                    # ipopt minimizes the objective
-                    value=-float(obj_value),
-                )
-            )
-
-        x, info = problem.solve(x0)
-        return x
-    else:
-        options = {}
-        if "max_iter" in ipopt_options.keys():
-            options["maxiter"] = ipopt_options["max_iter"]
-        if "print_level" in ipopt_options.keys():
-            options["disp"] = ipopt_options["print_level"]
-
-        scipy_callback = None
-        if callback is not None:
-            scipy_callback = scipy_progress_callback(callback)
-
-        result = opt.minimize(
-            fun=objective_function.evaluate,
-            x0=x0,
-            bounds=bounds,
-            options=options,
-            constraints=standardize_constraints(constraints, x0, "SLSQP"),
-            jac=objective_function.evaluate_jacobian,
-            hess=objective_function.evaluate_hessian if use_hessian else None,
-            callback=scipy_callback,
-        )
-        return result.x
+    """Like ``_solve``, but return only the optimized flattened design."""
+    return _solve(
+        objective_function,
+        x0=x0,
+        bounds=bounds,
+        constraints=constraints,
+        optimizer=optimizer,
+        optimizer_options=optimizer_options,
+        callback=callback,
+    ).x

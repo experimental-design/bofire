@@ -4,12 +4,12 @@ jupyter: python3
 ---
 
 
-The doe subpackage also supports problems with NChooseK constraints. Since IPOPT has problems finding feasible solutions
+The doe subpackage also supports problems with NChooseK constraints. Since the interior-point solver has problems finding feasible solutions
 using the gradient of the NChooseK constraint violation, a closely related (but stricter) constraint that suffices
 to fulfill the NChooseK constraint is imposed onto the problem: For each experiment $j$
 N-K decision variables $x_{i_1,j},...,x_{i_{N-K,j}}$ from the NChooseK constraints' names attribute are picked
 that are forced to be zero. This is done by setting the upper and lower bounds of the picked variables are set to 0
-in the corresponding experiments. This causes IPOPT to treat them as "fixed variables" (i.e. it will not optimize for them)
+in the corresponding experiments. This causes the solver to treat them as "fixed variables" (i.e. it will not optimize for them)
 and will always stick to the only feasible value (which is 0 here).
 However, this constraint is stricter than the original NChooseK constraint. In combination with other
 constraints on the same decision variables this can result in a situation where the constraints cannot be fulfilled
@@ -79,7 +79,7 @@ domain = Domain(
 data_model = DoEStrategy(
     domain=domain,
     criterion=DOptimalityCriterion(formula="fully-quadratic"),
-    ipopt_options={"max_iter": 500},
+    optimizer_options={"max_iter": 500},
 )
 strategy = strategies.map(data_model=data_model)
 candidates = strategy.ask(candidate_count=12)

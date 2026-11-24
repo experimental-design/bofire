@@ -56,7 +56,7 @@ for crit, label in [
     data_model = DoEStrategy(
         domain=domain,
         criterion=criterion,
-        ipopt_options={"max_iter": 300},
+        optimizer_options={"max_iter": 300},
     )
     strategy = strategies.map(data_model=data_model)
     design = strategy.ask(candidate_count=n_experiments)
@@ -95,7 +95,7 @@ domain = Domain(
     ],
 )
 data_model = DoEStrategy(
-    domain=domain, criterion=SpaceFillingCriterion(), ipopt_options={"max_iter": 500}
+    domain=domain, criterion=SpaceFillingCriterion(), optimizer_options={"max_iter": 500}
 )
 strategy = strategies.map(data_model=data_model)
 X = strategy.ask(candidate_count=40).to_numpy()
