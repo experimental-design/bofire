@@ -141,3 +141,9 @@ def test_discrete_input_to_pydantic_field_with_descriptors():
         "Discrete, allowed values: [1.0, 2.0, 5.0] — "
         "descriptors: {'logP': -0.3} — structure: CCO"
     )
+
+
+def test_discrete_input_from_unit_range():
+    feature = DiscreteInput(key="d", values=[1.0, 2.0, 9.0])
+    values = feature.from_unit_range(np.array([0.0, 0.3, 0.34, 0.7, 0.999]))
+    assert values.tolist() == [1.0, 1.0, 2.0, 9.0, 9.0]

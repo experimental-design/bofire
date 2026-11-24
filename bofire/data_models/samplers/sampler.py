@@ -1,4 +1,5 @@
 import warnings
+from abc import abstractmethod
 from typing import Any, Literal, Optional
 
 import numpy as np
@@ -21,6 +22,7 @@ class Sampler(BaseModel):
 
     type: Any
 
+    @abstractmethod
     def unit_samples(self, n_dims: int, n: int, seed: Optional[int]) -> np.ndarray:
         """Draws `n` points from the unit cube of dimension `n_dims`; every input
         maps its coordinate onto its values.
@@ -33,7 +35,6 @@ class Sampler(BaseModel):
         Returns:
             An array of shape `(n, n_dims)` with values in [0, 1).
         """
-        raise NotImplementedError
 
 
 class UniformSampler(Sampler):

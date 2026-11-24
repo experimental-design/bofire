@@ -396,7 +396,7 @@ class Inputs(_BaseFeatures[AnyInput]):
             X = sampler.unit_samples(len(free_features), n, seed)
             samples = pd.concat(
                 [
-                    feat.from_unit_samples(X[:, i])
+                    pd.Series(feat.from_unit_range(X[:, i]), name=feat.key)
                     for i, feat in enumerate(free_features)
                 ],
                 axis=1,

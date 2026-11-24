@@ -1,5 +1,6 @@
 import random
 
+import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
@@ -457,3 +458,11 @@ def test_categorical_with_structure_to_pydantic_field_falls_back_above_threshold
     # description still lists the SMILES so the LLM has guidance
     assert smiles[0] in field_info.description
     assert smiles[-1] in field_info.description
+
+
+def test_categorical_input_from_unit_range():
+    feature = CategoricalInput(
+        key="c", categories=["a", "b", "c"], allowed=[True, False, True]
+    )
+    values = feature.from_unit_range(np.array([0.0, 0.49, 0.5, 0.999]))
+    assert values.tolist() == ["a", "a", "c", "c"]

@@ -160,10 +160,21 @@ class DiscreteInput(NumericalInput):
             )
         return values
 
-    def from_unit_samples(self, u: np.ndarray) -> pd.Series:
+    def from_unit_range(self, values: np.ndarray) -> np.ndarray:
+        """Maps values of the unit interval onto the values, by splitting the
+        interval into equally wide bins, one per value.
+
+        Args:
+            values: Values in [0, 1].
+
+        Returns:
+            The corresponding values.
+        """
         levels = self.values
-        idx = np.minimum((np.asarray(u) * len(levels)).astype(int), len(levels) - 1)
-        return pd.Series(np.array(levels)[idx], name=self.key)
+        idx = np.minimum(
+            (np.asarray(values) * len(levels)).astype(int), len(levels) - 1
+        )
+        return np.array(levels)[idx]
 
     def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.

@@ -128,15 +128,15 @@ class Input(Feature):
         """
 
     @abstractmethod
-    def from_unit_samples(self, u: np.ndarray) -> pd.Series:
-        """Maps points of the unit interval onto values of the feature, so that
-        uniformly spread points give uniformly spread values.
+    def from_unit_range(self, values: np.ndarray) -> Union[pd.Series, np.ndarray]:
+        """Maps values of the unit interval onto values of the input, so that
+        uniformly spread values give uniformly spread inputs.
 
         Args:
-            u: Points in [0, 1].
+            values: Values in [0, 1].
 
         Returns:
-            pd.Series: The corresponding values.
+            The corresponding values of the input.
         """
 
     @abstractmethod
