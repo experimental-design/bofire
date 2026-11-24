@@ -77,9 +77,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-c77036355c3dc66c851e81dd48be6785.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-dark-1e9dd14f8cee45cff9b5e223c555214c.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-c77036355c3dc66c851e81dd48be6785.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-348615dbec15d57dbd120bddebf38ff3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-ee65e383bc30aa9fec98e06fe43bf684.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-348615dbec15d57dbd120bddebf38ff3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -1425,7 +1425,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Return a human-readable description combining objective and context.</p>
 <section id="examples-6" class="level6 doc-section doc-section-examples">
 <h6 class="doc-section doc-section-examples anchored" data-anchor-id="examples-6">Examples</h6>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> feat <span class="op">=</span> ContinuousOutput(key<span class="op">=</span><span class="st">"yield"</span>, objective<span class="op">=</span>MaximizeObjective(w<span class="op">=</span><span class="fl">1.0</span>), context<span class="op">=</span><span class="st">"Target &gt;90%"</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> feat <span class="op">=</span> ContinuousOutput(key<span class="op">=</span><span class="st">"yield"</span>, objective<span class="op">=</span>MaximizeObjective(), context<span class="op">=</span><span class="st">"Target &gt;90%"</span>)</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> feat.to_description()</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="co">'yield: Maximize — Target &gt;90%'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
@@ -3001,7 +3001,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb53-552"><a href="#cb53-552" aria-hidden="true" tabindex="-1"></a><span class="fu">###### Examples {.doc-section .doc-section-examples}</span></span>
 <span id="cb53-553"><a href="#cb53-553" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb53-554"><a href="#cb53-554" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb53-555"><a href="#cb53-555" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> feat <span class="op">=</span> ContinuousOutput(key<span class="op">=</span><span class="st">"yield"</span>, objective<span class="op">=</span>MaximizeObjective(w<span class="op">=</span><span class="fl">1.0</span>), context<span class="op">=</span><span class="st">"Target &gt;90%"</span>)</span>
+<span id="cb53-555"><a href="#cb53-555" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> feat <span class="op">=</span> ContinuousOutput(key<span class="op">=</span><span class="st">"yield"</span>, objective<span class="op">=</span>MaximizeObjective(), context<span class="op">=</span><span class="st">"Target &gt;90%"</span>)</span>
 <span id="cb53-556"><a href="#cb53-556" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> feat.to_description()</span>
 <span id="cb53-557"><a href="#cb53-557" aria-hidden="true" tabindex="-1"></a><span class="co">'yield: Maximize — Target &gt;90%'</span></span>
 <span id="cb53-558"><a href="#cb53-558" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
