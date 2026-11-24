@@ -9,7 +9,10 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Type
 import numpy as np
 import pandas as pd
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.acquisition import (
+    AcquisitionFunction,
+    OneShotAcquisitionFunction,
+)
 from botorch.optim.initializers import gen_batch_initial_conditions
 from botorch.optim.optimize import (
     optimize_acqf,
@@ -807,9 +810,12 @@ class BotorchOptimizer(AcquisitionOptimizer):
                 num_restarts=self.n_restarts,
                 raw_samples=self.n_raw_samples,
                 options=self._get_optimizer_options(domain, callback=callback),
-                # interpoint constraints couple the candidates, so they are
-                # always optimized jointly
-                sequential=self.sequential and len(interpoints) == 0,
+                # interpoint constraints couple the candidates, and one-shot
+                # acquisition functions (e.g. knowledge gradient) optimize them
+                # together, so both are always optimized jointly
+                sequential=self.sequential
+                and len(interpoints) == 0
+                and not isinstance(acqfs[0], OneShotAcquisitionFunction),
                 inequality_constraints=inequality_constraints,
                 equality_constraints=equality_constraints + interpoints,
                 nonlinear_inequality_constraints=nonlinear_constraints,

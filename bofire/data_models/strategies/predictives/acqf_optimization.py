@@ -151,8 +151,9 @@ class BotorchOptimizer(AcquisitionOptimizer):
         default=True,
         description="Whether the candidates of a batch are chosen one after another, "
         "each given the ones before, instead of all jointly. Cheaper for large "
-        "batches and usually as good. Candidates coupled by interpoint constraints "
-        "are always optimized jointly.",
+        "batches and usually as good. Candidates coupled by interpoint constraints, "
+        "and those of one-shot acquisition functions such as the knowledge "
+        "gradient, are always optimized jointly.",
     )
     local_search_config: Optional[AnyLocalSearchConfig] = Field(
         default=None,
