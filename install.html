@@ -474,27 +474,27 @@ Tip
 <pre><code>pip install 'bofire[optimization]'</code></pre>
 <p>The available dependencies are:</p>
 <ul>
-<li><code>optimization</code>: Core Bayesian optimization features.</li>
+<li><code>optimization</code>: Core Bayesian optimization and design of experiments features.</li>
 <li><code>cheminfo</code>: Cheminformatics utilities.</li>
 <li><code>entmoot</code>: <a href="https://github.com/cog-imperial/entmoot">Entmoot functionality.</a></li>
 <li><code>tests</code>: Required for running the test suite.</li>
 <li><code>docs</code>: Required for building the documentation.</li>
 <li><code>tutorials</code>: Required for running the <a href="https://github.com/experimental-design/bofire/tree/main/tutorials">tutorials.</a></li>
-<li><code>all</code>: Install all possible options (except DoE)</li>
+<li><code>all</code>: Install all possible options</li>
 </ul>
-<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Warning
+Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>BoFire has the functionalities for creating D, E, A, G, K and I-optimal experimental designs via the <code>DoEStrategy</code>. This feature depends on <a href="https://cyipopt.readthedocs.io/en/stable/">cyipopt</a> which is a python interface to <code>ipopt</code>. Unfortunately, it is not possible to install <code>cyipopt</code> including <code>ipopt</code> via pip. A solution is to install <code>cyipopt</code> and its dependencies via conda:</p>
+<p>BoFire creates D, E, A, G, K and I-optimal experimental designs via the <code>DoEStrategy</code>. The design problem is solved by <a href="https://github.com/jkitchin/pounce">pounce</a>, an interior-point solver installed with <code>bofire[optimization]</code> via pip.</p>
+<p>Alternatively, the <code>DoEStrategy</code> can use <a href="https://cyipopt.readthedocs.io/en/stable/">cyipopt</a> (<code>optimizer="ipopt"</code>). <code>cyipopt</code> including <code>ipopt</code> cannot be installed via pip; install it via conda:</p>
 <pre><code>conda install -c conda-forge cyipopt</code></pre>
-<p>We are working on a solution that makes BoFire’s model based DoE functionalities also accessible to users which do not have <code>cyipopt</code> available.</p>
 </div>
 </div>
 </section>
@@ -1027,22 +1027,22 @@ Warning
 <span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>The available dependencies are:</span>
 <span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`optimization`</span>: Core Bayesian optimization features.</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`optimization`</span>: Core Bayesian optimization and design of experiments features.</span>
 <span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`cheminfo`</span>: Cheminformatics utilities.</span>
 <span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`entmoot`</span>: <span class="co">[</span><span class="ot">Entmoot functionality.</span><span class="co">](https://github.com/cog-imperial/entmoot)</span></span>
 <span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`tests`</span>: Required for running the test suite.</span>
 <span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`docs`</span>: Required for building the documentation.</span>
 <span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`tutorials`</span>: Required for running the <span class="co">[</span><span class="ot">tutorials.</span><span class="co">](https://github.com/experimental-design/bofire/tree/main/tutorials)</span></span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`all`</span>: Install all possible options (except DoE)</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="in">`all`</span>: Install all possible options</span>
 <span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>:::{.callout-warning}</span>
-<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>BoFire has the functionalities for creating D, E, A, G, K and I-optimal experimental designs via the <span class="in">`DoEStrategy`</span>. This feature depends on <span class="co">[</span><span class="ot">cyipopt</span><span class="co">](https://cyipopt.readthedocs.io/en/stable/)</span> which is a python interface to <span class="in">`ipopt`</span>. Unfortunately, it is not possible to install <span class="in">`cyipopt`</span> including <span class="in">`ipopt`</span> via pip. A solution is to install <span class="in">`cyipopt`</span> and its dependencies via conda:</span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>:::{.callout-note}</span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>BoFire creates D, E, A, G, K and I-optimal experimental designs via the <span class="in">`DoEStrategy`</span>. The design problem is solved by <span class="co">[</span><span class="ot">pounce</span><span class="co">](https://github.com/jkitchin/pounce)</span>, an interior-point solver installed with <span class="in">`bofire[optimization]`</span> via pip.</span>
 <span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a><span class="in">conda install -c conda-forge cyipopt</span></span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>Alternatively, the <span class="in">`DoEStrategy`</span> can use <span class="co">[</span><span class="ot">cyipopt</span><span class="co">](https://cyipopt.readthedocs.io/en/stable/)</span> (<span class="in">`optimizer="ipopt"`</span>). <span class="in">`cyipopt`</span> including <span class="in">`ipopt`</span> cannot be installed via pip; install it via conda:</span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a>We are working on a solution that makes BoFire's model based DoE functionalities also accessible to users which do not have <span class="in">`cyipopt`</span> available.</span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a><span class="in">conda install -c conda-forge cyipopt</span></span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a></span>

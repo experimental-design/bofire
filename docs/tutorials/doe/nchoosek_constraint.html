@@ -782,13 +782,13 @@ window.Quarto = {
 </header>
 
 
-<p>The doe subpackage also supports problems with NChooseK constraints. Since IPOPT has problems finding feasible solutions using the gradient of the NChooseK constraint violation, a closely related (but stricter) constraint that suffices to fulfill the NChooseK constraint is imposed onto the problem: For each experiment <span class="math inline">\(j\)</span> N-K decision variables <span class="math inline">\(x_{i_1,j},...,x_{i_{N-K,j}}\)</span> from the NChooseK constraints’ names attribute are picked that are forced to be zero. This is done by setting the upper and lower bounds of the picked variables are set to 0 in the corresponding experiments. This causes IPOPT to treat them as “fixed variables” (i.e.&nbsp;it will not optimize for them) and will always stick to the only feasible value (which is 0 here). However, this constraint is stricter than the original NChooseK constraint. In combination with other constraints on the same decision variables this can result in a situation where the constraints cannot be fulfilled even though the original constraints would allow for a solution. For example consider a problem with four decision variables <span class="math inline">\(x_1, x_2, x_3, x_4\)</span>, an NChooseK constraint on the first four variable that restricts the number of nonzero variables to two. Additionally, we have a linear constraint <span class="math display">\[
+<p>The doe subpackage also supports problems with NChooseK constraints. Since the interior-point solver has problems finding feasible solutions using the gradient of the NChooseK constraint violation, a closely related (but stricter) constraint that suffices to fulfill the NChooseK constraint is imposed onto the problem: For each experiment <span class="math inline">\(j\)</span> N-K decision variables <span class="math inline">\(x_{i_1,j},...,x_{i_{N-K,j}}\)</span> from the NChooseK constraints’ names attribute are picked that are forced to be zero. This is done by setting the upper and lower bounds of the picked variables are set to 0 in the corresponding experiments. This causes the solver to treat them as “fixed variables” (i.e.&nbsp;it will not optimize for them) and will always stick to the only feasible value (which is 0 here). However, this constraint is stricter than the original NChooseK constraint. In combination with other constraints on the same decision variables this can result in a situation where the constraints cannot be fulfilled even though the original constraints would allow for a solution. For example consider a problem with four decision variables <span class="math inline">\(x_1, x_2, x_3, x_4\)</span>, an NChooseK constraint on the first four variable that restricts the number of nonzero variables to two. Additionally, we have a linear constraint <span class="math display">\[
 x_3 + x_4 \geq 0.1
 \]</span> We can easily find points that fulfill both constraints (e.g.&nbsp;<span class="math inline">\((0,0,0,0.1)\)</span>). Now consider the stricter, linear constraint from above. Eventually, it will happen that <span class="math inline">\(x_3\)</span> and <span class="math inline">\(x_4\)</span> are chosen to be zero for one experiment. For this experiment it is impossible to fulfill the linear constraint <span class="math inline">\(x_3 + x_4 \geq 0.1\)</span> since <span class="math inline">\(x_3 = x_4 = 0\)</span>.</p>
 <p>Therefore one has to be very careful when imposing linear constraints upon decision variables that already show up in an NChooseK constraint.</p>
 <p>For practical reasons it necessary that two NChooseK constraints of the same problem must not share any variables.</p>
 <p>You can find an example for a problem with NChooseK constraints and additional linear constraints imposed on the same variables.</p>
-<div id="2faea9b4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.941079,&quot;end_time&quot;:&quot;2024-10-10T20:36:20.399927&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:17.458848&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="669f986d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.941079,&quot;end_time&quot;:&quot;2024-10-10T20:36:20.399927&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:17.458848&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
@@ -835,7 +835,7 @@ x_3 + x_4 \geq 0.1
 <span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
 <span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
 <span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"fully-quadratic"</span>),</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    ipopt_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">500</span>},</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">500</span>},</span>
 <span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
 <span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(candidate_count<span class="op">=</span><span class="dv">12</span>)</span>
@@ -867,135 +867,135 @@ x_3 + x_4 \geq 0.1
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.0</td>
 <td>0.000</td>
-<td>0.499</td>
-<td>0.0</td>
-<td>0.501</td>
 <td>0.000</td>
+<td>-0.0</td>
+<td>0.9</td>
+<td>-0.000</td>
+<td>-0.000</td>
+<td>0.100</td>
+<td>-0.000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.100</td>
+<td>0.700</td>
 <td>0.000</td>
 <td>0.0</td>
-<td>0.900</td>
-<td>0.000</td>
+<td>-0.0</td>
+<td>-0.000</td>
+<td>-0.000</td>
+<td>0.300</td>
+<td>-0.000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>0.00</td>
+<td>0.000</td>
+<td>0.100</td>
 <td>0.0</td>
-<td>0.7</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.0</td>
-<td>0.000</td>
-<td>0.300</td>
+<td>-0.0</td>
+<td>-0.000</td>
+<td>-0.000</td>
+<td>-0.000</td>
+<td>0.900</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.7</td>
-<td>0.000</td>
+<td>-0.000</td>
 <td>0.000</td>
 <td>0.0</td>
-<td>0.000</td>
-<td>0.300</td>
+<td>-0.0</td>
+<td>0.100</td>
+<td>-0.000</td>
+<td>0.449</td>
+<td>0.451</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>0.70</td>
-<td>0.0</td>
-<td>0.0</td>
 <td>0.000</td>
-<td>0.000</td>
+<td>0.700</td>
+<td>0.0</td>
 <td>0.2</td>
+<td>-0.000</td>
+<td>-0.000</td>
+<td>-0.000</td>
 <td>0.100</td>
-<td>0.000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.0</td>
 <td>0.000</td>
-<td>0.900</td>
-<td>0.0</td>
 <td>0.000</td>
+<td>0.7</td>
+<td>0.2</td>
+<td>-0.000</td>
+<td>-0.000</td>
+<td>-0.000</td>
 <td>0.100</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.499</td>
 <td>0.000</td>
+<td>-0.000</td>
 <td>0.0</td>
-<td>0.000</td>
-<td>0.501</td>
+<td>-0.0</td>
+<td>-0.000</td>
+<td>0.900</td>
+<td>-0.000</td>
+<td>0.100</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>0.53</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.000</td>
+<td>0.589</td>
 <td>0.000</td>
 <td>0.0</td>
-<td>0.000</td>
-<td>0.470</td>
+<td>-0.0</td>
+<td>-0.000</td>
+<td>-0.000</td>
+<td>-0.000</td>
+<td>0.411</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.0</td>
 <td>0.000</td>
 <td>0.000</td>
-<td>0.1</td>
-<td>0.000</td>
+<td>-0.0</td>
+<td>-0.0</td>
 <td>0.900</td>
+<td>-0.000</td>
+<td>-0.000</td>
+<td>0.100</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>0.00</td>
+<td>-0.000</td>
+<td>0.000</td>
 <td>0.0</td>
-<td>0.0</td>
-<td>0.000</td>
-<td>0.000</td>
-<td>0.9</td>
-<td>0.100</td>
-<td>0.000</td>
+<td>-0.0</td>
+<td>-0.000</td>
+<td>0.498</td>
+<td>0.502</td>
+<td>-0.000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">10</th>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.0</td>
-<td>0.900</td>
 <td>0.000</td>
+<td>0.466</td>
 <td>0.0</td>
+<td>-0.0</td>
+<td>0.434</td>
+<td>-0.000</td>
 <td>0.100</td>
-<td>0.000</td>
+<td>-0.000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">11</th>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.0</td>
+<td>0.000</td>
+<td>0.000</td>
+<td>0.1</td>
+<td>-0.0</td>
+<td>-0.000</td>
+<td>-0.000</td>
 <td>0.900</td>
-<td>0.000</td>
-<td>0.0</td>
-<td>0.100</td>
-<td>0.000</td>
+<td>-0.000</td>
 </tr>
 </tbody>
 </table>
@@ -1495,12 +1495,12 @@ x_3 + x_4 \geq 0.1
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>The doe subpackage also supports problems with NChooseK constraints. Since IPOPT has problems finding feasible solutions</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>The doe subpackage also supports problems with NChooseK constraints. Since the interior-point solver has problems finding feasible solutions</span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>using the gradient of the NChooseK constraint violation, a closely related (but stricter) constraint that suffices</span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>to fulfill the NChooseK constraint is imposed onto the problem: For each experiment $j$</span>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>N-K decision variables $x_{i_1,j},...,x_{i_{N-K,j}}$ from the NChooseK constraints' names attribute are picked</span>
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>that are forced to be zero. This is done by setting the upper and lower bounds of the picked variables are set to 0</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>in the corresponding experiments. This causes IPOPT to treat them as "fixed variables" (i.e. it will not optimize for them)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>in the corresponding experiments. This causes the solver to treat them as "fixed variables" (i.e. it will not optimize for them)</span>
 <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>and will always stick to the only feasible value (which is 0 here).</span>
 <span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>However, this constraint is stricter than the original NChooseK constraint. In combination with other</span>
 <span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>constraints on the same decision variables this can result in a situation where the constraints cannot be fulfilled</span>
@@ -1570,7 +1570,7 @@ x_3 + x_4 \geq 0.1
 <span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
 <span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
 <span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"fully-quadratic"</span>),</span>
-<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>    ipopt_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">500</span>},</span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">500</span>},</span>
 <span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
 <span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(candidate_count<span class="op">=</span><span class="dv">12</span>)</span>
