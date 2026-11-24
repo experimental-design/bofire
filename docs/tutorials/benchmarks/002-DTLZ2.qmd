@@ -43,7 +43,7 @@ input_features = Inputs(
 # here the minimize objective is used, if you want to maximize you have to use the maximize objective.
 output_features = Outputs(
     features=[
-        ContinuousOutput(key=f"f_{i}", objective=MinimizeObjective(w=1.0))
+        ContinuousOutput(key=f"f_{i}", objective=MinimizeObjective())
         for i in range(2)
     ],
 )

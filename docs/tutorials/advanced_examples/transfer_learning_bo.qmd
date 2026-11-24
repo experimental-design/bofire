@@ -105,7 +105,7 @@ task_input = CategoricalTaskInput(key="task", categories=["task_1", "task_2"])
 # define the input features
 input_features = [ContinuousInput(key="x", bounds=(0, 1)), task_input]
 
-objective = MaximizeObjective(w=1)
+objective = MaximizeObjective()
 output_features = [ContinuousOutput(key="y", objective=objective)]
 
 inputs = Inputs(features=input_features)
@@ -183,7 +183,7 @@ input_features = [
     CategoricalTaskInput(key="task", categories=["task_1", "task_2"], allowed=[True, False]),
 ]
 
-objective = MaximizeObjective(w=1)
+objective = MaximizeObjective()
 output_features = [ContinuousOutput(key="y", objective=objective)]
 
 inputs = Inputs(features=input_features)
@@ -229,7 +229,7 @@ input_features = [
     CategoricalTaskInput(key="task", categories=["task_1", "task_2"], allowed=[False, True]),
 ]
 
-objective = MaximizeObjective(w=1)
+objective = MaximizeObjective()
 output_features = [ContinuousOutput(key="y", objective=objective)]
 
 inputs = Inputs(features=input_features)

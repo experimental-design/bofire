@@ -29,7 +29,7 @@ INVALID_SPECS = [
 ]
 
 
-objective = MinimizeObjective(w=1)
+objective = MinimizeObjective()
 
 VALID_CONTINUOUS_INPUT_FEATURE_SPEC = {
     "type": "ContinuousInput",

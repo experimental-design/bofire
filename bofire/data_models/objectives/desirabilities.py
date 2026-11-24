@@ -166,7 +166,7 @@ class PeakDesirabilityObjective(DesirabilityObjective):
     to the peak position and decreases from the peak position to the upper bound.
 
     The desirability is 0 outside `bounds` (or negative if `clip` is disabled) and
-    reaches `w` at the peak, so it expresses that a value is best somewhere in the
+    reaches 1 at the peak, so it expresses that a value is best somewhere in the
     middle of a range.
 
     Examples:
@@ -222,7 +222,7 @@ class PeakDesirabilityObjective(DesirabilityObjective):
             t,
         )
 
-        return y * self.w
+        return y
 
     @pydantic.model_validator(mode="after")
     def validate_peak_position(self):

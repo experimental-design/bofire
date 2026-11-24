@@ -60,7 +60,7 @@ domain = Domain.from_lists(
             ),
         ),
     ],
-    outputs=[ContinuousOutput(key=OUTPUT_KEY, objective=MaximizeObjective(w=1.0))],
+    outputs=[ContinuousOutput(key=OUTPUT_KEY, objective=MaximizeObjective())],
 )
 domain.context = "Find molecules with high E isomer pi-pi* wavelength."
 
