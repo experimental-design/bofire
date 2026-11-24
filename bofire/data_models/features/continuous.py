@@ -332,7 +332,7 @@ class ContinuousOutput(Output):
     )
 
     objective: Optional[AnyObjective] = Field(
-        default_factory=lambda: MaximizeObjective(w=1.0),
+        default_factory=lambda: MaximizeObjective(),
         description="How this output should be optimized. Defaults to maximization. "
         "Set to None for an output that is modelled and reported but not optimized.",
     )
@@ -341,7 +341,7 @@ class ContinuousOutput(Output):
         """Return a human-readable description combining objective and context.
 
         Examples:
-            >>> feat = ContinuousOutput(key="yield", objective=MaximizeObjective(w=1.0), context="Target >90%")
+            >>> feat = ContinuousOutput(key="yield", objective=MaximizeObjective(), context="Target >90%")
             >>> feat.to_description()
             'yield: Maximize — Target >90%'
         """

@@ -71,9 +71,7 @@ input_feature = CategoricalInput(
     # the categories *are* SMILES, so they double as the structure column
     descriptors=Descriptors(structure=smiles),
 )
-objective = MaximizeObjective(
-    w=1.0,
-)
+objective = MaximizeObjective()
 inputs = Inputs(features=[input_feature])
 output_feature = ContinuousOutput(key=benchmark["output"], objective=objective)
 outputs = Outputs(features=[output_feature])

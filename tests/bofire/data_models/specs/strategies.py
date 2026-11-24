@@ -30,6 +30,7 @@ from bofire.data_models.llm.provider import AnthropicLLMProvider
 from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
+    MinimizeObjective,
 )
 from bofire.data_models.strategies.api import (
     AbsoluteMovingReferenceValue,
@@ -37,6 +38,7 @@ from bofire.data_models.strategies.api import (
     FixedReferenceValue,
     RelativeMovingReferenceValue,
     RelativeToMaxMovingReferenceValue,
+    WeightedScalarization,
 )
 from bofire.data_models.strategies.convergence_criteria.api import (
     ExpMinRegretGapCriterion,
@@ -70,6 +72,10 @@ strategy_commons = {
     "seed": 42,
     "include_infeasible_exps_in_acqf_calc": False,
     "convergence_criterion": None,
+}
+sobo_commons = {
+    **strategy_commons,
+    "scalarization": None,
 }
 
 
@@ -169,7 +175,7 @@ specs.add_valid(
             inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
         ).model_dump(),
-        **strategy_commons,
+        **sobo_commons,
         "acquisition_function": qPI(tau=0.1).model_dump(),
         "convergence_criterion": ObjectiveImprovementCriterion(
             min_improvement=0.01, n_lookback=5
@@ -202,7 +208,7 @@ for _gp_criterion in [
                 inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
                 outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
             ).model_dump(),
-            **strategy_commons,
+            **sobo_commons,
             "acquisition_function": qPI(tau=0.1).model_dump(),
             "convergence_criterion": criterion.model_dump(),
         },
@@ -221,6 +227,7 @@ specs.add_valid(
             ga_progress_csv_path="ga_progress_specs.csv",
         ).model_dump(),
         "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
+        "scalarization": None,
         "seed": 42,
         "include_infeasible_exps_in_acqf_calc": False,
         "acquisition_function": qPI(tau=0.1).model_dump(),
@@ -240,47 +247,28 @@ specs.add_valid(
             ga_progress_csv_path="ga_progress_specs_2.csv",
         ).model_dump(),
         "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
+        "scalarization": None,
         "seed": 42,
         "include_infeasible_exps_in_acqf_calc": False,
         "acquisition_function": qPI(tau=0.1).model_dump(),
     },
 )
-specs.add_valid(
-    strategies.AdditiveSoboStrategy,
-    lambda: {
-        "domain": domain.valid().obj().model_dump(),
-        "acquisition_function": qPI(tau=0.1).model_dump(),
-        "use_output_constraints": True,
-        **strategy_commons,
-    },
-)
-specs.add_valid(
-    strategies.MultiplicativeSoboStrategy,
-    lambda: {
-        "domain": domain.valid().obj().model_dump(),
-        **strategy_commons,
-        "acquisition_function": qPI(tau=0.1).model_dump(),
-    },
-)
-specs.add_valid(
-    strategies.MultiplicativeAdditiveSoboStrategy,
-    lambda: {
-        "domain": domain.valid().obj().model_dump(),
-        **strategy_commons,
-        "acquisition_function": qPI(tau=0.1).model_dump(),
-        "use_output_constraints": False,
-        "additive_features": ["o1"],
-    },
-)
-specs.add_valid(
-    strategies.CustomSoboStrategy,
-    lambda: {
-        "domain": domain.valid().obj().model_dump(),
-        **strategy_commons,
-        "acquisition_function": qPI(tau=0.1).model_dump(),
-        "use_output_constraints": True,
-    },
-)
+for _scalarization in [
+    WeightedScalarization(),
+    WeightedScalarization(use_output_constraints=False),
+    WeightedScalarization(weights={"o1": 0.5, "o2": 2.0}),
+    WeightedScalarization(additive_features=["o1", "o2"]),
+    WeightedScalarization(additive_features=["o1"], weights={"o2": 3.0}),
+]:
+    specs.add_valid(
+        strategies.SoboStrategy,
+        lambda scalarization=_scalarization: {
+            "domain": domain.valid().obj().model_dump(),
+            **strategy_commons,
+            "acquisition_function": qPI(tau=0.1).model_dump(),
+            "scalarization": scalarization.model_dump(),
+        },
+    )
 specs.add_valid(
     strategies.ActiveLearningStrategy,
     lambda: {
@@ -786,7 +774,7 @@ specs.add_invalid(
 )
 
 specs.add_invalid(
-    strategies.AdditiveSoboStrategy,
+    strategies.SoboStrategy,
     lambda: {
         "domain": Domain(
             inputs=Inputs(
@@ -802,9 +790,156 @@ specs.add_invalid(
             ],
         ),
         "acquisition_function": qLogPF(),
+        "scalarization": WeightedScalarization(),
     },
     error=ValueError,
-    message="qLogPF acquisition function is only allowed in the ´SoboStrategy´.",
+    message="qLogPF acquisition function ignores the objectives, so it can't be "
+    "combined with a scalarization.",
+)
+
+# qLogPF on a domain with several plain objectives, as a feasibility step
+specs.add_valid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(
+                        key="alpha",
+                        objective=MaximizeSigmoidObjective(tp=1, steepness=100),
+                    ),
+                    ContinuousOutput(key="beta", objective=MaximizeObjective()),
+                    ContinuousOutput(key="gamma", objective=MaximizeObjective()),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qLogPF().model_dump(),
+        "scalarization": None,
+    },
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=[
+                ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+                ContinuousOutput(key="gamma", objective=None),
+            ],
+        ),
+        "scalarization": WeightedScalarization(weights={"gamma": 2.0}),
+    },
+    error=ValueError,
+    message="Weight given for gamma, which is not an objective of the scalarization.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=[
+                ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+                ContinuousOutput(key="gamma", objective=None),
+            ],
+        ),
+    },
+    error=ValueError,
+    message="SoboStrategy without a scalarization can only optimize one objective",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=[
+                ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                ContinuousOutput(key="beta", objective=MinimizeObjective()),
+            ],
+        ),
+        "scalarization": WeightedScalarization(additive_features=["alpha"]),
+    },
+    error=ValueError,
+    message="WeightedScalarization can't multiply the objective of beta",
+)
+
+specs.add_valid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                    ContinuousOutput(key="beta", objective=MinimizeObjective()),
+                ]
+            ),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+        "scalarization": WeightedScalarization(additive_features=["beta"]).model_dump(),
+    },
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=[ContinuousOutput(key="alpha", objective=MaximizeObjective())],
+        ),
+        "scalarization": WeightedScalarization(),
+    },
+    error=ValueError,
+    message="WeightedScalarization requires at least 2 objectives to combine",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=[
+                ContinuousOutput(key="alpha", objective=MaximizeObjective()),
+                ContinuousOutput(key="beta", objective=MaximizeObjective()),
+            ],
+        ),
+        "scalarization": WeightedScalarization(additive_features=["gamma"]),
+    },
+    error=ValueError,
+    message="Additive feature given for gamma, which is not an objective of the "
+    "scalarization.",
+)
+
+specs.add_invalid(
+    strategies.MultiFidelityVarianceBasedStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    CategoricalTaskInput(
+                        key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
+                    ),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="alpha"),
+                    ContinuousOutput(key="beta"),
+                ]
+            ),
+        ),
+        "scalarization": WeightedScalarization(),
+    },
+    error=ValueError,
+    message="MultiFidelityVarianceBasedStrategy only supports a single objective",
 )
 
 specs.add_invalid(
@@ -823,7 +958,7 @@ specs.add_invalid(
         ),
     },
     error=ValueError,
-    message="SOBO strategy can only deal with one no-constraint objective.",
+    message="SoboStrategy without a scalarization can only optimize one objective",
 )
 specs.add_invalid(
     strategies.SoboStrategy,
@@ -1052,7 +1187,7 @@ specs.add_valid(
             ),
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
         ).model_dump(),
-        **strategy_commons,
+        **sobo_commons,
         "acquisition_function": qEI().model_dump(),
         "fidelity_thresholds": 0.1,
     },
@@ -1105,7 +1240,7 @@ _llm_domain = Domain(
         ],
     ),
     outputs=Outputs(
-        features=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))]
+        features=[ContinuousOutput(key="y", objective=MaximizeObjective())]
     ),
 )
 
