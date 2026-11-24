@@ -37,7 +37,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning, append=True)
 
 
-pytest.importorskip("cyipopt")
+pytest.importorskip("pounce")
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -269,7 +269,6 @@ def test_partially_fixed_experiments():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        verbose=True,
         return_fixed_candidates=True,
         scip_params={"parallel/maxnthreads": 1, "numerics/feastol": 1e-8},
     )
@@ -368,34 +367,10 @@ def test_scaled_doe():
 
 @pytest.mark.xfail(reason="This test is failing due to a bad initial point.")
 def test_functional_constraint():
+    pytest.importorskip("cyipopt")  # uses Ipopt's derivative checker
     np.random.seed(42)
     torch.manual_seed(42)
     torch.cuda.manual_seed(42)
-
-    sampling = [
-        [
-            0.36531936,
-            0.774256,
-            0.0457612,
-            0.10232313,
-            0.66522677,
-        ],
-        [
-            0.39283984,
-            0.30091256,
-            0.3751583,
-            0.72181405,
-            0.37838284,
-        ],
-        [
-            0.38254448,
-            0.35407898,
-            0.47484388,
-            0.337307,
-            0.76760944,
-        ],
-        [0.31534748, 0.51893979, 0.42009135, 0.30568969, 0.85966],
-    ]
 
     inputs = [
         ContinuousInput(key="A", bounds=(0.2, 0.4)),
@@ -486,13 +461,12 @@ def test_functional_constraint():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        ipopt_options={
+        optimizer_options={
             "max_iter": 5000,
             "derivative_test": "first-order",
             "print_level": 5,
         },
-        sampling=sampling,
-        use_cyipopt=True,
+        optimizer="ipopt",
     )
     strategy = DoEStrategy(data_model=data_model)
 
@@ -525,7 +499,6 @@ def test_free_discrete_doe():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        verbose=True,
         scip_params={"parallel/maxnthreads": 1},
     )
     strategy = DoEStrategy(data_model=data_model)
@@ -583,7 +556,6 @@ def test_discrete_and_categorical_doe_w_constraints():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        verbose=True,
         scip_params={"parallel/maxnthreads": 1},
     )
     strategy = DoEStrategy(data_model=data_model)
@@ -640,7 +612,6 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
         data_model = data_models.DoEStrategy(
             domain=domain,
             criterion=DOptimalityCriterion(formula=model_type),
-            verbose=True,
             scip_params={"parallel/maxnthreads": 1},
         )
 
@@ -700,7 +671,6 @@ def test_discrete_and_categorical_doe_w_constraints_num_of_experiments():
         data_model = data_models.DoEStrategy(
             domain=domain,
             criterion=DOptimalityCriterion(formula=model_type),
-            verbose=True,
             scip_params={"parallel/maxnthreads": 1},
         )
 
@@ -745,7 +715,6 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        verbose=True,
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=5, raise_validation_error=True)
@@ -796,7 +765,6 @@ def test_compare_discrete_to_continuous_mapping_with_thresholding():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        verbose=True,
         scip_params={"parallel/maxnthreads": 1},
     )
     strategy = DoEStrategy(data_model=data_model)
@@ -822,7 +790,6 @@ def test_purely_categorical_doe():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        verbose=True,
         scip_params={"parallel/maxnthreads": 1},
     )
     strategy = DoEStrategy(data_model=data_model)
@@ -850,7 +817,6 @@ def test_continuous_categorical_doe():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula="linear"),
-        verbose=True,
         scip_params={"parallel/maxnthreads": 1},
     )
     strategy = DoEStrategy(data_model=data_model)
@@ -876,7 +842,6 @@ def one_cont_3_cat():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=SpaceFillingCriterion(),
-        verbose=True,
         scip_params={"parallel/maxnthreads": 1},
     )
     strategy = DoEStrategy(data_model=data_model)
@@ -1142,7 +1107,6 @@ def test_custom_formula_with_categorical_and_discrete():
     data_model = data_models.DoEStrategy(
         domain=domain,
         criterion=DOptimalityCriterion(formula=custom_formula),
-        verbose=True,
         scip_params={"parallel/maxnthreads": 1},
     )
     strategy = DoEStrategy(data_model=data_model)
@@ -1620,3 +1584,21 @@ def test_doe_strategy_ask_reports_progress():
     assert len(events) > 0
     assert [e.step for e in events] == list(range(1, len(events) + 1))
     assert all(np.isfinite(e.value) for e in events)
+
+
+@pytest.mark.parametrize("optimizer", ["pounce", "ipopt", "scipy"])
+def test_doe_strategy_ask_with_each_optimizer(optimizer):
+    """DoEStrategy.ask runs end to end with every solver backend: data model,
+    strategy, find_local_max and the solver, on a mixture with linear
+    inequalities."""
+    if optimizer == "ipopt":
+        pytest.importorskip("cyipopt")
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        criterion=DOptimalityCriterion(formula="linear"),
+        optimizer=optimizer,
+        seed=42,
+    )
+    candidates = DoEStrategy(data_model=data_model).ask(candidate_count=12)
+    assert candidates.shape == (12, 3)
+    assert domain.constraints.is_fulfilled(candidates, tol=1e-4).all()
