@@ -13,6 +13,9 @@ from bofire.data_models.types import Bounds
 from bofire.data_models.unions import tagged_union
 
 
+DoEOptimizer = Literal["pounce", "ipopt", "scipy"]
+DEFAULT_DOE_OPTIMIZER: DoEOptimizer = "pounce"
+
 PREDEFINED_MODEL_TYPES = Literal[
     "linear",
     "linear-and-quadratic",
@@ -213,8 +216,8 @@ class DoEStrategy(Strategy):
         ),
     )
 
-    optimizer: Literal["pounce", "ipopt", "scipy"] = Field(
-        default="pounce",
+    optimizer: DoEOptimizer = Field(
+        default=DEFAULT_DOE_OPTIMIZER,
         description=(
             "NLP solver for the continuous design problem: `pounce` (default), "
             "`ipopt` (requires cyipopt) or `scipy` (SLSQP, slow beyond a few "

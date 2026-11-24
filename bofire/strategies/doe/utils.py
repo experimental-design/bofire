@@ -4,7 +4,7 @@ import sys
 import warnings
 from copy import copy
 from itertools import combinations
-from typing import List, Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Union, cast, get_args
 
 import numpy as np
 import pandas as pd
@@ -29,6 +29,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.strategies.doe import DEFAULT_DOE_OPTIMIZER, DoEOptimizer
 from bofire.strategies.doe.objective_base import Objective
 from bofire.strategies.doe.utils_categorical_discrete import (
     map_categorical_to_continuous,
@@ -821,7 +822,7 @@ POUNCE_DOE_DEFAULTS = {
     "acceptable_constr_viol_tol": 1e-4,
 }
 
-OPTIMIZERS = ("pounce", "ipopt", "scipy")
+OPTIMIZERS = get_args(DoEOptimizer)
 
 
 # Constraints are scipy dict constraints with a sparse ``jac``. Dicts are the only
@@ -920,7 +921,7 @@ def _solve(
     x0: np.ndarray,
     bounds: List[Tuple[float, float]],
     constraints: Optional[List[dict]],
-    optimizer: str = "pounce",
+    optimizer: str = DEFAULT_DOE_OPTIMIZER,
     optimizer_options: Optional[dict] = None,
     callback: Optional[AskProgressCallback] = None,
 ) -> opt.OptimizeResult:
@@ -997,7 +998,7 @@ def _minimize(
     x0: np.ndarray,
     bounds: List[Tuple[float, float]],
     constraints: Optional[List[dict]],
-    optimizer: str = "pounce",
+    optimizer: str = DEFAULT_DOE_OPTIMIZER,
     optimizer_options: Optional[dict] = None,
     callback: Optional[AskProgressCallback] = None,
 ) -> np.ndarray:

@@ -6,7 +6,7 @@ jupyter: python3
 
 This tutorial notebook shows how to setup a D-optimal design with BoFire while providing an explicit formula and not just one of the four available keywords `linear`, `linear-and-interaction`, `linear-and-quadratic`, `fully-quadratic`.
 
-Make sure that BoFire is installed with the `optimization` extra (`pip install 'bofire[optimization]'`), which includes the solver `pounce`.
+Make sure that BoFire is installed with the `optimization` extra (`pip install 'bofire[optimization]'`), which includes the solver `pounce`. To use Ipopt instead, install `cyipopt` via conda (`conda install -c conda-forge cyipopt`) and pass `optimizer="ipopt"` to the `DoEStrategy`.
 
 
 ## Imports

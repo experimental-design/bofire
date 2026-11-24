@@ -18,6 +18,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain, Inputs
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.doe import (
+    DEFAULT_DOE_OPTIMIZER,
     AOptimalityCriterion,
     DoEOptimalityCriterion,
     DOptimalityCriterion,
@@ -136,7 +137,7 @@ class IOptimality(ModelBasedObjective):
         delta: float = 1e-7,
         transform_range: Optional[Bounds] = None,
         n_space_filling_points: Optional[int] = None,
-        optimizer: str = "pounce",
+        optimizer: str = DEFAULT_DOE_OPTIMIZER,
         optimizer_options: Optional[dict] = None,
     ) -> None:
         """
@@ -354,7 +355,7 @@ def get_objective_function(
     domain: Domain,
     n_experiments: int,
     inputs_for_formula: Optional[Inputs] = None,
-    optimizer: str = "pounce",
+    optimizer: str = DEFAULT_DOE_OPTIMIZER,
 ) -> Objective:
     if isinstance(criterion, DoEOptimalityCriterion):
         _inputs_for_formula = (

@@ -1,4 +1,4 @@
-from typing import Dict, Literal, Optional, cast
+from typing import Dict, Optional, cast
 
 import pandas as pd
 import torch
@@ -12,6 +12,7 @@ from bofire.data_models.strategies.doe import (
     AnyDoEOptimalityCriterion,
     AnyOptimalityCriterion,
     DoEOptimalityCriterion,
+    DoEOptimizer,
 )
 from bofire.strategies.doe.design import find_local_max, get_n_experiments
 from bofire.strategies.doe.objective import ModelBasedObjective, get_objective_function
@@ -286,7 +287,7 @@ class DoEStrategy(Strategy):
         domain: Domain,
         seed: int | None = None,
         criterion: AnyOptimalityCriterion | None = None,
-        optimizer: Literal["pounce", "ipopt", "scipy"] | None = None,
+        optimizer: DoEOptimizer | None = None,
         optimizer_options: Dict | None = None,
         scip_params: Dict | None = None,
         return_fixed_candidates: bool | None = None,

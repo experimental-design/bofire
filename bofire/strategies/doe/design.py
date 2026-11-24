@@ -12,6 +12,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.strategies.doe import DEFAULT_DOE_OPTIMIZER
 from bofire.strategies.doe.objective import Objective
 from bofire.strategies.doe.utils import (
     _minimize,
@@ -29,7 +30,7 @@ def find_local_max(
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
-    optimizer: str = "pounce",
+    optimizer: str = DEFAULT_DOE_OPTIMIZER,
     seed: Optional[int] = None,
     callback: Optional[AskProgressCallback] = None,
 ) -> pd.DataFrame:
