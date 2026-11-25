@@ -877,36 +877,47 @@ class TestMinimizeSamplePaths:
 
         assert minima.shape == (n_samples,)
 
-    def test_minima_leq_path_at_evaluated_points(self, trained_strategy):
-        """The minimum must be ≤ the path value at each evaluated point."""
+    def test_minima_leq_best_random_start(self, benchmark):
+        """Compare local refinement with the best of its random starting points."""
         import torch
         from botorch.sampling.pathwise import draw_matheron_paths
 
         from bofire.utils.torch_tools import tkwargs
 
-        strategy, experiments = trained_strategy
-        model = strategy.model
-        input_keys = strategy.domain.inputs.get_keys()
-        transformed = strategy.domain.inputs.transform(
-            experiments[input_keys], strategy.input_preprocessing_specs
-        )
-        X = torch.from_numpy(transformed.values).to(**tkwargs)
-        bounds = strategy.domain.inputs.get_bounds(
-            specs=strategy.input_preprocessing_specs
-        )
-        lower = torch.tensor(bounds[0], **tkwargs)
-        upper = torch.tensor(bounds[1], **tkwargs)
+        with torch.random.fork_rng():
+            torch.manual_seed(0)
+            experiments = benchmark.f(
+                benchmark.domain.inputs.sample(10, seed=0), return_complete=True
+            )
+            strategy = SoboStrategy(
+                data_model=SoboStrategyDataModel(domain=benchmark.domain, seed=0)
+            )
+            strategy.tell(experiments)
+            bounds = strategy.domain.inputs.get_bounds(
+                specs=strategy.input_preprocessing_specs
+            )
+            lower = torch.tensor(bounds[0], **tkwargs)
+            upper = torch.tensor(bounds[1], **tkwargs)
 
-        n_samples = 3
-        paths = draw_matheron_paths(model, sample_shape=torch.Size([n_samples]))
-        minima = _minimize_sample_paths(paths, lower, upper, n_random=64, n_starts=2)
+            n_samples = 3
+            n_random = 64
+            paths = draw_matheron_paths(
+                strategy.model, sample_shape=torch.Size([n_samples])
+            )
+            torch.manual_seed(0)
+            minima = _minimize_sample_paths(
+                paths, lower, upper, n_random=n_random, n_starts=2
+            )
 
-        with torch.no_grad():
-            vals = paths(X).numpy()  # [n_samples, n_points]
+            torch.manual_seed(0)
+            X_rand = lower + (upper - lower) * torch.rand(
+                n_random, lower.shape[0], dtype=lower.dtype
+            )
+            with torch.no_grad():
+                vals = paths(X_rand).numpy()
 
-        for i in range(n_samples):
-            # minimum found by optimiser must not exceed the minimum random sample
-            assert minima[i] <= vals[i].min() + 1e-6
+            for i in range(n_samples):
+                assert minima[i] <= vals[i].min() + 1e-6
 
 
 class TestRunPRBLevelTest:

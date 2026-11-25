@@ -112,6 +112,7 @@ and this project adheres to [Pragmatic Versioning](https://github.com/experiment
 - Register custom likelihoods with `bofire.data_models.likelihoods.api.register`.
 
 ### Fixed
+- Linear-constraint coefficients passed to BoTorch are constructed directly in solver precision, avoiding rounding through PyTorch's default dtype (#869).
 - Constrained objectives, such as sigmoid ones, were silently left out of `MultiplicativeAdditiveSoboStrategy`: neither combined nor used as constraints. With `WeightedScalarization`, they are either output constraints or part of the scalarization.
 - `SoboStrategy` rejects a domain with more than one output with a plain (not constrained) objective also when the domain has outputs without an objective; before, these outputs were subtracted from the count, so such a domain was accepted and only the first objective optimized.
 - Clearer validation messages: a data frame with inconsistent continuous output keys no longer reports them as input keys, and unknown `Fragments`/`MordredDescriptors` names are listed instead of the garbled "Not all provided … were not found".
