@@ -764,7 +764,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>A <code>SoboStrategy</code> combines several objectives into the single value it maximizes by its <code>scalarization</code>. Besides the built-in <code>WeightedScalarization</code>, you can register your own. In this tutorial notebook, it is shown how to use this to optimize a quantity that depends on a combination of an inferred quantity and one of the inputs.</p>
 <section id="imports" class="level2">
 <h2 class="anchored" data-anchor-id="imports">Imports</h2>
-<div id="1a8eecb9" class="cell" data-execution_count="1">
+<div id="9b0a31d2" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Literal</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
@@ -783,7 +783,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="define-the-scalarization">Define the scalarization</h2>
 <p>A scalarization consists of a data model, which makes it serializable, and a function that maps it to a callable for BoTorch. The callable receives the sampled output values (<code>samples</code>, outputs in the order of <code>domain.outputs</code>) and the corresponding inputs <code>X</code>, transformed for the model, and returns one value per sample to maximize.</p>
 <p>For the optimization, we want to subtract the value of feature <code>x_1</code> from the objective of the inferred quantity. <code>penalty</code> is a parameter of the scalarization, stored with the strategy.</p>
-<div id="b17c7898" class="cell" data-execution_count="2">
+<div id="5e30da97" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> InputPenaltyScalarization(Scalarization):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Subtracts `penalty` times an input from the sum of the objectives."""</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -812,7 +812,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="run-the-optimization" class="level2">
 <h2 class="anchored" data-anchor-id="run-the-optimization">Run the optimization</h2>
-<div id="12ffd93f" class="cell" data-execution_count="3">
+<div id="6eae5a04" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> Himmelblau()</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(benchmark.domain.inputs.sample(<span class="dv">10</span>), return_complete<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -845,11 +845,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>3.069301</td>
-<td>1.627639</td>
-<td>-42.507381</td>
-<td>95.743941</td>
-<td>42.507381</td>
+<td>1.907367</td>
+<td>2.637529</td>
+<td>-15.962848</td>
+<td>167.767416</td>
+<td>15.962848</td>
 </tr>
 </tbody>
 </table>
@@ -858,7 +858,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>The data model, including the scalarization, can be serialized and loaded again like any other strategy, once the scalarization is registered.</p>
-<div id="fb0e8433" class="cell" data-execution_count="4">
+<div id="0349e1b7" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>SoboStrategy.model_validate_json(strategy_data.model_dump_json())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="4">
 <pre><code>SoboStrategy(type='SoboStrategy', domain=Domain(type='Domain', inputs=Inputs(type='Inputs', features=[ContinuousInput(type='ContinuousInput', key='x_1', context=None, unit=None, descriptors=None, bounds=[-6.0, 6.0], local_relative_bounds=None, stepsize=None, allow_zero=False), ContinuousInput(type='ContinuousInput', key='x_2', context=None, unit=None, descriptors=None, bounds=[-6.0, 6.0], local_relative_bounds=None, stepsize=None, allow_zero=False)]), outputs=Outputs(type='Outputs', features=[ContinuousOutput(type='ContinuousOutput', key='y', context=None, unit=None, objective=MinimizeObjective(type='MinimizeObjective', bounds=[0.0, 1.0]))]), constraints=Constraints(type='Constraints', constraints=[]), context=None), seed=None, convergence_criterion=None, acquisition_optimizer=BotorchOptimizer(prefer_exhaustive_search_for_purely_categorical_domains=True, type='BotorchOptimizer', n_restarts=20, n_raw_samples=1024, maxiter=2000, batch_limit=20, sequential=True, local_search_config=None, per_step_local_reopt=False, final_local_reopt=True), surrogate_specs=BotorchSurrogates(surrogates=[SingleTaskGPSurrogate(optimizer=LBFGSB(type='LBFGSB', maxiter=None, ftol=None, gtol=None, max_attempts=50), type='SingleTaskGPSurrogate', inputs=Inputs(type='Inputs', features=[ContinuousInput(type='ContinuousInput', key='x_1', context=None, unit=None, descriptors=None, bounds=[-6.0, 6.0], local_relative_bounds=None, stepsize=None, allow_zero=False), ContinuousInput(type='ContinuousInput', key='x_2', context=None, unit=None, descriptors=None, bounds=[-6.0, 6.0], local_relative_bounds=None, stepsize=None, allow_zero=False)]), outputs=Outputs(type='Outputs', features=[ContinuousOutput(type='ContinuousOutput', key='y', context=None, unit=None, objective=MinimizeObjective(type='MinimizeObjective', bounds=[0.0, 1.0]))]), dump=None, categorical_encodings={}, engineered_features=EngineeredFeatures(type='EngineeredFeatures', features=[]), scaler=Normalize(type='Normalize', features=[]), output_scaler=&lt;ScalerEnum.STANDARDIZE: 'STANDARDIZE'&gt;, kernel=RBFKernel(type='RBFKernel', features=None, lengthscale_prior=DimensionalityScaledLogNormalPrior(type='DimensionalityScaledLogNormalPrior', loc=1.4142135623730951, loc_scaling=0.5, scale=1.7320508075688772, scale_scaling=0.0), lengthscale_constraint=GreaterThan(type='GreaterThan', initial_value=None, lower_bound=0.025), ard=True), mean=ConstantMean(type='ConstantMean', prior=None, constraint=None), likelihood=GaussianLikelihood(type='GaussianLikelihood', noise_prior=LogNormalPrior(type='LogNormalPrior', loc=-4.0, scale=1.0), noise_constraint=GreaterThan(type='GreaterThan', initial_value=0.006737946999085467, lower_bound=0.0001)))]), include_infeasible_exps_in_acqf_calc=False, acquisition_function=qLogNEI(type='qLogNEI', prune_baseline=True, n_mc_samples=512), scalarization=InputPenaltyScalarization(type='InputPenaltyScalarization', feature='x_1', penalty=1.0))</code></pre>
