@@ -30,7 +30,7 @@ dependencies = [
     "pydantic>=2.5",
     "scipy>=1.7",
     "typing-extensions",
-    "formulaic<=1.0.2",
+    "formulaic==1.0.2",
 ]
 
 [project.optional-dependencies]
@@ -40,7 +40,7 @@ optimization = [
     "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
     "multiprocess",
     "plotly",
-    "formulaic>=1.0.1,<1.1",
+    "formulaic>=1.0.2,<1.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL,SCIP]<=1.8.2",
@@ -62,7 +62,7 @@ all = [
     "numpy<2.5.0", # we pin due to some incompatibility with shap under uv dependency resolution
     "multiprocess",
     "plotly",
-    "formulaic>=1.0.1,<1.1",
+    "formulaic>=1.0.2,<1.1",
     "cloudpickle>=2.0.0",
     "sympy>=1.12",
     "cvxpy[CLARABEL,SCIP]<=1.8.2",
