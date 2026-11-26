@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Annotated, Any, List, Literal, Optional, Protocol
+from typing import Annotated, Any, Literal, Protocol
 
 import numpy as np
 import pandas as pd
@@ -46,7 +46,7 @@ class EvaluateableCondition:
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         """Whether the step using ``strategy`` should remain the active step.
 
@@ -92,7 +92,7 @@ class FeasibleExperimentCondition(SingleCondition, EvaluateableCondition):
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         constrained_outputs = domain.outputs.get_by_objective(ConstrainedObjective)
         if len(constrained_outputs) == 0:
@@ -132,7 +132,7 @@ class NumberOfExperimentsCondition(SingleCondition, EvaluateableCondition):
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         if experiments is None:
             n_experiments = 0
@@ -150,7 +150,7 @@ class AlwaysTrueCondition(SingleCondition, EvaluateableCondition):
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         return True
 
@@ -173,7 +173,7 @@ class StrategyHasConvergedCondition(SingleCondition, EvaluateableCondition):
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         return not strategy.has_converged()
 
@@ -245,10 +245,10 @@ class SufficientDistinguishableValues(SingleCondition, EvaluateableCondition):
     """
 
     type: Literal["SufficientDistinguishableValues"] = "SufficientDistinguishableValues"
-    inputs: List[DistinguishableParameters] = Field(
+    inputs: list[DistinguishableParameters] = Field(
         default=[], description="Inputs whose values are checked."
     )
-    outputs: List[DistinguishableParameters] = Field(
+    outputs: list[DistinguishableParameters] = Field(
         default=[], description="Outputs whose values are checked."
     )
 
@@ -262,7 +262,7 @@ class SufficientDistinguishableValues(SingleCondition, EvaluateableCondition):
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         if experiments is None:
             return True
@@ -296,7 +296,7 @@ class SufficientDistinguishableValues(SingleCondition, EvaluateableCondition):
 class CombiCondition(Condition, EvaluateableCondition):
     type: Literal["CombiCondition"] = "CombiCondition"
     conditions: Annotated[
-        List[
+        list[
             tagged_union(
                 NumberOfExperimentsCondition,
                 "CombiCondition",
@@ -320,7 +320,7 @@ class CombiCondition(Condition, EvaluateableCondition):
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         n_matched_conditions = 0
         for c in self.conditions:
