@@ -417,27 +417,30 @@ def test_get_interpoint_equality_constraints():
     assert len(constraints) == 0
 
 
+@pytest.mark.parametrize(
+    "constraint_type", [LinearEqualityConstraint, LinearInequalityConstraint]
+)
 @pytest.mark.parametrize("unit_scaled", [False, True])
-def test_get_linear_constraints_preserves_decimal_precision(unit_scaled):
-    """Preserve float64 coefficients in both scaled and unscaled conversion.
-
-    Exact equality catches intermediate float32 rounding of 0.1, which could
-    make RandomStrategy infer a fixed value just outside a valid boundary.
-    Scaling by two preserves the coefficient's binary precision.
-    """
+def test_get_linear_constraints_preserves_decimal_precision(
+    constraint_type, unit_scaled
+):
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=k, bounds=(0, 2)) for k in ["a", "b"]],
         constraints=[
-            LinearEqualityConstraint(
-                features=["a", "b"], coefficients=[0.1, 1], rhs=0.3
-            )
+            constraint_type(features=["a", "b"], coefficients=[0.1, 1], rhs=0.3)
         ],
     )
-    constraints = get_linear_constraints(
-        domain, LinearEqualityConstraint, unit_scaled=unit_scaled
-    )
+    default_dtype = torch.get_default_dtype()
+    try:
+        torch.set_default_dtype(torch.float32)
+        constraints = get_linear_constraints(
+            domain, constraint_type, unit_scaled=unit_scaled
+        )
+    finally:
+        torch.set_default_dtype(default_dtype)
+
     expected = torch.tensor([-0.2, -2] if unit_scaled else [-0.1, -1], **tkwargs)
-    assert torch.equal(constraints[0][1], expected)
+    torch.testing.assert_close(constraints[0][1], expected, rtol=0, atol=0)
 
 
 def test_get_linear_constraints():
