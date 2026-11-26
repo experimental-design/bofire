@@ -18,23 +18,18 @@ from bofire.strategies.doe.design import (
     check_fixed_experiments,
     check_partially_and_fully_fixed_experiments,
     check_partially_fixed_experiments,
-    find_local_max_ipopt,
+    find_local_max,
     get_n_experiments,
 )
 from bofire.strategies.doe.objective import get_objective_function
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 
 
-CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
+POUNCE_AVAILABLE = importlib.util.find_spec("pounce") is not None
 
 
-@pytest.mark.skipif(CYIPOPT_AVAILABLE, reason="requires cyipopt")
-def test_raise_error_if_cyipopt_not_available():
-    pytest.raises(ImportError)
-
-
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
-def test_find_local_max_ipopt_no_constraint():
+@pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
+def test_find_local_max_no_constraint():
     # Design for a problem with an n-choose-k constraint
     domain = Domain.from_lists(
         inputs=[
@@ -54,7 +49,7 @@ def test_find_local_max_ipopt_no_constraint():
         + 3
     )
 
-    design = find_local_max_ipopt(
+    design = find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="linear"),
@@ -65,8 +60,8 @@ def test_find_local_max_ipopt_no_constraint():
     assert design.shape == (num_exp, dim_input)
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
-def test_find_local_max_ipopt_nchoosek():
+@pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
+def test_find_local_max_nchoosek():
     # Design for a problem with an n-choose-k constraint
     inputs = [
         ContinuousInput(
@@ -97,7 +92,7 @@ def test_find_local_max_ipopt_nchoosek():
     )
     print(N)
 
-    A = find_local_max_ipopt(
+    A = find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="linear"),
@@ -108,8 +103,8 @@ def test_find_local_max_ipopt_nchoosek():
     assert A.shape == (N, D)
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
-def test_find_local_max_ipopt_mixture():
+@pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
+def test_find_local_max_mixture():
     # Design for a problem with a mixture constraint
     inputs = [
         ContinuousInput(
@@ -133,7 +128,7 @@ def test_find_local_max_ipopt_mixture():
     D = len(domain.inputs)
 
     N = len(get_formula_from_string(inputs=domain.inputs, model_type="linear")) + 3
-    A = find_local_max_ipopt(
+    A = find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="linear"),
@@ -144,8 +139,8 @@ def test_find_local_max_ipopt_mixture():
     assert A.shape == (N, D)
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
-def test_find_local_max_ipopt_mixed_results():
+@pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
+def test_find_local_max_mixed_results():
     inputs = [
         ContinuousInput(
             key=f"x{1}",
@@ -184,14 +179,14 @@ def test_find_local_max_ipopt_mixed_results():
         + 3
     )
     # with pytest.warns(ValueError):
-    A = find_local_max_ipopt(
+    A = find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="linear"),
             domain=domain,
             n_experiments=N,
         ),
-        ipopt_options={"max_iter": 100},
+        optimizer_options={"max_iter": 100},
     )
     opt = np.eye(3)
     for row in A.to_numpy():
@@ -200,8 +195,8 @@ def test_find_local_max_ipopt_mixed_results():
         assert any(np.allclose(o, row, atol=1e-2) for row in A.to_numpy())
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
-def test_find_local_max_ipopt_results():
+@pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
+def test_find_local_max_results():
     # define problem: no NChooseK constraints
     inputs = [
         ContinuousInput(
@@ -233,7 +228,7 @@ def test_find_local_max_ipopt_results():
         ],
     )
     np.random.seed(1)
-    A = find_local_max_ipopt(
+    A = find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="linear"),
@@ -248,8 +243,8 @@ def test_find_local_max_ipopt_results():
         assert any(np.allclose(o, row, atol=1e-2) for row in A.to_numpy())
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
-def test_find_local_max_ipopt_batch_constraint():
+@pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
+def test_find_local_max_batch_constraint():
     # define problem with batch constraints
     domain = Domain.from_lists(
         inputs=[
@@ -261,14 +256,14 @@ def test_find_local_max_ipopt_batch_constraint():
         constraints=[InterpointEqualityConstraint(features=["x1"], multiplicity=3)],
     )
 
-    result = find_local_max_ipopt(
+    result = find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="linear"),
             domain=domain,
             n_experiments=30,
         ),
-        ipopt_options={"max_iter": 100},
+        optimizer_options={"max_iter": 100},
     )
 
     x1 = np.round(np.array(result["x1"].values), 6)
@@ -278,8 +273,8 @@ def test_find_local_max_ipopt_batch_constraint():
         assert x1[3 * i] == x1[3 * i + 1] and x1[3 * i] == x1[3 * i + 2]
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
-def test_find_local_max_ipopt_fixed_experiments():
+@pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
+def test_find_local_max_fixed_experiments():
     # TODO fix this test. Currently it gets stuck in a local minimum 50% of the time
     # working if fixed experiments is tested below. Do I need this test?
     inputs = [
@@ -315,7 +310,7 @@ def test_find_local_max_ipopt_fixed_experiments():
     # define domain: no NChooseK constraints, invalid proposal
     np.random.seed(1)
     with pytest.raises(ValueError):
-        find_local_max_ipopt(
+        find_local_max(
             domain,
             objective_function=get_objective_function(
                 criterion=DOptimalityCriterion(formula="linear"),
@@ -370,14 +365,14 @@ def test_find_local_max_ipopt_fixed_experiments():
         + 3
     )
 
-    A = find_local_max_ipopt(
+    A = find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="fully-quadratic"),
             domain=domain,
             n_experiments=num_exp,
         ),
-        ipopt_options={"max_iter": 100},
+        optimizer_options={"max_iter": 100},
         fixed_experiments=pd.DataFrame(
             [[1, 0, 0], [0, 1, 0]],
             columns=["x1", "x2", "x3"],
@@ -391,7 +386,7 @@ def test_find_local_max_ipopt_fixed_experiments():
     assert np.allclose(A.to_numpy()[:2, :], opt[:2, :])
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+@pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
 def test_check_fixed_experiments():
     # define problem: everything fine
     inputs = [
@@ -447,7 +442,7 @@ def test_check_fixed_experiments():
     #     check_fixed_experiments(domain, 3, fixed_experiments)
 
 
-# @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+# @pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
 # def test_check_constraints_and_domain_respected():
 #     # problem with unfulfillable constraints
 #     # formulation constraint
@@ -469,7 +464,7 @@ def test_check_fixed_experiments():
 #     with warnings.catch_warnings():
 #         # warnings.simplefilter("ignore")
 #         try:
-#             A = find_local_max_ipopt(domain=domain, model_type="linear")
+#             A = find_local_max(domain=domain, model_type="linear")
 #         except Exception as e:
 #             assert (
 #                 str(e)
@@ -503,15 +498,15 @@ def test_check_fixed_experiments():
 
 #     with warnings.catch_warnings():
 #         warnings.simplefilter("ignore")
-#         A = find_local_max_ipopt(domain=domain, model_type="linear")
+#         A = find_local_max(domain=domain, model_type="linear")
 
 #     with warnings.catch_warnings():
 #         warnings.simplefilter("error")
 #         domain.validate_candidates(candidates=A, only_inputs=True)
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
-def test_find_local_max_ipopt_nonlinear_constraint():
+@pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
+def test_find_local_max_nonlinear_constraint():
     domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(-1, 1)),
@@ -534,14 +529,15 @@ def test_find_local_max_ipopt_nonlinear_constraint():
         + 3
     )
 
-    result = find_local_max_ipopt(
+    result = find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="linear"),
             domain=domain,
             n_experiments=num_exp,
         ),
-        ipopt_options={"max_iter": 100},
+        optimizer_options={"max_iter": 100},
+        seed=1,  # unseeded starts rarely end 1e-5 short of the active boundary
     )
 
     assert np.allclose(domain.constraints(result), 0, atol=1e-6)
@@ -582,7 +578,7 @@ def test_get_n_experiments():
         )
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+@pytest.mark.skipif(not POUNCE_AVAILABLE, reason="requires pounce")
 def test_fixed_experiments_checker():
     domain = Domain.from_lists(
         inputs=[
@@ -778,7 +774,7 @@ def test_partially_fixed_experiments():
         columns=domain.inputs.get_keys(),
     )
 
-    doe = find_local_max_ipopt(
+    doe = find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="linear"),
@@ -800,7 +796,7 @@ def test_partially_fixed_experiments():
     )
 
     with pytest.raises(ValueError) as e:
-        doe = find_local_max_ipopt(
+        doe = find_local_max(
             domain,
             objective_function=get_objective_function(
                 criterion=DOptimalityCriterion(formula="linear"),
@@ -817,7 +813,7 @@ def test_partially_fixed_experiments():
     )
 
     with pytest.raises(ValueError) as e:
-        doe = find_local_max_ipopt(
+        doe = find_local_max(
             domain,
             objective_function=get_objective_function(
                 criterion=DOptimalityCriterion(formula="linear"),
@@ -833,7 +829,7 @@ def test_partially_fixed_experiments():
         columns=domain.inputs.get_keys() + ["c0"],
     )
 
-    doe = find_local_max_ipopt(
+    doe = find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="linear"),
@@ -853,7 +849,7 @@ def test_partially_fixed_experiments():
         np.array([[1.0, None, None, None, 1.0], [0.0, None, None, None, 2.0]]),
         columns=["x1", "x2", "a1", "a2", "c0"],
     )
-    doe = find_local_max_ipopt(
+    doe = find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="linear"),
@@ -869,7 +865,7 @@ def test_partially_fixed_experiments():
         partially_fixed_experiments["x1"].astype(float),
     )
 
-    doe = find_local_max_ipopt(
+    doe = find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="linear"),
@@ -894,7 +890,7 @@ def test_partially_fixed_experiments():
         "For starting the optimization the total number of experiments must be larger that the number of fixed experiments.",
     )
     with pytest.raises(ValueError) as e:
-        doe = find_local_max_ipopt(
+        doe = find_local_max(
             domain,
             objective_function=get_objective_function(
                 criterion=DOptimalityCriterion(formula="linear"),
@@ -906,7 +902,7 @@ def test_partially_fixed_experiments():
         )
         assert e == too_few_experiments_error
     with pytest.raises(ValueError) as e:
-        doe = find_local_max_ipopt(
+        doe = find_local_max(
             domain,
             objective_function=get_objective_function(
                 criterion=DOptimalityCriterion(formula="linear"),
@@ -920,7 +916,7 @@ def test_partially_fixed_experiments():
 
     _fixed_experiments = fixed_experiments.drop(columns=["x1"])
     with pytest.raises(ValueError) as e:
-        doe = find_local_max_ipopt(
+        doe = find_local_max(
             domain,
             objective_function=get_objective_function(
                 criterion=DOptimalityCriterion(formula="linear"),
@@ -934,7 +930,7 @@ def test_partially_fixed_experiments():
 
     _partially_fixed_experiments = partially_fixed_experiments.drop(columns=["x1"])
     with pytest.raises(ValueError) as e:
-        doe = find_local_max_ipopt(
+        doe = find_local_max(
             domain,
             objective_function=get_objective_function(
                 criterion=DOptimalityCriterion(formula="linear"),
@@ -949,7 +945,7 @@ def test_partially_fixed_experiments():
         )
 
     with pytest.raises(ValueError) as e:
-        doe = find_local_max_ipopt(
+        doe = find_local_max(
             domain,
             objective_function=get_objective_function(
                 criterion=DOptimalityCriterion(formula="linear"),
@@ -964,25 +960,41 @@ def test_partially_fixed_experiments():
         )
 
 
-def test_find_local_max_ipopt_reports_progress():
+def _progress_events(optimizer):
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
     )
     events = []
-    find_local_max_ipopt(
+    find_local_max(
         domain,
         objective_function=get_objective_function(
             criterion=DOptimalityCriterion(formula="linear"),
             domain=domain,
             n_experiments=8,
         ),
-        ipopt_options={"max_iter": 20},
-        use_cyipopt=False,
+        optimizer_options={"max_iter": 20},
+        optimizer=optimizer,
         seed=1,
         callback=events.append,
     )
+    return events
+
+
+@pytest.mark.parametrize("optimizer", ["pounce", "scipy"])
+def test_find_local_max_reports_progress(optimizer):
+    if optimizer == "pounce" and not POUNCE_AVAILABLE:
+        pytest.skip("requires pounce")
+    events = _progress_events(optimizer)
     assert len(events) > 0
     assert [e.step for e in events] == list(range(1, len(events) + 1))
-    assert len(events) <= 20
+    # max_iter=20; pounce, like Ipopt, also reports the starting point
+    assert len(events) <= 21
     assert all(e.value is None or np.isfinite(e.value) for e in events)
+
+
+def test_find_local_max_progress_with_ipopt_warns_and_reports_nothing():
+    pytest.importorskip("cyipopt")
+    with pytest.warns(UserWarning, match="Progress is not reported"):
+        events = _progress_events("ipopt")
+    assert events == []

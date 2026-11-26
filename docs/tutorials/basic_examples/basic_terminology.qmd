@@ -60,8 +60,8 @@ x6 = CategoricalInput(
 ```
 
 We can define both continuous and categorical outputs. Each output feature should have an objective,
-which determines if we aim to minimize, maximize, or drive the feature to a given value. Furthermore, we can
-define weights between 0 and 1 in case the objectives should not be weighted equally.
+which determines if we aim to minimize, maximize, or drive the feature to a given value. If the objectives
+are combined into one, their relative weights are set on the strategy's scalarization.
 
 ```{python}
 #| papermill: {duration: 0.008613, end_time: '2024-10-10T20:36:29.452617', exception: false, start_time: '2024-10-10T20:36:29.444004', status: completed}
@@ -70,13 +70,11 @@ from bofire.data_models.features.api import ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 
 
-objective1 = MaximizeObjective(
-    w=1.0,
-    bounds=[0.0, 1.0],
+objective1 = MaximizeObjective(bounds=[0.0, 1.0],
 )
 y1 = ContinuousOutput(key="yield", objective=objective1)
 
-objective2 = MinimizeObjective(w=1.0)
+objective2 = MinimizeObjective()
 y2 = ContinuousOutput(key="time_taken", objective=objective2)
 ```
 
@@ -334,7 +332,7 @@ from bofire.data_models.objectives.api import MinimizeSigmoidObjective
 from bofire.plot.api import plot_objective_plotly
 
 
-output_constraint = MinimizeSigmoidObjective(w=1.0, steepness=10, tp=0.5)
+output_constraint = MinimizeSigmoidObjective(steepness=10, tp=0.5)
 y3 = ContinuousOutput(key="y3", objective=output_constraint)
 
 output_features = Outputs(features=[y1, y2, y3])

@@ -37,7 +37,7 @@ def simple_domain():
             ContinuousInput(key="x2", bounds=(0, 1)),
             CategoricalInput(key="x3", categories=["a", "b", "c"]),
         ],
-        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective())],
     )
 
 
@@ -85,7 +85,7 @@ def test_select_experiments_top_minimize(experiments):
             ContinuousInput(key="x2", bounds=(0, 1)),
             CategoricalInput(key="x3", categories=["a", "b", "c"]),
         ],
-        outputs=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))],
+        outputs=[ContinuousOutput(key="y", objective=MinimizeObjective())],
     )
     selected, desc = _select_experiments(experiments, domain, None, 3)
     assert set(selected["y"].tolist()) == {10, 20, 30}
@@ -143,8 +143,8 @@ def test_llm_strategy_rejects_multi_objective():
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x", bounds=(0, 1))],
         outputs=[
-            ContinuousOutput(key="y1", objective=MaximizeObjective(w=1.0)),
-            ContinuousOutput(key="y2", objective=MinimizeObjective(w=1.0)),
+            ContinuousOutput(key="y1", objective=MaximizeObjective()),
+            ContinuousOutput(key="y2", objective=MinimizeObjective()),
         ],
     )
     with pytest.raises(ValueError, match="exactly one output"):
@@ -171,7 +171,7 @@ def test_llm_strategy_ask_with_test_model():
             ContinuousInput(key="x1", bounds=(0, 10)),
             ContinuousInput(key="x2", bounds=(0, 10)),
         ],
-        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective(w=1.0))],
+        outputs=[ContinuousOutput(key="y", objective=MaximizeObjective())],
     )
     data_model = LLMStrategyDataModel(
         domain=domain,

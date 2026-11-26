@@ -16,13 +16,7 @@ from bofire.data_models.strategies.predictives.multi_fidelity_knowledge_gradient
     MultiFidelityHVKGStrategy,
 )
 from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
-from bofire.data_models.strategies.predictives.sobo import (
-    AdditiveSoboStrategy,
-    CustomSoboStrategy,
-    MultiplicativeAdditiveSoboStrategy,
-    MultiplicativeSoboStrategy,
-    SoboStrategy,
-)
+from bofire.data_models.strategies.predictives.sobo import SoboStrategy
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
 from bofire.data_models.strategies.strategy import Strategy
@@ -31,11 +25,7 @@ from bofire.data_models.unions import tagged_union
 
 _ACTUAL_STRATEGY_TYPES: list[type[Strategy]] = [
     SoboStrategy,
-    AdditiveSoboStrategy,
     ActiveLearningStrategy,
-    MultiplicativeSoboStrategy,
-    MultiplicativeAdditiveSoboStrategy,
-    CustomSoboStrategy,
     MultiFidelityVarianceBasedStrategy,
     MultiFidelityHVKGStrategy,
     QparegoStrategy,

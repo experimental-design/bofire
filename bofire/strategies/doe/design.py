@@ -12,6 +12,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.strategies.doe import DEFAULT_DOE_OPTIMIZER
 from bofire.strategies.doe.objective import Objective
 from bofire.strategies.doe.utils import (
     _minimize,
@@ -22,15 +23,14 @@ from bofire.strategies.progress import AskProgressCallback
 from bofire.strategies.random import RandomStrategy
 
 
-def find_local_max_ipopt(
+def find_local_max(
     domain: Domain,
     objective_function: Objective,
-    ipopt_options: Optional[Dict] = None,
+    optimizer_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
-    use_hessian: bool = False,
-    use_cyipopt: Optional[bool] = None,
+    optimizer: str = DEFAULT_DOE_OPTIMIZER,
     seed: Optional[int] = None,
     callback: Optional[AskProgressCallback] = None,
 ) -> pd.DataFrame:
@@ -39,7 +39,9 @@ def find_local_max_ipopt(
     Args:
         domain: domain containing the inputs and constraints.
         objective_function: The function defining the objective of the optimizattion.
-        ipopt_options: options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+        optimizer_options: options forwarded to the solver, overriding the defaults
+            ``max_iter=500`` and ``print_level=0``. Ipopt options for "pounce" and
+            "ipopt"; for "scipy" only ``max_iter`` and ``print_level`` are used.
         sampling : dataframe containing the initial guess.
         fixed_experiments : dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
@@ -47,9 +49,8 @@ def find_local_max_ipopt(
             Values are set before the optimization. Within one experiment not all variables need to be fixed.
             Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
             Non-fixed variables have to be set to None or nan.
-        use_hessian: If True, the hessian of the objective function is used. Default is False.
-        use_cyipopt: If True, cyipopt is used, otherwise scipy.minimize(). Default is None.
-            If None, cyipopt is used if available.
+        optimizer: NLP solver: "pounce" (default), "ipopt" (requires cyipopt) or
+            "scipy" (SLSQP).
         seed: Random seed for sampling. Defaults to None, in this case no seed is given to the
         callback: Called with an `AskProgressData` once per iteration of the solver.
 
@@ -156,14 +157,10 @@ def find_local_max_ipopt(
         x0,
     )
 
-    # set ipopt options
-    if ipopt_options is None:
-        ipopt_options = {}
-    _ipopt_options = {"max_iter": 500, "print_level": 0}
-    for key in ipopt_options.keys():
-        _ipopt_options[key] = ipopt_options[key]
-    if _ipopt_options["print_level"] > 12:
-        _ipopt_options["print_level"] = 0
+    # set optimizer options (Ipopt-style defaults; mapped to scipy names internally)
+    _options = {"max_iter": 500, "print_level": 0, **(optimizer_options or {})}
+    if _options.get("print_level", 0) > 12:
+        _options["print_level"] = 0
 
     #
     # Do the optimization
@@ -173,9 +170,8 @@ def find_local_max_ipopt(
         x0=x0,
         bounds=bounds,
         constraints=constraints,
-        use_hessian=use_hessian,
-        ipopt_options=_ipopt_options,
-        use_cyipopt=use_cyipopt,
+        optimizer=optimizer,
+        optimizer_options=_options,
         callback=callback,
     )
 

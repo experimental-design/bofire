@@ -108,7 +108,7 @@ class Ackley(Benchmark):
             )
 
         # Objective
-        output_feature = ContinuousOutput(key="y", objective=MaximizeObjective(w=1))
+        output_feature = ContinuousOutput(key="y", objective=MaximizeObjective())
 
         self._domain = Domain(
             inputs=Inputs(features=input_feature_list),
@@ -385,7 +385,7 @@ class Himmelblau(Benchmark):
         inputs.append(ContinuousInput(key="x_1", bounds=[-6, 6]))
         inputs.append(ContinuousInput(key="x_2", bounds=[-6, 6]))
 
-        objective = MinimizeObjective(w=1.0)
+        objective = MinimizeObjective()
         output_feature = ContinuousOutput(key="y", objective=objective)
         if self.use_constraints:
             raise ValueError("Not implemented yet!")
@@ -487,7 +487,7 @@ class MultiTaskHimmelblau(Benchmark):
         inputs.append(ContinuousInput(key="x_1", bounds=[-6, 6]))
         inputs.append(ContinuousInput(key="x_2", bounds=[-6, 6]))
 
-        objective = MinimizeObjective(w=1.0)
+        objective = MinimizeObjective()
         output_feature = ContinuousOutput(key="y", objective=objective)
         if self.use_constraints:
             raise ValueError("Not implemented yet!")
@@ -555,7 +555,7 @@ class DiscreteHimmelblau(Himmelblau):
         inputs.append(DiscreteInput(key="x_1", values=np.linspace(-6, 6, 20).tolist()))
         inputs.append(DiscreteInput(key="x_2", values=np.linspace(-6, 6, 20).tolist()))
 
-        objective = MinimizeObjective(w=1.0)
+        objective = MinimizeObjective()
         output_feature = ContinuousOutput(key="y", objective=objective)
 
         self._domain = Domain(
@@ -573,7 +573,7 @@ class _CategoricalDiscreteHimmelblau(Himmelblau):  # only used for testing
         inputs.append(DiscreteInput(key="x_2", values=np.linspace(-6, 6, 20).tolist()))
         inputs.append(CategoricalInput(key="x_3", categories=["a", "b", "c"]))
 
-        objective = MinimizeObjective(w=1.0)
+        objective = MinimizeObjective()
         output_feature = ContinuousOutput(key="y", objective=objective)
 
         self._domain = Domain(
@@ -755,7 +755,7 @@ class SixHumpCamel(Benchmark):
                 ]
             ),
             outputs=Outputs(
-                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
         )
 
@@ -795,7 +795,7 @@ class Easom(Benchmark):
                 ]
             ),
             outputs=Outputs(
-                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
         )
 
@@ -831,7 +831,7 @@ class Rosenbrock(Benchmark):
                 ]
             ),
             outputs=Outputs(
-                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
         )
 
@@ -869,7 +869,7 @@ class Booth(Benchmark):
                 ]
             ),
             outputs=Outputs(
-                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
         )
 
@@ -902,7 +902,7 @@ class HolderTable(Benchmark):
                 ]
             ),
             outputs=Outputs(
-                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
         )
 
@@ -944,7 +944,7 @@ class CrossInTray(Benchmark):
                 ]
             ),
             outputs=Outputs(
-                features=[ContinuousOutput(key="y", objective=MinimizeObjective(w=1.0))]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
         )
 

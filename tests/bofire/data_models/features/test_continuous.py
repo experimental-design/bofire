@@ -414,7 +414,7 @@ def test_continuous_output_to_description():
 
     feat = ContinuousOutput(
         key="yield",
-        objective=MaximizeObjective(w=1.0),
+        objective=MaximizeObjective(),
         context="Target >90%",
     )
     assert feat.to_description() == "yield: Maximize — Target >90%"
@@ -424,7 +424,7 @@ def test_continuous_output_to_description_no_context():
     from bofire.data_models.features.api import ContinuousOutput
     from bofire.data_models.objectives.api import MinimizeObjective
 
-    feat = ContinuousOutput(key="yield", objective=MinimizeObjective(w=1.0))
+    feat = ContinuousOutput(key="yield", objective=MinimizeObjective())
     assert feat.to_description() == "yield: Minimize"
 
 

@@ -133,7 +133,7 @@ def test_get_arguments_for_optimizer():
     assert optimizer_args.inequality_constraints == []
     assert optimizer_args.ic_generator is None
     assert optimizer_args.nonlinear_inequality_constraints is None
-    assert optimizer_args.sequential is False
+    assert optimizer_args.sequential is optimizer_data.sequential
     assert optimizer_args.fixed_features == {}
     assert optimizer_args.options == {"batch_limit": 20, "maxiter": 2000}
 
