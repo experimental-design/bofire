@@ -66,9 +66,11 @@ from bofire.data_models.strategies.stepwise.conditions import (
     AlwaysTrueCondition,
     AnyCondition,
     CombiCondition,
+    DistinguishableParameters,
     FeasibleExperimentCondition,
     NumberOfExperimentsCondition,
     StrategyHasConvergedCondition,
+    SufficientDistinguishableValues,
 )
 from bofire.data_models.strategies.stepwise.stepwise import Step, StepwiseStrategy
 from bofire.data_models.strategies.strategy import Strategy
