@@ -1186,6 +1186,35 @@ def test_nchoosek_constraints_as_bounds():
         assert _bounds[i] == bounds[i]
 
 
+@pytest.mark.parametrize(
+    "non_continuous",
+    [
+        DiscreteInput(key="d", values=[0, 1]),
+        CategoricalInput(key="c", categories=["u", "v"]),
+    ],
+)
+def test_nchoosek_constraints_as_bounds_rejects_mixed_domain(non_continuous):
+    """Issue #842: a raw mixed domain misaligns bounds and patterns.
+
+    No linear constraint is present, so the feasibility filter never runs; the
+    guard at the start of nchoosek_constraints_as_bounds must still raise.
+    """
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=k, bounds=(0, 1)) for k in ["a", "b", "x"]]
+        + [non_continuous],
+        constraints=[
+            NChooseKConstraint(
+                features=["a", "b", "x"],
+                min_count=0,
+                max_count=1,
+                none_also_valid=True,
+            )
+        ],
+    )
+    with pytest.raises(ValueError, match="relaxed to continuous"):
+        nchoosek_constraints_as_bounds(domain, n_experiments=2)
+
+
 def test_convert_formula_to_string():
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(3)],
