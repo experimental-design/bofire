@@ -3,13 +3,7 @@ from typing import Annotated, Any, Literal, Protocol
 
 import numpy as np
 import pandas as pd
-from pydantic import (
-    Field,
-    NonNegativeFloat,
-    PositiveInt,
-    field_validator,
-    model_validator,
-)
+from pydantic import Field, PositiveFloat, PositiveInt, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain
@@ -86,7 +80,7 @@ class FeasibleExperimentCondition(SingleCondition, EvaluateableCondition):
 
     type: Literal["FeasibleExperimentCondition"] = "FeasibleExperimentCondition"
     n_required_feasible_experiments: PositiveInt = 1
-    threshold: Annotated[NonNegativeFloat, Field(ge=0, le=1)] = 0.9
+    threshold: Annotated[float, Field(ge=0, le=1)] = 0.9
 
     def evaluate(
         self,
@@ -203,7 +197,7 @@ class DistinguishableParameters(BaseModel):
     """
 
     key: str = Field(description="Key of the feature whose values are checked.")
-    threshold: NonNegativeFloat = Field(
+    threshold: PositiveFloat = Field(
         description=(
             "Minimal absolute difference for two values to count as different. "
             "Ignored for categorical features, whose values are different if "
