@@ -119,6 +119,7 @@ def get_linear_constraints(
                 coefficients.append(
                     c.coefficients[i],
                 )  # if unit_scaled == False else c_scaled.coefficients[i])
+        # Construct in solver precision directly to avoid float32 rounding.
         if unit_scaled:
             lower = np.array(lower)
             upper = np.array(upper)
@@ -127,7 +128,7 @@ def get_linear_constraints(
             constraints.append(
                 (
                     torch.tensor(indices),
-                    -torch.tensor(scaled_coefficients).to(**tkwargs),
+                    -torch.tensor(scaled_coefficients, **tkwargs),
                     -(rhs + c.rhs - np.sum(np.array(coefficients) * lower)),
                 ),
             )
@@ -135,7 +136,7 @@ def get_linear_constraints(
             constraints.append(
                 (
                     torch.tensor(indices),
-                    -torch.tensor(coefficients).to(**tkwargs),
+                    -torch.tensor(coefficients, **tkwargs),
                     -(rhs + c.rhs),
                 ),
             )
