@@ -220,8 +220,9 @@ class SufficientDistinguishableValues(SingleCondition, EvaluateableCondition):
 
     Numerical and categorical inputs as well as continuous and categorical
     outputs can be listed. For outputs, only valid values are used; repeated
-    measurements of a continuous output at the same input point are averaged
-    first, so that replicates count only once.
+    measurements of a continuous output at the same input point are replaced by
+    their median first, so that replicates count only once and a single outlier
+    among them does not shift the value.
 
     Examples:
         >>> SufficientDistinguishableValues(
@@ -278,7 +279,7 @@ class SufficientDistinguishableValues(SingleCondition, EvaluateableCondition):
             if isinstance(domain.outputs.get_by_key(params.key), CategoricalOutput):
                 n_distinguishable = valid[params.key].nunique()
             else:
-                values = valid.groupby(input_keys, sort=False)[params.key].mean()
+                values = valid.groupby(input_keys, sort=False)[params.key].median()
                 n_distinguishable = _n_distinguishable(
                     values.to_numpy(dtype=float), params.threshold
                 )

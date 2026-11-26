@@ -186,9 +186,11 @@ def _sufficient_experiments(x, y1, y2=None, c=None, co=None, valid_co=None):
         # 0 and 1.2 are 1 apart although every neighbouring gap is < 1
         ("y1", [0, 1, 2], [0, 0.6, 1.2], 2, False),
         ("y1", [0, 1, 2], [0, 0.6, 1.2], 3, True),
-        # replicates spread over the threshold are averaged and count once
+        # replicates spread over the threshold are combined and count once
         ("y1", [0, 0, 0], [0, 1, 2], 1, False),
         ("y1", [0, 0, 0], [0, 1, 2], 2, True),
+        # replicates are combined by their median (1)
+        ("y1", [0, 0, 0, 1], [0, 1, 10, 1], 2, True),
         # missing output values are ignored
         ("y1", [0, 1, 2], [0, float("nan"), 5], 3, True),
         # inputs are packed directly
