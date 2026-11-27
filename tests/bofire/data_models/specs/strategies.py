@@ -53,6 +53,7 @@ from bofire.data_models.strategies.convergence_criteria.api import (
     ProposalDeviationCriterion,
     UcbLcbRegretBoundCriterion,
 )
+from bofire.data_models.strategies.llm import _DEFAULT_SYSTEM_PROMPT
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     LinearDeterministicSurrogate,
@@ -1285,7 +1286,7 @@ specs.add_valid(
         "output_retries": 3,
         "n_recent_experiments": None,
         "n_top_experiments": None,
-        "system_prompt": None,
+        "system_prompt": _DEFAULT_SYSTEM_PROMPT,
     },
 )
 

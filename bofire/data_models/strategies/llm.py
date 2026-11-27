@@ -88,20 +88,11 @@ class LLMStrategy(Strategy):
         "values are shown, in addition to the recent ones if `n_recent_experiments` "
         "is also given. If neither is provided, all experiments are shown.",
     )
-    system_prompt: Optional[str] = Field(
-        default=None,
-        description="Instructions replacing BoFire's default system prompt, which "
-        "`get_system_prompt` returns. The problem description and the experiments "
-        "are added to it in any case.",
+    system_prompt: str = Field(
+        default=_DEFAULT_SYSTEM_PROMPT,
+        description="Instructions the model receives as system prompt. The problem "
+        "description and the experiments are added to it in any case.",
     )
-
-    def get_system_prompt(self) -> str:
-        """Returns the system prompt the model receives.
-
-        Returns:
-            `system_prompt` if provided, otherwise BoFire's default system prompt.
-        """
-        return self.system_prompt or _DEFAULT_SYSTEM_PROMPT
 
     @model_validator(mode="after")
     def validate_single_objective(self):

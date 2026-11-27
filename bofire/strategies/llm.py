@@ -121,7 +121,7 @@ class LLMStrategy(Strategy):
         self._output_retries = data_model.output_retries
         self._n_recent_experiments = data_model.n_recent_experiments
         self._n_top_experiments = data_model.n_top_experiments
-        self._system_prompt = data_model.get_system_prompt()
+        self._system_prompt = data_model.system_prompt
         self._pydantic_ai_model = None
         self._agent = None
 
@@ -275,7 +275,7 @@ class LLMStrategy(Strategy):
             output_retries: Number of retries for output validation.
             n_recent_experiments: Number of recent experiments to show.
             n_top_experiments: Number of top experiments to show.
-            system_prompt: Custom system prompt override.
+            system_prompt: Custom system prompt; if not provided, BoFire's default.
             seed: Random seed.
 
         Returns:
