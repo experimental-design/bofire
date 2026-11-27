@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-348615dbec15d57dbd120bddebf38ff3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-ee65e383bc30aa9fec98e06fe43bf684.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-348615dbec15d57dbd120bddebf38ff3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-be7d895c813c84042c9fbb18889028a9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-c571f53156c730c5a034ccf14cd27066.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-be7d895c813c84042c9fbb18889028a9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -766,18 +766,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This tutorial shows how to set up a multi-fidelity problem that has multiple objectives. This approach uses the Multi-fidelity Hypervolume Knowledge Gradient acquisition function [1], which supports: - Multiple objectives, optimizing their pareto front - Multiple fidelities, which can correspond to the quality of a function evaluation. For example, when running a computer simulation, one can control the resolution or the duration, each of which trade-off between quality and cost. - A cost-weighting, which determines how expensive an experiment is to carry out given the fidelity.</p>
 <p>For a deeper look at how this acquisition function works, see the corresponding paper or the <a href="https://botorch.org/docs/tutorials/Multi_objective_multi_fidelity_BO">BoTorch tutorial</a>.</p>
 <p>[1] S. Daulton, M. Balandat, and E. Bakshy. <a href="https://proceedings.mlr.press/v202/daulton23a.html">Hypervolume Knowledge Gradient for Multi-Objective Bayesian Optimization with Partial Information</a>. ICML, 2023.</p>
-<div id="0b36a492" class="cell" data-execution_count="1">
+<div id="e4555a47" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qMFHVKG</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.enum <span class="im">import</span> SamplingMethodEnum</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousTaskInput</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> BotorchOptimizer</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> LinearDeterministicSurrogate</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies.api <span class="im">import</span> MultiFidelityHVKGStrategy, RandomStrategy</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousTaskInput</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> BotorchOptimizer</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> LinearDeterministicSurrogate</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies.api <span class="im">import</span> MultiFidelityHVKGStrategy, RandomStrategy</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
   warnings.warn(
@@ -785,7 +784,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   warnings.warn(</code></pre>
 </div>
 </div>
-<div id="7d12e218" class="cell" data-execution_count="2">
+<div id="083029e4" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> SMOKE_TEST:</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    acqf_optimizer <span class="op">=</span> BotorchOptimizer(</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>        n_raw_samples<span class="op">=</span><span class="dv">32</span>,</span>
@@ -811,7 +810,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="problem-definition">Problem definition</h2>
 <p>We will consider a very simple objective function - a rigid-body physics simulation of thousands of particles in a packed bed reactor. We can control the shape of each particle, and we want to optimize the performance of the reactor. This includes: - maximizing air flow through the reactor (minimizing pressure drop), and - maximizing the number reaction sites (maximizing surface area per unit volume of the reactor).</p>
 <p>We can also decrease the fidelity in two different ways, each reducing the cost of an experiment: - stop the simulation early, and - reduce the resolution of the simulation.</p>
-<div id="799372dd" class="cell" data-execution_count="3">
+<div id="49aa8a26" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> simulation_black_box(experiments: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Toy function representing a rigid-body simulation of reactor packing.</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -843,7 +842,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>        <span class="st">"surface_area"</span>: surface_area,</span>
 <span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="7b6d439b" class="cell" data-execution_count="4">
+<div id="9c1d9003" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> Benchmark</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.domain.api <span class="im">as</span> domain_api</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.features.api <span class="im">as</span> feature_api</span>
@@ -873,7 +872,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> simulation_black_box(candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let’s plot the objective function. First, we show the surface at the highest fidelity, varying the height+radius parameters. The objective surface is quite smooth, and unimodal, so this problem shouldn’t be too difficult.</p>
-<div id="747e355f" class="cell" data-execution_count="5">
+<div id="69eee15c" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.colors <span class="im">import</span> Normalize</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -903,7 +902,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We can also plot the pareto front below, keeping in mind that we want to minimize the pressure drop, and maximize the surface area. We color the observations according to the radius, and scale their size according to the height.</p>
-<div id="b7356af3" class="cell" data-execution_count="6">
+<div id="fe284bb4" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_pareto_idcs(data: pd.DataFrame) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">int</span>]:</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    dominating_points: <span class="bu">list</span>[<span class="bu">int</span>] <span class="op">=</span> []</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    cur_max_surface_area <span class="op">=</span> <span class="op">-</span>np.inf</span>
@@ -932,7 +931,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We also show the impact of varying the fidelity parameters, for a fixed height+radius. This shows the scale of bias that is introduced when changing the fidelities.</p>
-<div id="be10d7d1" class="cell" data-execution_count="7">
+<div id="b9ec0595" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.colors <span class="im">import</span> CenteredNorm</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>fixed_shape <span class="op">=</span> {<span class="st">"height"</span>: <span class="fl">7.5</span>, <span class="st">"radius"</span>: <span class="fl">5.0</span>}</span>
@@ -968,7 +967,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="creating-the-strategy" class="level2">
 <h2 class="anchored" data-anchor-id="creating-the-strategy">Creating the strategy</h2>
 <p>Now that the problem has been defined, we can sample some experiments from the problem, and define the strategy that we will use to ask for points.</p>
-<div id="36f8dcf8" class="cell" data-execution_count="8">
+<div id="96554499" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SimulationBenchmark()</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(<span class="dv">10</span>, seed<span class="op">=</span><span class="dv">0</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
@@ -992,48 +991,48 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>2.658293</td>
-<td>4.399428</td>
-<td>0.540408</td>
-<td>0.535277</td>
-<td>1.232067</td>
-<td>2.047043</td>
+<td>6.732655</td>
+<td>3.428080</td>
+<td>0.136876</td>
+<td>0.213222</td>
+<td>0.234713</td>
+<td>2.876884</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>2.716066</td>
-<td>6.081596</td>
-<td>0.447888</td>
-<td>0.919367</td>
-<td>1.680873</td>
-<td>1.914449</td>
+<td>8.319432</td>
+<td>9.214800</td>
+<td>0.645972</td>
+<td>0.783597</td>
+<td>0.815293</td>
+<td>1.971617</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>4.674992</td>
-<td>7.387116</td>
-<td>0.237494</td>
-<td>0.915109</td>
-<td>1.111606</td>
-<td>2.122532</td>
+<td>5.892625</td>
+<td>9.415652</td>
+<td>0.834268</td>
+<td>0.202191</td>
+<td>1.245150</td>
+<td>1.297578</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>7.157799</td>
-<td>8.927885</td>
-<td>0.239628</td>
-<td>0.812347</td>
-<td>0.845761</td>
-<td>2.067462</td>
+<td>8.716638</td>
+<td>1.302270</td>
+<td>0.756690</td>
+<td>0.340524</td>
+<td>1.290022</td>
+<td>3.130227</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>2.847855</td>
-<td>5.074227</td>
-<td>0.786220</td>
-<td>0.405740</td>
-<td>1.382661</td>
-<td>1.832457</td>
+<td>8.768610</td>
+<td>5.873151</td>
+<td>0.369741</td>
+<td>0.538150</td>
+<td>0.409782</td>
+<td>2.905577</td>
 </tr>
 </tbody>
 </table>
@@ -1041,7 +1040,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="ffae7d31" class="cell" data-execution_count="9">
+<div id="ee0d49dd" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies.api <span class="im">import</span> MultiFidelityHVKGStrategy</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> MultiFidelityHVKGStrategy.make(</span>
@@ -1083,16 +1082,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>4.205817</td>
-<td>1.0</td>
+<td>4.720405</td>
+<td>3.409429</td>
 <td>0.1</td>
 <td>0.2</td>
-<td>0.542412</td>
-<td>3.231457</td>
-<td>0.640275</td>
-<td>0.617674</td>
-<td>-0.542412</td>
-<td>3.231457</td>
+<td>0.870929</td>
+<td>2.027893</td>
+<td>0.655382</td>
+<td>0.406418</td>
+<td>-0.870929</td>
+<td>2.027893</td>
 </tr>
 </tbody>
 </table>
@@ -1105,7 +1104,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>A key piece of information that we omitted in the above cells is the <em>cost</em> function - how much does an experiment cost to run? This is highly relevant in multi-fidelity settings, since if all experiments cost the same, then there is no reason to not query at the highest fidelity.</p>
 <p>By default, we assume that an experiment at the lowest fidelity costs <code>1.0</code> units, and scales linearly with the task features with coefficients <code>1.0</code>. However, this should be explicitly defined as a part of the strategy. Note that currently, BoFire only supports linear costs.</p>
 <p>In our example, increasing the duration of the simulation will increase the cost by a large coefficient. However (eg. due to parallelization of the simulation), increasing the resolution incurs a smaller cost. We can explicitly include this in the model. We would then expect the strategy to propose experiments at full resolution (since there is no significant cost savings to reducing the resolution), but not necessarily at the full duration.</p>
-<div id="6425fd10" class="cell" data-execution_count="10">
+<div id="ab24efd6" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> LinearDeterministicSurrogate</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>cost_model <span class="op">=</span> LinearDeterministicSurrogate(</span>
@@ -1151,16 +1150,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>6.313038</td>
-<td>3.186808</td>
-<td>0.765557</td>
-<td>0.899081</td>
-<td>0.531769</td>
-<td>2.781472</td>
-<td>0.178426</td>
-<td>0.152278</td>
-<td>-0.531769</td>
-<td>2.781472</td>
+<td>9.769986</td>
+<td>6.734176</td>
+<td>0.1</td>
+<td>0.2</td>
+<td>0.274009</td>
+<td>2.899743</td>
+<td>0.564379</td>
+<td>0.493324</td>
+<td>-0.274009</td>
+<td>2.899743</td>
 </tr>
 </tbody>
 </table>
@@ -1678,267 +1677,266 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
 <span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qMFHVKG</span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.enum <span class="im">import</span> SamplingMethodEnum</span>
-<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousTaskInput</span>
-<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> BotorchOptimizer</span>
-<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> LinearDeterministicSurrogate</span>
-<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies.api <span class="im">import</span> MultiFidelityHVKGStrategy, RandomStrategy</span>
-<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span>
-<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> SMOKE_TEST:</span>
-<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>    acqf_optimizer <span class="op">=</span> BotorchOptimizer(</span>
-<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>        n_raw_samples<span class="op">=</span><span class="dv">32</span>,</span>
-<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>        maxiter<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>        n_restarts<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>    acqf <span class="op">=</span> qMFHVKG(</span>
-<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>        num_fantasies<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>        num_pareto<span class="op">=</span><span class="dv">3</span></span>
-<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
-<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>    acqf_optimizer <span class="op">=</span> BotorchOptimizer(</span>
-<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>        n_raw_samples<span class="op">=</span><span class="dv">256</span>,</span>
-<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>        maxiter<span class="op">=</span><span class="dv">100</span>,</span>
-<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a>        n_restarts<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>    acqf <span class="op">=</span> qMFHVKG(</span>
-<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>        num_fantasies<span class="op">=</span><span class="dv">4</span>,</span>
-<span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a>        num_pareto<span class="op">=</span><span class="dv">5</span></span>
-<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a><span class="fu">## Problem definition</span></span>
-<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>We will consider a very simple objective function - a rigid-body physics simulation</span>
-<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>of thousands of particles in a packed bed reactor. We can control the shape of each</span>
-<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a>particle, and we want to optimize the performance of the reactor. This includes:</span>
-<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>maximizing air flow through the reactor (minimizing pressure drop), and</span>
-<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>maximizing the number reaction sites (maximizing surface area per unit volume of the reactor).</span>
-<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-70"><a href="#cb13-70" aria-hidden="true" tabindex="-1"></a>We can also decrease the fidelity in two different ways, each reducing the cost of an experiment:</span>
-<span id="cb13-71"><a href="#cb13-71" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>stop the simulation early, and</span>
-<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>reduce the resolution of the simulation.</span>
-<span id="cb13-73"><a href="#cb13-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-76"><a href="#cb13-76" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb13-77"><a href="#cb13-77" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> simulation_black_box(experiments: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
-<span id="cb13-78"><a href="#cb13-78" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Toy function representing a rigid-body simulation of reactor packing.</span></span>
-<span id="cb13-79"><a href="#cb13-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-80"><a href="#cb13-80" aria-hidden="true" tabindex="-1"></a><span class="co">    For the sake of this tutorial, we provide simple expressions to represent the various</span></span>
-<span id="cb13-81"><a href="#cb13-81" aria-hidden="true" tabindex="-1"></a><span class="co">    impacts of changing the experiment conditions and fidelities."""</span></span>
-<span id="cb13-82"><a href="#cb13-82" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-83"><a href="#cb13-83" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Pressure drop is minimized for near-spherical cylinders</span></span>
-<span id="cb13-84"><a href="#cb13-84" aria-hidden="true" tabindex="-1"></a>    aspect_ratio <span class="op">=</span> experiments[<span class="st">"height"</span>] <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> experiments[<span class="st">"radius"</span>])</span>
-<span id="cb13-85"><a href="#cb13-85" aria-hidden="true" tabindex="-1"></a>    pressure_drop <span class="op">=</span> <span class="fl">0.4</span> <span class="op">*</span> np.exp(np.<span class="bu">abs</span>(np.log(aspect_ratio)))</span>
-<span id="cb13-86"><a href="#cb13-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-87"><a href="#cb13-87" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Specific surface area is maximized for tall, thin cylinders</span></span>
-<span id="cb13-88"><a href="#cb13-88" aria-hidden="true" tabindex="-1"></a>    optimal_shape_for_surface_area <span class="op">=</span> {<span class="st">"height"</span>: <span class="fl">10.0</span>, <span class="st">"radius"</span>: <span class="fl">1.0</span>}</span>
-<span id="cb13-89"><a href="#cb13-89" aria-hidden="true" tabindex="-1"></a>    dist <span class="op">=</span> experiments[[<span class="st">"height"</span>, <span class="st">"radius"</span>]].sub(optimal_shape_for_surface_area).to_numpy()</span>
-<span id="cb13-90"><a href="#cb13-90" aria-hidden="true" tabindex="-1"></a>    surface_area <span class="op">=</span> <span class="fl">3.5</span> <span class="op">-</span> <span class="fl">0.02</span> <span class="op">*</span> (dist <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb13-91"><a href="#cb13-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-92"><a href="#cb13-92" aria-hidden="true" tabindex="-1"></a>    <span class="co"># By terminating the simulation early, the packing doesn't settle - we underestimate</span></span>
-<span id="cb13-93"><a href="#cb13-93" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the pressure drop, and the specific surface area has some noisy bias</span></span>
-<span id="cb13-94"><a href="#cb13-94" aria-hidden="true" tabindex="-1"></a>    pressure_drop <span class="op">+=</span> <span class="fl">0.2</span> <span class="op">*</span> (experiments[<span class="st">"sim_duration"</span>] <span class="op">-</span> <span class="fl">1.0</span>)</span>
-<span id="cb13-95"><a href="#cb13-95" aria-hidden="true" tabindex="-1"></a>    surface_area <span class="op">+=</span> <span class="fl">0.1</span> <span class="op">*</span> np.sin(<span class="fl">5.0</span> <span class="op">*</span> experiments[<span class="st">"sim_duration"</span>])</span>
-<span id="cb13-96"><a href="#cb13-96" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-97"><a href="#cb13-97" aria-hidden="true" tabindex="-1"></a>    <span class="co"># By decreasing the resolution, the computed mesh starts combining adjacent particles</span></span>
-<span id="cb13-98"><a href="#cb13-98" aria-hidden="true" tabindex="-1"></a>    <span class="co"># to fill voids. This causes large decrease in specific surface area for small resolution.</span></span>
-<span id="cb13-99"><a href="#cb13-99" aria-hidden="true" tabindex="-1"></a>    <span class="co"># To make this more realistic, you may want to make this effect a function of the</span></span>
-<span id="cb13-100"><a href="#cb13-100" aria-hidden="true" tabindex="-1"></a>    <span class="co"># geometry, since a smaller geometry would require a higher resolution.</span></span>
-<span id="cb13-101"><a href="#cb13-101" aria-hidden="true" tabindex="-1"></a>    surface_area <span class="op">+=</span> <span class="op">-</span><span class="fl">0.2</span> <span class="op">*</span> np.exp(<span class="fl">2.0</span> <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> experiments[<span class="st">"sim_resolution"</span>]) <span class="op">-</span> <span class="fl">1.0</span>)</span>
-<span id="cb13-102"><a href="#cb13-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-103"><a href="#cb13-103" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame({</span>
-<span id="cb13-104"><a href="#cb13-104" aria-hidden="true" tabindex="-1"></a>        <span class="st">"pressure_drop"</span>: pressure_drop,</span>
-<span id="cb13-105"><a href="#cb13-105" aria-hidden="true" tabindex="-1"></a>        <span class="st">"surface_area"</span>: surface_area,</span>
-<span id="cb13-106"><a href="#cb13-106" aria-hidden="true" tabindex="-1"></a>    })</span>
-<span id="cb13-107"><a href="#cb13-107" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb13-108"><a href="#cb13-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-111"><a href="#cb13-111" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb13-112"><a href="#cb13-112" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> Benchmark</span>
-<span id="cb13-113"><a href="#cb13-113" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.domain.api <span class="im">as</span> domain_api</span>
-<span id="cb13-114"><a href="#cb13-114" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.features.api <span class="im">as</span> feature_api</span>
-<span id="cb13-115"><a href="#cb13-115" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.objectives.api <span class="im">as</span> objective_api</span>
-<span id="cb13-116"><a href="#cb13-116" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-117"><a href="#cb13-117" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SimulationBenchmark(Benchmark):</span>
-<span id="cb13-118"><a href="#cb13-118" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, <span class="op">**</span>kwargs):</span>
-<span id="cb13-119"><a href="#cb13-119" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(<span class="op">**</span>kwargs)</span>
-<span id="cb13-120"><a href="#cb13-120" aria-hidden="true" tabindex="-1"></a>        inputs <span class="op">=</span> domain_api.Inputs(features<span class="op">=</span>[</span>
-<span id="cb13-121"><a href="#cb13-121" aria-hidden="true" tabindex="-1"></a>            feature_api.ContinuousInput(key<span class="op">=</span><span class="st">"height"</span>, bounds<span class="op">=</span>(<span class="fl">1.0</span>, <span class="fl">10.0</span>)),</span>
-<span id="cb13-122"><a href="#cb13-122" aria-hidden="true" tabindex="-1"></a>            feature_api.ContinuousInput(key<span class="op">=</span><span class="st">"radius"</span>, bounds<span class="op">=</span>(<span class="fl">1.0</span>, <span class="fl">10.0</span>)),</span>
-<span id="cb13-123"><a href="#cb13-123" aria-hidden="true" tabindex="-1"></a>            feature_api.ContinuousTaskInput(key<span class="op">=</span><span class="st">"sim_duration"</span>, bounds<span class="op">=</span>(<span class="fl">0.1</span>, <span class="fl">1.0</span>)),</span>
-<span id="cb13-124"><a href="#cb13-124" aria-hidden="true" tabindex="-1"></a>            feature_api.ContinuousTaskInput(key<span class="op">=</span><span class="st">"sim_resolution"</span>, bounds<span class="op">=</span>(<span class="fl">0.2</span>, <span class="fl">1.0</span>)),</span>
-<span id="cb13-125"><a href="#cb13-125" aria-hidden="true" tabindex="-1"></a>        ])</span>
-<span id="cb13-126"><a href="#cb13-126" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-127"><a href="#cb13-127" aria-hidden="true" tabindex="-1"></a>        outputs <span class="op">=</span> domain_api.Outputs(features<span class="op">=</span>[</span>
-<span id="cb13-128"><a href="#cb13-128" aria-hidden="true" tabindex="-1"></a>            feature_api.ContinuousOutput(key<span class="op">=</span><span class="st">"pressure_drop"</span>, objective<span class="op">=</span>objective_api.MinimizeObjective()),</span>
-<span id="cb13-129"><a href="#cb13-129" aria-hidden="true" tabindex="-1"></a>            feature_api.ContinuousOutput(key<span class="op">=</span><span class="st">"surface_area"</span>, objective<span class="op">=</span>objective_api.MaximizeObjective()),</span>
-<span id="cb13-130"><a href="#cb13-130" aria-hidden="true" tabindex="-1"></a>        ])</span>
-<span id="cb13-131"><a href="#cb13-131" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-132"><a href="#cb13-132" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._domain <span class="op">=</span> domain_api.Domain(</span>
-<span id="cb13-133"><a href="#cb13-133" aria-hidden="true" tabindex="-1"></a>            inputs<span class="op">=</span>inputs,</span>
-<span id="cb13-134"><a href="#cb13-134" aria-hidden="true" tabindex="-1"></a>            outputs<span class="op">=</span>outputs,</span>
-<span id="cb13-135"><a href="#cb13-135" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb13-136"><a href="#cb13-136" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-137"><a href="#cb13-137" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _f(<span class="va">self</span>, candidates: pd.DataFrame):</span>
-<span id="cb13-138"><a href="#cb13-138" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> simulation_black_box(candidates)</span>
-<span id="cb13-139"><a href="#cb13-139" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb13-140"><a href="#cb13-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-141"><a href="#cb13-141" aria-hidden="true" tabindex="-1"></a>Let's plot the objective function. First, we show the surface at the highest fidelity, varying the height+radius parameters. The objective surface is quite smooth, and unimodal, so this problem shouldn't be too difficult.</span>
-<span id="cb13-142"><a href="#cb13-142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-145"><a href="#cb13-145" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb13-146"><a href="#cb13-146" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb13-147"><a href="#cb13-147" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.colors <span class="im">import</span> Normalize</span>
-<span id="cb13-148"><a href="#cb13-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-149"><a href="#cb13-149" aria-hidden="true" tabindex="-1"></a>target_fidelity <span class="op">=</span> {<span class="st">"sim_duration"</span>: <span class="fl">1.0</span>, <span class="st">"sim_resolution"</span>: <span class="fl">1.0</span>}</span>
-<span id="cb13-150"><a href="#cb13-150" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-151"><a href="#cb13-151" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(ncols<span class="op">=</span><span class="dv">2</span>, sharex<span class="op">=</span><span class="va">True</span>, sharey<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb13-152"><a href="#cb13-152" aria-hidden="true" tabindex="-1"></a>NUM_PLOT <span class="op">=</span> <span class="dv">20</span></span>
-<span id="cb13-153"><a href="#cb13-153" aria-hidden="true" tabindex="-1"></a>hs, rs <span class="op">=</span> np.meshgrid(np.linspace(<span class="fl">1.0</span>, <span class="fl">10.0</span>, NUM_PLOT), np.linspace(<span class="fl">1.0</span>, <span class="fl">10.0</span>, NUM_PLOT))</span>
-<span id="cb13-154"><a href="#cb13-154" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.DataFrame({<span class="st">"height"</span>: hs.flatten(), <span class="st">"radius"</span>: rs.flatten(), <span class="op">**</span>target_fidelity})</span>
-<span id="cb13-155"><a href="#cb13-155" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> simulation_black_box(data)</span>
-<span id="cb13-156"><a href="#cb13-156" aria-hidden="true" tabindex="-1"></a>norm <span class="op">=</span> Normalize(vmin<span class="op">=</span><span class="fl">0.0</span>, vmax<span class="op">=</span><span class="fl">3.5</span>)</span>
-<span id="cb13-157"><a href="#cb13-157" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].contourf(hs, rs, res[<span class="st">"pressure_drop"</span>].to_numpy().reshape(NUM_PLOT, NUM_PLOT), norm<span class="op">=</span>norm, levels<span class="op">=</span><span class="dv">30</span>)</span>
-<span id="cb13-158"><a href="#cb13-158" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].contourf(hs, rs, res[<span class="st">"surface_area"</span>].to_numpy().reshape(NUM_PLOT, NUM_PLOT), norm<span class="op">=</span>norm, levels<span class="op">=</span><span class="dv">20</span>)</span>
-<span id="cb13-159"><a href="#cb13-159" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-160"><a href="#cb13-160" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"Simulation outputs at highest fidelity"</span>)</span>
-<span id="cb13-161"><a href="#cb13-161" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_title(<span class="st">"Pressure drop"</span>)</span>
-<span id="cb13-162"><a href="#cb13-162" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_title(<span class="st">"Surface area"</span>)</span>
-<span id="cb13-163"><a href="#cb13-163" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axs:</span>
-<span id="cb13-164"><a href="#cb13-164" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"height"</span>)</span>
-<span id="cb13-165"><a href="#cb13-165" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="st">"radius"</span>)</span>
-<span id="cb13-166"><a href="#cb13-166" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb13-167"><a href="#cb13-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-168"><a href="#cb13-168" aria-hidden="true" tabindex="-1"></a>We can also plot the pareto front below, keeping in mind that we want to minimize the</span>
-<span id="cb13-169"><a href="#cb13-169" aria-hidden="true" tabindex="-1"></a>pressure drop, and maximize the surface area. We color the observations according to</span>
-<span id="cb13-170"><a href="#cb13-170" aria-hidden="true" tabindex="-1"></a>the radius, and scale their size according to the height.</span>
-<span id="cb13-171"><a href="#cb13-171" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-174"><a href="#cb13-174" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb13-175"><a href="#cb13-175" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_pareto_idcs(data: pd.DataFrame) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">int</span>]:</span>
-<span id="cb13-176"><a href="#cb13-176" aria-hidden="true" tabindex="-1"></a>    dominating_points: <span class="bu">list</span>[<span class="bu">int</span>] <span class="op">=</span> []</span>
-<span id="cb13-177"><a href="#cb13-177" aria-hidden="true" tabindex="-1"></a>    cur_max_surface_area <span class="op">=</span> <span class="op">-</span>np.inf</span>
-<span id="cb13-178"><a href="#cb13-178" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> idx, row <span class="kw">in</span> res.sort_values(by<span class="op">=</span><span class="st">"pressure_drop"</span>).iterrows():</span>
-<span id="cb13-179"><a href="#cb13-179" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> row[<span class="st">"surface_area"</span>] <span class="op">&gt;</span> cur_max_surface_area:</span>
-<span id="cb13-180"><a href="#cb13-180" aria-hidden="true" tabindex="-1"></a>            cur_max_surface_area <span class="op">=</span> row[<span class="st">"surface_area"</span>]</span>
-<span id="cb13-181"><a href="#cb13-181" aria-hidden="true" tabindex="-1"></a>            dominating_points.append(idx)</span>
-<span id="cb13-182"><a href="#cb13-182" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dominating_points</span>
-<span id="cb13-183"><a href="#cb13-183" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-184"><a href="#cb13-184" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots()</span>
-<span id="cb13-185"><a href="#cb13-185" aria-hidden="true" tabindex="-1"></a>ax.scatter(res[<span class="st">"pressure_drop"</span>],  res[<span class="st">"surface_area"</span>], label<span class="op">=</span><span class="st">"Observations"</span>, c<span class="op">=</span>data[<span class="st">"radius"</span>], s<span class="op">=</span><span class="fl">2.0</span><span class="op">*</span>data[<span class="st">"height"</span>])</span>
-<span id="cb13-186"><a href="#cb13-186" aria-hidden="true" tabindex="-1"></a>dominating_points <span class="op">=</span> get_pareto_idcs(res)</span>
-<span id="cb13-187"><a href="#cb13-187" aria-hidden="true" tabindex="-1"></a>ax.plot(res.loc[dominating_points, <span class="st">"pressure_drop"</span>],  res.loc[dominating_points, <span class="st">"surface_area"</span>], color<span class="op">=</span><span class="st">"C1"</span>, linewidth<span class="op">=</span><span class="dv">3</span>, label<span class="op">=</span><span class="st">"Pareto front"</span>)</span>
-<span id="cb13-188"><a href="#cb13-188" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-189"><a href="#cb13-189" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Pareto plot of objective values"</span>)</span>
-<span id="cb13-190"><a href="#cb13-190" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r"Pressure drop </span><span class="kw">(</span><span class="dv">$\d</span><span class="vs">ownarrow</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>)</span>
-<span id="cb13-191"><a href="#cb13-191" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="vs">r"Surface area </span><span class="kw">(</span><span class="dv">$</span><span class="er">\</span><span class="vs">uparrow</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>)</span>
-<span id="cb13-192"><a href="#cb13-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-193"><a href="#cb13-193" aria-hidden="true" tabindex="-1"></a>fig.legend()</span>
-<span id="cb13-194"><a href="#cb13-194" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb13-195"><a href="#cb13-195" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-196"><a href="#cb13-196" aria-hidden="true" tabindex="-1"></a>We also show the impact of varying the fidelity parameters, for a fixed height+radius. This shows the scale of bias that is introduced when changing the fidelities.</span>
-<span id="cb13-197"><a href="#cb13-197" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-200"><a href="#cb13-200" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb13-201"><a href="#cb13-201" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.colors <span class="im">import</span> CenteredNorm</span>
-<span id="cb13-202"><a href="#cb13-202" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-203"><a href="#cb13-203" aria-hidden="true" tabindex="-1"></a>fixed_shape <span class="op">=</span> {<span class="st">"height"</span>: <span class="fl">7.5</span>, <span class="st">"radius"</span>: <span class="fl">5.0</span>}</span>
-<span id="cb13-204"><a href="#cb13-204" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-205"><a href="#cb13-205" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(ncols<span class="op">=</span><span class="dv">2</span>, sharex<span class="op">=</span><span class="va">True</span>, sharey<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb13-206"><a href="#cb13-206" aria-hidden="true" tabindex="-1"></a>durs, ress <span class="op">=</span> np.meshgrid(np.linspace(<span class="fl">0.1</span>, <span class="fl">1.0</span>, NUM_PLOT), np.linspace(<span class="fl">0.2</span>, <span class="fl">1.0</span>, NUM_PLOT))</span>
-<span id="cb13-207"><a href="#cb13-207" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.DataFrame({<span class="st">"sim_duration"</span>: durs.flatten(), <span class="st">"sim_resolution"</span>: ress.flatten(), <span class="op">**</span>fixed_shape})</span>
-<span id="cb13-208"><a href="#cb13-208" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> simulation_black_box(data)</span>
-<span id="cb13-209"><a href="#cb13-209" aria-hidden="true" tabindex="-1"></a><span class="co"># the last datapoint corresponds to the highest fidelity</span></span>
-<span id="cb13-210"><a href="#cb13-210" aria-hidden="true" tabindex="-1"></a><span class="co"># we subtract the highest fidelity to plot differences</span></span>
-<span id="cb13-211"><a href="#cb13-211" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> res.sub(res.iloc[<span class="op">-</span><span class="dv">1</span>])</span>
-<span id="cb13-212"><a href="#cb13-212" aria-hidden="true" tabindex="-1"></a>norm <span class="op">=</span> CenteredNorm()</span>
-<span id="cb13-213"><a href="#cb13-213" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].contourf(hs, rs, res[<span class="st">"pressure_drop"</span>].to_numpy().reshape(NUM_PLOT, NUM_PLOT), cmap<span class="op">=</span><span class="st">"RdBu"</span>, norm<span class="op">=</span>norm)</span>
-<span id="cb13-214"><a href="#cb13-214" aria-hidden="true" tabindex="-1"></a>cf <span class="op">=</span> axs[<span class="dv">1</span>].contourf(hs, rs, res[<span class="st">"surface_area"</span>].to_numpy().reshape(NUM_PLOT, NUM_PLOT), cmap<span class="op">=</span><span class="st">"RdBu"</span>, norm<span class="op">=</span>norm, levels<span class="op">=</span><span class="dv">30</span>)</span>
-<span id="cb13-215"><a href="#cb13-215" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-216"><a href="#cb13-216" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="ss">f"Difference in simulation outputs due to varying fidelities (for a fixed geometry)"</span>)</span>
-<span id="cb13-217"><a href="#cb13-217" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_title(<span class="st">"Pressure drop difference"</span>)</span>
-<span id="cb13-218"><a href="#cb13-218" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_title(<span class="st">"Surface area difference"</span>)</span>
-<span id="cb13-219"><a href="#cb13-219" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axs:</span>
-<span id="cb13-220"><a href="#cb13-220" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"sim_duration"</span>)</span>
-<span id="cb13-221"><a href="#cb13-221" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="st">"sim_resolution"</span>)</span>
-<span id="cb13-222"><a href="#cb13-222" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-223"><a href="#cb13-223" aria-hidden="true" tabindex="-1"></a>fig.colorbar(cf, ax<span class="op">=</span>axs[<span class="dv">1</span>])</span>
-<span id="cb13-224"><a href="#cb13-224" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb13-225"><a href="#cb13-225" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-226"><a href="#cb13-226" aria-hidden="true" tabindex="-1"></a><span class="fu">## Creating the strategy</span></span>
-<span id="cb13-227"><a href="#cb13-227" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-228"><a href="#cb13-228" aria-hidden="true" tabindex="-1"></a>Now that the problem has been defined, we can sample some experiments from the problem,</span>
-<span id="cb13-229"><a href="#cb13-229" aria-hidden="true" tabindex="-1"></a>and define the strategy that we will use to ask for points.</span>
-<span id="cb13-230"><a href="#cb13-230" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-233"><a href="#cb13-233" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb13-234"><a href="#cb13-234" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SimulationBenchmark()</span>
-<span id="cb13-235"><a href="#cb13-235" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(<span class="dv">10</span>, seed<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb13-236"><a href="#cb13-236" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb13-237"><a href="#cb13-237" aria-hidden="true" tabindex="-1"></a>experiments.head()</span>
-<span id="cb13-238"><a href="#cb13-238" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb13-239"><a href="#cb13-239" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-242"><a href="#cb13-242" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb13-243"><a href="#cb13-243" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies.api <span class="im">import</span> MultiFidelityHVKGStrategy</span>
-<span id="cb13-244"><a href="#cb13-244" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-245"><a href="#cb13-245" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> MultiFidelityHVKGStrategy.make(</span>
-<span id="cb13-246"><a href="#cb13-246" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>benchmark.domain,</span>
-<span id="cb13-247"><a href="#cb13-247" aria-hidden="true" tabindex="-1"></a>    <span class="co"># We manually pass in `acqf` and the `acqf_optimizer` below so that we can</span></span>
-<span id="cb13-248"><a href="#cb13-248" aria-hidden="true" tabindex="-1"></a>    <span class="co"># reduce the computation time by changing hyperparameters. The default</span></span>
-<span id="cb13-249"><a href="#cb13-249" aria-hidden="true" tabindex="-1"></a>    <span class="co"># hyperparameters should be a good trade-off between speed and quality, but</span></span>
-<span id="cb13-250"><a href="#cb13-250" aria-hidden="true" tabindex="-1"></a>    <span class="co"># can be changed to suit your needs.</span></span>
-<span id="cb13-251"><a href="#cb13-251" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span>acqf,</span>
-<span id="cb13-252"><a href="#cb13-252" aria-hidden="true" tabindex="-1"></a>    acquisition_optimizer<span class="op">=</span>acqf_optimizer</span>
-<span id="cb13-253"><a href="#cb13-253" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-254"><a href="#cb13-254" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-255"><a href="#cb13-255" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments)</span>
-<span id="cb13-256"><a href="#cb13-256" aria-hidden="true" tabindex="-1"></a>strategy.ask(<span class="dv">1</span>)</span>
-<span id="cb13-257"><a href="#cb13-257" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb13-258"><a href="#cb13-258" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-259"><a href="#cb13-259" aria-hidden="true" tabindex="-1"></a><span class="fu">### Defining the cost weighting</span></span>
-<span id="cb13-260"><a href="#cb13-260" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-261"><a href="#cb13-261" aria-hidden="true" tabindex="-1"></a>A key piece of information that we omitted in the above cells is the *cost* function -</span>
-<span id="cb13-262"><a href="#cb13-262" aria-hidden="true" tabindex="-1"></a>how much does an experiment cost to run? This is highly relevant in multi-fidelity</span>
-<span id="cb13-263"><a href="#cb13-263" aria-hidden="true" tabindex="-1"></a>settings, since if all experiments cost the same, then there is no reason to not query</span>
-<span id="cb13-264"><a href="#cb13-264" aria-hidden="true" tabindex="-1"></a>at the highest fidelity.</span>
-<span id="cb13-265"><a href="#cb13-265" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-266"><a href="#cb13-266" aria-hidden="true" tabindex="-1"></a>By default, we assume that an experiment at the lowest fidelity costs <span class="in">`1.0`</span> units, and</span>
-<span id="cb13-267"><a href="#cb13-267" aria-hidden="true" tabindex="-1"></a>scales linearly with the task features with coefficients <span class="in">`1.0`</span>. However, this should be</span>
-<span id="cb13-268"><a href="#cb13-268" aria-hidden="true" tabindex="-1"></a>explicitly defined as a part of the strategy. Note that currently, BoFire only supports</span>
-<span id="cb13-269"><a href="#cb13-269" aria-hidden="true" tabindex="-1"></a>linear costs.</span>
-<span id="cb13-270"><a href="#cb13-270" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-271"><a href="#cb13-271" aria-hidden="true" tabindex="-1"></a>In our example, increasing the duration of the simulation will increase the cost by a</span>
-<span id="cb13-272"><a href="#cb13-272" aria-hidden="true" tabindex="-1"></a>large coefficient. However (eg. due to parallelization of the simulation), increasing</span>
-<span id="cb13-273"><a href="#cb13-273" aria-hidden="true" tabindex="-1"></a>the resolution incurs a smaller cost. We can explicitly include this in the model. We</span>
-<span id="cb13-274"><a href="#cb13-274" aria-hidden="true" tabindex="-1"></a>would then expect the strategy to propose experiments at full resolution (since there is</span>
-<span id="cb13-275"><a href="#cb13-275" aria-hidden="true" tabindex="-1"></a>no significant cost savings to reducing the resolution), but not necessarily at the full</span>
-<span id="cb13-276"><a href="#cb13-276" aria-hidden="true" tabindex="-1"></a>duration.</span>
-<span id="cb13-277"><a href="#cb13-277" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-280"><a href="#cb13-280" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb13-281"><a href="#cb13-281" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> LinearDeterministicSurrogate</span>
-<span id="cb13-282"><a href="#cb13-282" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-283"><a href="#cb13-283" aria-hidden="true" tabindex="-1"></a>cost_model <span class="op">=</span> LinearDeterministicSurrogate(</span>
-<span id="cb13-284"><a href="#cb13-284" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>benchmark.domain.inputs.get(ContinuousTaskInput),</span>
-<span id="cb13-285"><a href="#cb13-285" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>domain_api.Outputs(features<span class="op">=</span>[</span>
-<span id="cb13-286"><a href="#cb13-286" aria-hidden="true" tabindex="-1"></a>        feature_api.ContinuousOutput(key<span class="op">=</span><span class="st">"cost"</span>, objective<span class="op">=</span><span class="va">None</span>)</span>
-<span id="cb13-287"><a href="#cb13-287" aria-hidden="true" tabindex="-1"></a>    ]),</span>
-<span id="cb13-288"><a href="#cb13-288" aria-hidden="true" tabindex="-1"></a>    coefficients<span class="op">=</span>{</span>
-<span id="cb13-289"><a href="#cb13-289" aria-hidden="true" tabindex="-1"></a>        <span class="st">"sim_duration"</span>: <span class="fl">2.0</span>,</span>
-<span id="cb13-290"><a href="#cb13-290" aria-hidden="true" tabindex="-1"></a>        <span class="st">"sim_resolution"</span>: <span class="fl">0.1</span>,</span>
-<span id="cb13-291"><a href="#cb13-291" aria-hidden="true" tabindex="-1"></a>    },</span>
-<span id="cb13-292"><a href="#cb13-292" aria-hidden="true" tabindex="-1"></a>    intercept<span class="op">=</span><span class="fl">1.0</span>  <span class="co"># fixed cost of lowest fidelity</span></span>
-<span id="cb13-293"><a href="#cb13-293" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-294"><a href="#cb13-294" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-295"><a href="#cb13-295" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> MultiFidelityHVKGStrategy.make(</span>
-<span id="cb13-296"><a href="#cb13-296" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>benchmark.domain,</span>
-<span id="cb13-297"><a href="#cb13-297" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span>acqf,</span>
-<span id="cb13-298"><a href="#cb13-298" aria-hidden="true" tabindex="-1"></a>    acquisition_optimizer<span class="op">=</span>acqf_optimizer</span>
-<span id="cb13-299"><a href="#cb13-299" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-300"><a href="#cb13-300" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-301"><a href="#cb13-301" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments)</span>
-<span id="cb13-302"><a href="#cb13-302" aria-hidden="true" tabindex="-1"></a>strategy.ask(<span class="dv">1</span>)</span>
-<span id="cb13-303"><a href="#cb13-303" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousTaskInput</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> BotorchOptimizer</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> LinearDeterministicSurrogate</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies.api <span class="im">import</span> MultiFidelityHVKGStrategy, RandomStrategy</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>SMOKE_TEST <span class="op">=</span> os.environ.get(<span class="st">"SMOKE_TEST"</span>)</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> SMOKE_TEST:</span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>    acqf_optimizer <span class="op">=</span> BotorchOptimizer(</span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>        n_raw_samples<span class="op">=</span><span class="dv">32</span>,</span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>        maxiter<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>        n_restarts<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>    acqf <span class="op">=</span> qMFHVKG(</span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>        num_fantasies<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>        num_pareto<span class="op">=</span><span class="dv">3</span></span>
+<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a>    acqf_optimizer <span class="op">=</span> BotorchOptimizer(</span>
+<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>        n_raw_samples<span class="op">=</span><span class="dv">256</span>,</span>
+<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>        maxiter<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>        n_restarts<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a>    acqf <span class="op">=</span> qMFHVKG(</span>
+<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>        num_fantasies<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>        num_pareto<span class="op">=</span><span class="dv">5</span></span>
+<span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a><span class="fu">## Problem definition</span></span>
+<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>We will consider a very simple objective function - a rigid-body physics simulation</span>
+<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>of thousands of particles in a packed bed reactor. We can control the shape of each</span>
+<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>particle, and we want to optimize the performance of the reactor. This includes:</span>
+<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>maximizing air flow through the reactor (minimizing pressure drop), and</span>
+<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>maximizing the number reaction sites (maximizing surface area per unit volume of the reactor).</span>
+<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a>We can also decrease the fidelity in two different ways, each reducing the cost of an experiment:</span>
+<span id="cb13-70"><a href="#cb13-70" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>stop the simulation early, and</span>
+<span id="cb13-71"><a href="#cb13-71" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>reduce the resolution of the simulation.</span>
+<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-75"><a href="#cb13-75" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb13-76"><a href="#cb13-76" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> simulation_black_box(experiments: pd.DataFrame) <span class="op">-&gt;</span> pd.DataFrame:</span>
+<span id="cb13-77"><a href="#cb13-77" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Toy function representing a rigid-body simulation of reactor packing.</span></span>
+<span id="cb13-78"><a href="#cb13-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-79"><a href="#cb13-79" aria-hidden="true" tabindex="-1"></a><span class="co">    For the sake of this tutorial, we provide simple expressions to represent the various</span></span>
+<span id="cb13-80"><a href="#cb13-80" aria-hidden="true" tabindex="-1"></a><span class="co">    impacts of changing the experiment conditions and fidelities."""</span></span>
+<span id="cb13-81"><a href="#cb13-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-82"><a href="#cb13-82" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Pressure drop is minimized for near-spherical cylinders</span></span>
+<span id="cb13-83"><a href="#cb13-83" aria-hidden="true" tabindex="-1"></a>    aspect_ratio <span class="op">=</span> experiments[<span class="st">"height"</span>] <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> experiments[<span class="st">"radius"</span>])</span>
+<span id="cb13-84"><a href="#cb13-84" aria-hidden="true" tabindex="-1"></a>    pressure_drop <span class="op">=</span> <span class="fl">0.4</span> <span class="op">*</span> np.exp(np.<span class="bu">abs</span>(np.log(aspect_ratio)))</span>
+<span id="cb13-85"><a href="#cb13-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-86"><a href="#cb13-86" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Specific surface area is maximized for tall, thin cylinders</span></span>
+<span id="cb13-87"><a href="#cb13-87" aria-hidden="true" tabindex="-1"></a>    optimal_shape_for_surface_area <span class="op">=</span> {<span class="st">"height"</span>: <span class="fl">10.0</span>, <span class="st">"radius"</span>: <span class="fl">1.0</span>}</span>
+<span id="cb13-88"><a href="#cb13-88" aria-hidden="true" tabindex="-1"></a>    dist <span class="op">=</span> experiments[[<span class="st">"height"</span>, <span class="st">"radius"</span>]].sub(optimal_shape_for_surface_area).to_numpy()</span>
+<span id="cb13-89"><a href="#cb13-89" aria-hidden="true" tabindex="-1"></a>    surface_area <span class="op">=</span> <span class="fl">3.5</span> <span class="op">-</span> <span class="fl">0.02</span> <span class="op">*</span> (dist <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb13-90"><a href="#cb13-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-91"><a href="#cb13-91" aria-hidden="true" tabindex="-1"></a>    <span class="co"># By terminating the simulation early, the packing doesn't settle - we underestimate</span></span>
+<span id="cb13-92"><a href="#cb13-92" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the pressure drop, and the specific surface area has some noisy bias</span></span>
+<span id="cb13-93"><a href="#cb13-93" aria-hidden="true" tabindex="-1"></a>    pressure_drop <span class="op">+=</span> <span class="fl">0.2</span> <span class="op">*</span> (experiments[<span class="st">"sim_duration"</span>] <span class="op">-</span> <span class="fl">1.0</span>)</span>
+<span id="cb13-94"><a href="#cb13-94" aria-hidden="true" tabindex="-1"></a>    surface_area <span class="op">+=</span> <span class="fl">0.1</span> <span class="op">*</span> np.sin(<span class="fl">5.0</span> <span class="op">*</span> experiments[<span class="st">"sim_duration"</span>])</span>
+<span id="cb13-95"><a href="#cb13-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-96"><a href="#cb13-96" aria-hidden="true" tabindex="-1"></a>    <span class="co"># By decreasing the resolution, the computed mesh starts combining adjacent particles</span></span>
+<span id="cb13-97"><a href="#cb13-97" aria-hidden="true" tabindex="-1"></a>    <span class="co"># to fill voids. This causes large decrease in specific surface area for small resolution.</span></span>
+<span id="cb13-98"><a href="#cb13-98" aria-hidden="true" tabindex="-1"></a>    <span class="co"># To make this more realistic, you may want to make this effect a function of the</span></span>
+<span id="cb13-99"><a href="#cb13-99" aria-hidden="true" tabindex="-1"></a>    <span class="co"># geometry, since a smaller geometry would require a higher resolution.</span></span>
+<span id="cb13-100"><a href="#cb13-100" aria-hidden="true" tabindex="-1"></a>    surface_area <span class="op">+=</span> <span class="op">-</span><span class="fl">0.2</span> <span class="op">*</span> np.exp(<span class="fl">2.0</span> <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> experiments[<span class="st">"sim_resolution"</span>]) <span class="op">-</span> <span class="fl">1.0</span>)</span>
+<span id="cb13-101"><a href="#cb13-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-102"><a href="#cb13-102" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame({</span>
+<span id="cb13-103"><a href="#cb13-103" aria-hidden="true" tabindex="-1"></a>        <span class="st">"pressure_drop"</span>: pressure_drop,</span>
+<span id="cb13-104"><a href="#cb13-104" aria-hidden="true" tabindex="-1"></a>        <span class="st">"surface_area"</span>: surface_area,</span>
+<span id="cb13-105"><a href="#cb13-105" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb13-106"><a href="#cb13-106" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-107"><a href="#cb13-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-110"><a href="#cb13-110" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb13-111"><a href="#cb13-111" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.api <span class="im">import</span> Benchmark</span>
+<span id="cb13-112"><a href="#cb13-112" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.domain.api <span class="im">as</span> domain_api</span>
+<span id="cb13-113"><a href="#cb13-113" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.features.api <span class="im">as</span> feature_api</span>
+<span id="cb13-114"><a href="#cb13-114" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.data_models.objectives.api <span class="im">as</span> objective_api</span>
+<span id="cb13-115"><a href="#cb13-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-116"><a href="#cb13-116" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SimulationBenchmark(Benchmark):</span>
+<span id="cb13-117"><a href="#cb13-117" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, <span class="op">**</span>kwargs):</span>
+<span id="cb13-118"><a href="#cb13-118" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(<span class="op">**</span>kwargs)</span>
+<span id="cb13-119"><a href="#cb13-119" aria-hidden="true" tabindex="-1"></a>        inputs <span class="op">=</span> domain_api.Inputs(features<span class="op">=</span>[</span>
+<span id="cb13-120"><a href="#cb13-120" aria-hidden="true" tabindex="-1"></a>            feature_api.ContinuousInput(key<span class="op">=</span><span class="st">"height"</span>, bounds<span class="op">=</span>(<span class="fl">1.0</span>, <span class="fl">10.0</span>)),</span>
+<span id="cb13-121"><a href="#cb13-121" aria-hidden="true" tabindex="-1"></a>            feature_api.ContinuousInput(key<span class="op">=</span><span class="st">"radius"</span>, bounds<span class="op">=</span>(<span class="fl">1.0</span>, <span class="fl">10.0</span>)),</span>
+<span id="cb13-122"><a href="#cb13-122" aria-hidden="true" tabindex="-1"></a>            feature_api.ContinuousTaskInput(key<span class="op">=</span><span class="st">"sim_duration"</span>, bounds<span class="op">=</span>(<span class="fl">0.1</span>, <span class="fl">1.0</span>)),</span>
+<span id="cb13-123"><a href="#cb13-123" aria-hidden="true" tabindex="-1"></a>            feature_api.ContinuousTaskInput(key<span class="op">=</span><span class="st">"sim_resolution"</span>, bounds<span class="op">=</span>(<span class="fl">0.2</span>, <span class="fl">1.0</span>)),</span>
+<span id="cb13-124"><a href="#cb13-124" aria-hidden="true" tabindex="-1"></a>        ])</span>
+<span id="cb13-125"><a href="#cb13-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-126"><a href="#cb13-126" aria-hidden="true" tabindex="-1"></a>        outputs <span class="op">=</span> domain_api.Outputs(features<span class="op">=</span>[</span>
+<span id="cb13-127"><a href="#cb13-127" aria-hidden="true" tabindex="-1"></a>            feature_api.ContinuousOutput(key<span class="op">=</span><span class="st">"pressure_drop"</span>, objective<span class="op">=</span>objective_api.MinimizeObjective()),</span>
+<span id="cb13-128"><a href="#cb13-128" aria-hidden="true" tabindex="-1"></a>            feature_api.ContinuousOutput(key<span class="op">=</span><span class="st">"surface_area"</span>, objective<span class="op">=</span>objective_api.MaximizeObjective()),</span>
+<span id="cb13-129"><a href="#cb13-129" aria-hidden="true" tabindex="-1"></a>        ])</span>
+<span id="cb13-130"><a href="#cb13-130" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-131"><a href="#cb13-131" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>._domain <span class="op">=</span> domain_api.Domain(</span>
+<span id="cb13-132"><a href="#cb13-132" aria-hidden="true" tabindex="-1"></a>            inputs<span class="op">=</span>inputs,</span>
+<span id="cb13-133"><a href="#cb13-133" aria-hidden="true" tabindex="-1"></a>            outputs<span class="op">=</span>outputs,</span>
+<span id="cb13-134"><a href="#cb13-134" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb13-135"><a href="#cb13-135" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-136"><a href="#cb13-136" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _f(<span class="va">self</span>, candidates: pd.DataFrame):</span>
+<span id="cb13-137"><a href="#cb13-137" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> simulation_black_box(candidates)</span>
+<span id="cb13-138"><a href="#cb13-138" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-139"><a href="#cb13-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-140"><a href="#cb13-140" aria-hidden="true" tabindex="-1"></a>Let's plot the objective function. First, we show the surface at the highest fidelity, varying the height+radius parameters. The objective surface is quite smooth, and unimodal, so this problem shouldn't be too difficult.</span>
+<span id="cb13-141"><a href="#cb13-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-144"><a href="#cb13-144" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb13-145"><a href="#cb13-145" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb13-146"><a href="#cb13-146" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.colors <span class="im">import</span> Normalize</span>
+<span id="cb13-147"><a href="#cb13-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-148"><a href="#cb13-148" aria-hidden="true" tabindex="-1"></a>target_fidelity <span class="op">=</span> {<span class="st">"sim_duration"</span>: <span class="fl">1.0</span>, <span class="st">"sim_resolution"</span>: <span class="fl">1.0</span>}</span>
+<span id="cb13-149"><a href="#cb13-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-150"><a href="#cb13-150" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(ncols<span class="op">=</span><span class="dv">2</span>, sharex<span class="op">=</span><span class="va">True</span>, sharey<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-151"><a href="#cb13-151" aria-hidden="true" tabindex="-1"></a>NUM_PLOT <span class="op">=</span> <span class="dv">20</span></span>
+<span id="cb13-152"><a href="#cb13-152" aria-hidden="true" tabindex="-1"></a>hs, rs <span class="op">=</span> np.meshgrid(np.linspace(<span class="fl">1.0</span>, <span class="fl">10.0</span>, NUM_PLOT), np.linspace(<span class="fl">1.0</span>, <span class="fl">10.0</span>, NUM_PLOT))</span>
+<span id="cb13-153"><a href="#cb13-153" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.DataFrame({<span class="st">"height"</span>: hs.flatten(), <span class="st">"radius"</span>: rs.flatten(), <span class="op">**</span>target_fidelity})</span>
+<span id="cb13-154"><a href="#cb13-154" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> simulation_black_box(data)</span>
+<span id="cb13-155"><a href="#cb13-155" aria-hidden="true" tabindex="-1"></a>norm <span class="op">=</span> Normalize(vmin<span class="op">=</span><span class="fl">0.0</span>, vmax<span class="op">=</span><span class="fl">3.5</span>)</span>
+<span id="cb13-156"><a href="#cb13-156" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].contourf(hs, rs, res[<span class="st">"pressure_drop"</span>].to_numpy().reshape(NUM_PLOT, NUM_PLOT), norm<span class="op">=</span>norm, levels<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb13-157"><a href="#cb13-157" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].contourf(hs, rs, res[<span class="st">"surface_area"</span>].to_numpy().reshape(NUM_PLOT, NUM_PLOT), norm<span class="op">=</span>norm, levels<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb13-158"><a href="#cb13-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-159"><a href="#cb13-159" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"Simulation outputs at highest fidelity"</span>)</span>
+<span id="cb13-160"><a href="#cb13-160" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_title(<span class="st">"Pressure drop"</span>)</span>
+<span id="cb13-161"><a href="#cb13-161" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_title(<span class="st">"Surface area"</span>)</span>
+<span id="cb13-162"><a href="#cb13-162" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axs:</span>
+<span id="cb13-163"><a href="#cb13-163" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"height"</span>)</span>
+<span id="cb13-164"><a href="#cb13-164" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="st">"radius"</span>)</span>
+<span id="cb13-165"><a href="#cb13-165" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-166"><a href="#cb13-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-167"><a href="#cb13-167" aria-hidden="true" tabindex="-1"></a>We can also plot the pareto front below, keeping in mind that we want to minimize the</span>
+<span id="cb13-168"><a href="#cb13-168" aria-hidden="true" tabindex="-1"></a>pressure drop, and maximize the surface area. We color the observations according to</span>
+<span id="cb13-169"><a href="#cb13-169" aria-hidden="true" tabindex="-1"></a>the radius, and scale their size according to the height.</span>
+<span id="cb13-170"><a href="#cb13-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-173"><a href="#cb13-173" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb13-174"><a href="#cb13-174" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_pareto_idcs(data: pd.DataFrame) <span class="op">-&gt;</span> <span class="bu">list</span>[<span class="bu">int</span>]:</span>
+<span id="cb13-175"><a href="#cb13-175" aria-hidden="true" tabindex="-1"></a>    dominating_points: <span class="bu">list</span>[<span class="bu">int</span>] <span class="op">=</span> []</span>
+<span id="cb13-176"><a href="#cb13-176" aria-hidden="true" tabindex="-1"></a>    cur_max_surface_area <span class="op">=</span> <span class="op">-</span>np.inf</span>
+<span id="cb13-177"><a href="#cb13-177" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> idx, row <span class="kw">in</span> res.sort_values(by<span class="op">=</span><span class="st">"pressure_drop"</span>).iterrows():</span>
+<span id="cb13-178"><a href="#cb13-178" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> row[<span class="st">"surface_area"</span>] <span class="op">&gt;</span> cur_max_surface_area:</span>
+<span id="cb13-179"><a href="#cb13-179" aria-hidden="true" tabindex="-1"></a>            cur_max_surface_area <span class="op">=</span> row[<span class="st">"surface_area"</span>]</span>
+<span id="cb13-180"><a href="#cb13-180" aria-hidden="true" tabindex="-1"></a>            dominating_points.append(idx)</span>
+<span id="cb13-181"><a href="#cb13-181" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dominating_points</span>
+<span id="cb13-182"><a href="#cb13-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-183"><a href="#cb13-183" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots()</span>
+<span id="cb13-184"><a href="#cb13-184" aria-hidden="true" tabindex="-1"></a>ax.scatter(res[<span class="st">"pressure_drop"</span>],  res[<span class="st">"surface_area"</span>], label<span class="op">=</span><span class="st">"Observations"</span>, c<span class="op">=</span>data[<span class="st">"radius"</span>], s<span class="op">=</span><span class="fl">2.0</span><span class="op">*</span>data[<span class="st">"height"</span>])</span>
+<span id="cb13-185"><a href="#cb13-185" aria-hidden="true" tabindex="-1"></a>dominating_points <span class="op">=</span> get_pareto_idcs(res)</span>
+<span id="cb13-186"><a href="#cb13-186" aria-hidden="true" tabindex="-1"></a>ax.plot(res.loc[dominating_points, <span class="st">"pressure_drop"</span>],  res.loc[dominating_points, <span class="st">"surface_area"</span>], color<span class="op">=</span><span class="st">"C1"</span>, linewidth<span class="op">=</span><span class="dv">3</span>, label<span class="op">=</span><span class="st">"Pareto front"</span>)</span>
+<span id="cb13-187"><a href="#cb13-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-188"><a href="#cb13-188" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Pareto plot of objective values"</span>)</span>
+<span id="cb13-189"><a href="#cb13-189" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r"Pressure drop </span><span class="kw">(</span><span class="dv">$\d</span><span class="vs">ownarrow</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>)</span>
+<span id="cb13-190"><a href="#cb13-190" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="vs">r"Surface area </span><span class="kw">(</span><span class="dv">$</span><span class="er">\</span><span class="vs">uparrow</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>)</span>
+<span id="cb13-191"><a href="#cb13-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-192"><a href="#cb13-192" aria-hidden="true" tabindex="-1"></a>fig.legend()</span>
+<span id="cb13-193"><a href="#cb13-193" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-194"><a href="#cb13-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-195"><a href="#cb13-195" aria-hidden="true" tabindex="-1"></a>We also show the impact of varying the fidelity parameters, for a fixed height+radius. This shows the scale of bias that is introduced when changing the fidelities.</span>
+<span id="cb13-196"><a href="#cb13-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-199"><a href="#cb13-199" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb13-200"><a href="#cb13-200" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.colors <span class="im">import</span> CenteredNorm</span>
+<span id="cb13-201"><a href="#cb13-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-202"><a href="#cb13-202" aria-hidden="true" tabindex="-1"></a>fixed_shape <span class="op">=</span> {<span class="st">"height"</span>: <span class="fl">7.5</span>, <span class="st">"radius"</span>: <span class="fl">5.0</span>}</span>
+<span id="cb13-203"><a href="#cb13-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-204"><a href="#cb13-204" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(ncols<span class="op">=</span><span class="dv">2</span>, sharex<span class="op">=</span><span class="va">True</span>, sharey<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-205"><a href="#cb13-205" aria-hidden="true" tabindex="-1"></a>durs, ress <span class="op">=</span> np.meshgrid(np.linspace(<span class="fl">0.1</span>, <span class="fl">1.0</span>, NUM_PLOT), np.linspace(<span class="fl">0.2</span>, <span class="fl">1.0</span>, NUM_PLOT))</span>
+<span id="cb13-206"><a href="#cb13-206" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> pd.DataFrame({<span class="st">"sim_duration"</span>: durs.flatten(), <span class="st">"sim_resolution"</span>: ress.flatten(), <span class="op">**</span>fixed_shape})</span>
+<span id="cb13-207"><a href="#cb13-207" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> simulation_black_box(data)</span>
+<span id="cb13-208"><a href="#cb13-208" aria-hidden="true" tabindex="-1"></a><span class="co"># the last datapoint corresponds to the highest fidelity</span></span>
+<span id="cb13-209"><a href="#cb13-209" aria-hidden="true" tabindex="-1"></a><span class="co"># we subtract the highest fidelity to plot differences</span></span>
+<span id="cb13-210"><a href="#cb13-210" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> res.sub(res.iloc[<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb13-211"><a href="#cb13-211" aria-hidden="true" tabindex="-1"></a>norm <span class="op">=</span> CenteredNorm()</span>
+<span id="cb13-212"><a href="#cb13-212" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].contourf(hs, rs, res[<span class="st">"pressure_drop"</span>].to_numpy().reshape(NUM_PLOT, NUM_PLOT), cmap<span class="op">=</span><span class="st">"RdBu"</span>, norm<span class="op">=</span>norm)</span>
+<span id="cb13-213"><a href="#cb13-213" aria-hidden="true" tabindex="-1"></a>cf <span class="op">=</span> axs[<span class="dv">1</span>].contourf(hs, rs, res[<span class="st">"surface_area"</span>].to_numpy().reshape(NUM_PLOT, NUM_PLOT), cmap<span class="op">=</span><span class="st">"RdBu"</span>, norm<span class="op">=</span>norm, levels<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb13-214"><a href="#cb13-214" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-215"><a href="#cb13-215" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="ss">f"Difference in simulation outputs due to varying fidelities (for a fixed geometry)"</span>)</span>
+<span id="cb13-216"><a href="#cb13-216" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_title(<span class="st">"Pressure drop difference"</span>)</span>
+<span id="cb13-217"><a href="#cb13-217" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_title(<span class="st">"Surface area difference"</span>)</span>
+<span id="cb13-218"><a href="#cb13-218" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axs:</span>
+<span id="cb13-219"><a href="#cb13-219" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"sim_duration"</span>)</span>
+<span id="cb13-220"><a href="#cb13-220" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="st">"sim_resolution"</span>)</span>
+<span id="cb13-221"><a href="#cb13-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-222"><a href="#cb13-222" aria-hidden="true" tabindex="-1"></a>fig.colorbar(cf, ax<span class="op">=</span>axs[<span class="dv">1</span>])</span>
+<span id="cb13-223"><a href="#cb13-223" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-224"><a href="#cb13-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-225"><a href="#cb13-225" aria-hidden="true" tabindex="-1"></a><span class="fu">## Creating the strategy</span></span>
+<span id="cb13-226"><a href="#cb13-226" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-227"><a href="#cb13-227" aria-hidden="true" tabindex="-1"></a>Now that the problem has been defined, we can sample some experiments from the problem,</span>
+<span id="cb13-228"><a href="#cb13-228" aria-hidden="true" tabindex="-1"></a>and define the strategy that we will use to ask for points.</span>
+<span id="cb13-229"><a href="#cb13-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-232"><a href="#cb13-232" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb13-233"><a href="#cb13-233" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SimulationBenchmark()</span>
+<span id="cb13-234"><a href="#cb13-234" aria-hidden="true" tabindex="-1"></a>samples <span class="op">=</span> benchmark.domain.inputs.sample(<span class="dv">10</span>, seed<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb13-235"><a href="#cb13-235" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> benchmark.f(samples, return_complete<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-236"><a href="#cb13-236" aria-hidden="true" tabindex="-1"></a>experiments.head()</span>
+<span id="cb13-237"><a href="#cb13-237" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-238"><a href="#cb13-238" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-241"><a href="#cb13-241" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb13-242"><a href="#cb13-242" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.strategies.api <span class="im">import</span> MultiFidelityHVKGStrategy</span>
+<span id="cb13-243"><a href="#cb13-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-244"><a href="#cb13-244" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> MultiFidelityHVKGStrategy.make(</span>
+<span id="cb13-245"><a href="#cb13-245" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>benchmark.domain,</span>
+<span id="cb13-246"><a href="#cb13-246" aria-hidden="true" tabindex="-1"></a>    <span class="co"># We manually pass in `acqf` and the `acqf_optimizer` below so that we can</span></span>
+<span id="cb13-247"><a href="#cb13-247" aria-hidden="true" tabindex="-1"></a>    <span class="co"># reduce the computation time by changing hyperparameters. The default</span></span>
+<span id="cb13-248"><a href="#cb13-248" aria-hidden="true" tabindex="-1"></a>    <span class="co"># hyperparameters should be a good trade-off between speed and quality, but</span></span>
+<span id="cb13-249"><a href="#cb13-249" aria-hidden="true" tabindex="-1"></a>    <span class="co"># can be changed to suit your needs.</span></span>
+<span id="cb13-250"><a href="#cb13-250" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span>acqf,</span>
+<span id="cb13-251"><a href="#cb13-251" aria-hidden="true" tabindex="-1"></a>    acquisition_optimizer<span class="op">=</span>acqf_optimizer</span>
+<span id="cb13-252"><a href="#cb13-252" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-253"><a href="#cb13-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-254"><a href="#cb13-254" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments)</span>
+<span id="cb13-255"><a href="#cb13-255" aria-hidden="true" tabindex="-1"></a>strategy.ask(<span class="dv">1</span>)</span>
+<span id="cb13-256"><a href="#cb13-256" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-257"><a href="#cb13-257" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-258"><a href="#cb13-258" aria-hidden="true" tabindex="-1"></a><span class="fu">### Defining the cost weighting</span></span>
+<span id="cb13-259"><a href="#cb13-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-260"><a href="#cb13-260" aria-hidden="true" tabindex="-1"></a>A key piece of information that we omitted in the above cells is the *cost* function -</span>
+<span id="cb13-261"><a href="#cb13-261" aria-hidden="true" tabindex="-1"></a>how much does an experiment cost to run? This is highly relevant in multi-fidelity</span>
+<span id="cb13-262"><a href="#cb13-262" aria-hidden="true" tabindex="-1"></a>settings, since if all experiments cost the same, then there is no reason to not query</span>
+<span id="cb13-263"><a href="#cb13-263" aria-hidden="true" tabindex="-1"></a>at the highest fidelity.</span>
+<span id="cb13-264"><a href="#cb13-264" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-265"><a href="#cb13-265" aria-hidden="true" tabindex="-1"></a>By default, we assume that an experiment at the lowest fidelity costs <span class="in">`1.0`</span> units, and</span>
+<span id="cb13-266"><a href="#cb13-266" aria-hidden="true" tabindex="-1"></a>scales linearly with the task features with coefficients <span class="in">`1.0`</span>. However, this should be</span>
+<span id="cb13-267"><a href="#cb13-267" aria-hidden="true" tabindex="-1"></a>explicitly defined as a part of the strategy. Note that currently, BoFire only supports</span>
+<span id="cb13-268"><a href="#cb13-268" aria-hidden="true" tabindex="-1"></a>linear costs.</span>
+<span id="cb13-269"><a href="#cb13-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-270"><a href="#cb13-270" aria-hidden="true" tabindex="-1"></a>In our example, increasing the duration of the simulation will increase the cost by a</span>
+<span id="cb13-271"><a href="#cb13-271" aria-hidden="true" tabindex="-1"></a>large coefficient. However (eg. due to parallelization of the simulation), increasing</span>
+<span id="cb13-272"><a href="#cb13-272" aria-hidden="true" tabindex="-1"></a>the resolution incurs a smaller cost. We can explicitly include this in the model. We</span>
+<span id="cb13-273"><a href="#cb13-273" aria-hidden="true" tabindex="-1"></a>would then expect the strategy to propose experiments at full resolution (since there is</span>
+<span id="cb13-274"><a href="#cb13-274" aria-hidden="true" tabindex="-1"></a>no significant cost savings to reducing the resolution), but not necessarily at the full</span>
+<span id="cb13-275"><a href="#cb13-275" aria-hidden="true" tabindex="-1"></a>duration.</span>
+<span id="cb13-276"><a href="#cb13-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-279"><a href="#cb13-279" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb13-280"><a href="#cb13-280" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> LinearDeterministicSurrogate</span>
+<span id="cb13-281"><a href="#cb13-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-282"><a href="#cb13-282" aria-hidden="true" tabindex="-1"></a>cost_model <span class="op">=</span> LinearDeterministicSurrogate(</span>
+<span id="cb13-283"><a href="#cb13-283" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>benchmark.domain.inputs.get(ContinuousTaskInput),</span>
+<span id="cb13-284"><a href="#cb13-284" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>domain_api.Outputs(features<span class="op">=</span>[</span>
+<span id="cb13-285"><a href="#cb13-285" aria-hidden="true" tabindex="-1"></a>        feature_api.ContinuousOutput(key<span class="op">=</span><span class="st">"cost"</span>, objective<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb13-286"><a href="#cb13-286" aria-hidden="true" tabindex="-1"></a>    ]),</span>
+<span id="cb13-287"><a href="#cb13-287" aria-hidden="true" tabindex="-1"></a>    coefficients<span class="op">=</span>{</span>
+<span id="cb13-288"><a href="#cb13-288" aria-hidden="true" tabindex="-1"></a>        <span class="st">"sim_duration"</span>: <span class="fl">2.0</span>,</span>
+<span id="cb13-289"><a href="#cb13-289" aria-hidden="true" tabindex="-1"></a>        <span class="st">"sim_resolution"</span>: <span class="fl">0.1</span>,</span>
+<span id="cb13-290"><a href="#cb13-290" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb13-291"><a href="#cb13-291" aria-hidden="true" tabindex="-1"></a>    intercept<span class="op">=</span><span class="fl">1.0</span>  <span class="co"># fixed cost of lowest fidelity</span></span>
+<span id="cb13-292"><a href="#cb13-292" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-293"><a href="#cb13-293" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-294"><a href="#cb13-294" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> MultiFidelityHVKGStrategy.make(</span>
+<span id="cb13-295"><a href="#cb13-295" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>benchmark.domain,</span>
+<span id="cb13-296"><a href="#cb13-296" aria-hidden="true" tabindex="-1"></a>    acquisition_function<span class="op">=</span>acqf,</span>
+<span id="cb13-297"><a href="#cb13-297" aria-hidden="true" tabindex="-1"></a>    acquisition_optimizer<span class="op">=</span>acqf_optimizer</span>
+<span id="cb13-298"><a href="#cb13-298" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-299"><a href="#cb13-299" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-300"><a href="#cb13-300" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments)</span>
+<span id="cb13-301"><a href="#cb13-301" aria-hidden="true" tabindex="-1"></a>strategy.ask(<span class="dv">1</span>)</span>
+<span id="cb13-302"><a href="#cb13-302" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

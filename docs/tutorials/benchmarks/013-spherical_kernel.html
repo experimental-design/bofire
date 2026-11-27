@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-348615dbec15d57dbd120bddebf38ff3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-ee65e383bc30aa9fec98e06fe43bf684.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-348615dbec15d57dbd120bddebf38ff3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-be7d895c813c84042c9fbb18889028a9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-c571f53156c730c5a034ccf14cd27066.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-be7d895c813c84042c9fbb18889028a9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -751,7 +751,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p><a href="https://arxiv.org/pdf/2512.00170">Spherical Linear Kernel</a> is useful for optimizing high-dimensional problems.</p>
-<div id="ea874328" class="cell" data-execution_count="1">
+<div id="3f01a823" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.svm <span class="im">import</span> SVM</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> SphericalLinearKernel</span>
@@ -763,7 +763,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>We use the <a href="https://github.com/LeoIV/BenchSuite/blob/master/benchsuite/svm.py">SVM</a> benchmark.</p>
-<div id="773fbb06" class="cell" data-execution_count="2">
+<div id="7e3f5d51" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># problem setup for spherical linear kernels</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SVM()</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> benchmark._domain.inputs.sample(benchmark.dim<span class="op">+</span><span class="dv">1</span>, seed<span class="op">=</span>benchmark.seed)</span>
@@ -791,7 +791,7 @@ Download complete.</code></pre>
 </div>
 </div>
 <p>Running the optimization loop</p>
-<div id="2fda6453" class="cell" data-execution_count="3">
+<div id="caf7c55b" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments, replace<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>num_steps <span class="op">=</span> <span class="dv">3</span> <span class="co"># set the number of steps here (the original paper uses 1000 steps)</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step_number <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>
@@ -809,22 +809,16 @@ Download complete.</code></pre>
   return torch.from_numpy(np.ascontiguousarray(df.to_numpy())).to(**tkwargs)</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Step 1/3</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
-  warnings.warn(</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>New experiment:
-        x_1      x_10    x_100     x_101     x_102     x_103     x_104  \
-0  0.337319  0.384239  0.09327  0.592019  0.955246  0.110942  0.053179   
+<pre><code>Step 1/3
+New experiment:
+        x_1      x_10     x_100  x_101     x_102     x_103  x_104  x_105  \
+0  0.425539  0.600411  0.178162    0.0  0.406192  0.469032    0.0    0.0   
 
-      x_105     x_106     x_107  ...      x_95      x_96      x_97      x_98  \
-0  0.156118  0.251626  0.196012  ...  0.326189  0.681004  0.875211  0.004581   
+   x_106  x_107  ...  x_95  x_96      x_97  x_98      x_99    y_pred  \
+0    1.0    0.0  ...   1.0   1.0  0.532216   1.0  0.324232  0.216303   
 
-       x_99    y_pred     y_sd     y_des        y  valid_y  
-0  0.974339  0.236782  0.00201 -0.236782  0.23043        1  
+       y_sd     y_des         y  valid_y  
+0  0.001296 -0.216303  0.237676        1  
 
 [1 rows x 393 columns]
 Step 2/3</code></pre>
@@ -835,14 +829,14 @@ Step 2/3</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>New experiment:
-        x_1      x_10     x_100     x_101     x_102     x_103     x_104  \
-0  0.794966  0.243803  0.471024  0.769065  0.871186  0.737292  0.287659   
+        x_1      x_10  x_100     x_101     x_102     x_103    x_104     x_105  \
+0  0.822914  0.637538    0.0  0.719861  0.535239  0.319359  0.77107  0.789509   
 
-      x_105     x_106    x_107  ...     x_95      x_96      x_97      x_98  \
-0  0.813384  0.953588  0.34332  ...  0.12471  0.515158  0.823459  0.338318   
+      x_106  x_107  ...  x_95      x_96  x_97      x_98      x_99    y_pred  \
+0  0.564023    0.0  ...   1.0  0.916037   1.0  0.586867  0.789649  0.226903   
 
-       x_99    y_pred      y_sd     y_des         y  valid_y  
-0  0.839714  0.236623  0.002032 -0.236623  0.232567        1  
+       y_sd     y_des         y  valid_y  
+0  0.001544 -0.226903  0.234804        1  
 
 [1 rows x 393 columns]
 Step 3/3</code></pre>
@@ -853,14 +847,14 @@ Step 3/3</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>New experiment:
-        x_1     x_10     x_100     x_101     x_102     x_103     x_104  \
-0  0.301818  0.38379  0.272558  0.872709  0.470315  0.011128  0.580215   
+        x_1  x_10  x_100     x_101     x_102     x_103     x_104     x_105  \
+0  0.193824   1.0    0.0  0.457557  0.946203  0.281256  0.764543  0.287073   
 
-     x_105     x_106     x_107  ...      x_95     x_96      x_97      x_98  \
-0  0.64006  0.803377  0.729386  ...  0.324092  0.72748  0.124034  0.000973   
+   x_106  x_107  ...      x_95  x_96  x_97  x_98     x_99    y_pred      y_sd  \
+0    1.0    0.0  ...  0.789964   1.0   1.0   1.0  0.38155  0.227976  0.001523   
 
-       x_99    y_pred     y_sd     y_des         y  valid_y  
-0  0.070125  0.236515  0.00204 -0.236515  0.234364        1  
+      y_des         y  valid_y  
+0 -0.227976  0.235609        1  
 
 [1 rows x 393 columns]</code></pre>
 </div>
@@ -1352,62 +1346,62 @@ Step 3/3</code></pre>
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Spherical linear kernels for high dimensional BO</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Spherical Linear Kernel</span><span class="co">](https://arxiv.org/pdf/2512.00170)</span> is useful for optimizing high-dimensional problems.</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.svm <span class="im">import</span> SVM</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> SphericalLinearKernel</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> SingleTaskGPSurrogate, BotorchSurrogates</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>We use the <span class="co">[</span><span class="ot">SVM</span><span class="co">](https://github.com/LeoIV/BenchSuite/blob/master/benchsuite/svm.py)</span> benchmark.</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="co"># problem setup for spherical linear kernels</span></span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SVM()</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> benchmark._domain.inputs.sample(benchmark.dim<span class="op">+</span><span class="dv">1</span>, seed<span class="op">=</span>benchmark.seed)</span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> candidates.copy()</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> benchmark._f(experiments)</span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Add empty columns 'y' and 'valid_y' to experiments DataFrame</span></span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>experiments[<span class="st">"y"</span>], experiments[<span class="st">"valid_y"</span>] <span class="op">=</span> result[<span class="st">"y"</span>], result[<span class="st">"valid_y"</span>]</span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>sobo_strategy_data_model <span class="op">=</span> SoboStrategy(</span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>benchmark._domain,</span>
-<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>    seed<span class="op">=</span>benchmark.seed,</span>
-<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>    surrogate_specs<span class="op">=</span>BotorchSurrogates(</span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>        surrogates<span class="op">=</span>[</span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>            SingleTaskGPSurrogate(</span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>                inputs<span class="op">=</span>benchmark._domain.inputs,</span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>                outputs<span class="op">=</span>benchmark._domain.outputs,</span>
-<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>                kernel<span class="op">=</span>SphericalLinearKernel(),</span>
-<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>            )</span>
-<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>        ]</span>
-<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(sobo_strategy_data_model)</span>
-<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>Running the optimization loop</span>
-<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments, replace<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>num_steps <span class="op">=</span> <span class="dv">3</span> <span class="co"># set the number of steps here (the original paper uses 1000 steps)</span></span>
-<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step_number <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>
-<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Step </span><span class="sc">{</span>step_number<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>num_steps<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>    new_candidates <span class="op">=</span> strategy.ask(candidate_count<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>    new_experiments <span class="op">=</span> new_candidates.copy()</span>
-<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> benchmark._f(new_candidates)</span>
-<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a>    new_experiments[<span class="st">"y"</span>], new_experiments[<span class="st">"valid_y"</span>] <span class="op">=</span> result[<span class="st">"y"</span>], result[<span class="st">"valid_y"</span>]</span>
-<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"New experiment:</span><span class="ch">\n</span><span class="sc">{</span>new_experiments<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a>    strategy.tell(experiments<span class="op">=</span>new_experiments)</span>
-<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a><span class="co"># save all the experiments</span></span>
-<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>all_experiments <span class="op">=</span> strategy.experiments</span>
-<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>One can use the results obtained in ```all_experiments``` to get the evolution of the optimum with respect to the iterations.</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Spherical linear kernels for high dimensional BO</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Spherical Linear Kernel</span><span class="co">](https://arxiv.org/pdf/2512.00170)</span> is useful for optimizing high-dimensional problems.</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.benchmarks.svm <span class="im">import</span> SVM</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.kernels.api <span class="im">import</span> SphericalLinearKernel</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> SingleTaskGPSurrogate, BotorchSurrogates</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>We use the <span class="co">[</span><span class="ot">SVM</span><span class="co">](https://github.com/LeoIV/BenchSuite/blob/master/benchsuite/svm.py)</span> benchmark.</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a><span class="co"># problem setup for spherical linear kernels</span></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>benchmark <span class="op">=</span> SVM()</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> benchmark._domain.inputs.sample(benchmark.dim<span class="op">+</span><span class="dv">1</span>, seed<span class="op">=</span>benchmark.seed)</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>experiments <span class="op">=</span> candidates.copy()</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> benchmark._f(experiments)</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Add empty columns 'y' and 'valid_y' to experiments DataFrame</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>experiments[<span class="st">"y"</span>], experiments[<span class="st">"valid_y"</span>] <span class="op">=</span> result[<span class="st">"y"</span>], result[<span class="st">"valid_y"</span>]</span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>sobo_strategy_data_model <span class="op">=</span> SoboStrategy(</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>benchmark._domain,</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>    seed<span class="op">=</span>benchmark.seed,</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>    surrogate_specs<span class="op">=</span>BotorchSurrogates(</span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>        surrogates<span class="op">=</span>[</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>            SingleTaskGPSurrogate(</span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>                inputs<span class="op">=</span>benchmark._domain.inputs,</span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>                outputs<span class="op">=</span>benchmark._domain.outputs,</span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>                kernel<span class="op">=</span>SphericalLinearKernel(),</span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(sobo_strategy_data_model)</span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>Running the optimization loop</span>
+<span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>strategy.tell(experiments, replace<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>num_steps <span class="op">=</span> <span class="dv">3</span> <span class="co"># set the number of steps here (the original paper uses 1000 steps)</span></span>
+<span id="cb12-50"><a href="#cb12-50" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step_number <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>
+<span id="cb12-51"><a href="#cb12-51" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Step </span><span class="sc">{</span>step_number<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>num_steps<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-52"><a href="#cb12-52" aria-hidden="true" tabindex="-1"></a>    new_candidates <span class="op">=</span> strategy.ask(candidate_count<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb12-53"><a href="#cb12-53" aria-hidden="true" tabindex="-1"></a>    new_experiments <span class="op">=</span> new_candidates.copy()</span>
+<span id="cb12-54"><a href="#cb12-54" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> benchmark._f(new_candidates)</span>
+<span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>    new_experiments[<span class="st">"y"</span>], new_experiments[<span class="st">"valid_y"</span>] <span class="op">=</span> result[<span class="st">"y"</span>], result[<span class="st">"valid_y"</span>]</span>
+<span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"New experiment:</span><span class="ch">\n</span><span class="sc">{</span>new_experiments<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a>    strategy.tell(experiments<span class="op">=</span>new_experiments)</span>
+<span id="cb12-58"><a href="#cb12-58" aria-hidden="true" tabindex="-1"></a><span class="co"># save all the experiments</span></span>
+<span id="cb12-59"><a href="#cb12-59" aria-hidden="true" tabindex="-1"></a>all_experiments <span class="op">=</span> strategy.experiments</span>
+<span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>One can use the results obtained in ```all_experiments``` to get the evolution of the optimum with respect to the iterations.</span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

@@ -77,9 +77,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-348615dbec15d57dbd120bddebf38ff3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-dark-ee65e383bc30aa9fec98e06fe43bf684.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../site_libs/bootstrap/bootstrap-348615dbec15d57dbd120bddebf38ff3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-be7d895c813c84042c9fbb18889028a9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark-c571f53156c730c5a034ccf14cd27066.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-be7d895c813c84042c9fbb18889028a9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -463,7 +463,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </tr>
 <tr class="odd">
 <td><a href="#bofire.data_models.domain.features.Inputs.sample">sample</a></td>
-<td>Draw sobol samples</td>
+<td>Draws samples of the inputs; fixed inputs keep their value.</td>
 </tr>
 <tr class="even">
 <td><a href="#bofire.data_models.domain.features.Inputs.to_pydantic_model">to_pydantic_model</a></td>
@@ -947,19 +947,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="bofire.data_models.domain.features.Inputs.sample">sample</h3>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.sample(</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span>SamplingMethodEnum.UNIFORM,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    sampler<span class="op">=</span>UniformSampler(),</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    seed<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    sampler_kwargs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Draw sobol samples</p>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Draws samples of the inputs; fixed inputs keep their value.</p>
 <section id="parameters-6" class="level4 doc-section doc-section-parameters">
 <h4 class="doc-section doc-section-parameters anchored" data-anchor-id="parameters-6">Parameters</h4>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 10%">
-<col style="width: 12%">
-<col style="width: 58%">
-<col style="width: 18%">
+<col style="width: 8%">
+<col style="width: 16%">
+<col style="width: 54%">
+<col style="width: 19%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -972,26 +971,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <td>n</td>
-<td>int</td>
-<td>Number of samples, has to be larger than 0. Defaults to 1.</td>
+<td>PositiveInt</td>
+<td>Number of samples.</td>
 <td><code>1</code></td>
 </tr>
 <tr class="even">
-<td>method</td>
-<td>SamplingMethodEnum</td>
-<td>Method to use, implemented methods are <code>UNIFORM</code>, <code>SOBOL</code> and <code>LHS</code>. Defaults to <code>UNIFORM</code>.</td>
-<td><code>SamplingMethodEnum.UNIFORM</code></td>
+<td>sampler</td>
+<td>AnySampler</td>
+<td>How the samples are spread, e.g.&nbsp;<code>SobolSampler()</code>.</td>
+<td><code>UniformSampler()</code></td>
 </tr>
 <tr class="odd">
 <td>seed</td>
-<td>int</td>
-<td>random seed. Defaults to None.</td>
-<td><code>None</code></td>
-</tr>
-<tr class="even">
-<td>sampler_kwargs</td>
-<td>Dict</td>
-<td>Additional arguments for the sampler. Defaults to None.</td>
+<td>Optional[int]</td>
+<td>Seed for reproducible samples; random if not provided.</td>
 <td><code>None</code></td>
 </tr>
 </tbody>
@@ -1680,7 +1673,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">get_number_of_categorical_combinations</span><span class="co">](#bofire.data_models.domain.features.Inputs.get_number_of_categorical_combinations)</span> <span class="pp">|</span> Get the total number of unique categorical combinations. <span class="pp">|</span></span>
 <span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">inverse_transform</span><span class="co">](#bofire.data_models.domain.features.Inputs.inverse_transform)</span> <span class="pp">|</span> Transform a dataframe back to the original representations. <span class="pp">|</span></span>
 <span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">is_fulfilled</span><span class="co">](#bofire.data_models.domain.features.Inputs.is_fulfilled)</span> <span class="pp">|</span> Check if the provided experiments fulfill all constraints defined on the <span class="pp">|</span></span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">sample</span><span class="co">](#bofire.data_models.domain.features.Inputs.sample)</span> <span class="pp">|</span> Draw sobol samples <span class="pp">|</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">sample</span><span class="co">](#bofire.data_models.domain.features.Inputs.sample)</span> <span class="pp">|</span> Draws samples of the inputs; fixed inputs keep their value. <span class="pp">|</span></span>
 <span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">to_pydantic_model</span><span class="co">](#bofire.data_models.domain.features.Inputs.to_pydantic_model)</span> <span class="pp">|</span> Build a dynamic Pydantic model with one field per input feature. <span class="pp">|</span></span>
 <span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">transform</span><span class="co">](#bofire.data_models.domain.features.Inputs.transform)</span> <span class="pp">|</span> Transform a dataframe to the representation specified in <span class="in">`specs`</span>. <span class="pp">|</span></span>
 <span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> <span class="co">[</span><span class="ot">validate_candidates</span><span class="co">](#bofire.data_models.domain.features.Inputs.validate_candidates)</span> <span class="pp">|</span> Validate a pandas dataframe with input feature values. <span class="pp">|</span></span>
@@ -1875,94 +1868,92 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb14-213"><a href="#cb14-213" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
 <span id="cb14-214"><a href="#cb14-214" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.sample(</span>
 <span id="cb14-215"><a href="#cb14-215" aria-hidden="true" tabindex="-1"></a>    n<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb14-216"><a href="#cb14-216" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span>SamplingMethodEnum.UNIFORM,</span>
+<span id="cb14-216"><a href="#cb14-216" aria-hidden="true" tabindex="-1"></a>    sampler<span class="op">=</span>UniformSampler(),</span>
 <span id="cb14-217"><a href="#cb14-217" aria-hidden="true" tabindex="-1"></a>    seed<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb14-218"><a href="#cb14-218" aria-hidden="true" tabindex="-1"></a>    sampler_kwargs<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb14-219"><a href="#cb14-219" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-220"><a href="#cb14-220" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb14-221"><a href="#cb14-221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-222"><a href="#cb14-222" aria-hidden="true" tabindex="-1"></a>Draw sobol samples</span>
-<span id="cb14-223"><a href="#cb14-223" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-224"><a href="#cb14-224" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
-<span id="cb14-225"><a href="#cb14-225" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-226"><a href="#cb14-226" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name           <span class="pp">|</span> Type               <span class="pp">|</span> Description                                                                                 <span class="pp">|</span> Default                      <span class="pp">|</span></span>
-<span id="cb14-227"><a href="#cb14-227" aria-hidden="true" tabindex="-1"></a><span class="pp">|----------------|--------------------|---------------------------------------------------------------------------------------------|------------------------------|</span></span>
-<span id="cb14-228"><a href="#cb14-228" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> n              <span class="pp">|</span> int                <span class="pp">|</span> Number of samples, has to be larger than 0. Defaults to 1.                                  <span class="pp">|</span> <span class="in">`1`</span>                          <span class="pp">|</span></span>
-<span id="cb14-229"><a href="#cb14-229" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> method         <span class="pp">|</span> SamplingMethodEnum <span class="pp">|</span> Method to use, implemented methods are <span class="in">`UNIFORM`</span>, <span class="in">`SOBOL`</span> and <span class="in">`LHS`</span>. Defaults to <span class="in">`UNIFORM`</span>. <span class="pp">|</span> <span class="in">`SamplingMethodEnum.UNIFORM`</span> <span class="pp">|</span></span>
-<span id="cb14-230"><a href="#cb14-230" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> seed           <span class="pp">|</span> int                <span class="pp">|</span> random seed. Defaults to None.                                                              <span class="pp">|</span> <span class="in">`None`</span>                       <span class="pp">|</span></span>
-<span id="cb14-231"><a href="#cb14-231" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> sampler_kwargs <span class="pp">|</span> Dict               <span class="pp">|</span> Additional arguments for the sampler. Defaults to None.                                     <span class="pp">|</span> <span class="in">`None`</span>                       <span class="pp">|</span></span>
+<span id="cb14-218"><a href="#cb14-218" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-219"><a href="#cb14-219" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-220"><a href="#cb14-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-221"><a href="#cb14-221" aria-hidden="true" tabindex="-1"></a>Draws samples of the inputs; fixed inputs keep their value.</span>
+<span id="cb14-222"><a href="#cb14-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-223"><a href="#cb14-223" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
+<span id="cb14-224"><a href="#cb14-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-225"><a href="#cb14-225" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name    <span class="pp">|</span> Type            <span class="pp">|</span> Description                                            <span class="pp">|</span> Default            <span class="pp">|</span></span>
+<span id="cb14-226"><a href="#cb14-226" aria-hidden="true" tabindex="-1"></a><span class="pp">|---------|-----------------|--------------------------------------------------------|--------------------|</span></span>
+<span id="cb14-227"><a href="#cb14-227" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> n       <span class="pp">|</span> PositiveInt     <span class="pp">|</span> Number of samples.                                     <span class="pp">|</span> <span class="in">`1`</span>                <span class="pp">|</span></span>
+<span id="cb14-228"><a href="#cb14-228" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> sampler <span class="pp">|</span> AnySampler      <span class="pp">|</span> How the samples are spread, e.g. <span class="in">`SobolSampler()`</span>.     <span class="pp">|</span> <span class="in">`UniformSampler()`</span> <span class="pp">|</span></span>
+<span id="cb14-229"><a href="#cb14-229" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> seed    <span class="pp">|</span> Optional<span class="sc">\[</span>int<span class="sc">\]</span> <span class="pp">|</span> Seed for reproducible samples; random if not provided. <span class="pp">|</span> <span class="in">`None`</span>             <span class="pp">|</span></span>
+<span id="cb14-230"><a href="#cb14-230" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-231"><a href="#cb14-231" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
 <span id="cb14-232"><a href="#cb14-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-233"><a href="#cb14-233" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb14-234"><a href="#cb14-234" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-235"><a href="#cb14-235" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                                     <span class="pp">|</span></span>
-<span id="cb14-236"><a href="#cb14-236" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|-------------------------------------------------|</span></span>
-<span id="cb14-237"><a href="#cb14-237" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.DataFrame: Dataframe containing the samples. <span class="pp">|</span></span>
+<span id="cb14-233"><a href="#cb14-233" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                                     <span class="pp">|</span></span>
+<span id="cb14-234"><a href="#cb14-234" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|-------------------------------------------------|</span></span>
+<span id="cb14-235"><a href="#cb14-235" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.DataFrame: Dataframe containing the samples. <span class="pp">|</span></span>
+<span id="cb14-236"><a href="#cb14-236" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-237"><a href="#cb14-237" aria-hidden="true" tabindex="-1"></a><span class="fu">### to_pydantic_model { #bofire.data_models.domain.features.Inputs.to_pydantic_model }</span></span>
 <span id="cb14-238"><a href="#cb14-238" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-239"><a href="#cb14-239" aria-hidden="true" tabindex="-1"></a><span class="fu">### to_pydantic_model { #bofire.data_models.domain.features.Inputs.to_pydantic_model }</span></span>
-<span id="cb14-240"><a href="#cb14-240" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-241"><a href="#cb14-241" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-242"><a href="#cb14-242" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.to_pydantic_model(name<span class="op">=</span><span class="st">'CandidatePoint'</span>)</span>
-<span id="cb14-243"><a href="#cb14-243" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-239"><a href="#cb14-239" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-240"><a href="#cb14-240" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.to_pydantic_model(name<span class="op">=</span><span class="st">'CandidatePoint'</span>)</span>
+<span id="cb14-241"><a href="#cb14-241" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-242"><a href="#cb14-242" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-243"><a href="#cb14-243" aria-hidden="true" tabindex="-1"></a>Build a dynamic Pydantic model with one field per input feature.</span>
 <span id="cb14-244"><a href="#cb14-244" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-245"><a href="#cb14-245" aria-hidden="true" tabindex="-1"></a>Build a dynamic Pydantic model with one field per input feature.</span>
-<span id="cb14-246"><a href="#cb14-246" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-247"><a href="#cb14-247" aria-hidden="true" tabindex="-1"></a>Each feature's ``to_pydantic_field()`` determines the field type and</span>
-<span id="cb14-248"><a href="#cb14-248" aria-hidden="true" tabindex="-1"></a>constraints (e.g., ge/le for continuous, Literal for categorical).</span>
+<span id="cb14-245"><a href="#cb14-245" aria-hidden="true" tabindex="-1"></a>Each feature's ``to_pydantic_field()`` determines the field type and</span>
+<span id="cb14-246"><a href="#cb14-246" aria-hidden="true" tabindex="-1"></a>constraints (e.g., ge/le for continuous, Literal for categorical).</span>
+<span id="cb14-247"><a href="#cb14-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-248"><a href="#cb14-248" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
 <span id="cb14-249"><a href="#cb14-249" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-250"><a href="#cb14-250" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb14-251"><a href="#cb14-251" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-252"><a href="#cb14-252" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description                                                          <span class="pp">|</span></span>
-<span id="cb14-253"><a href="#cb14-253" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|----------------------------------------------------------------------|</span></span>
-<span id="cb14-254"><a href="#cb14-254" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span>        <span class="pp">|</span> A Pydantic BaseModel subclass with typed fields matching the inputs. <span class="pp">|</span></span>
+<span id="cb14-250"><a href="#cb14-250" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type   <span class="pp">|</span> Description                                                          <span class="pp">|</span></span>
+<span id="cb14-251"><a href="#cb14-251" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------|----------------------------------------------------------------------|</span></span>
+<span id="cb14-252"><a href="#cb14-252" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span>        <span class="pp">|</span> A Pydantic BaseModel subclass with typed fields matching the inputs. <span class="pp">|</span></span>
+<span id="cb14-253"><a href="#cb14-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-254"><a href="#cb14-254" aria-hidden="true" tabindex="-1"></a><span class="fu">### transform { #bofire.data_models.domain.features.Inputs.transform }</span></span>
 <span id="cb14-255"><a href="#cb14-255" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-256"><a href="#cb14-256" aria-hidden="true" tabindex="-1"></a><span class="fu">### transform { #bofire.data_models.domain.features.Inputs.transform }</span></span>
-<span id="cb14-257"><a href="#cb14-257" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-258"><a href="#cb14-258" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-259"><a href="#cb14-259" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.transform(experiments, specs)</span>
-<span id="cb14-260"><a href="#cb14-260" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-256"><a href="#cb14-256" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-257"><a href="#cb14-257" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.transform(experiments, specs)</span>
+<span id="cb14-258"><a href="#cb14-258" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-259"><a href="#cb14-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-260"><a href="#cb14-260" aria-hidden="true" tabindex="-1"></a>Transform a dataframe to the representation specified in <span class="in">`specs`</span>.</span>
 <span id="cb14-261"><a href="#cb14-261" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-262"><a href="#cb14-262" aria-hidden="true" tabindex="-1"></a>Transform a dataframe to the representation specified in <span class="in">`specs`</span>.</span>
+<span id="cb14-262"><a href="#cb14-262" aria-hidden="true" tabindex="-1"></a>Currently only input categoricals are supported.</span>
 <span id="cb14-263"><a href="#cb14-263" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-264"><a href="#cb14-264" aria-hidden="true" tabindex="-1"></a>Currently only input categoricals are supported.</span>
+<span id="cb14-264"><a href="#cb14-264" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
 <span id="cb14-265"><a href="#cb14-265" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-266"><a href="#cb14-266" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
-<span id="cb14-267"><a href="#cb14-267" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-268"><a href="#cb14-268" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name        <span class="pp">|</span> Type                <span class="pp">|</span> Description                                                                <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb14-269"><a href="#cb14-269" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|---------------------|----------------------------------------------------------------------------|------------|</span></span>
-<span id="cb14-270"><a href="#cb14-270" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments <span class="pp">|</span> pd.DataFrame        <span class="pp">|</span> Data dataframe to be transformed.                                          <span class="pp">|</span> _required_ <span class="pp">|</span></span>
-<span id="cb14-271"><a href="#cb14-271" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> specs       <span class="pp">|</span> InputTransformSpecs <span class="pp">|</span> Dictionary specifying which input feature is transformed by which encoder. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-266"><a href="#cb14-266" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name        <span class="pp">|</span> Type                <span class="pp">|</span> Description                                                                <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb14-267"><a href="#cb14-267" aria-hidden="true" tabindex="-1"></a><span class="pp">|-------------|---------------------|----------------------------------------------------------------------------|------------|</span></span>
+<span id="cb14-268"><a href="#cb14-268" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> experiments <span class="pp">|</span> pd.DataFrame        <span class="pp">|</span> Data dataframe to be transformed.                                          <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-269"><a href="#cb14-269" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> specs       <span class="pp">|</span> InputTransformSpecs <span class="pp">|</span> Dictionary specifying which input feature is transformed by which encoder. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-270"><a href="#cb14-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-271"><a href="#cb14-271" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
 <span id="cb14-272"><a href="#cb14-272" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-273"><a href="#cb14-273" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb14-274"><a href="#cb14-274" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-275"><a href="#cb14-275" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                                                            <span class="pp">|</span></span>
-<span id="cb14-276"><a href="#cb14-276" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|------------------------------------------------------------------------|</span></span>
-<span id="cb14-277"><a href="#cb14-277" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.DataFrame: Transformed dataframe. Only input features are included. <span class="pp">|</span></span>
+<span id="cb14-273"><a href="#cb14-273" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                                                            <span class="pp">|</span></span>
+<span id="cb14-274"><a href="#cb14-274" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|------------------------------------------------------------------------|</span></span>
+<span id="cb14-275"><a href="#cb14-275" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.DataFrame: Transformed dataframe. Only input features are included. <span class="pp">|</span></span>
+<span id="cb14-276"><a href="#cb14-276" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-277"><a href="#cb14-277" aria-hidden="true" tabindex="-1"></a><span class="fu">### validate_candidates { #bofire.data_models.domain.features.Inputs.validate_candidates }</span></span>
 <span id="cb14-278"><a href="#cb14-278" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-279"><a href="#cb14-279" aria-hidden="true" tabindex="-1"></a><span class="fu">### validate_candidates { #bofire.data_models.domain.features.Inputs.validate_candidates }</span></span>
-<span id="cb14-280"><a href="#cb14-280" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-281"><a href="#cb14-281" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
-<span id="cb14-282"><a href="#cb14-282" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.validate_candidates(candidates)</span>
-<span id="cb14-283"><a href="#cb14-283" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-279"><a href="#cb14-279" aria-hidden="true" tabindex="-1"></a><span class="in">```python</span></span>
+<span id="cb14-280"><a href="#cb14-280" aria-hidden="true" tabindex="-1"></a>data_models.domain.features.Inputs.validate_candidates(candidates)</span>
+<span id="cb14-281"><a href="#cb14-281" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-282"><a href="#cb14-282" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-283"><a href="#cb14-283" aria-hidden="true" tabindex="-1"></a>Validate a pandas dataframe with input feature values.</span>
 <span id="cb14-284"><a href="#cb14-284" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-285"><a href="#cb14-285" aria-hidden="true" tabindex="-1"></a>Validate a pandas dataframe with input feature values.</span>
+<span id="cb14-285"><a href="#cb14-285" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
 <span id="cb14-286"><a href="#cb14-286" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-287"><a href="#cb14-287" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Parameters {.doc-section .doc-section-parameters}</span></span>
-<span id="cb14-288"><a href="#cb14-288" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-289"><a href="#cb14-289" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name       <span class="pp">|</span> Type         <span class="pp">|</span> Description         <span class="pp">|</span> Default    <span class="pp">|</span></span>
-<span id="cb14-290"><a href="#cb14-290" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------|--------------|---------------------|------------|</span></span>
-<span id="cb14-291"><a href="#cb14-291" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> candidates <span class="pp">|</span> pd.Dataframe <span class="pp">|</span> Inputs to validate. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-287"><a href="#cb14-287" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name       <span class="pp">|</span> Type         <span class="pp">|</span> Description         <span class="pp">|</span> Default    <span class="pp">|</span></span>
+<span id="cb14-288"><a href="#cb14-288" aria-hidden="true" tabindex="-1"></a><span class="pp">|------------|--------------|---------------------|------------|</span></span>
+<span id="cb14-289"><a href="#cb14-289" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> candidates <span class="pp">|</span> pd.Dataframe <span class="pp">|</span> Inputs to validate. <span class="pp">|</span> _required_ <span class="pp">|</span></span>
+<span id="cb14-290"><a href="#cb14-290" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-291"><a href="#cb14-291" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Raises {.doc-section .doc-section-raises}</span></span>
 <span id="cb14-292"><a href="#cb14-292" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-293"><a href="#cb14-293" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Raises {.doc-section .doc-section-raises}</span></span>
-<span id="cb14-294"><a href="#cb14-294" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-295"><a href="#cb14-295" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                                            <span class="pp">|</span></span>
-<span id="cb14-296"><a href="#cb14-296" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|------------------------------------------------------------------------|</span></span>
-<span id="cb14-297"><a href="#cb14-297" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> Raises a Valueerror if a feature based validation raises an exception. <span class="pp">|</span></span>
+<span id="cb14-293"><a href="#cb14-293" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type       <span class="pp">|</span> Description                                                            <span class="pp">|</span></span>
+<span id="cb14-294"><a href="#cb14-294" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|------------|------------------------------------------------------------------------|</span></span>
+<span id="cb14-295"><a href="#cb14-295" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> ValueError <span class="pp">|</span> Raises a Valueerror if a feature based validation raises an exception. <span class="pp">|</span></span>
+<span id="cb14-296"><a href="#cb14-296" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-297"><a href="#cb14-297" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
 <span id="cb14-298"><a href="#cb14-298" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-299"><a href="#cb14-299" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Returns {.doc-section .doc-section-returns}</span></span>
-<span id="cb14-300"><a href="#cb14-300" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-301"><a href="#cb14-301" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                       <span class="pp">|</span></span>
-<span id="cb14-302"><a href="#cb14-302" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|-----------------------------------|</span></span>
-<span id="cb14-303"><a href="#cb14-303" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.Dataframe: Validated dataframe <span class="pp">|</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb14-299"><a href="#cb14-299" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span> Name   <span class="pp">|</span> Type         <span class="pp">|</span> Description                       <span class="pp">|</span></span>
+<span id="cb14-300"><a href="#cb14-300" aria-hidden="true" tabindex="-1"></a><span class="pp">|--------|--------------|-----------------------------------|</span></span>
+<span id="cb14-301"><a href="#cb14-301" aria-hidden="true" tabindex="-1"></a><span class="pp">|</span>        <span class="pp">|</span> pd.DataFrame <span class="pp">|</span> pd.Dataframe: Validated dataframe <span class="pp">|</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

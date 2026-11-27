@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-348615dbec15d57dbd120bddebf38ff3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-ee65e383bc30aa9fec98e06fe43bf684.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-348615dbec15d57dbd120bddebf38ff3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-be7d895c813c84042c9fbb18889028a9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-c571f53156c730c5a034ccf14cd27066.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-be7d895c813c84042c9fbb18889028a9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -796,7 +796,7 @@ window.Quarto = {
 
 
 <p>The following example has been taken from the paper “The construction of D- and I-optimal designs for mixture experiments with linear constraints on the components” by R. Coetzer and L. M. Haines (https://www.sciencedirect.com/science/article/pii/S0169743917303106).</p>
-<div id="2bc6e20a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.886753,&quot;end_time&quot;:&quot;2024-10-10T20:36:02.603166&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:59.716413&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="03ecf598" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.886753,&quot;end_time&quot;:&quot;2024-10-10T20:36:02.603166&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:35:59.716413&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.ticker <span class="im">import</span> FormatStrFormatter</span>
@@ -824,7 +824,7 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="linear-model">Linear model</h2>
 <p>Creating an experimental design that is D-optimal with respect to a linear model is done the same way as making proposals using other methods in BoFire; you 1. create a domain 2. construct a stategy data model (here we want DoEStrategy) 3. map the strategy to its functional version, and finally 4. ask the strategy for proposals.</p>
 <p>We will start with the simplest case: make a design based on a linear model containing main-effects (i.e., simply the inputs themselves and an intercept, without any second-order terms).</p>
-<div id="ec18f1d8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.258445,&quot;end_time&quot;:&quot;2024-10-10T20:36:02.867393&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:02.608948&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="2afeb53e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.258445,&quot;end_time&quot;:&quot;2024-10-10T20:36:02.867393&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:36:02.608948&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
@@ -856,7 +856,7 @@ window.Quarto = {
 <span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(candidate_count<span class="op">=</span><span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Let’s visualize the experiments that were chosen. We will see that such a design puts the experiments at the extremes of the experimental space - these are the points that best allow us to estimate the parameters of the linear model we chose.</p>
-<div id="12535794" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="cac3f2fb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>((<span class="dv">10</span>, <span class="dv">10</span>)))</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> fig.add_subplot(<span class="dv">111</span>, projection<span class="op">=</span><span class="st">"3d"</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>ax.view_init(<span class="dv">45</span>, <span class="dv">45</span>)</span>
@@ -899,7 +899,7 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="cubic-model">cubic model</h2>
 <p>While the previous design is optimal for the main-effects model, we might prefer to see something that does not allocate all the experimental effort to values at the boundary of the space. This implies that we think there might be some higher-order effects present in the system - if we were sure that the target variable would follow straight-line behavior across the domain, we would not need to investigate any points away from the extremes.</p>
 <p>We can address this by specifying our own linear model that includes higher-order terms.</p>
-<div id="cfec3888" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="9fe45fd3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(</span>
@@ -911,13 +911,13 @@ window.Quarto = {
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(<span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <div class="ansi-escaped-output">
-<pre><span style="color:rgb(138,109,59)"> INFO</span> pounce_algorithm::conv_check::opt_error: refusing an acceptable-level termination: the error has been inside the acceptable band for the whole streak but is still moving across it, so the streak has not flattened; continuing (acceptable_progress_kappa=0 disables) <span style="font-style:italic">nlp_err</span>=6.339229574336969e-5 <span style="font-style:italic">obj</span>=108.47593281339627 <span style="font-style:italic">acceptable_tol</span>=0.001 <span style="font-style:italic">window</span>=5 <span style="font-style:italic">kappa</span>=0.1
+<pre><span style="color:rgb(138,109,59)"> INFO</span> pounce_algorithm::conv_check::opt_error: refusing an acceptable-level termination: the error has been inside the acceptable band for the whole streak but is still moving across it, so the streak has not flattened; continuing (acceptable_progress_kappa=0 disables) <span style="font-style:italic">nlp_err</span>=3.6016871725939516e-5 <span style="font-style:italic">obj</span>=108.47593281326147 <span style="font-style:italic">acceptable_tol</span>=0.001 <span style="font-style:italic">window</span>=5 <span style="font-style:italic">kappa</span>=0.1
 </pre>
 </div>
 </div>
 </div>
 <p>In this case we can compare with the result reported in the paper of Coetzer and Haines.</p>
-<div id="43535629" class="cell" data-execution_count="5">
+<div id="ae45821d" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>d_opt <span class="op">=</span> np.array(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    [</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        [</span>
@@ -1000,7 +1000,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<div id="54f2e8a0" class="cell" data-execution_count="6">
+<div id="8813975b" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>IOptimalityCriterion(</span>
@@ -1073,11 +1073,11 @@ window.Quarto = {
 <span id="cb7-70"><a href="#cb7-70" aria-hidden="true" tabindex="-1"></a>plt.legend()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <div class="ansi-escaped-output">
-<pre>/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/bofire/strategies/doe/objective.py:172: UserWarning: Equality constraints were detected. No equidistant grid of points can be generated. The design space will be filled via SpaceFilling.
+<pre>/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/bofire/strategies/doe/objective.py:171: UserWarning: Equality constraints were detected. No equidistant grid of points can be generated. The design space will be filled via SpaceFilling.
 
   warnings.warn(
 
-<span style="color:rgb(138,109,59)"> INFO</span> pounce_algorithm::conv_check::opt_error: refusing an acceptable-level termination: the error has been inside the acceptable band for the whole streak but is still moving across it, so the streak has not flattened; continuing (acceptable_progress_kappa=0 disables) <span style="font-style:italic">nlp_err</span>=4.089750063987825e-6 <span style="font-style:italic">obj</span>=0.23301402172346192 <span style="font-style:italic">acceptable_tol</span>=0.001 <span style="font-style:italic">window</span>=5 <span style="font-style:italic">kappa</span>=0.1
+<span style="color:rgb(138,109,59)"> INFO</span> pounce_algorithm::conv_check::opt_error: refusing an acceptable-level termination: the error has been inside the acceptable band for the whole streak but is still moving across it, so the streak has not flattened; continuing (acceptable_progress_kappa=0 disables) <span style="font-style:italic">nlp_err</span>=2.6140156122838782e-5 <span style="font-style:italic">obj</span>=0.5307969876220286 <span style="font-style:italic">acceptable_tol</span>=0.001 <span style="font-style:italic">window</span>=5 <span style="font-style:italic">kappa</span>=0.1
 </pre>
 </div>
 </div>
@@ -1094,7 +1094,7 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="nonlinear-constraints">Nonlinear Constraints</h2>
 <p>Design generation also supports nonlinear constraints. The following 3 examples show what is possible.</p>
 <p>First, a convenience function for plotting.</p>
-<div id="5feea532" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
+<div id="07cc2ec0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_results_3d(result, surface_func):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    u, v <span class="op">=</span> np.mgrid[<span class="dv">0</span> : <span class="dv">2</span> <span class="op">*</span> np.pi : <span class="ot">100j</span>, <span class="dv">0</span> : np.pi : <span class="ot">80j</span>]</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> np.cos(u) <span class="op">*</span> np.sin(v)</span>
@@ -1119,7 +1119,7 @@ window.Quarto = {
 <section id="example-1-design-inside-a-cone-nonlinear-inequality" class="level3">
 <h3 class="anchored" data-anchor-id="example-1-design-inside-a-cone-nonlinear-inequality">Example 1: Design inside a cone / nonlinear inequality</h3>
 <p>In the following example we have three design variables. We impose the constraint that all experiments have to be contained in the interior of a cone, which corresponds to the nonlinear inequality constraint <span class="math inline">\(\sqrt{x_1^2 + x_2^2} - x_3 \leq 0\)</span>. The optimization is done for a linear model and we will see that it places the points on the surface of the cone so as to maximize the distance between them (although this is not explicitly the objective of the optimization).</p>
-<div id="343ce696" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
+<div id="f0347066" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
@@ -1147,8 +1147,14 @@ window.Quarto = {
 <span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
 <span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>plot_results_3d(result, surface_func<span class="op">=</span><span class="kw">lambda</span> x1, x2: np.sqrt(x1<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> x2<span class="op">**</span><span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/bofire/strategies/doe/design.py:96: UserWarning: Nonlinear constraints were detected. Not all features and checks are supported for this type of constraints.                 Using them can lead to unexpected behaviour. Please make sure to provide jacobians for nonlinear constraints.
-  warnings.warn(</code></pre>
+<div class="ansi-escaped-output">
+<pre>/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/bofire/strategies/doe/design.py:95: UserWarning: Nonlinear constraints were detected. Not all features and checks are supported for this type of constraints.                 Using them can lead to unexpected behaviour. Please make sure to provide jacobians for nonlinear constraints.
+
+  warnings.warn(
+
+<span style="color:rgb(138,109,59)"> INFO</span> pounce_algorithm::conv_check::opt_error: refusing an acceptable-level termination: the error has been inside the acceptable band for the whole streak but is still moving across it, so the streak has not flattened; continuing (acceptable_progress_kappa=0 disables) <span style="font-style:italic">nlp_err</span>=0.0001140235384293144 <span style="font-style:italic">obj</span>=-4.135168679021179 <span style="font-style:italic">acceptable_tol</span>=0.001 <span style="font-style:italic">window</span>=5 <span style="font-style:italic">kappa</span>=0.1
+</pre>
+</div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -1159,35 +1165,41 @@ window.Quarto = {
 </div>
 </div>
 <p>We can do the same for a design space limited by an elliptical cone <span class="math inline">\(x_1^2 + x_2^2 - x_3 \leq 0\)</span>.</p>
-<div id="95b202c8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        NonlinearInequalityConstraint(</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"x1**2 + x2**2 - x3"</span>,</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>],</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">100</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(</span>
-<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    strategy.get_required_number_of_experiments(), raise_validation_error<span class="op">=</span><span class="va">False</span></span>
-<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
-<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>plot_results_3d(result, surface_func<span class="op">=</span><span class="kw">lambda</span> x1, x2: x1<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> x2<span class="op">**</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="5a5be69c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        NonlinearInequalityConstraint(</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"x1**2 + x2**2 - x3"</span>,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>],</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">100</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    strategy.get_required_number_of_experiments(), raise_validation_error<span class="op">=</span><span class="va">False</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>plot_results_3d(result, surface_func<span class="op">=</span><span class="kw">lambda</span> x1, x2: x1<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> x2<span class="op">**</span><span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/bofire/strategies/doe/design.py:96: UserWarning: Nonlinear constraints were detected. Not all features and checks are supported for this type of constraints.                 Using them can lead to unexpected behaviour. Please make sure to provide jacobians for nonlinear constraints.
-  warnings.warn(</code></pre>
+<div class="ansi-escaped-output">
+<pre>/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/bofire/strategies/doe/design.py:95: UserWarning: Nonlinear constraints were detected. Not all features and checks are supported for this type of constraints.                 Using them can lead to unexpected behaviour. Please make sure to provide jacobians for nonlinear constraints.
+
+  warnings.warn(
+
+<span style="color:rgb(138,109,59)"> INFO</span> pounce_algorithm::conv_check::opt_error: refusing an acceptable-level termination: the error has been inside the acceptable band for the whole streak but is still moving across it, so the streak has not flattened; continuing (acceptable_progress_kappa=0 disables) <span style="font-style:italic">nlp_err</span>=2.3603531584370785e-5 <span style="font-style:italic">obj</span>=-4.135168645595147 <span style="font-style:italic">acceptable_tol</span>=0.001 <span style="font-style:italic">window</span>=5 <span style="font-style:italic">kappa</span>=0.1
+</pre>
+</div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -1202,51 +1214,39 @@ window.Quarto = {
 <h3 class="anchored" data-anchor-id="example-2-design-on-the-surface-of-a-cone-nonlinear-equality">Example 2: Design on the surface of a cone / nonlinear equality</h3>
 <p>We can also limit the design space to the surface of a cone, defined by the equality constraint <span class="math inline">\(\sqrt{x_1^2 + x_2^2} - x_3 = 0\)</span>. Before, we observed that the experimental proposals happened to be on the surface of the cone, but now they are constrained so that this must be the case.</p>
 <p>Remark: Due to missing sampling methods, the initial points provided to the solver don’t satisfy the constraints. But this does not matter for the solution.</p>
-<div id="a52b4146" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        NonlinearEqualityConstraint(</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"(x1**2 + x2**2)**0.5 - x3"</span>,</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>],</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">100</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
-<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(<span class="dv">12</span>, raise_validation_error<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
-<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>plot_results_3d(result, surface_func<span class="op">=</span><span class="kw">lambda</span> x1, x2: np.sqrt(x1<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> x2<span class="op">**</span><span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="a2cd61b5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        NonlinearEqualityConstraint(</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"(x1**2 + x2**2)**0.5 - x3"</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>],</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">100</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(<span class="dv">12</span>, raise_validation_error<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>plot_results_3d(result, surface_func<span class="op">=</span><span class="kw">lambda</span> x1, x2: np.sqrt(x1<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> x2<span class="op">**</span><span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
-<div class="ansi-escaped-output">
-<pre>/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/bofire/strategies/doe/design.py:96: UserWarning: Nonlinear constraints were detected. Not all features and checks are supported for this type of constraints.                 Using them can lead to unexpected behaviour. Please make sure to provide jacobians for nonlinear constraints.
-
+<pre><code>/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/bofire/strategies/doe/design.py:95: UserWarning: Nonlinear constraints were detected. Not all features and checks are supported for this type of constraints.                 Using them can lead to unexpected behaviour. Please make sure to provide jacobians for nonlinear constraints.
   warnings.warn(
-
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/bofire/strategies/doe/design.py:119: UserWarning: 1 validation error for RandomStrategy
-
-  Value error, constraint `&lt;class 'bofire.data_models.constraints.nonlinear.NonlinearEqualityConstraint'&gt;` is not implemented for strategy `RandomStrategy` [type=value_error, input_value={'domain': Domain(type='D...ne), 'seed': 3428790905}, input_type=dict]
-
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/bofire/strategies/doe/design.py:118: UserWarning: 1 validation error for RandomStrategy
+  Value error, constraint `&lt;class 'bofire.data_models.constraints.nonlinear.NonlinearEqualityConstraint'&gt;` is not implemented for strategy `RandomStrategy` [type=value_error, input_value={'domain': Domain(type='D...ne), 'seed': 2028239014}, input_type=dict]
     For further information visit https://errors.pydantic.dev/2.14/v/value_error
-
   warnings.warn(str(e))
-
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/bofire/strategies/doe/design.py:120: UserWarning: Sampling failed. Falling back to uniform sampling on input domain.                      Providing a custom sampling strategy compatible with the problem can                       possibly improve performance.
-
-  warnings.warn(
-
-<span style="color:rgb(138,109,59)"> INFO</span> pounce_algorithm::conv_check::opt_error: refusing an acceptable-level termination: the error has been inside the acceptable band for the whole streak but is still moving across it, so the streak has not flattened; continuing (acceptable_progress_kappa=0 disables) <span style="font-style:italic">nlp_err</span>=1.5051020799329178e-5 <span style="font-style:italic">obj</span>=-6.2383258301344355 <span style="font-style:italic">acceptable_tol</span>=0.001 <span style="font-style:italic">window</span>=5 <span style="font-style:italic">kappa</span>=0.1
-</pre>
-</div>
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/bofire/strategies/doe/design.py:119: UserWarning: Sampling failed. Falling back to uniform sampling on input domain.                      Providing a custom sampling strategy compatible with the problem can                       possibly improve performance.
+  warnings.warn(</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -1261,24 +1261,24 @@ window.Quarto = {
 <h3 class="anchored" data-anchor-id="example-3-batch-constraints">Example 3: Batch constraints</h3>
 <p>Batch constraints can be used to create designs where each set of <code>multiplicity</code> subsequent experiments have the same value for a certain feature. This can be useful for setups where experiments are done in parallel and some parameters must be shared by experiments in the same parallel batch.</p>
 <p>In the following example we fix the value of the decision variable <code>x1</code> for each batch of 3 experiments.</p>
-<div id="eb270b1a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[InterpointEqualityConstraint(features<span class="op">=</span>[<span class="st">"x1"</span>], multiplicity<span class="op">=</span><span class="dv">3</span>)],</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">500</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(<span class="dv">12</span>)</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="86e8050c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[InterpointEqualityConstraint(features<span class="op">=</span>[<span class="st">"x1"</span>], multiplicity<span class="op">=</span><span class="dv">3</span>)],</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">500</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(<span class="dv">12</span>)</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="11">
 <div>
 
@@ -1295,74 +1295,74 @@ window.Quarto = {
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>1.0</td>
-<td>1.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
 <td>1.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>1.0</td>
-<td>1.0</td>
 <td>-0.0</td>
+<td>1.0</td>
+<td>1.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>1.0</td>
-<td>1.0</td>
 <td>-0.0</td>
+<td>1.0</td>
+<td>1.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
+<td>1.0</td>
 <td>-0.0</td>
-<td>-0.0</td>
-<td>-0.0</td>
+<td>1.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
+<td>1.0</td>
 <td>-0.0</td>
-<td>1.0</td>
-<td>1.0</td>
+<td>-0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>-0.0</td>
-<td>-0.0</td>
-<td>-0.0</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>-0.0</td>
-<td>-0.0</td>
 <td>1.0</td>
+<td>1.0</td>
+<td>-0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>-0.0</td>
 <td>1.0</td>
+<td>-0.0</td>
 <td>1.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>-0.0</td>
-<td>-0.0</td>
 <td>1.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
+<td>-0.0</td>
 <td>1.0</td>
-<td>1.0</td>
-<td>1.0</td>
+<td>-0.0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">10</th>
-<td>1.0</td>
 <td>-0.0</td>
-<td>1.0</td>
+<td>-0.0</td>
+<td>-0.0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">11</th>
-<td>1.0</td>
 <td>-0.0</td>
+<td>1.0</td>
 <td>-0.0</td>
 </tr>
 </tbody>
@@ -1859,449 +1859,449 @@ window.Quarto = {
       </a>
   </div>
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Basic Examples for the DoE Subpackage</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>The following example has been taken from the paper "The construction of D- and I-optimal designs for mixture experiments with linear constraints on the components" by R. Coetzer and L. M. Haines (https://www.sciencedirect.com/science/article/pii/S0169743917303106).</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: 2.886753, end_time: '2024-10-10T20:36:02.603166', exception: false, start_time: '2024-10-10T20:35:59.716413', status: completed}</span></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.ticker <span class="im">import</span> FormatStrFormatter</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.constraints.api <span class="im">import</span> (</span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>    InterpointEqualityConstraint,</span>
-<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>    LinearEqualityConstraint,</span>
-<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>    LinearInequalityConstraint,</span>
-<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>    NonlinearEqualityConstraint,</span>
-<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>    NonlinearInequalityConstraint,</span>
-<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Domain</span>
-<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousInput, ContinuousOutput</span>
-<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> DoEStrategy</span>
-<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.doe <span class="im">import</span> DOptimalityCriterion, IOptimalityCriterion</span>
-<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a><span class="fu">## Linear model</span></span>
-<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>Creating an experimental design that is D-optimal with respect to a linear model is done the same way as making proposals using other methods in BoFire; you</span>
-<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>create a domain</span>
-<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>construct a stategy data model (here we want DoEStrategy)</span>
-<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>map the strategy to its functional version, and finally</span>
-<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>ask the strategy for proposals.</span>
-<span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a>We will start with the simplest case: make a design based on a linear model containing main-effects (i.e., simply the inputs themselves and an intercept, without any second-order terms).</span>
-<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-45"><a href="#cb15-45" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb15-46"><a href="#cb15-46" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: 0.258445, end_time: '2024-10-10T20:36:02.867393', exception: true, start_time: '2024-10-10T20:36:02.608948', status: failed}</span></span>
-<span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb15-48"><a href="#cb15-48" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
-<span id="cb15-49"><a href="#cb15-49" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb15-50"><a href="#cb15-50" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-51"><a href="#cb15-51" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="fl">0.1</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="fl">0.6</span>)),</span>
-<span id="cb15-53"><a href="#cb15-53" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb15-54"><a href="#cb15-54" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
-<span id="cb15-55"><a href="#cb15-55" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
-<span id="cb15-56"><a href="#cb15-56" aria-hidden="true" tabindex="-1"></a>        LinearEqualityConstraint(</span>
-<span id="cb15-57"><a href="#cb15-57" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>],</span>
-<span id="cb15-58"><a href="#cb15-58" aria-hidden="true" tabindex="-1"></a>            coefficients<span class="op">=</span>[<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>],</span>
-<span id="cb15-59"><a href="#cb15-59" aria-hidden="true" tabindex="-1"></a>            rhs<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb15-60"><a href="#cb15-60" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb15-61"><a href="#cb15-61" aria-hidden="true" tabindex="-1"></a>        LinearInequalityConstraint(features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>], coefficients<span class="op">=</span>[<span class="dv">5</span>, <span class="dv">4</span>], rhs<span class="op">=</span><span class="fl">3.9</span>),</span>
-<span id="cb15-62"><a href="#cb15-62" aria-hidden="true" tabindex="-1"></a>        LinearInequalityConstraint(</span>
-<span id="cb15-63"><a href="#cb15-63" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>],</span>
-<span id="cb15-64"><a href="#cb15-64" aria-hidden="true" tabindex="-1"></a>            coefficients<span class="op">=</span>[<span class="op">-</span><span class="dv">20</span>, <span class="dv">5</span>],</span>
-<span id="cb15-65"><a href="#cb15-65" aria-hidden="true" tabindex="-1"></a>            rhs<span class="op">=-</span><span class="dv">3</span>,</span>
-<span id="cb15-66"><a href="#cb15-66" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb15-67"><a href="#cb15-67" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb15-68"><a href="#cb15-68" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-69"><a href="#cb15-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-70"><a href="#cb15-70" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
-<span id="cb15-71"><a href="#cb15-71" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb15-72"><a href="#cb15-72" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
-<span id="cb15-73"><a href="#cb15-73" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
-<span id="cb15-74"><a href="#cb15-74" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-75"><a href="#cb15-75" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
-<span id="cb15-76"><a href="#cb15-76" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(candidate_count<span class="op">=</span><span class="dv">12</span>)</span>
-<span id="cb15-77"><a href="#cb15-77" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-78"><a href="#cb15-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-79"><a href="#cb15-79" aria-hidden="true" tabindex="-1"></a>Let's visualize the experiments that were chosen. We will see that such a design puts the experiments at the extremes of the experimental space - these are the points that best allow us to estimate the parameters of the linear model we chose.</span>
-<span id="cb15-80"><a href="#cb15-80" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-83"><a href="#cb15-83" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb15-84"><a href="#cb15-84" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
-<span id="cb15-85"><a href="#cb15-85" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb15-86"><a href="#cb15-86" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>((<span class="dv">10</span>, <span class="dv">10</span>)))</span>
-<span id="cb15-87"><a href="#cb15-87" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> fig.add_subplot(<span class="dv">111</span>, projection<span class="op">=</span><span class="st">"3d"</span>)</span>
-<span id="cb15-88"><a href="#cb15-88" aria-hidden="true" tabindex="-1"></a>ax.view_init(<span class="dv">45</span>, <span class="dv">45</span>)</span>
-<span id="cb15-89"><a href="#cb15-89" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Linear model"</span>)</span>
-<span id="cb15-90"><a href="#cb15-90" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"$x_1$"</span>)</span>
-<span id="cb15-91"><a href="#cb15-91" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"$x_2$"</span>)</span>
-<span id="cb15-92"><a href="#cb15-92" aria-hidden="true" tabindex="-1"></a>ax.set_zlabel(<span class="st">"$x_3$"</span>)</span>
-<span id="cb15-93"><a href="#cb15-93" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"figure.figsize"</span>] <span class="op">=</span> (<span class="dv">10</span>, <span class="dv">8</span>)</span>
-<span id="cb15-94"><a href="#cb15-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-95"><a href="#cb15-95" aria-hidden="true" tabindex="-1"></a><span class="co"># plot feasible polytope</span></span>
-<span id="cb15-96"><a href="#cb15-96" aria-hidden="true" tabindex="-1"></a>ax.plot(</span>
-<span id="cb15-97"><a href="#cb15-97" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>[<span class="dv">7</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">7</span> <span class="op">/</span> <span class="dv">10</span>],</span>
-<span id="cb15-98"><a href="#cb15-98" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>[<span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>],</span>
-<span id="cb15-99"><a href="#cb15-99" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>[<span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>],</span>
-<span id="cb15-100"><a href="#cb15-100" aria-hidden="true" tabindex="-1"></a>    linewidth<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb15-101"><a href="#cb15-101" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-102"><a href="#cb15-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-103"><a href="#cb15-103" aria-hidden="true" tabindex="-1"></a><span class="co"># plot D-optimal solutions</span></span>
-<span id="cb15-104"><a href="#cb15-104" aria-hidden="true" tabindex="-1"></a>ax.scatter(</span>
-<span id="cb15-105"><a href="#cb15-105" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>candidates[<span class="st">"x1"</span>],</span>
-<span id="cb15-106"><a href="#cb15-106" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>candidates[<span class="st">"x2"</span>],</span>
-<span id="cb15-107"><a href="#cb15-107" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>candidates[<span class="st">"x3"</span>],</span>
-<span id="cb15-108"><a href="#cb15-108" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
-<span id="cb15-109"><a href="#cb15-109" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">40</span>,</span>
-<span id="cb15-110"><a href="#cb15-110" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"orange"</span>,</span>
-<span id="cb15-111"><a href="#cb15-111" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"optimal_design solution, 12 points"</span>,</span>
-<span id="cb15-112"><a href="#cb15-112" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-113"><a href="#cb15-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-114"><a href="#cb15-114" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb15-115"><a href="#cb15-115" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-116"><a href="#cb15-116" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-117"><a href="#cb15-117" aria-hidden="true" tabindex="-1"></a><span class="fu">## cubic model</span></span>
-<span id="cb15-118"><a href="#cb15-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-119"><a href="#cb15-119" aria-hidden="true" tabindex="-1"></a>While the previous design is optimal for the main-effects model, we might prefer to see something that does not allocate all the experimental effort to values at the boundary of the space. This implies that we think there might be some higher-order effects present in the system - if we were sure that the target variable would follow straight-line behavior across the domain, we would not need to investigate any points away from the extremes.</span>
-<span id="cb15-120"><a href="#cb15-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-121"><a href="#cb15-121" aria-hidden="true" tabindex="-1"></a>We can address this by specifying our own linear model that includes higher-order terms.</span>
-<span id="cb15-122"><a href="#cb15-122" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-125"><a href="#cb15-125" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb15-126"><a href="#cb15-126" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
-<span id="cb15-127"><a href="#cb15-127" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb15-128"><a href="#cb15-128" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
-<span id="cb15-129"><a href="#cb15-129" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb15-130"><a href="#cb15-130" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(</span>
-<span id="cb15-131"><a href="#cb15-131" aria-hidden="true" tabindex="-1"></a>        formula<span class="op">=</span><span class="st">"x1 + x2 + x3 + {x1**2} + {x2**2} + {x3**2} + {x1**3} + {x2**3} + {x3**3} + x1:x2 + x1:x3 + x2:x3 + x1:x2:x3"</span></span>
-<span id="cb15-132"><a href="#cb15-132" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb15-133"><a href="#cb15-133" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
-<span id="cb15-134"><a href="#cb15-134" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-135"><a href="#cb15-135" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
-<span id="cb15-136"><a href="#cb15-136" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(<span class="dv">12</span>)</span>
-<span id="cb15-137"><a href="#cb15-137" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-138"><a href="#cb15-138" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-139"><a href="#cb15-139" aria-hidden="true" tabindex="-1"></a>In this case we can compare with the result reported in the paper of Coetzer and Haines.</span>
-<span id="cb15-140"><a href="#cb15-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-143"><a href="#cb15-143" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb15-144"><a href="#cb15-144" aria-hidden="true" tabindex="-1"></a>d_opt <span class="op">=</span> np.array(</span>
-<span id="cb15-145"><a href="#cb15-145" aria-hidden="true" tabindex="-1"></a>    [</span>
-<span id="cb15-146"><a href="#cb15-146" aria-hidden="true" tabindex="-1"></a>        [</span>
-<span id="cb15-147"><a href="#cb15-147" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.7</span>,</span>
-<span id="cb15-148"><a href="#cb15-148" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.3</span>,</span>
-<span id="cb15-149"><a href="#cb15-149" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.2</span>,</span>
-<span id="cb15-150"><a href="#cb15-150" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.3</span>,</span>
-<span id="cb15-151"><a href="#cb15-151" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.5902</span>,</span>
-<span id="cb15-152"><a href="#cb15-152" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.4098</span>,</span>
-<span id="cb15-153"><a href="#cb15-153" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.2702</span>,</span>
-<span id="cb15-154"><a href="#cb15-154" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.2279</span>,</span>
-<span id="cb15-155"><a href="#cb15-155" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.4118</span>,</span>
-<span id="cb15-156"><a href="#cb15-156" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.5738</span>,</span>
-<span id="cb15-157"><a href="#cb15-157" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.4211</span>,</span>
-<span id="cb15-158"><a href="#cb15-158" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.3360</span>,</span>
-<span id="cb15-159"><a href="#cb15-159" aria-hidden="true" tabindex="-1"></a>        ],</span>
-<span id="cb15-160"><a href="#cb15-160" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.1</span>, <span class="fl">0.6</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>, <span class="fl">0.2373</span>, <span class="fl">0.4628</span>, <span class="fl">0.4808</span>, <span class="fl">0.3117</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.2911</span>, <span class="fl">0.2264</span>],</span>
-<span id="cb15-161"><a href="#cb15-161" aria-hidden="true" tabindex="-1"></a>        [</span>
-<span id="cb15-162"><a href="#cb15-162" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.2</span>,</span>
-<span id="cb15-163"><a href="#cb15-163" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.1</span>,</span>
-<span id="cb15-164"><a href="#cb15-164" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.6</span>,</span>
-<span id="cb15-165"><a href="#cb15-165" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.6</span>,</span>
-<span id="cb15-166"><a href="#cb15-166" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.1725</span>,</span>
-<span id="cb15-167"><a href="#cb15-167" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.1274</span>,</span>
-<span id="cb15-168"><a href="#cb15-168" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.249</span>,</span>
-<span id="cb15-169"><a href="#cb15-169" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.4604</span>,</span>
-<span id="cb15-170"><a href="#cb15-170" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.4882</span>,</span>
-<span id="cb15-171"><a href="#cb15-171" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.3262</span>,</span>
-<span id="cb15-172"><a href="#cb15-172" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.2878</span>,</span>
-<span id="cb15-173"><a href="#cb15-173" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.4376</span>,</span>
-<span id="cb15-174"><a href="#cb15-174" aria-hidden="true" tabindex="-1"></a>        ],</span>
-<span id="cb15-175"><a href="#cb15-175" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb15-176"><a href="#cb15-176" aria-hidden="true" tabindex="-1"></a>)  <span class="co"># values taken from paper</span></span>
-<span id="cb15-177"><a href="#cb15-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-178"><a href="#cb15-178" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-179"><a href="#cb15-179" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>((<span class="dv">10</span>, <span class="dv">10</span>)))</span>
-<span id="cb15-180"><a href="#cb15-180" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> fig.add_subplot(<span class="dv">111</span>, projection<span class="op">=</span><span class="st">"3d"</span>)</span>
-<span id="cb15-181"><a href="#cb15-181" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"cubic model"</span>)</span>
-<span id="cb15-182"><a href="#cb15-182" aria-hidden="true" tabindex="-1"></a>ax.view_init(<span class="dv">45</span>, <span class="dv">45</span>)</span>
-<span id="cb15-183"><a href="#cb15-183" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"$x_1$"</span>)</span>
-<span id="cb15-184"><a href="#cb15-184" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"$x_2$"</span>)</span>
-<span id="cb15-185"><a href="#cb15-185" aria-hidden="true" tabindex="-1"></a>ax.set_zlabel(<span class="st">"$x_3$"</span>)</span>
-<span id="cb15-186"><a href="#cb15-186" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"figure.figsize"</span>] <span class="op">=</span> (<span class="dv">10</span>, <span class="dv">8</span>)</span>
-<span id="cb15-187"><a href="#cb15-187" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-188"><a href="#cb15-188" aria-hidden="true" tabindex="-1"></a><span class="co"># plot feasible polytope</span></span>
-<span id="cb15-189"><a href="#cb15-189" aria-hidden="true" tabindex="-1"></a>ax.plot(</span>
-<span id="cb15-190"><a href="#cb15-190" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>[<span class="dv">7</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">7</span> <span class="op">/</span> <span class="dv">10</span>],</span>
-<span id="cb15-191"><a href="#cb15-191" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>[<span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>],</span>
-<span id="cb15-192"><a href="#cb15-192" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>[<span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>],</span>
-<span id="cb15-193"><a href="#cb15-193" aria-hidden="true" tabindex="-1"></a>    linewidth<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb15-194"><a href="#cb15-194" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-195"><a href="#cb15-195" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-196"><a href="#cb15-196" aria-hidden="true" tabindex="-1"></a><span class="co"># plot D-optimal solution</span></span>
-<span id="cb15-197"><a href="#cb15-197" aria-hidden="true" tabindex="-1"></a>ax.scatter(</span>
-<span id="cb15-198"><a href="#cb15-198" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>d_opt[<span class="dv">0</span>],</span>
-<span id="cb15-199"><a href="#cb15-199" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>d_opt[<span class="dv">1</span>],</span>
-<span id="cb15-200"><a href="#cb15-200" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>d_opt[<span class="dv">2</span>],</span>
-<span id="cb15-201"><a href="#cb15-201" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
-<span id="cb15-202"><a href="#cb15-202" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">40</span>,</span>
-<span id="cb15-203"><a href="#cb15-203" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"darkgreen"</span>,</span>
-<span id="cb15-204"><a href="#cb15-204" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"D-optimal design, 12 points"</span>,</span>
-<span id="cb15-205"><a href="#cb15-205" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-206"><a href="#cb15-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-207"><a href="#cb15-207" aria-hidden="true" tabindex="-1"></a>ax.scatter(</span>
-<span id="cb15-208"><a href="#cb15-208" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>candidates[<span class="st">"x1"</span>],</span>
-<span id="cb15-209"><a href="#cb15-209" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>candidates[<span class="st">"x2"</span>],</span>
-<span id="cb15-210"><a href="#cb15-210" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>candidates[<span class="st">"x3"</span>],</span>
-<span id="cb15-211"><a href="#cb15-211" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
-<span id="cb15-212"><a href="#cb15-212" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">40</span>,</span>
-<span id="cb15-213"><a href="#cb15-213" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"orange"</span>,</span>
-<span id="cb15-214"><a href="#cb15-214" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"optimal_design solution, 12 points"</span>,</span>
-<span id="cb15-215"><a href="#cb15-215" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-216"><a href="#cb15-216" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-217"><a href="#cb15-217" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb15-218"><a href="#cb15-218" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-219"><a href="#cb15-219" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-222"><a href="#cb15-222" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb15-223"><a href="#cb15-223" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
-<span id="cb15-224"><a href="#cb15-224" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb15-225"><a href="#cb15-225" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>IOptimalityCriterion(</span>
-<span id="cb15-226"><a href="#cb15-226" aria-hidden="true" tabindex="-1"></a>        formula<span class="op">=</span><span class="st">"x1 + x2 + x3 + {x1**2} + {x2**2} + {x3**2} + {x1**3} + {x2**3} + {x3**3} + x1:x2 + x1:x3 + x2:x3 + x1:x2:x3"</span>,</span>
-<span id="cb15-227"><a href="#cb15-227" aria-hidden="true" tabindex="-1"></a>        n_space_filling_points<span class="op">=</span><span class="dv">60</span>,</span>
-<span id="cb15-228"><a href="#cb15-228" aria-hidden="true" tabindex="-1"></a>        optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">500</span>},</span>
-<span id="cb15-229"><a href="#cb15-229" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb15-230"><a href="#cb15-230" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
-<span id="cb15-231"><a href="#cb15-231" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-232"><a href="#cb15-232" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
-<span id="cb15-233"><a href="#cb15-233" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(<span class="dv">12</span>).to_numpy().T</span>
-<span id="cb15-234"><a href="#cb15-234" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-235"><a href="#cb15-235" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-236"><a href="#cb15-236" aria-hidden="true" tabindex="-1"></a>i_opt <span class="op">=</span> np.array(</span>
-<span id="cb15-237"><a href="#cb15-237" aria-hidden="true" tabindex="-1"></a>    [</span>
-<span id="cb15-238"><a href="#cb15-238" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.7000</span>, <span class="fl">0.1000</span>, <span class="fl">0.2000</span>],</span>
-<span id="cb15-239"><a href="#cb15-239" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.3000</span>, <span class="fl">0.6000</span>, <span class="fl">0.1000</span>],</span>
-<span id="cb15-240"><a href="#cb15-240" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.2031</span>, <span class="fl">0.1969</span>, <span class="fl">0.6000</span>],</span>
-<span id="cb15-241"><a href="#cb15-241" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.5899</span>, <span class="fl">0.2376</span>, <span class="fl">0.1725</span>],</span>
-<span id="cb15-242"><a href="#cb15-242" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.4105</span>, <span class="fl">0.4619</span>, <span class="fl">0.1276</span>],</span>
-<span id="cb15-243"><a href="#cb15-243" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.2720</span>, <span class="fl">0.4882</span>, <span class="fl">0.2398</span>],</span>
-<span id="cb15-244"><a href="#cb15-244" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.2281</span>, <span class="fl">0.3124</span>, <span class="fl">0.4595</span>],</span>
-<span id="cb15-245"><a href="#cb15-245" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.3492</span>, <span class="fl">0.1000</span>, <span class="fl">0.5508</span>],</span>
-<span id="cb15-246"><a href="#cb15-246" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.5614</span>, <span class="fl">0.1000</span>, <span class="fl">0.3386</span>],</span>
-<span id="cb15-247"><a href="#cb15-247" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.4621</span>, <span class="fl">0.2342</span>, <span class="fl">0.3037</span>],</span>
-<span id="cb15-248"><a href="#cb15-248" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.3353</span>, <span class="fl">0.2228</span>, <span class="fl">0.4419</span>],</span>
-<span id="cb15-249"><a href="#cb15-249" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.3782</span>, <span class="fl">0.3618</span>, <span class="fl">0.2600</span>],</span>
-<span id="cb15-250"><a href="#cb15-250" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb15-251"><a href="#cb15-251" aria-hidden="true" tabindex="-1"></a>).T  <span class="co"># values taken from paper</span></span>
-<span id="cb15-252"><a href="#cb15-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-253"><a href="#cb15-253" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-254"><a href="#cb15-254" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>((<span class="dv">10</span>, <span class="dv">10</span>)))</span>
-<span id="cb15-255"><a href="#cb15-255" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> fig.add_subplot(<span class="dv">111</span>, projection<span class="op">=</span><span class="st">"3d"</span>)</span>
-<span id="cb15-256"><a href="#cb15-256" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"cubic model"</span>)</span>
-<span id="cb15-257"><a href="#cb15-257" aria-hidden="true" tabindex="-1"></a>ax.view_init(<span class="dv">45</span>, <span class="dv">45</span>)</span>
-<span id="cb15-258"><a href="#cb15-258" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"$x_1$"</span>)</span>
-<span id="cb15-259"><a href="#cb15-259" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"$x_2$"</span>)</span>
-<span id="cb15-260"><a href="#cb15-260" aria-hidden="true" tabindex="-1"></a>ax.set_zlabel(<span class="st">"$x_3$"</span>)</span>
-<span id="cb15-261"><a href="#cb15-261" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"figure.figsize"</span>] <span class="op">=</span> (<span class="dv">10</span>, <span class="dv">8</span>)</span>
-<span id="cb15-262"><a href="#cb15-262" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-263"><a href="#cb15-263" aria-hidden="true" tabindex="-1"></a><span class="co"># plot feasible polytope</span></span>
-<span id="cb15-264"><a href="#cb15-264" aria-hidden="true" tabindex="-1"></a>ax.plot(</span>
-<span id="cb15-265"><a href="#cb15-265" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>[<span class="dv">7</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">7</span> <span class="op">/</span> <span class="dv">10</span>],</span>
-<span id="cb15-266"><a href="#cb15-266" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>[<span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>],</span>
-<span id="cb15-267"><a href="#cb15-267" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>[<span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>],</span>
-<span id="cb15-268"><a href="#cb15-268" aria-hidden="true" tabindex="-1"></a>    linewidth<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb15-269"><a href="#cb15-269" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-270"><a href="#cb15-270" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-271"><a href="#cb15-271" aria-hidden="true" tabindex="-1"></a><span class="co"># plot I-optimal solution</span></span>
-<span id="cb15-272"><a href="#cb15-272" aria-hidden="true" tabindex="-1"></a>ax.scatter(</span>
-<span id="cb15-273"><a href="#cb15-273" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>i_opt[<span class="dv">0</span>],</span>
-<span id="cb15-274"><a href="#cb15-274" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>i_opt[<span class="dv">1</span>],</span>
-<span id="cb15-275"><a href="#cb15-275" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>i_opt[<span class="dv">2</span>],</span>
-<span id="cb15-276"><a href="#cb15-276" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
-<span id="cb15-277"><a href="#cb15-277" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">40</span>,</span>
-<span id="cb15-278"><a href="#cb15-278" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"darkgreen"</span>,</span>
-<span id="cb15-279"><a href="#cb15-279" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"I-optimal design, 12 points"</span>,</span>
-<span id="cb15-280"><a href="#cb15-280" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-281"><a href="#cb15-281" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-282"><a href="#cb15-282" aria-hidden="true" tabindex="-1"></a>ax.scatter(</span>
-<span id="cb15-283"><a href="#cb15-283" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>candidates[<span class="dv">0</span>],</span>
-<span id="cb15-284"><a href="#cb15-284" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>candidates[<span class="dv">1</span>],</span>
-<span id="cb15-285"><a href="#cb15-285" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>candidates[<span class="dv">2</span>],</span>
-<span id="cb15-286"><a href="#cb15-286" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
-<span id="cb15-287"><a href="#cb15-287" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">40</span>,</span>
-<span id="cb15-288"><a href="#cb15-288" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"orange"</span>,</span>
-<span id="cb15-289"><a href="#cb15-289" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"optimal_design solution, 12 points"</span>,</span>
-<span id="cb15-290"><a href="#cb15-290" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-291"><a href="#cb15-291" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-292"><a href="#cb15-292" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb15-293"><a href="#cb15-293" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-294"><a href="#cb15-294" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-295"><a href="#cb15-295" aria-hidden="true" tabindex="-1"></a><span class="fu">## Nonlinear Constraints</span></span>
-<span id="cb15-296"><a href="#cb15-296" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-297"><a href="#cb15-297" aria-hidden="true" tabindex="-1"></a>Design generation also supports nonlinear constraints. The following 3 examples show what is possible.</span>
-<span id="cb15-298"><a href="#cb15-298" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-299"><a href="#cb15-299" aria-hidden="true" tabindex="-1"></a>First, a convenience function for plotting.</span>
-<span id="cb15-300"><a href="#cb15-300" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-303"><a href="#cb15-303" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb15-304"><a href="#cb15-304" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
-<span id="cb15-305"><a href="#cb15-305" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb15-306"><a href="#cb15-306" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_results_3d(result, surface_func):</span>
-<span id="cb15-307"><a href="#cb15-307" aria-hidden="true" tabindex="-1"></a>    u, v <span class="op">=</span> np.mgrid[<span class="dv">0</span> : <span class="dv">2</span> <span class="op">*</span> np.pi : <span class="ot">100j</span>, <span class="dv">0</span> : np.pi : <span class="ot">80j</span>]</span>
-<span id="cb15-308"><a href="#cb15-308" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> np.cos(u) <span class="op">*</span> np.sin(v)</span>
-<span id="cb15-309"><a href="#cb15-309" aria-hidden="true" tabindex="-1"></a>    Y <span class="op">=</span> np.sin(u) <span class="op">*</span> np.sin(v)</span>
-<span id="cb15-310"><a href="#cb15-310" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">=</span> surface_func(X, Y)</span>
-<span id="cb15-311"><a href="#cb15-311" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-312"><a href="#cb15-312" aria-hidden="true" tabindex="-1"></a>    fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">8</span>))</span>
-<span id="cb15-313"><a href="#cb15-313" aria-hidden="true" tabindex="-1"></a>    ax <span class="op">=</span> fig.add_subplot(<span class="dv">111</span>, projection<span class="op">=</span><span class="st">"3d"</span>)</span>
-<span id="cb15-314"><a href="#cb15-314" aria-hidden="true" tabindex="-1"></a>    ax.plot_surface(X, Y, Z, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
-<span id="cb15-315"><a href="#cb15-315" aria-hidden="true" tabindex="-1"></a>    ax.scatter(</span>
-<span id="cb15-316"><a href="#cb15-316" aria-hidden="true" tabindex="-1"></a>        xs<span class="op">=</span>result[<span class="st">"x1"</span>],</span>
-<span id="cb15-317"><a href="#cb15-317" aria-hidden="true" tabindex="-1"></a>        ys<span class="op">=</span>result[<span class="st">"x2"</span>],</span>
-<span id="cb15-318"><a href="#cb15-318" aria-hidden="true" tabindex="-1"></a>        zs<span class="op">=</span>result[<span class="st">"x3"</span>],</span>
-<span id="cb15-319"><a href="#cb15-319" aria-hidden="true" tabindex="-1"></a>        marker<span class="op">=</span><span class="st">"o"</span>,</span>
-<span id="cb15-320"><a href="#cb15-320" aria-hidden="true" tabindex="-1"></a>        s<span class="op">=</span><span class="dv">40</span>,</span>
-<span id="cb15-321"><a href="#cb15-321" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"red"</span>,</span>
-<span id="cb15-322"><a href="#cb15-322" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb15-323"><a href="#cb15-323" aria-hidden="true" tabindex="-1"></a>    ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"x1"</span>, ylabel<span class="op">=</span><span class="st">"x2"</span>, zlabel<span class="op">=</span><span class="st">"x3"</span>)</span>
-<span id="cb15-324"><a href="#cb15-324" aria-hidden="true" tabindex="-1"></a>    ax.xaxis.set_major_formatter(FormatStrFormatter(<span class="st">"</span><span class="sc">%.2f</span><span class="st">"</span>))</span>
-<span id="cb15-325"><a href="#cb15-325" aria-hidden="true" tabindex="-1"></a>    ax.yaxis.set_major_formatter(FormatStrFormatter(<span class="st">"</span><span class="sc">%.2f</span><span class="st">"</span>))</span>
-<span id="cb15-326"><a href="#cb15-326" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-327"><a href="#cb15-327" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-328"><a href="#cb15-328" aria-hidden="true" tabindex="-1"></a><span class="fu">### Example 1: Design inside a cone / nonlinear inequality</span></span>
-<span id="cb15-329"><a href="#cb15-329" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-330"><a href="#cb15-330" aria-hidden="true" tabindex="-1"></a>In the following example we have three design variables.</span>
-<span id="cb15-331"><a href="#cb15-331" aria-hidden="true" tabindex="-1"></a>We impose the constraint that all experiments have to be contained in the interior of a cone, which corresponds to the nonlinear inequality constraint</span>
-<span id="cb15-332"><a href="#cb15-332" aria-hidden="true" tabindex="-1"></a>$\sqrt{x_1^2 + x_2^2} - x_3 \leq 0$.</span>
-<span id="cb15-333"><a href="#cb15-333" aria-hidden="true" tabindex="-1"></a>The optimization is done for a linear model and we will see that it places the points on the surface of the cone so as to maximize the distance between them (although this is not explicitly the objective of the optimization).</span>
-<span id="cb15-334"><a href="#cb15-334" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-337"><a href="#cb15-337" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb15-338"><a href="#cb15-338" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
-<span id="cb15-339"><a href="#cb15-339" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb15-340"><a href="#cb15-340" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
-<span id="cb15-341"><a href="#cb15-341" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb15-342"><a href="#cb15-342" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-343"><a href="#cb15-343" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-344"><a href="#cb15-344" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-345"><a href="#cb15-345" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb15-346"><a href="#cb15-346" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
-<span id="cb15-347"><a href="#cb15-347" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
-<span id="cb15-348"><a href="#cb15-348" aria-hidden="true" tabindex="-1"></a>        NonlinearInequalityConstraint(</span>
-<span id="cb15-349"><a href="#cb15-349" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"(x1**2 + x2**2)**0.5 - x3"</span>,</span>
-<span id="cb15-350"><a href="#cb15-350" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>],</span>
-<span id="cb15-351"><a href="#cb15-351" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb15-352"><a href="#cb15-352" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb15-353"><a href="#cb15-353" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-354"><a href="#cb15-354" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-355"><a href="#cb15-355" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
-<span id="cb15-356"><a href="#cb15-356" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb15-357"><a href="#cb15-357" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
-<span id="cb15-358"><a href="#cb15-358" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">100</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
-<span id="cb15-359"><a href="#cb15-359" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-360"><a href="#cb15-360" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
-<span id="cb15-361"><a href="#cb15-361" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(</span>
-<span id="cb15-362"><a href="#cb15-362" aria-hidden="true" tabindex="-1"></a>    strategy.get_required_number_of_experiments(), raise_validation_error<span class="op">=</span><span class="va">False</span></span>
-<span id="cb15-363"><a href="#cb15-363" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-364"><a href="#cb15-364" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
-<span id="cb15-365"><a href="#cb15-365" aria-hidden="true" tabindex="-1"></a>plot_results_3d(result, surface_func<span class="op">=</span><span class="kw">lambda</span> x1, x2: np.sqrt(x1<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> x2<span class="op">**</span><span class="dv">2</span>))</span>
-<span id="cb15-366"><a href="#cb15-366" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-367"><a href="#cb15-367" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-368"><a href="#cb15-368" aria-hidden="true" tabindex="-1"></a>We can do the same for a design space limited by an elliptical cone $x_1^2 + x_2^2 - x_3 \leq 0$.</span>
-<span id="cb15-369"><a href="#cb15-369" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-372"><a href="#cb15-372" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb15-373"><a href="#cb15-373" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
-<span id="cb15-374"><a href="#cb15-374" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb15-375"><a href="#cb15-375" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
-<span id="cb15-376"><a href="#cb15-376" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb15-377"><a href="#cb15-377" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-378"><a href="#cb15-378" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-379"><a href="#cb15-379" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-380"><a href="#cb15-380" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb15-381"><a href="#cb15-381" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
-<span id="cb15-382"><a href="#cb15-382" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
-<span id="cb15-383"><a href="#cb15-383" aria-hidden="true" tabindex="-1"></a>        NonlinearInequalityConstraint(</span>
-<span id="cb15-384"><a href="#cb15-384" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"x1**2 + x2**2 - x3"</span>,</span>
-<span id="cb15-385"><a href="#cb15-385" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>],</span>
-<span id="cb15-386"><a href="#cb15-386" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb15-387"><a href="#cb15-387" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb15-388"><a href="#cb15-388" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-389"><a href="#cb15-389" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
-<span id="cb15-390"><a href="#cb15-390" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb15-391"><a href="#cb15-391" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
-<span id="cb15-392"><a href="#cb15-392" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">100</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
-<span id="cb15-393"><a href="#cb15-393" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-394"><a href="#cb15-394" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
-<span id="cb15-395"><a href="#cb15-395" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(</span>
-<span id="cb15-396"><a href="#cb15-396" aria-hidden="true" tabindex="-1"></a>    strategy.get_required_number_of_experiments(), raise_validation_error<span class="op">=</span><span class="va">False</span></span>
-<span id="cb15-397"><a href="#cb15-397" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-398"><a href="#cb15-398" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
-<span id="cb15-399"><a href="#cb15-399" aria-hidden="true" tabindex="-1"></a>plot_results_3d(result, surface_func<span class="op">=</span><span class="kw">lambda</span> x1, x2: x1<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> x2<span class="op">**</span><span class="dv">2</span>)</span>
-<span id="cb15-400"><a href="#cb15-400" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-401"><a href="#cb15-401" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-402"><a href="#cb15-402" aria-hidden="true" tabindex="-1"></a><span class="fu">### Example 2: Design on the surface of a cone / nonlinear equality</span></span>
-<span id="cb15-403"><a href="#cb15-403" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-404"><a href="#cb15-404" aria-hidden="true" tabindex="-1"></a>We can also limit the design space to the surface of a cone, defined by the equality constraint $\sqrt{x_1^2 + x_2^2} - x_3 = 0$. Before, we observed that the experimental proposals happened to be on the surface of the cone, but now they are constrained so that this must be the case.</span>
-<span id="cb15-405"><a href="#cb15-405" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-406"><a href="#cb15-406" aria-hidden="true" tabindex="-1"></a>Remark: Due to missing sampling methods, the initial points provided to the solver don't satisfy the constraints. But this does not matter for the solution.</span>
-<span id="cb15-407"><a href="#cb15-407" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-410"><a href="#cb15-410" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb15-411"><a href="#cb15-411" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
-<span id="cb15-412"><a href="#cb15-412" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb15-413"><a href="#cb15-413" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
-<span id="cb15-414"><a href="#cb15-414" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb15-415"><a href="#cb15-415" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-416"><a href="#cb15-416" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-417"><a href="#cb15-417" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-418"><a href="#cb15-418" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb15-419"><a href="#cb15-419" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
-<span id="cb15-420"><a href="#cb15-420" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
-<span id="cb15-421"><a href="#cb15-421" aria-hidden="true" tabindex="-1"></a>        NonlinearEqualityConstraint(</span>
-<span id="cb15-422"><a href="#cb15-422" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"(x1**2 + x2**2)**0.5 - x3"</span>,</span>
-<span id="cb15-423"><a href="#cb15-423" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>],</span>
-<span id="cb15-424"><a href="#cb15-424" aria-hidden="true" tabindex="-1"></a>        ),</span>
-<span id="cb15-425"><a href="#cb15-425" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb15-426"><a href="#cb15-426" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-427"><a href="#cb15-427" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
-<span id="cb15-428"><a href="#cb15-428" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb15-429"><a href="#cb15-429" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
-<span id="cb15-430"><a href="#cb15-430" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">100</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
-<span id="cb15-431"><a href="#cb15-431" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-432"><a href="#cb15-432" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
-<span id="cb15-433"><a href="#cb15-433" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(<span class="dv">12</span>, raise_validation_error<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb15-434"><a href="#cb15-434" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
-<span id="cb15-435"><a href="#cb15-435" aria-hidden="true" tabindex="-1"></a>plot_results_3d(result, surface_func<span class="op">=</span><span class="kw">lambda</span> x1, x2: np.sqrt(x1<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> x2<span class="op">**</span><span class="dv">2</span>))</span>
-<span id="cb15-436"><a href="#cb15-436" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb15-437"><a href="#cb15-437" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-438"><a href="#cb15-438" aria-hidden="true" tabindex="-1"></a><span class="fu">### Example 3: Batch constraints</span></span>
-<span id="cb15-439"><a href="#cb15-439" aria-hidden="true" tabindex="-1"></a>Batch constraints can be used to create designs where each set of <span class="in">`multiplicity`</span> subsequent experiments have the same value for a certain feature. This can be useful for setups where experiments are done in parallel and some parameters must be shared by experiments in the same parallel batch.</span>
-<span id="cb15-440"><a href="#cb15-440" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-441"><a href="#cb15-441" aria-hidden="true" tabindex="-1"></a>In the following example we fix the value of the decision variable <span class="in">`x1`</span> for each batch of 3 experiments.</span>
-<span id="cb15-442"><a href="#cb15-442" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-445"><a href="#cb15-445" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
-<span id="cb15-446"><a href="#cb15-446" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
-<span id="cb15-447"><a href="#cb15-447" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
-<span id="cb15-448"><a href="#cb15-448" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
-<span id="cb15-449"><a href="#cb15-449" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
-<span id="cb15-450"><a href="#cb15-450" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-451"><a href="#cb15-451" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-452"><a href="#cb15-452" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
-<span id="cb15-453"><a href="#cb15-453" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb15-454"><a href="#cb15-454" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
-<span id="cb15-455"><a href="#cb15-455" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[InterpointEqualityConstraint(features<span class="op">=</span>[<span class="st">"x1"</span>], multiplicity<span class="op">=</span><span class="dv">3</span>)],</span>
-<span id="cb15-456"><a href="#cb15-456" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-457"><a href="#cb15-457" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
-<span id="cb15-458"><a href="#cb15-458" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
-<span id="cb15-459"><a href="#cb15-459" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
-<span id="cb15-460"><a href="#cb15-460" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">500</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
-<span id="cb15-461"><a href="#cb15-461" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb15-462"><a href="#cb15-462" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
-<span id="cb15-463"><a href="#cb15-463" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(<span class="dv">12</span>)</span>
-<span id="cb15-464"><a href="#cb15-464" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
-<span id="cb15-465"><a href="#cb15-465" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> Basic Examples for the DoE Subpackage</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="an">jupyter:</span><span class="co"> python3</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>The following example has been taken from the paper "The construction of D- and I-optimal designs for mixture experiments with linear constraints on the components" by R. Coetzer and L. M. Haines (https://www.sciencedirect.com/science/article/pii/S0169743917303106).</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: 2.886753, end_time: '2024-10-10T20:36:02.603166', exception: false, start_time: '2024-10-10T20:35:59.716413', status: completed}</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.ticker <span class="im">import</span> FormatStrFormatter</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.strategies.api <span class="im">as</span> strategies</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.constraints.api <span class="im">import</span> (</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    InterpointEqualityConstraint,</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    LinearEqualityConstraint,</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    LinearInequalityConstraint,</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>    NonlinearEqualityConstraint,</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>    NonlinearInequalityConstraint,</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.domain.api <span class="im">import</span> Domain</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.features.api <span class="im">import</span> ContinuousInput, ContinuousOutput</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> DoEStrategy</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.doe <span class="im">import</span> DOptimalityCriterion, IOptimalityCriterion</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a><span class="fu">## Linear model</span></span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>Creating an experimental design that is D-optimal with respect to a linear model is done the same way as making proposals using other methods in BoFire; you</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>create a domain</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>construct a stategy data model (here we want DoEStrategy)</span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>map the strategy to its functional version, and finally</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>ask the strategy for proposals.</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>We will start with the simplest case: make a design based on a linear model containing main-effects (i.e., simply the inputs themselves and an intercept, without any second-order terms).</span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: 0.258445, end_time: '2024-10-10T20:36:02.867393', exception: true, start_time: '2024-10-10T20:36:02.608948', status: failed}</span></span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="fl">0.1</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="fl">0.6</span>)),</span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>        LinearEqualityConstraint(</span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>],</span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>            coefficients<span class="op">=</span>[<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>],</span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>            rhs<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>        LinearInequalityConstraint(features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>], coefficients<span class="op">=</span>[<span class="dv">5</span>, <span class="dv">4</span>], rhs<span class="op">=</span><span class="fl">3.9</span>),</span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>        LinearInequalityConstraint(</span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>],</span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a>            coefficients<span class="op">=</span>[<span class="op">-</span><span class="dv">20</span>, <span class="dv">5</span>],</span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>            rhs<span class="op">=-</span><span class="dv">3</span>,</span>
+<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
+<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
+<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
+<span id="cb14-74"><a href="#cb14-74" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-75"><a href="#cb14-75" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
+<span id="cb14-76"><a href="#cb14-76" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(candidate_count<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb14-77"><a href="#cb14-77" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-78"><a href="#cb14-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-79"><a href="#cb14-79" aria-hidden="true" tabindex="-1"></a>Let's visualize the experiments that were chosen. We will see that such a design puts the experiments at the extremes of the experimental space - these are the points that best allow us to estimate the parameters of the linear model we chose.</span>
+<span id="cb14-80"><a href="#cb14-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-83"><a href="#cb14-83" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb14-84"><a href="#cb14-84" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
+<span id="cb14-85"><a href="#cb14-85" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb14-86"><a href="#cb14-86" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>((<span class="dv">10</span>, <span class="dv">10</span>)))</span>
+<span id="cb14-87"><a href="#cb14-87" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> fig.add_subplot(<span class="dv">111</span>, projection<span class="op">=</span><span class="st">"3d"</span>)</span>
+<span id="cb14-88"><a href="#cb14-88" aria-hidden="true" tabindex="-1"></a>ax.view_init(<span class="dv">45</span>, <span class="dv">45</span>)</span>
+<span id="cb14-89"><a href="#cb14-89" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Linear model"</span>)</span>
+<span id="cb14-90"><a href="#cb14-90" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"$x_1$"</span>)</span>
+<span id="cb14-91"><a href="#cb14-91" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"$x_2$"</span>)</span>
+<span id="cb14-92"><a href="#cb14-92" aria-hidden="true" tabindex="-1"></a>ax.set_zlabel(<span class="st">"$x_3$"</span>)</span>
+<span id="cb14-93"><a href="#cb14-93" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"figure.figsize"</span>] <span class="op">=</span> (<span class="dv">10</span>, <span class="dv">8</span>)</span>
+<span id="cb14-94"><a href="#cb14-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-95"><a href="#cb14-95" aria-hidden="true" tabindex="-1"></a><span class="co"># plot feasible polytope</span></span>
+<span id="cb14-96"><a href="#cb14-96" aria-hidden="true" tabindex="-1"></a>ax.plot(</span>
+<span id="cb14-97"><a href="#cb14-97" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>[<span class="dv">7</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">7</span> <span class="op">/</span> <span class="dv">10</span>],</span>
+<span id="cb14-98"><a href="#cb14-98" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>[<span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>],</span>
+<span id="cb14-99"><a href="#cb14-99" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>[<span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>],</span>
+<span id="cb14-100"><a href="#cb14-100" aria-hidden="true" tabindex="-1"></a>    linewidth<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb14-101"><a href="#cb14-101" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-102"><a href="#cb14-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-103"><a href="#cb14-103" aria-hidden="true" tabindex="-1"></a><span class="co"># plot D-optimal solutions</span></span>
+<span id="cb14-104"><a href="#cb14-104" aria-hidden="true" tabindex="-1"></a>ax.scatter(</span>
+<span id="cb14-105"><a href="#cb14-105" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>candidates[<span class="st">"x1"</span>],</span>
+<span id="cb14-106"><a href="#cb14-106" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>candidates[<span class="st">"x2"</span>],</span>
+<span id="cb14-107"><a href="#cb14-107" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>candidates[<span class="st">"x3"</span>],</span>
+<span id="cb14-108"><a href="#cb14-108" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
+<span id="cb14-109"><a href="#cb14-109" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">40</span>,</span>
+<span id="cb14-110"><a href="#cb14-110" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"orange"</span>,</span>
+<span id="cb14-111"><a href="#cb14-111" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"optimal_design solution, 12 points"</span>,</span>
+<span id="cb14-112"><a href="#cb14-112" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-113"><a href="#cb14-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-114"><a href="#cb14-114" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb14-115"><a href="#cb14-115" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-116"><a href="#cb14-116" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-117"><a href="#cb14-117" aria-hidden="true" tabindex="-1"></a><span class="fu">## cubic model</span></span>
+<span id="cb14-118"><a href="#cb14-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-119"><a href="#cb14-119" aria-hidden="true" tabindex="-1"></a>While the previous design is optimal for the main-effects model, we might prefer to see something that does not allocate all the experimental effort to values at the boundary of the space. This implies that we think there might be some higher-order effects present in the system - if we were sure that the target variable would follow straight-line behavior across the domain, we would not need to investigate any points away from the extremes.</span>
+<span id="cb14-120"><a href="#cb14-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-121"><a href="#cb14-121" aria-hidden="true" tabindex="-1"></a>We can address this by specifying our own linear model that includes higher-order terms.</span>
+<span id="cb14-122"><a href="#cb14-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-125"><a href="#cb14-125" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb14-126"><a href="#cb14-126" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
+<span id="cb14-127"><a href="#cb14-127" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb14-128"><a href="#cb14-128" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
+<span id="cb14-129"><a href="#cb14-129" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb14-130"><a href="#cb14-130" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(</span>
+<span id="cb14-131"><a href="#cb14-131" aria-hidden="true" tabindex="-1"></a>        formula<span class="op">=</span><span class="st">"x1 + x2 + x3 + {x1**2} + {x2**2} + {x3**2} + {x1**3} + {x2**3} + {x3**3} + x1:x2 + x1:x3 + x2:x3 + x1:x2:x3"</span></span>
+<span id="cb14-132"><a href="#cb14-132" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb14-133"><a href="#cb14-133" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
+<span id="cb14-134"><a href="#cb14-134" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-135"><a href="#cb14-135" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
+<span id="cb14-136"><a href="#cb14-136" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(<span class="dv">12</span>)</span>
+<span id="cb14-137"><a href="#cb14-137" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-138"><a href="#cb14-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-139"><a href="#cb14-139" aria-hidden="true" tabindex="-1"></a>In this case we can compare with the result reported in the paper of Coetzer and Haines.</span>
+<span id="cb14-140"><a href="#cb14-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-143"><a href="#cb14-143" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb14-144"><a href="#cb14-144" aria-hidden="true" tabindex="-1"></a>d_opt <span class="op">=</span> np.array(</span>
+<span id="cb14-145"><a href="#cb14-145" aria-hidden="true" tabindex="-1"></a>    [</span>
+<span id="cb14-146"><a href="#cb14-146" aria-hidden="true" tabindex="-1"></a>        [</span>
+<span id="cb14-147"><a href="#cb14-147" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.7</span>,</span>
+<span id="cb14-148"><a href="#cb14-148" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.3</span>,</span>
+<span id="cb14-149"><a href="#cb14-149" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.2</span>,</span>
+<span id="cb14-150"><a href="#cb14-150" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.3</span>,</span>
+<span id="cb14-151"><a href="#cb14-151" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.5902</span>,</span>
+<span id="cb14-152"><a href="#cb14-152" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.4098</span>,</span>
+<span id="cb14-153"><a href="#cb14-153" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.2702</span>,</span>
+<span id="cb14-154"><a href="#cb14-154" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.2279</span>,</span>
+<span id="cb14-155"><a href="#cb14-155" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.4118</span>,</span>
+<span id="cb14-156"><a href="#cb14-156" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.5738</span>,</span>
+<span id="cb14-157"><a href="#cb14-157" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.4211</span>,</span>
+<span id="cb14-158"><a href="#cb14-158" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.3360</span>,</span>
+<span id="cb14-159"><a href="#cb14-159" aria-hidden="true" tabindex="-1"></a>        ],</span>
+<span id="cb14-160"><a href="#cb14-160" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.1</span>, <span class="fl">0.6</span>, <span class="fl">0.2</span>, <span class="fl">0.1</span>, <span class="fl">0.2373</span>, <span class="fl">0.4628</span>, <span class="fl">0.4808</span>, <span class="fl">0.3117</span>, <span class="fl">0.1</span>, <span class="fl">0.1</span>, <span class="fl">0.2911</span>, <span class="fl">0.2264</span>],</span>
+<span id="cb14-161"><a href="#cb14-161" aria-hidden="true" tabindex="-1"></a>        [</span>
+<span id="cb14-162"><a href="#cb14-162" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.2</span>,</span>
+<span id="cb14-163"><a href="#cb14-163" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.1</span>,</span>
+<span id="cb14-164"><a href="#cb14-164" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.6</span>,</span>
+<span id="cb14-165"><a href="#cb14-165" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.6</span>,</span>
+<span id="cb14-166"><a href="#cb14-166" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.1725</span>,</span>
+<span id="cb14-167"><a href="#cb14-167" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.1274</span>,</span>
+<span id="cb14-168"><a href="#cb14-168" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.249</span>,</span>
+<span id="cb14-169"><a href="#cb14-169" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.4604</span>,</span>
+<span id="cb14-170"><a href="#cb14-170" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.4882</span>,</span>
+<span id="cb14-171"><a href="#cb14-171" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.3262</span>,</span>
+<span id="cb14-172"><a href="#cb14-172" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.2878</span>,</span>
+<span id="cb14-173"><a href="#cb14-173" aria-hidden="true" tabindex="-1"></a>            <span class="fl">0.4376</span>,</span>
+<span id="cb14-174"><a href="#cb14-174" aria-hidden="true" tabindex="-1"></a>        ],</span>
+<span id="cb14-175"><a href="#cb14-175" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb14-176"><a href="#cb14-176" aria-hidden="true" tabindex="-1"></a>)  <span class="co"># values taken from paper</span></span>
+<span id="cb14-177"><a href="#cb14-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-178"><a href="#cb14-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-179"><a href="#cb14-179" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>((<span class="dv">10</span>, <span class="dv">10</span>)))</span>
+<span id="cb14-180"><a href="#cb14-180" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> fig.add_subplot(<span class="dv">111</span>, projection<span class="op">=</span><span class="st">"3d"</span>)</span>
+<span id="cb14-181"><a href="#cb14-181" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"cubic model"</span>)</span>
+<span id="cb14-182"><a href="#cb14-182" aria-hidden="true" tabindex="-1"></a>ax.view_init(<span class="dv">45</span>, <span class="dv">45</span>)</span>
+<span id="cb14-183"><a href="#cb14-183" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"$x_1$"</span>)</span>
+<span id="cb14-184"><a href="#cb14-184" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"$x_2$"</span>)</span>
+<span id="cb14-185"><a href="#cb14-185" aria-hidden="true" tabindex="-1"></a>ax.set_zlabel(<span class="st">"$x_3$"</span>)</span>
+<span id="cb14-186"><a href="#cb14-186" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"figure.figsize"</span>] <span class="op">=</span> (<span class="dv">10</span>, <span class="dv">8</span>)</span>
+<span id="cb14-187"><a href="#cb14-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-188"><a href="#cb14-188" aria-hidden="true" tabindex="-1"></a><span class="co"># plot feasible polytope</span></span>
+<span id="cb14-189"><a href="#cb14-189" aria-hidden="true" tabindex="-1"></a>ax.plot(</span>
+<span id="cb14-190"><a href="#cb14-190" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>[<span class="dv">7</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">7</span> <span class="op">/</span> <span class="dv">10</span>],</span>
+<span id="cb14-191"><a href="#cb14-191" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>[<span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>],</span>
+<span id="cb14-192"><a href="#cb14-192" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>[<span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>],</span>
+<span id="cb14-193"><a href="#cb14-193" aria-hidden="true" tabindex="-1"></a>    linewidth<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb14-194"><a href="#cb14-194" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-195"><a href="#cb14-195" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-196"><a href="#cb14-196" aria-hidden="true" tabindex="-1"></a><span class="co"># plot D-optimal solution</span></span>
+<span id="cb14-197"><a href="#cb14-197" aria-hidden="true" tabindex="-1"></a>ax.scatter(</span>
+<span id="cb14-198"><a href="#cb14-198" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>d_opt[<span class="dv">0</span>],</span>
+<span id="cb14-199"><a href="#cb14-199" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>d_opt[<span class="dv">1</span>],</span>
+<span id="cb14-200"><a href="#cb14-200" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>d_opt[<span class="dv">2</span>],</span>
+<span id="cb14-201"><a href="#cb14-201" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
+<span id="cb14-202"><a href="#cb14-202" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">40</span>,</span>
+<span id="cb14-203"><a href="#cb14-203" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"darkgreen"</span>,</span>
+<span id="cb14-204"><a href="#cb14-204" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"D-optimal design, 12 points"</span>,</span>
+<span id="cb14-205"><a href="#cb14-205" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-206"><a href="#cb14-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-207"><a href="#cb14-207" aria-hidden="true" tabindex="-1"></a>ax.scatter(</span>
+<span id="cb14-208"><a href="#cb14-208" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>candidates[<span class="st">"x1"</span>],</span>
+<span id="cb14-209"><a href="#cb14-209" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>candidates[<span class="st">"x2"</span>],</span>
+<span id="cb14-210"><a href="#cb14-210" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>candidates[<span class="st">"x3"</span>],</span>
+<span id="cb14-211"><a href="#cb14-211" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
+<span id="cb14-212"><a href="#cb14-212" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">40</span>,</span>
+<span id="cb14-213"><a href="#cb14-213" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"orange"</span>,</span>
+<span id="cb14-214"><a href="#cb14-214" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"optimal_design solution, 12 points"</span>,</span>
+<span id="cb14-215"><a href="#cb14-215" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-216"><a href="#cb14-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-217"><a href="#cb14-217" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb14-218"><a href="#cb14-218" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-219"><a href="#cb14-219" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-222"><a href="#cb14-222" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb14-223"><a href="#cb14-223" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
+<span id="cb14-224"><a href="#cb14-224" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb14-225"><a href="#cb14-225" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>IOptimalityCriterion(</span>
+<span id="cb14-226"><a href="#cb14-226" aria-hidden="true" tabindex="-1"></a>        formula<span class="op">=</span><span class="st">"x1 + x2 + x3 + {x1**2} + {x2**2} + {x3**2} + {x1**3} + {x2**3} + {x3**3} + x1:x2 + x1:x3 + x2:x3 + x1:x2:x3"</span>,</span>
+<span id="cb14-227"><a href="#cb14-227" aria-hidden="true" tabindex="-1"></a>        n_space_filling_points<span class="op">=</span><span class="dv">60</span>,</span>
+<span id="cb14-228"><a href="#cb14-228" aria-hidden="true" tabindex="-1"></a>        optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">500</span>},</span>
+<span id="cb14-229"><a href="#cb14-229" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb14-230"><a href="#cb14-230" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
+<span id="cb14-231"><a href="#cb14-231" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-232"><a href="#cb14-232" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
+<span id="cb14-233"><a href="#cb14-233" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(<span class="dv">12</span>).to_numpy().T</span>
+<span id="cb14-234"><a href="#cb14-234" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-235"><a href="#cb14-235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-236"><a href="#cb14-236" aria-hidden="true" tabindex="-1"></a>i_opt <span class="op">=</span> np.array(</span>
+<span id="cb14-237"><a href="#cb14-237" aria-hidden="true" tabindex="-1"></a>    [</span>
+<span id="cb14-238"><a href="#cb14-238" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.7000</span>, <span class="fl">0.1000</span>, <span class="fl">0.2000</span>],</span>
+<span id="cb14-239"><a href="#cb14-239" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.3000</span>, <span class="fl">0.6000</span>, <span class="fl">0.1000</span>],</span>
+<span id="cb14-240"><a href="#cb14-240" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.2031</span>, <span class="fl">0.1969</span>, <span class="fl">0.6000</span>],</span>
+<span id="cb14-241"><a href="#cb14-241" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.5899</span>, <span class="fl">0.2376</span>, <span class="fl">0.1725</span>],</span>
+<span id="cb14-242"><a href="#cb14-242" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.4105</span>, <span class="fl">0.4619</span>, <span class="fl">0.1276</span>],</span>
+<span id="cb14-243"><a href="#cb14-243" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.2720</span>, <span class="fl">0.4882</span>, <span class="fl">0.2398</span>],</span>
+<span id="cb14-244"><a href="#cb14-244" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.2281</span>, <span class="fl">0.3124</span>, <span class="fl">0.4595</span>],</span>
+<span id="cb14-245"><a href="#cb14-245" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.3492</span>, <span class="fl">0.1000</span>, <span class="fl">0.5508</span>],</span>
+<span id="cb14-246"><a href="#cb14-246" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.5614</span>, <span class="fl">0.1000</span>, <span class="fl">0.3386</span>],</span>
+<span id="cb14-247"><a href="#cb14-247" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.4621</span>, <span class="fl">0.2342</span>, <span class="fl">0.3037</span>],</span>
+<span id="cb14-248"><a href="#cb14-248" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.3353</span>, <span class="fl">0.2228</span>, <span class="fl">0.4419</span>],</span>
+<span id="cb14-249"><a href="#cb14-249" aria-hidden="true" tabindex="-1"></a>        [<span class="fl">0.3782</span>, <span class="fl">0.3618</span>, <span class="fl">0.2600</span>],</span>
+<span id="cb14-250"><a href="#cb14-250" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb14-251"><a href="#cb14-251" aria-hidden="true" tabindex="-1"></a>).T  <span class="co"># values taken from paper</span></span>
+<span id="cb14-252"><a href="#cb14-252" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-253"><a href="#cb14-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-254"><a href="#cb14-254" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>((<span class="dv">10</span>, <span class="dv">10</span>)))</span>
+<span id="cb14-255"><a href="#cb14-255" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> fig.add_subplot(<span class="dv">111</span>, projection<span class="op">=</span><span class="st">"3d"</span>)</span>
+<span id="cb14-256"><a href="#cb14-256" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"cubic model"</span>)</span>
+<span id="cb14-257"><a href="#cb14-257" aria-hidden="true" tabindex="-1"></a>ax.view_init(<span class="dv">45</span>, <span class="dv">45</span>)</span>
+<span id="cb14-258"><a href="#cb14-258" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"$x_1$"</span>)</span>
+<span id="cb14-259"><a href="#cb14-259" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"$x_2$"</span>)</span>
+<span id="cb14-260"><a href="#cb14-260" aria-hidden="true" tabindex="-1"></a>ax.set_zlabel(<span class="st">"$x_3$"</span>)</span>
+<span id="cb14-261"><a href="#cb14-261" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"figure.figsize"</span>] <span class="op">=</span> (<span class="dv">10</span>, <span class="dv">8</span>)</span>
+<span id="cb14-262"><a href="#cb14-262" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-263"><a href="#cb14-263" aria-hidden="true" tabindex="-1"></a><span class="co"># plot feasible polytope</span></span>
+<span id="cb14-264"><a href="#cb14-264" aria-hidden="true" tabindex="-1"></a>ax.plot(</span>
+<span id="cb14-265"><a href="#cb14-265" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>[<span class="dv">7</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">7</span> <span class="op">/</span> <span class="dv">10</span>],</span>
+<span id="cb14-266"><a href="#cb14-266" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>[<span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>],</span>
+<span id="cb14-267"><a href="#cb14-267" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>[<span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">10</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">3</span> <span class="op">/</span> <span class="dv">5</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">5</span>],</span>
+<span id="cb14-268"><a href="#cb14-268" aria-hidden="true" tabindex="-1"></a>    linewidth<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb14-269"><a href="#cb14-269" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-270"><a href="#cb14-270" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-271"><a href="#cb14-271" aria-hidden="true" tabindex="-1"></a><span class="co"># plot I-optimal solution</span></span>
+<span id="cb14-272"><a href="#cb14-272" aria-hidden="true" tabindex="-1"></a>ax.scatter(</span>
+<span id="cb14-273"><a href="#cb14-273" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>i_opt[<span class="dv">0</span>],</span>
+<span id="cb14-274"><a href="#cb14-274" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>i_opt[<span class="dv">1</span>],</span>
+<span id="cb14-275"><a href="#cb14-275" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>i_opt[<span class="dv">2</span>],</span>
+<span id="cb14-276"><a href="#cb14-276" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
+<span id="cb14-277"><a href="#cb14-277" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">40</span>,</span>
+<span id="cb14-278"><a href="#cb14-278" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"darkgreen"</span>,</span>
+<span id="cb14-279"><a href="#cb14-279" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"I-optimal design, 12 points"</span>,</span>
+<span id="cb14-280"><a href="#cb14-280" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-281"><a href="#cb14-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-282"><a href="#cb14-282" aria-hidden="true" tabindex="-1"></a>ax.scatter(</span>
+<span id="cb14-283"><a href="#cb14-283" aria-hidden="true" tabindex="-1"></a>    xs<span class="op">=</span>candidates[<span class="dv">0</span>],</span>
+<span id="cb14-284"><a href="#cb14-284" aria-hidden="true" tabindex="-1"></a>    ys<span class="op">=</span>candidates[<span class="dv">1</span>],</span>
+<span id="cb14-285"><a href="#cb14-285" aria-hidden="true" tabindex="-1"></a>    zs<span class="op">=</span>candidates[<span class="dv">2</span>],</span>
+<span id="cb14-286"><a href="#cb14-286" aria-hidden="true" tabindex="-1"></a>    marker<span class="op">=</span><span class="st">"o"</span>,</span>
+<span id="cb14-287"><a href="#cb14-287" aria-hidden="true" tabindex="-1"></a>    s<span class="op">=</span><span class="dv">40</span>,</span>
+<span id="cb14-288"><a href="#cb14-288" aria-hidden="true" tabindex="-1"></a>    color<span class="op">=</span><span class="st">"orange"</span>,</span>
+<span id="cb14-289"><a href="#cb14-289" aria-hidden="true" tabindex="-1"></a>    label<span class="op">=</span><span class="st">"optimal_design solution, 12 points"</span>,</span>
+<span id="cb14-290"><a href="#cb14-290" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-291"><a href="#cb14-291" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-292"><a href="#cb14-292" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb14-293"><a href="#cb14-293" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-294"><a href="#cb14-294" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-295"><a href="#cb14-295" aria-hidden="true" tabindex="-1"></a><span class="fu">## Nonlinear Constraints</span></span>
+<span id="cb14-296"><a href="#cb14-296" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-297"><a href="#cb14-297" aria-hidden="true" tabindex="-1"></a>Design generation also supports nonlinear constraints. The following 3 examples show what is possible.</span>
+<span id="cb14-298"><a href="#cb14-298" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-299"><a href="#cb14-299" aria-hidden="true" tabindex="-1"></a>First, a convenience function for plotting.</span>
+<span id="cb14-300"><a href="#cb14-300" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-303"><a href="#cb14-303" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb14-304"><a href="#cb14-304" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
+<span id="cb14-305"><a href="#cb14-305" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb14-306"><a href="#cb14-306" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> plot_results_3d(result, surface_func):</span>
+<span id="cb14-307"><a href="#cb14-307" aria-hidden="true" tabindex="-1"></a>    u, v <span class="op">=</span> np.mgrid[<span class="dv">0</span> : <span class="dv">2</span> <span class="op">*</span> np.pi : <span class="ot">100j</span>, <span class="dv">0</span> : np.pi : <span class="ot">80j</span>]</span>
+<span id="cb14-308"><a href="#cb14-308" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> np.cos(u) <span class="op">*</span> np.sin(v)</span>
+<span id="cb14-309"><a href="#cb14-309" aria-hidden="true" tabindex="-1"></a>    Y <span class="op">=</span> np.sin(u) <span class="op">*</span> np.sin(v)</span>
+<span id="cb14-310"><a href="#cb14-310" aria-hidden="true" tabindex="-1"></a>    Z <span class="op">=</span> surface_func(X, Y)</span>
+<span id="cb14-311"><a href="#cb14-311" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-312"><a href="#cb14-312" aria-hidden="true" tabindex="-1"></a>    fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">8</span>))</span>
+<span id="cb14-313"><a href="#cb14-313" aria-hidden="true" tabindex="-1"></a>    ax <span class="op">=</span> fig.add_subplot(<span class="dv">111</span>, projection<span class="op">=</span><span class="st">"3d"</span>)</span>
+<span id="cb14-314"><a href="#cb14-314" aria-hidden="true" tabindex="-1"></a>    ax.plot_surface(X, Y, Z, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb14-315"><a href="#cb14-315" aria-hidden="true" tabindex="-1"></a>    ax.scatter(</span>
+<span id="cb14-316"><a href="#cb14-316" aria-hidden="true" tabindex="-1"></a>        xs<span class="op">=</span>result[<span class="st">"x1"</span>],</span>
+<span id="cb14-317"><a href="#cb14-317" aria-hidden="true" tabindex="-1"></a>        ys<span class="op">=</span>result[<span class="st">"x2"</span>],</span>
+<span id="cb14-318"><a href="#cb14-318" aria-hidden="true" tabindex="-1"></a>        zs<span class="op">=</span>result[<span class="st">"x3"</span>],</span>
+<span id="cb14-319"><a href="#cb14-319" aria-hidden="true" tabindex="-1"></a>        marker<span class="op">=</span><span class="st">"o"</span>,</span>
+<span id="cb14-320"><a href="#cb14-320" aria-hidden="true" tabindex="-1"></a>        s<span class="op">=</span><span class="dv">40</span>,</span>
+<span id="cb14-321"><a href="#cb14-321" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"red"</span>,</span>
+<span id="cb14-322"><a href="#cb14-322" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-323"><a href="#cb14-323" aria-hidden="true" tabindex="-1"></a>    ax.<span class="bu">set</span>(xlabel<span class="op">=</span><span class="st">"x1"</span>, ylabel<span class="op">=</span><span class="st">"x2"</span>, zlabel<span class="op">=</span><span class="st">"x3"</span>)</span>
+<span id="cb14-324"><a href="#cb14-324" aria-hidden="true" tabindex="-1"></a>    ax.xaxis.set_major_formatter(FormatStrFormatter(<span class="st">"</span><span class="sc">%.2f</span><span class="st">"</span>))</span>
+<span id="cb14-325"><a href="#cb14-325" aria-hidden="true" tabindex="-1"></a>    ax.yaxis.set_major_formatter(FormatStrFormatter(<span class="st">"</span><span class="sc">%.2f</span><span class="st">"</span>))</span>
+<span id="cb14-326"><a href="#cb14-326" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-327"><a href="#cb14-327" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-328"><a href="#cb14-328" aria-hidden="true" tabindex="-1"></a><span class="fu">### Example 1: Design inside a cone / nonlinear inequality</span></span>
+<span id="cb14-329"><a href="#cb14-329" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-330"><a href="#cb14-330" aria-hidden="true" tabindex="-1"></a>In the following example we have three design variables.</span>
+<span id="cb14-331"><a href="#cb14-331" aria-hidden="true" tabindex="-1"></a>We impose the constraint that all experiments have to be contained in the interior of a cone, which corresponds to the nonlinear inequality constraint</span>
+<span id="cb14-332"><a href="#cb14-332" aria-hidden="true" tabindex="-1"></a>$\sqrt{x_1^2 + x_2^2} - x_3 \leq 0$.</span>
+<span id="cb14-333"><a href="#cb14-333" aria-hidden="true" tabindex="-1"></a>The optimization is done for a linear model and we will see that it places the points on the surface of the cone so as to maximize the distance between them (although this is not explicitly the objective of the optimization).</span>
+<span id="cb14-334"><a href="#cb14-334" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-337"><a href="#cb14-337" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb14-338"><a href="#cb14-338" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
+<span id="cb14-339"><a href="#cb14-339" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb14-340"><a href="#cb14-340" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
+<span id="cb14-341"><a href="#cb14-341" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb14-342"><a href="#cb14-342" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-343"><a href="#cb14-343" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-344"><a href="#cb14-344" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-345"><a href="#cb14-345" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb14-346"><a href="#cb14-346" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
+<span id="cb14-347"><a href="#cb14-347" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
+<span id="cb14-348"><a href="#cb14-348" aria-hidden="true" tabindex="-1"></a>        NonlinearInequalityConstraint(</span>
+<span id="cb14-349"><a href="#cb14-349" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"(x1**2 + x2**2)**0.5 - x3"</span>,</span>
+<span id="cb14-350"><a href="#cb14-350" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>],</span>
+<span id="cb14-351"><a href="#cb14-351" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb14-352"><a href="#cb14-352" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb14-353"><a href="#cb14-353" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-354"><a href="#cb14-354" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-355"><a href="#cb14-355" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
+<span id="cb14-356"><a href="#cb14-356" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb14-357"><a href="#cb14-357" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
+<span id="cb14-358"><a href="#cb14-358" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">100</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
+<span id="cb14-359"><a href="#cb14-359" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-360"><a href="#cb14-360" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
+<span id="cb14-361"><a href="#cb14-361" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(</span>
+<span id="cb14-362"><a href="#cb14-362" aria-hidden="true" tabindex="-1"></a>    strategy.get_required_number_of_experiments(), raise_validation_error<span class="op">=</span><span class="va">False</span></span>
+<span id="cb14-363"><a href="#cb14-363" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-364"><a href="#cb14-364" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
+<span id="cb14-365"><a href="#cb14-365" aria-hidden="true" tabindex="-1"></a>plot_results_3d(result, surface_func<span class="op">=</span><span class="kw">lambda</span> x1, x2: np.sqrt(x1<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> x2<span class="op">**</span><span class="dv">2</span>))</span>
+<span id="cb14-366"><a href="#cb14-366" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-367"><a href="#cb14-367" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-368"><a href="#cb14-368" aria-hidden="true" tabindex="-1"></a>We can do the same for a design space limited by an elliptical cone $x_1^2 + x_2^2 - x_3 \leq 0$.</span>
+<span id="cb14-369"><a href="#cb14-369" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-372"><a href="#cb14-372" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb14-373"><a href="#cb14-373" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
+<span id="cb14-374"><a href="#cb14-374" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb14-375"><a href="#cb14-375" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
+<span id="cb14-376"><a href="#cb14-376" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb14-377"><a href="#cb14-377" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-378"><a href="#cb14-378" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-379"><a href="#cb14-379" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-380"><a href="#cb14-380" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb14-381"><a href="#cb14-381" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
+<span id="cb14-382"><a href="#cb14-382" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
+<span id="cb14-383"><a href="#cb14-383" aria-hidden="true" tabindex="-1"></a>        NonlinearInequalityConstraint(</span>
+<span id="cb14-384"><a href="#cb14-384" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"x1**2 + x2**2 - x3"</span>,</span>
+<span id="cb14-385"><a href="#cb14-385" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>],</span>
+<span id="cb14-386"><a href="#cb14-386" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb14-387"><a href="#cb14-387" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb14-388"><a href="#cb14-388" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-389"><a href="#cb14-389" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
+<span id="cb14-390"><a href="#cb14-390" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb14-391"><a href="#cb14-391" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
+<span id="cb14-392"><a href="#cb14-392" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">100</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
+<span id="cb14-393"><a href="#cb14-393" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-394"><a href="#cb14-394" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
+<span id="cb14-395"><a href="#cb14-395" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(</span>
+<span id="cb14-396"><a href="#cb14-396" aria-hidden="true" tabindex="-1"></a>    strategy.get_required_number_of_experiments(), raise_validation_error<span class="op">=</span><span class="va">False</span></span>
+<span id="cb14-397"><a href="#cb14-397" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-398"><a href="#cb14-398" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
+<span id="cb14-399"><a href="#cb14-399" aria-hidden="true" tabindex="-1"></a>plot_results_3d(result, surface_func<span class="op">=</span><span class="kw">lambda</span> x1, x2: x1<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> x2<span class="op">**</span><span class="dv">2</span>)</span>
+<span id="cb14-400"><a href="#cb14-400" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-401"><a href="#cb14-401" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-402"><a href="#cb14-402" aria-hidden="true" tabindex="-1"></a><span class="fu">### Example 2: Design on the surface of a cone / nonlinear equality</span></span>
+<span id="cb14-403"><a href="#cb14-403" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-404"><a href="#cb14-404" aria-hidden="true" tabindex="-1"></a>We can also limit the design space to the surface of a cone, defined by the equality constraint $\sqrt{x_1^2 + x_2^2} - x_3 = 0$. Before, we observed that the experimental proposals happened to be on the surface of the cone, but now they are constrained so that this must be the case.</span>
+<span id="cb14-405"><a href="#cb14-405" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-406"><a href="#cb14-406" aria-hidden="true" tabindex="-1"></a>Remark: Due to missing sampling methods, the initial points provided to the solver don't satisfy the constraints. But this does not matter for the solution.</span>
+<span id="cb14-407"><a href="#cb14-407" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-410"><a href="#cb14-410" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb14-411"><a href="#cb14-411" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
+<span id="cb14-412"><a href="#cb14-412" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb14-413"><a href="#cb14-413" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
+<span id="cb14-414"><a href="#cb14-414" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb14-415"><a href="#cb14-415" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-416"><a href="#cb14-416" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-417"><a href="#cb14-417" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-418"><a href="#cb14-418" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb14-419"><a href="#cb14-419" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
+<span id="cb14-420"><a href="#cb14-420" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[</span>
+<span id="cb14-421"><a href="#cb14-421" aria-hidden="true" tabindex="-1"></a>        NonlinearEqualityConstraint(</span>
+<span id="cb14-422"><a href="#cb14-422" aria-hidden="true" tabindex="-1"></a>            expression<span class="op">=</span><span class="st">"(x1**2 + x2**2)**0.5 - x3"</span>,</span>
+<span id="cb14-423"><a href="#cb14-423" aria-hidden="true" tabindex="-1"></a>            features<span class="op">=</span>[<span class="st">"x1"</span>, <span class="st">"x2"</span>, <span class="st">"x3"</span>],</span>
+<span id="cb14-424"><a href="#cb14-424" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb14-425"><a href="#cb14-425" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb14-426"><a href="#cb14-426" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-427"><a href="#cb14-427" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
+<span id="cb14-428"><a href="#cb14-428" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb14-429"><a href="#cb14-429" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
+<span id="cb14-430"><a href="#cb14-430" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">100</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
+<span id="cb14-431"><a href="#cb14-431" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-432"><a href="#cb14-432" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
+<span id="cb14-433"><a href="#cb14-433" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(<span class="dv">12</span>, raise_validation_error<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb14-434"><a href="#cb14-434" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
+<span id="cb14-435"><a href="#cb14-435" aria-hidden="true" tabindex="-1"></a>plot_results_3d(result, surface_func<span class="op">=</span><span class="kw">lambda</span> x1, x2: np.sqrt(x1<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> x2<span class="op">**</span><span class="dv">2</span>))</span>
+<span id="cb14-436"><a href="#cb14-436" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb14-437"><a href="#cb14-437" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-438"><a href="#cb14-438" aria-hidden="true" tabindex="-1"></a><span class="fu">### Example 3: Batch constraints</span></span>
+<span id="cb14-439"><a href="#cb14-439" aria-hidden="true" tabindex="-1"></a>Batch constraints can be used to create designs where each set of <span class="in">`multiplicity`</span> subsequent experiments have the same value for a certain feature. This can be useful for setups where experiments are done in parallel and some parameters must be shared by experiments in the same parallel batch.</span>
+<span id="cb14-440"><a href="#cb14-440" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-441"><a href="#cb14-441" aria-hidden="true" tabindex="-1"></a>In the following example we fix the value of the decision variable <span class="in">`x1`</span> for each batch of 3 experiments.</span>
+<span id="cb14-442"><a href="#cb14-442" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-445"><a href="#cb14-445" aria-hidden="true" tabindex="-1"></a><span class="in">```{python}</span></span>
+<span id="cb14-446"><a href="#cb14-446" aria-hidden="true" tabindex="-1"></a><span class="co">#| papermill: {duration: null, end_time: null, exception: null, start_time: null, status: pending}</span></span>
+<span id="cb14-447"><a href="#cb14-447" aria-hidden="true" tabindex="-1"></a><span class="co">#| tags: []</span></span>
+<span id="cb14-448"><a href="#cb14-448" aria-hidden="true" tabindex="-1"></a>domain <span class="op">=</span> Domain(</span>
+<span id="cb14-449"><a href="#cb14-449" aria-hidden="true" tabindex="-1"></a>    inputs<span class="op">=</span>[</span>
+<span id="cb14-450"><a href="#cb14-450" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x1"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-451"><a href="#cb14-451" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x2"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-452"><a href="#cb14-452" aria-hidden="true" tabindex="-1"></a>        ContinuousInput(key<span class="op">=</span><span class="st">"x3"</span>, bounds<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)),</span>
+<span id="cb14-453"><a href="#cb14-453" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb14-454"><a href="#cb14-454" aria-hidden="true" tabindex="-1"></a>    outputs<span class="op">=</span>[ContinuousOutput(key<span class="op">=</span><span class="st">"y"</span>)],</span>
+<span id="cb14-455"><a href="#cb14-455" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>[InterpointEqualityConstraint(features<span class="op">=</span>[<span class="st">"x1"</span>], multiplicity<span class="op">=</span><span class="dv">3</span>)],</span>
+<span id="cb14-456"><a href="#cb14-456" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-457"><a href="#cb14-457" aria-hidden="true" tabindex="-1"></a>data_model <span class="op">=</span> DoEStrategy(</span>
+<span id="cb14-458"><a href="#cb14-458" aria-hidden="true" tabindex="-1"></a>    domain<span class="op">=</span>domain,</span>
+<span id="cb14-459"><a href="#cb14-459" aria-hidden="true" tabindex="-1"></a>    criterion<span class="op">=</span>DOptimalityCriterion(formula<span class="op">=</span><span class="st">"linear"</span>),</span>
+<span id="cb14-460"><a href="#cb14-460" aria-hidden="true" tabindex="-1"></a>    optimizer_options<span class="op">=</span>{<span class="st">"max_iter"</span>: <span class="dv">500</span>, <span class="st">"print_level"</span>: <span class="dv">0</span>},</span>
+<span id="cb14-461"><a href="#cb14-461" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-462"><a href="#cb14-462" aria-hidden="true" tabindex="-1"></a>strategy <span class="op">=</span> strategies.<span class="bu">map</span>(data_model<span class="op">=</span>data_model)</span>
+<span id="cb14-463"><a href="#cb14-463" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> strategy.ask(<span class="dv">12</span>)</span>
+<span id="cb14-464"><a href="#cb14-464" aria-hidden="true" tabindex="-1"></a>result.<span class="bu">round</span>(<span class="dv">3</span>)</span>
+<span id="cb14-465"><a href="#cb14-465" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 </code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->

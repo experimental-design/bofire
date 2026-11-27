@@ -79,9 +79,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../../site_libs/quarto-html/quarto-syntax-highlighting-b22cc5e3947e191bc3cd7ec0d5a99010.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="../../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../../site_libs/bootstrap/bootstrap-348615dbec15d57dbd120bddebf38ff3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-dark-ee65e383bc30aa9fec98e06fe43bf684.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
-<link href="../../../site_libs/bootstrap/bootstrap-348615dbec15d57dbd120bddebf38ff3.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-be7d895c813c84042c9fbb18889028a9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-dark-c571f53156c730c5a034ccf14cd27066.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="light">
+<link href="../../../site_libs/bootstrap/bootstrap-be7d895c813c84042c9fbb18889028a9.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -800,7 +800,7 @@ window.Quarto = {
 <p>We are interested in testing whether or not a surrogate model can correctly identify unknown constraints based on categorical criteria with classification surrogates. Essentially, we want to account for scenarios where specialists can look at a set of experiments and label outcomes as ‘acceptable’, ‘unacceptable’, ‘ideal’, etc.</p>
 <p>This involves new models that produce <code>CategoricalOutput</code>’s rather than continuous outputs. Mathematically, if <span class="math inline">\(g_{\theta}:\mathbb{R}^d\to[0,1]^c\)</span> represents the function governed by learnable parameters <span class="math inline">\(\theta\)</span> which outputs a probability vector over <span class="math inline">\(c\)</span> potential classes (i.e.&nbsp;for input <span class="math inline">\(x\in\mathbb{R}^d\)</span>, <span class="math inline">\(g_{\theta}(x)^\top\mathbf{1}=1\)</span> where <span class="math inline">\(\mathbf{1}\)</span> is the vector of all 1’s) and we have acceptibility criteria for the corresponding classes given by <span class="math inline">\(a\in\{0,1\}^c\)</span>, we can compute the scalar output <span class="math inline">\(g_{\theta}(x)^\top a\in[0,1]\)</span> which represents the expected value of acceptance as an objective value to be passed in as a constrained function.</p>
 <p>In this script, we look at the <a href="https://en.wikipedia.org/wiki/Test_functions_for_optimization#cite_note-12">Rosenbrock function constrained to a disk</a> which attains a global minima at <span class="math inline">\((x_0^*,x_1^*)=(1.0, 1.0)\)</span>. To facilitate testing the functionality offered by BoFire, we label all points inside of the circle <span class="math inline">\(x_0^2+x_1^2\le2\)</span> as ‘acceptable’ and further label anything inside of the intersection of this circle and the circle <span class="math inline">\((x_0-1)^2+(x_1-1)^2\le1.0\)</span> as ‘ideal’; points lying outside of these two locations are labeled as “unacceptable.”</p>
-<div id="8db01f52" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.996427,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.182910&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:32.186483&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
+<div id="fc35bad9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:2.996427,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.182910&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:32.186483&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import packages</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -826,7 +826,7 @@ window.Quarto = {
 <section id="manual-setup-of-the-optimization-domain" class="level2">
 <h2 class="anchored" data-anchor-id="manual-setup-of-the-optimization-domain">Manual setup of the optimization domain</h2>
 <p>The following cells show how to manually setup the optimization problem in BoFire for didactic purposes.</p>
-<div id="0a237c11" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.005827,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.193653&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.187826&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
+<div id="ca221d08" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.005827,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.193653&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.187826&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write helper functions which give the objective and the constraints</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rosenbrock(x: pd.Series) <span class="op">-&gt;</span> pd.Series:</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> <span class="st">"x_0"</span> <span class="kw">in</span> x.columns</span>
@@ -849,7 +849,7 @@ window.Quarto = {
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>            feasiblity_vector.append(<span class="st">"unacceptable"</span>)</span>
 <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> feasiblity_vector</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="550583a5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.01961,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.214891&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.195281&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
+<div id="d50cfa4b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.01961,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.214891&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.195281&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set-up the inputs and outputs, use categorical domain just as an example</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>input_features <span class="op">=</span> Inputs(</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    features<span class="op">=</span>[ContinuousInput(key<span class="op">=</span><span class="ss">f"x_</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>, bounds<span class="op">=</span>(<span class="op">-</span><span class="fl">1.75</span>, <span class="fl">1.75</span>)) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2</span>)]</span>
@@ -900,42 +900,42 @@ window.Quarto = {
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>-0.402874</td>
-<td>1.719383</td>
-<td>0</td>
-<td>244.416396</td>
-<td>unacceptable</td>
+<td>0.477717</td>
+<td>0.868990</td>
+<td>1</td>
+<td>41.332218</td>
+<td>ideal</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>1.332498</td>
-<td>0.105495</td>
+<td>-0.279560</td>
+<td>0.452541</td>
 <td>0</td>
-<td>279.018933</td>
-<td>ideal</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2</th>
-<td>1.213652</td>
-<td>-1.613726</td>
-<td>0</td>
-<td>952.803932</td>
-<td>unacceptable</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">3</th>
-<td>-0.540772</td>
-<td>-1.096331</td>
-<td>0</td>
-<td>195.240862</td>
+<td>15.653816</td>
 <td>acceptable</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">4</th>
-<td>1.395108</td>
-<td>0.384030</td>
+<th data-quarto-table-cell-role="th">2</th>
+<td>0.995229</td>
+<td>0.583244</td>
 <td>1</td>
-<td>244.233259</td>
+<td>16.584152</td>
+<td>ideal</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>-0.766594</td>
+<td>1.532536</td>
+<td>0</td>
+<td>92.398762</td>
+<td>unacceptable</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>0.875087</td>
+<td>1.154264</td>
+<td>0</td>
+<td>15.107777</td>
 <td>unacceptable</td>
 </tr>
 </tbody>
@@ -944,7 +944,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<div id="7bc547d8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.600439,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.816921&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.216482&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="4">
+<div id="1c1e5751" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.600439,&quot;end_time&quot;:&quot;2024-10-10T20:34:35.816921&quot;,&quot;exception&quot;:false,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.216482&quot;,&quot;status&quot;:&quot;completed&quot;}}" data-tags="[]" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the sample df</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -987,9 +987,9 @@ window.Quarto = {
 <span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>fig.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div style="height:525px; width:550px;">            <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script><script>if (window.MathJax && window.MathJax.Hub && window.MathJax.Hub.Config) {window.MathJax.Hub.Config({SVG: {font: "STIX-Web"}});}</script>                <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-        <script charset="utf-8" src="https://cdn.plot.ly/plotly-4.1.1.min.js" integrity="sha256-O24V1F27f8pb0glCkelh3cVHLNiHAJ5gCaVtq2aNch8=" crossorigin="anonymous"></script>                <div id="7bd07a45-38bf-4fed-8855-46fb8d06c1ed" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("7bd07a45-38bf-4fed-8855-46fb8d06c1ed")) {                    Plotly.newPlot(                        "7bd07a45-38bf-4fed-8855-46fb8d06c1ed",                        [{"hovertemplate":"f_1=unacceptable\u003cbr\u003ex_0=%{x}\u003cbr\u003ex_1=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"unacceptable","marker":{"color":"#636efa","symbol":"circle"},"mode":"markers","name":"unacceptable","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"LATzKbDI2b\u002fsgWC0HmvzP8YAThldUvY\u002fvqIuur7k8z\u002fcr0yYUaX3P2BZW7z0NeW\u002fOppZ4ksu+r+4LUB2Ni7TP89atC1rV+2\u002f+JTH0c3P+L+7Nmk6\u002fHD4v+T02bdhvPU\u002fa5CuVSvK7r8kqfEWL7r7v7jzS7xOI\u002fs\u002fQJL9M2tL87\u002fM\u002fSOBSmbkP0ydofbCC\u002fk\u002f5uyA+8Dj8T\u002fgokTLdQjyPzqh+DOw6O6\u002frkHQdKTE8j+QnB9zusTQPxy4d4Dta\u002fo\u002fhhCF8rot+b8Y3MpOvhX6P+S1F+GHwvs\u002fyGRTHQjQ+z+ovaDwqsr7v8DV20QnDfW\u002fSDKr3ELW+b9YJ42XxK70P7iakcIOWue\u002f7V9wG7Oa6r\u002fewlq\u002fZP\u002fsv0A0fy9Zqu0\u002fMqCw2Et29798bvbfSsD6v0LeGb7Rh\u002fI\u002f8EjJXhdM7D8JGiKtK+X4vyZeTIeEQ\u002fU\u002fph3Pz5su8T96n+HAFn74v4C5cYTLR8I\u002fAsuuW\u002fiO5r\u002fEzRqJgLf5Pw=="},"xaxis":"x","y":{"dtype":"f8","bdata":"ttXdfpeC+z\u002fvcyqu0tH5v1Av7Q70k9g\u002f5kxwThXF9T9h8G2oob\u002f1v10JSPmJ4Pi\u002fIJV9HF6H7j9o1MO7RoD6P\u002fAzJixn8fI\u002fdM7EG\u002fBf7L+AGTkcq+HyP2Z44RJon\u002fM\u002fdlp5xqci8z\u002fqqU8aT3Tov5zl32t7KPq\u002fMXeyvnS0+b+eppLlqfP7vyxt4AyDRfQ\u002fAHcgLS8v8D9EH+qq+D76v+pr2\u002fN3d\u002fQ\u002f\u002fiBhhEKz9T9iL1GVgC34v2d5qqoh5+i\u002fRlFT4ZLm9r\u002fABT8Z8UypP456eoIOA\u002fs\u002fAIsRFb+utL\u002fYWAMleszoP419fVRUffO\u002f6Lku4dKb279k1Xwpdtfov5CPi11MnPa\u002fjIprguaL9T8X\u002fc\u002fHSdD2v1kBdTty9fi\u002fAMKgsJk\u002fzz9cb8aCHDbhv64ClfTF\u002ffk\u002f54dYq0Uj+b90H\u002fBFfAH2v+iGmHyiy\u002fg\u002f2KrF7f3+8j8gD3uG6z3XPw5ZgCpmZvq\u002ff6mN5iwI+r\u002fApY\u002f65TW5Pw=="},"yaxis":"y","type":"scatter"},{"hovertemplate":"f_1=ideal\u003cbr\u003ex_0=%{x}\u003cbr\u003ex_1=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"ideal","marker":{"color":"#EF553B","symbol":"circle"},"mode":"markers","name":"ideal","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"5kxPOulR9T9ohSPCS\u002ff1P6CSzi4Yct4\u002fYMNi1TaW0D+ceC7TKLznPzCQORRF5Og\u002fAI7DTEQu6T\u002fwto858jDwP+iRLPRKBO8\u002fgIx6zc9pvT\u002fosLjdvd7hP3ZXeLZzr\u002fA\u002f"},"xaxis":"x","y":{"dtype":"f8","bdata":"UA1iJb8Buz9QkFNGOYfVP\u002fiQ0qkGceE\u002fDBT++ESI4D\u002fEfziqKC7yP2DT84YotMY\u002fsEyb\u002fXClzj94p0H1uHjlP7CUkmPhS9M\u002fZLPGOAWl6z\u002fIiwxEajzwP+SdQ7JnmeQ\u002f"},"yaxis":"y","type":"scatter"},{"hovertemplate":"f_1=acceptable\u003cbr\u003ex_0=%{x}\u003cbr\u003ex_1=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"acceptable","marker":{"color":"#00cc96","symbol":"circle"},"mode":"markers","name":"acceptable","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"XLziPwFO4b\u002fQna8ioHXHP8JzAuXji+C\u002fCFDfyTNl0z9+Wd\u002frQc3jvySoToy15vE\u002f6Oy\u002fBzwV6b+KYbAUtdTgv3tavXmb3fO\u002fhmiGTiLN8L93vyU\u002fLh3xv6Cf2\u002f2ITee\u002f8NnKfnmV1b8gqoLTdFzwPwD8SnOE6WG\u002fnvlpanBk5L9M\u002fuOCszvkP64COL\u002f6Y+a\u002f2OqtgkHG8D+EadRK\u002frDfv1CxrsuRoM8\u002fsH5WhD0cub8wOHNaRKvzv1DTywCbPNA\u002fhFlaacJF8j\u002fQm7od02bFPxjPnljPg9A\u002fYN\u002ffC7r887+cjkxO+gfovwBg0dxIaTI\u002f0teD1bPE4r\u002fgNFqi97fhv5iMQ0ZHKsQ\u002fuDHAM0z\u002f2j+6\u002fLYTRsDwvyAguK3QztC\u002fSDVRkX7X57+V7CZxnhnov6i0EIVlacI\u002fC6mRXfgA77+41WvmQanaPw=="},"xaxis":"x","y":{"dtype":"f8","bdata":"bECRI5KK8b\u002fguCDAW4TOPy60\u002f9suX++\u002foCebS39Swj9SoT\u002fE8zzyv3CElP51086\u002fuMVJK+1E3j+K2p1Pxmz0P1yZkooH6OS\u002feEkmUvT32D8ozVrEcZLgP9h7qwoA2tI\u002f8N3fU73uzb8Az+3IVz7iv9S3KnRz0+G\u002f7DpoWWwS8j\u002f0KNip0HfZvzJOKgcNiPE\u002fHPFhc9696r8MuS8ww3bxv\u002fG\u002ftsUyQO+\u002f7GbssLtH8T\u002fQCa5QBdHUP+D3F+DWfcc\u002fYCoRhD8927+gH8QD4\u002fLbv0CDd048rpI\u002fSMYFWGMWz7+oCd08woHvvwBAgiHzOMo\u002fJ975rX0b9L\u002fcEyZuHNLpP4SbpcGjl+W\u002fMJqWFfl8vT8wZ+mWTKbTv\u002fr99i\u002fID\u002fY\u002feH+S3c4X1T\u002fg6VEwv7Xav\u002fam5Jjmyuy\u002foM20y14i3j+CE8pVC4\u002f0vw=="},"yaxis":"y","type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"margin":{"b":0,"l":0,"r":0,"t":30}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"x_0"}},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"x_1"}},"legend":{"title":{"text":"f_1"},"tracegroupgap":0},"title":{"text":"Samples with labels"},"height":525,"width":550,"shapes":[{"fillcolor":"red","line":{"color":"red"},"opacity":0.1,"type":"circle","x0":-1.4142135623730951,"x1":1.4142135623730951,"xref":"x","y0":-1.4142135623730951,"y1":1.4142135623730951,"yref":"y"},{"fillcolor":"LightSeaGreen","line":{"color":"LightSeaGreen"},"opacity":0.2,"type":"circle","x0":0,"x1":2,"xref":"x","y0":0,"y1":2,"yref":"y"}]},                        {"responsive": true}                    ).then(function(){
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-4.1.1.min.js" integrity="sha256-O24V1F27f8pb0glCkelh3cVHLNiHAJ5gCaVtq2aNch8=" crossorigin="anonymous"></script>                <div id="243eb3fd-374a-4199-8c68-f6bc104b8cd1" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("243eb3fd-374a-4199-8c68-f6bc104b8cd1")) {                    Plotly.newPlot(                        "243eb3fd-374a-4199-8c68-f6bc104b8cd1",                        [{"hovertemplate":"f_1=ideal\u003cbr\u003ex_0=%{x}\u003cbr\u003ex_1=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"ideal","marker":{"color":"#636efa","symbol":"circle"},"mode":"markers","name":"ideal","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"+EvS1+mS3j+QcvDH6djvP5AoyjPBysc\u002fQI9uLrd70j8UzQ1cmnLqP4xWnR0xhvI\u002fSjGhYM8f8z\u002fAocui8tHeP5DReHTA6NM\u002f1laqV0Ck8T++7H8E\u002fS7zPw=="},"xaxis":"x","y":{"dtype":"f8","bdata":"jCCCuMPO6z8IomEp76niP+gYTzQK8uA\u002f1A63UQ+I7D\u002fUaMEADUbjP+AQl8a0E+k\u002fPKa3VHQc6D8Q0E\u002f70u\u002fIP\u002fxOl9OIEPM\u002fTP7Z3uVE4D9wKQLpam7lPw=="},"yaxis":"y","type":"scatter"},{"hovertemplate":"f_1=acceptable\u003cbr\u003ex_0=%{x}\u003cbr\u003ex_1=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"acceptable","marker":{"color":"#EF553B","symbol":"circle"},"mode":"markers","name":"acceptable","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"QMZ7rVHk0b+rlttXJ73wv\u002fzDHDCTbeG\u002f8G\u002fWJuutv790Prlsom3iv1h27SipUuK\u002fWMnCGDCLxL\u002f4iP+IR0\u002fhv6QJOPI2FeK\u002f4i6Go5aM9T9Qsk46\u002f+2wv4wl38pOwOi\u002fmoi4vfVS8j+a99\u002fKgLPiv0BtPueO6aa\u002fcKz6j+0fvL\u002fhwlA0wwfuv6ojX8\u002fyLva\u002fHtN1o3ka8b\u002fgZzSasIywP3izgUUj\u002f9Q\u002fmDh17HOz0b+AUtChGFq8v7pVeAhvVPW\u002fZLUBEmVA4b+gIk+wWAm+P8Cbos\u002fLsuk\u002frOnkYN037z8h7DuT6OfzvzBIST9Das6\u002faJxQ+Rga8b+Ag+5rBGvNP+g91yf2xNC\u002fmFgqcMPK3j9Ixb70T0HvP2iH938ZAOy\u002fpHJcDcU55j\u002fwG9oNfk3mv7gB2gkwcs6\u002f6GGnV5EV1r8gf6IqoXjSvw=="},"xaxis":"x","y":{"dtype":"f8","bdata":"gCxxm2323D8kBCTmq0jpP6jrg9NPpvA\u002fhA2Et1cx5b+6JND08if0P5Rcg5vO7Oa\u002fHGuxTvZv9T+PPNkzverxv8hqcUMILtU\u002fwK6NJeVhwr8UOsn2yy3yP\u002fhfhJbRAug\u002fnEpevwUP4L9E3eHFTDDZv0qqmPaKIvU\u002fmFlAfx2M5j\u002fgXsgAGmrvPzBgM0CGtbo\u002feF2vDvSO6j\u002fspKSAKObyv+iPdNzNxOS\u002fGOdQyfyc1T9oYgVV2hbnP2AIuOmp3aa\u002fJfpCESrQ8b8AhTdAqPTev\u002fycHNI9\u002feS\u002fuCLMv2\u002fIxL+s4+wuMInQv4z1pwi8Ou0\u002fnD4OfpIq5z9CUbMaf17svxAF9i4nJNY\u002fOLE3lRgQ0r\u002fIK4YjO1PPv3CIrr+FTew\u002fvQz5jsJd8L9wZ+u0Zt3qP7RisOmtju0\u002f2RrmGXFa8r98ie0j2gLVvw=="},"yaxis":"y","type":"scatter"},{"hovertemplate":"f_1=unacceptable\u003cbr\u003ex_0=%{x}\u003cbr\u003ex_1=%{y}\u003cextra\u003e\u003c\u002fextra\u003e","legendgroup":"unacceptable","marker":{"color":"#00cc96","symbol":"circle"},"mode":"markers","name":"unacceptable","orientation":"v","showlegend":true,"x":{"dtype":"f8","bdata":"5SSPo++H6L+Ux2lMtgDsP3yw7XlWSew\u002fWFxSY1zt+z9+RBDD6qL4P2v06ZnfKPe\u002f+F4\u002fxYuRy7\u002f0Y7SN8pXlv6BZNJCswti\u002fxG5\u002fpyh\u002f7D+iF2saoEf7PxHN9NzHy\u002fm\u002fAOXfzRXB8z+I0q2\u002faEbkPxICJDytyve\u002fFDJDBqji5z+oAl4tTPnZPxREzUfqC\u002fk\u002fRrVcJKRP+L8EAK6NFqf2P\u002fxJx5nwb+s\u002fAOAGlToC8T+0SIvRHCX6v6je9fUjQPk\u002fDWDfdMaK+r8JLCeD8H\u002f1v5oxL8aoifU\u002f6BybNVk26D\u002fcqxnCU531v\u002fj\u002fW4a3yvk\u002fFnX4JaHR9r+IFn\u002fKqaD6P2QpQ0VgM\u002fu\u002ffHBf\u002fldf5D+EEemBX4Tkv2RlzbXiKPm\u002fgNyf8k1U4z8q9O8lmvr7P7s4fHk7n++\u002faA9smavk+T8qVPvh0Iz7v6AWg12CFve\u002fLoEwYVaC+D\u002fOkzGAMUv4v0g6Xlsm+dA\u002fxi8PQV9F7r98aoK\u002fBUz7P3ymDtP\u002fkuw\u002f"},"xaxis":"x","y":{"dtype":"f8","bdata":"mu5AVUSF+D9g1bgc3XfyP3R0zH4B0Pi\u002fdj1zEmgW8z8UONht\u002f\u002fniv1IH1JK5NfY\u002fIId+6uqf979Jt8SrJvX2v9l9Fh+7bve\u002fbS3ai7i1+r+gqB31BfPXv22BTTD1+\u002fi\u002ftoO3mgzC9z9QeaAmHg34v4q13uTfEPE\u002fUGnCx3\u002fx+b8Wi7JhL7H2P0CZo3sxkJY\u002fgh4d7Sch+z9wPcdjw+nUv8ISeQ+rM\u002fo\u002fdGV2qswN8D\u002fwEC5NmTvRP0gzmPVSHPE\u002fwa0Yz8EP6b8sL8jlTGTsvwCJlfHKXPc\u002fktZRBl5Q+j\u002fwqqjZibrxP1DwfBDjyrO\u002fIKhFb9FDwj8w98WjGwzAv8thadzzpPq\u002f5h4hT9LJ9T8bNGTAsoD7vza8zsmtYvG\u002fVISdc5u1+j8iPgJZhoryP\u002fCKqUVp7Pg\u002fcKdtw3kT4T\u002fQOaAj6n\u002fvvyqcQ5kBgvO\u002fONOQpP6S5r+MQghOR17yP2wWi5zKiPi\u002fgd6cSW3a8b94KLrHidT2P\u002fL\u002f8OPcIfY\u002f"},"yaxis":"y","type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"margin":{"b":0,"l":0,"r":0,"t":30}}},"xaxis":{"anchor":"y","domain":[0.0,1.0],"title":{"text":"x_0"}},"yaxis":{"anchor":"x","domain":[0.0,1.0],"title":{"text":"x_1"}},"legend":{"title":{"text":"f_1"},"tracegroupgap":0},"title":{"text":"Samples with labels"},"height":525,"width":550,"shapes":[{"fillcolor":"red","line":{"color":"red"},"opacity":0.1,"type":"circle","x0":-1.4142135623730951,"x1":1.4142135623730951,"xref":"x","y0":-1.4142135623730951,"y1":1.4142135623730951,"yref":"y"},{"fillcolor":"LightSeaGreen","line":{"color":"LightSeaGreen"},"opacity":0.2,"type":"circle","x0":0,"x1":2,"xref":"x","y0":0,"y1":2,"yref":"y"}]},                        {"responsive": true}                    ).then(function(){
                             
-var gd = document.getElementById('7bd07a45-38bf-4fed-8855-46fb8d06c1ed');
+var gd = document.getElementById('243eb3fd-374a-4199-8c68-f6bc104b8cd1');
 var x = new MutationObserver(function (mutations, observer) {{
         var display = window.getComputedStyle(gd).display;
         if (!display || display === 'none') {{
@@ -1017,7 +1017,7 @@ if (outputEl) {{
 </section>
 <section id="evaluate-the-classification-model-performance-outside-of-the-optimization-procedure" class="level2">
 <h2 class="anchored" data-anchor-id="evaluate-the-classification-model-performance-outside-of-the-optimization-procedure">Evaluate the classification model performance (outside of the optimization procedure)</h2>
-<div id="089b5302" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.208408,&quot;end_time&quot;:&quot;2024-10-10T20:34:36.095990&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.887582&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="5">
+<div id="917bbb75" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:0.208408,&quot;end_time&quot;:&quot;2024-10-10T20:34:36.095990&quot;,&quot;exception&quot;:true,&quot;start_time&quot;:&quot;2024-10-10T20:34:35.887582&quot;,&quot;status&quot;:&quot;failed&quot;}}" data-tags="[]" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Import packages</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> bofire.surrogates.api <span class="im">as</span> surrogates</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> ClassificationMLPEnsemble</span>
@@ -1073,7 +1073,7 @@ if (outputEl) {{
   return self.train(False)</code></pre>
 </div>
 </div>
-<div id="7b6d57e9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="6">
+<div id="2d7795df" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Print training performance</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>cv_train.get_metrics(</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    metrics<span class="op">=</span>ClassificationMetricsEnum,</span>
@@ -1094,8 +1094,8 @@ if (outputEl) {{
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.75</td>
-<td>0.75</td>
+<td>0.84</td>
+<td>0.84</td>
 </tr>
 </tbody>
 </table>
@@ -1103,7 +1103,7 @@ if (outputEl) {{
 </div>
 </div>
 </div>
-<div id="8138646e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
+<div id="eae7b8be" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Print test performance</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>cv_test.get_metrics(</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    metrics<span class="op">=</span>ClassificationMetricsEnum,</span>
@@ -1124,8 +1124,8 @@ if (outputEl) {{
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.59</td>
-<td>0.59</td>
+<td>0.61</td>
+<td>0.61</td>
 </tr>
 </tbody>
 </table>
@@ -1137,7 +1137,7 @@ if (outputEl) {{
 <section id="setup-strategy-and-ask-for-candidates" class="level2">
 <h2 class="anchored" data-anchor-id="setup-strategy-and-ask-for-candidates">Setup strategy and ask for candidates</h2>
 <p>Now we setup a <code>SoboStrategy</code> for generating candidates, the categorical output is modelled using the surrogate from above. The categorical output is modelled as an output constraint in the acquistion function optimization (constrained expected improvement). For more details have a look at this notebook: https://github.com/pytorch/botorch/blob/main/notebooks_community/clf_constrained_bo.ipynb and/or this paper: https://arxiv.org/abs/2402.07692.</p>
-<div id="6f29966b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
+<div id="17e3dca1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.acquisition_functions.api <span class="im">import</span> qLogEI</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.strategies.api <span class="im">import</span> SoboStrategy</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bofire.data_models.surrogates.api <span class="im">import</span> BotorchSurrogates</span>
@@ -1155,7 +1155,7 @@ if (outputEl) {{
 <span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>strategy.tell(sample_df)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="3574c4c6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
+<div id="7c3b5feb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> strategy.ask(<span class="dv">10</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>candidates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
@@ -1179,64 +1179,48 @@ Trying again with a new set of initial conditions.
 [RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
 Trying again with a new set of initial conditions.
   return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
-[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
-Trying again with a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
-[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
-Trying again with a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
-[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
-Trying again with a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
-[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
-Trying again with a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
-[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
-Trying again with a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
-[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
-Trying again with a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
-[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
-Trying again with a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
-[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-07 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-06 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-07 to the diagonal')]
-Trying again with a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
-[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-07 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-07 to the diagonal')]
-Trying again with a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
-/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
-[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-07 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-06 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-07 to the diagonal')]
-Trying again with a new set of initial conditions.
-  return _optimize_acqf_batch(opt_inputs=opt_inputs)
 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
   return _optimize_acqf_batch(opt_inputs=opt_inputs)
 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
 [RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-07 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-06 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-07 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-07 to the diagonal'), NumericalWarning('A not p.d., added jitter of 1.0e-06 to the diagonal'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), NumericalWarning('A not p.d., added jitter of 1.0e-08 to the diagonal')]
+Trying again with a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
+  return _optimize_acqf_batch(opt_inputs=opt_inputs)
+/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed in `gen_candidates_scipy` with the following warning(s):
+[RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), OptimizationWarning('Optimization failed within `scipy.optimize.minimize` with status 2 and message ABNORMAL: .'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.'), RuntimeWarning('Could not update `train_inputs` with transformed inputs since _MLPEnsemble does not have a `train_inputs` attribute. Make sure that the `input_transform` is applied to both the train inputs and test inputs.')]
 Trying again with a new set of initial conditions.
   return _optimize_acqf_batch(opt_inputs=opt_inputs)
 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/botorch/optim/optimize.py:844: RuntimeWarning: Optimization failed on the second try, after generating a new set of initial conditions.
@@ -1278,183 +1262,183 @@ Trying again with a new set of initial conditions.
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.200330</td>
-<td>0.037207</td>
-<td>0</td>
+<td>0.434503</td>
+<td>0.181520</td>
+<td>1</td>
 <td>acceptable</td>
 <td>0.0</td>
-<td>0.582362</td>
-<td>0.000701</td>
-<td>0.983799</td>
-<td>0.015500</td>
-<td>4.322861</td>
-<td>0.000654</td>
-<td>0.022934</td>
-<td>0.023126</td>
-<td>-0.582362</td>
-<td>0.999299</td>
+<td>0.098094</td>
+<td>0.200846</td>
+<td>0.798818</td>
+<td>0.000336</td>
+<td>4.275216</td>
+<td>0.446704</td>
+<td>0.446530</td>
+<td>0.000415</td>
+<td>-0.098094</td>
+<td>0.799154</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>-1.321857</td>
-<td>1.750000</td>
-<td>1</td>
-<td>unacceptable</td>
+<td>0.331515</td>
+<td>0.104168</td>
+<td>0</td>
+<td>acceptable</td>
 <td>0.0</td>
-<td>4.411612</td>
-<td>0.583990</td>
-<td>0.415703</td>
-<td>0.000307</td>
-<td>7.949454</td>
-<td>0.533645</td>
-<td>0.533589</td>
-<td>0.000335</td>
-<td>-4.411612</td>
-<td>0.416010</td>
+<td>0.271582</td>
+<td>0.073724</td>
+<td>0.715057</td>
+<td>0.211219</td>
+<td>4.217732</td>
+<td>0.162409</td>
+<td>0.426943</td>
+<td>0.440162</td>
+<td>-0.271582</td>
+<td>0.926276</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>0.528455</td>
-<td>0.270275</td>
+<td>0.713301</td>
+<td>0.498645</td>
 <td>1</td>
 <td>acceptable</td>
 <td>0.0</td>
-<td>0.578482</td>
-<td>0.161740</td>
-<td>0.836951</td>
-<td>0.001310</td>
-<td>4.330989</td>
-<td>0.355888</td>
-<td>0.355156</td>
-<td>0.002214</td>
-<td>-0.578482</td>
-<td>0.838260</td>
+<td>0.211271</td>
+<td>0.280044</td>
+<td>0.541475</td>
+<td>0.178481</td>
+<td>4.266639</td>
+<td>0.420464</td>
+<td>0.505824</td>
+<td>0.398406</td>
+<td>-0.211271</td>
+<td>0.719956</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>1.314699</td>
+<td>-1.312064</td>
 <td>1.750000</td>
 <td>1</td>
 <td>unacceptable</td>
 <td>0.0</td>
-<td>-0.307377</td>
-<td>0.836919</td>
-<td>0.000822</td>
-<td>0.162259</td>
-<td>5.159756</td>
-<td>0.361829</td>
-<td>0.001135</td>
-<td>0.360788</td>
-<td>0.307377</td>
-<td>0.163081</td>
+<td>4.436968</td>
+<td>0.638784</td>
+<td>0.360504</td>
+<td>0.000712</td>
+<td>5.315187</td>
+<td>0.489824</td>
+<td>0.489337</td>
+<td>0.000594</td>
+<td>-4.436968</td>
+<td>0.361216</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>0.735340</td>
-<td>0.527373</td>
-<td>0</td>
-<td>acceptable</td>
-<td>0.0</td>
-<td>1.040729</td>
-<td>0.044823</td>
-<td>0.551028</td>
-<td>0.404148</td>
-<td>4.352096</td>
-<td>0.099048</td>
-<td>0.509493</td>
-<td>0.542783</td>
-<td>-1.040729</td>
-<td>0.955177</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">5</th>
-<td>0.201968</td>
-<td>0.037166</td>
-<td>0</td>
-<td>acceptable</td>
-<td>0.0</td>
-<td>0.581635</td>
-<td>0.000702</td>
-<td>0.983742</td>
-<td>0.015556</td>
-<td>4.322538</td>
-<td>0.000655</td>
-<td>0.023014</td>
-<td>0.023206</td>
-<td>-0.581635</td>
-<td>0.999298</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">6</th>
-<td>0.143178</td>
-<td>0.017490</td>
+<td>0.167087</td>
+<td>0.020494</td>
 <td>1</td>
 <td>acceptable</td>
 <td>0.0</td>
-<td>0.443725</td>
-<td>0.159989</td>
-<td>0.839677</td>
-<td>0.000334</td>
-<td>4.304270</td>
-<td>0.356563</td>
-<td>0.356377</td>
-<td>0.000375</td>
-<td>-0.443725</td>
-<td>0.840011</td>
+<td>0.300237</td>
+<td>0.004911</td>
+<td>0.994682</td>
+<td>0.000407</td>
+<td>4.233065</td>
+<td>0.009019</td>
+<td>0.009005</td>
+<td>0.000382</td>
+<td>-0.300237</td>
+<td>0.995089</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">7</th>
-<td>-0.150092</td>
-<td>0.024708</td>
+<th data-quarto-table-cell-role="th">5</th>
+<td>-0.174178</td>
+<td>0.023434</td>
 <td>0</td>
 <td>acceptable</td>
 <td>0.0</td>
-<td>1.262064</td>
-<td>0.000542</td>
-<td>0.992623</td>
-<td>0.006835</td>
-<td>4.433048</td>
-<td>0.000515</td>
-<td>0.011390</td>
-<td>0.011679</td>
-<td>-1.262064</td>
-<td>0.999458</td>
+<td>1.521155</td>
+<td>0.073448</td>
+<td>0.926271</td>
+<td>0.000281</td>
+<td>4.171471</td>
+<td>0.162480</td>
+<td>0.162324</td>
+<td>0.000499</td>
+<td>-1.521155</td>
+<td>0.926552</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">8</th>
-<td>0.110091</td>
-<td>-0.624408</td>
-<td>0</td>
-<td>acceptable</td>
-<td>0.0</td>
-<td>41.251857</td>
-<td>0.000469</td>
-<td>0.998899</td>
-<td>0.000633</td>
-<td>4.360670</td>
-<td>0.000525</td>
-<td>0.000436</td>
-<td>0.000573</td>
-<td>-41.251857</td>
-<td>0.999531</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">9</th>
-<td>-1.307206</td>
-<td>1.319972</td>
+<th data-quarto-table-cell-role="th">6</th>
+<td>0.888541</td>
+<td>0.778086</td>
 <td>0</td>
 <td>unacceptable</td>
 <td>0.0</td>
-<td>18.702257</td>
-<td>0.599419</td>
-<td>0.400150</td>
-<td>0.000431</td>
-<td>5.251909</td>
-<td>0.546825</td>
-<td>0.546840</td>
-<td>0.000290</td>
-<td>-18.702257</td>
-<td>0.400581</td>
+<td>0.194343</td>
+<td>0.798927</td>
+<td>0.000694</td>
+<td>0.200380</td>
+<td>4.198453</td>
+<td>0.441805</td>
+<td>0.001266</td>
+<td>0.440550</td>
+<td>-0.194343</td>
+<td>0.201073</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>0.416049</td>
+<td>0.042973</td>
+<td>1</td>
+<td>acceptable</td>
+<td>0.0</td>
+<td>1.621770</td>
+<td>0.200698</td>
+<td>0.798955</td>
+<td>0.000347</td>
+<td>4.273057</td>
+<td>0.446584</td>
+<td>0.446427</td>
+<td>0.000409</td>
+<td>-1.621770</td>
+<td>0.799302</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">8</th>
+<td>-0.086748</td>
+<td>-0.636814</td>
+<td>0</td>
+<td>acceptable</td>
+<td>0.0</td>
+<td>42.630864</td>
+<td>0.073420</td>
+<td>0.926444</td>
+<td>0.000137</td>
+<td>4.225718</td>
+<td>0.162480</td>
+<td>0.162404</td>
+<td>0.000187</td>
+<td>-42.630864</td>
+<td>0.926580</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">9</th>
+<td>-1.013144</td>
+<td>1.211200</td>
+<td>0</td>
+<td>unacceptable</td>
+<td>0.0</td>
+<td>7.789534</td>
+<td>0.870393</td>
+<td>0.129421</td>
+<td>0.000186</td>
+<td>4.255327</td>
+<td>0.283094</td>
+<td>0.283199</td>
+<td>0.000213</td>
+<td>-7.789534</td>
+<td>0.129607</td>
 </tr>
 </tbody>
 </table>
@@ -1466,11 +1450,11 @@ Trying again with a new set of initial conditions.
 <section id="check-classification-of-proposed-candidates" class="level2">
 <h2 class="anchored" data-anchor-id="check-classification-of-proposed-candidates">Check classification of proposed candidates</h2>
 <p>Use the logic from above to verify the classification values</p>
-<div id="0530135a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
+<div id="84fe73b8" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Append to the candidates</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>candidates[<span class="st">"f_1_true"</span>] <span class="op">=</span> constraints(x<span class="op">=</span>candidates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="7a3aa38d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
+<div id="408758bc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;papermill&quot;,&quot;value&quot;:{&quot;duration&quot;:null,&quot;end_time&quot;:null,&quot;exception&quot;:null,&quot;start_time&quot;:null,&quot;status&quot;:&quot;pending&quot;}}" data-tags="[]" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Print results</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>candidates[[<span class="st">"x_0"</span>, <span class="st">"x_1"</span>, <span class="st">"f_1_pred"</span>, <span class="st">"f_1_true"</span>]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="11">
@@ -1490,71 +1474,71 @@ Trying again with a new set of initial conditions.
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>0.200330</td>
-<td>0.037207</td>
+<td>0.434503</td>
+<td>0.181520</td>
 <td>acceptable</td>
-<td>acceptable</td>
+<td>ideal</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>-1.321857</td>
-<td>1.750000</td>
-<td>unacceptable</td>
-<td>unacceptable</td>
+<td>0.331515</td>
+<td>0.104168</td>
+<td>acceptable</td>
+<td>acceptable</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>0.528455</td>
-<td>0.270275</td>
+<td>0.713301</td>
+<td>0.498645</td>
 <td>acceptable</td>
 <td>ideal</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>1.314699</td>
+<td>-1.312064</td>
 <td>1.750000</td>
 <td>unacceptable</td>
 <td>unacceptable</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>0.735340</td>
-<td>0.527373</td>
+<td>0.167087</td>
+<td>0.020494</td>
 <td>acceptable</td>
-<td>ideal</td>
+<td>acceptable</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>0.201968</td>
-<td>0.037166</td>
+<td>-0.174178</td>
+<td>0.023434</td>
 <td>acceptable</td>
 <td>acceptable</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
-<td>0.143178</td>
-<td>0.017490</td>
-<td>acceptable</td>
-<td>acceptable</td>
+<td>0.888541</td>
+<td>0.778086</td>
+<td>unacceptable</td>
+<td>ideal</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
-<td>-0.150092</td>
-<td>0.024708</td>
+<td>0.416049</td>
+<td>0.042973</td>
 <td>acceptable</td>
 <td>acceptable</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>0.110091</td>
-<td>-0.624408</td>
+<td>-0.086748</td>
+<td>-0.636814</td>
 <td>acceptable</td>
 <td>acceptable</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>-1.307206</td>
-<td>1.319972</td>
+<td>-1.013144</td>
+<td>1.211200</td>
 <td>unacceptable</td>
 <td>unacceptable</td>
 </tr>
