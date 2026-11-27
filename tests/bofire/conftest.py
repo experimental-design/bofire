@@ -223,6 +223,16 @@ def invalid_encoding_spec(request) -> specs.InvalidSpec:
     return request.param
 
 
+@fixture(params=specs.samplers.valids)
+def sampler_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.samplers.invalids)
+def invalid_sampler_spec(request) -> specs.InvalidSpec:
+    return request.param
+
+
 @fixture(params=specs.local_search_configs.valids)
 def local_search_config_spec(request) -> specs.Spec:
     return request.param

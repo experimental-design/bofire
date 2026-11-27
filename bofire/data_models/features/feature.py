@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from typing import Any, ClassVar, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 from pydantic import Field
 from pydantic.fields import FieldInfo
@@ -124,6 +125,17 @@ class Input(Feature):
         Returns:
             pd.Series: The passed dataFrame with candidates
 
+        """
+
+    @abstractmethod
+    def from_unit_range(self, values: np.ndarray) -> Union[pd.Series, np.ndarray]:
+        """Maps values of the unit interval onto values of the input.
+
+        Args:
+            values: Values in [0, 1].
+
+        Returns:
+            The corresponding values of the input.
         """
 
     @abstractmethod

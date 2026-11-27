@@ -72,7 +72,7 @@ recommender.tell(experiments=experiments)
 
 # currently not supported
 # for i in range(10):
-#     samples = benchmark.domain.inputs.sample(512, method=SamplingMethodEnum.SOBOL)
+#     samples = benchmark.domain.inputs.sample(512, sampler=SobolSampler())
 #     candidates = recommender.ask(1, candidate_pool=samples)
 #     candidates = candidates.reset_index(drop=True)
 #     new_experiments = benchmark.f(candidates[benchmark.domain.inputs.get_keys().copy()], return_complete=True)

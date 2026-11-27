@@ -154,6 +154,14 @@ def test_llm_strategy_rejects_multi_objective():
         )
 
 
+def test_llm_strategy_default_system_prompt_in_schema(simple_domain):
+    schema = LLMStrategyDataModel.model_json_schema()
+    assert (
+        "experimental design assistant"
+        in (schema["properties"]["system_prompt"]["default"])
+    )
+
+
 # --- End-to-end smoke test with pydantic-ai TestModel ---
 
 

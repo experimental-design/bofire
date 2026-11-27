@@ -1,5 +1,5 @@
 import math
-from typing import Annotated, ClassVar, List, Literal, Optional, Tuple
+from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -241,6 +241,60 @@ class ContinuousInput(NumericalInput):
                 f"not all values of input feature `{self.key}` are smaller than upper bound `{self.upper_bound}` ",
             )
         return values
+
+    def to_unit_range(
+        self,
+        values: Union[pd.Series, np.ndarray],
+        use_observed_bounds: bool = False,
+    ) -> Union[pd.Series, np.ndarray]:
+        """Maps values linearly from the bounds onto the unit interval, the inverse
+        of `from_unit_range`.
+
+        Args:
+            values: Values to be transformed.
+            use_observed_bounds: If True, use the bounds spanned by the feature
+                bounds and the passed values instead of the feature bounds alone.
+
+        Raises:
+            ValueError: if the bounds used are equal.
+
+        Returns:
+            The transformed values.
+        """
+        if use_observed_bounds:
+            (lower,), (upper,) = self.get_bounds(transform_type=None, values=values)
+            if lower == upper:
+                raise ValueError("Fixed feature cannot be transformed to unit range.")
+        else:
+            if self.is_fixed():
+                raise ValueError("Fixed feature cannot be transformed to unit range.")
+            lower, upper = self.lower_bound, self.upper_bound
+
+        allowed_range = upper - lower
+        return (values - lower) / allowed_range
+
+    def from_unit_range(
+        self,
+        values: Union[pd.Series, np.ndarray],
+    ) -> Union[pd.Series, np.ndarray]:
+        """Maps values of the unit interval linearly onto the bounds, the inverse of
+        `to_unit_range`.
+
+        Args:
+            values: Values in [0, 1].
+
+        Raises:
+            ValueError: if the feature is fixed.
+
+        Returns:
+            The values between the lower and the upper bound.
+        """
+        if self.is_fixed():
+            raise ValueError("Fixed feature cannot be transformed from unit range.")
+
+        allowed_range = self.upper_bound - self.lower_bound
+
+        return (values * allowed_range) + self.lower_bound
 
     def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.

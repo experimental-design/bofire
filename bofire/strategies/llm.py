@@ -27,27 +27,6 @@ class _LLMDeps:
     experiments_text: str
 
 
-# --- Default system prompt ---
-_DEFAULT_SYSTEM_PROMPT = """\
-You are an expert experimental design assistant for Bayesian optimization.
-
-You will receive a description of an optimization problem including:
-- Objectives (what to maximize/minimize)
-- Constraints (mathematical relationships candidates MUST satisfy)
-- Problem context and domain knowledge
-
-The output schema already encodes the input features with their types,
-bounds, and allowed values. Use the field descriptions to understand each feature.
-
-Consider:
-- Domain knowledge from the context descriptions
-- Feature bounds and constraints (candidates MUST be feasible)
-- Diversity of proposed candidates (explore the space)
-- If previous experiments are provided, use them to inform proposals
-For each candidate, briefly explain your reasoning.
-"""
-
-
 # --- Experiment selection ---
 def _select_experiments(
     experiments: pd.DataFrame,
@@ -142,7 +121,7 @@ class LLMStrategy(Strategy):
         self._output_retries = data_model.output_retries
         self._n_recent_experiments = data_model.n_recent_experiments
         self._n_top_experiments = data_model.n_top_experiments
-        self._system_prompt = data_model.system_prompt or _DEFAULT_SYSTEM_PROMPT
+        self._system_prompt = data_model.system_prompt
         self._pydantic_ai_model = None
         self._agent = None
 
@@ -296,7 +275,7 @@ class LLMStrategy(Strategy):
             output_retries: Number of retries for output validation.
             n_recent_experiments: Number of recent experiments to show.
             n_top_experiments: Number of top experiments to show.
-            system_prompt: Custom system prompt override.
+            system_prompt: Custom system prompt; if not provided, BoFire's default.
             seed: Random seed.
 
         Returns:

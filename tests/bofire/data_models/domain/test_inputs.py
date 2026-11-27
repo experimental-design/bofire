@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
+from pydantic import ValidationError
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.descriptor_generators.api import (
@@ -27,6 +28,11 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.data_models.features.descriptors import Descriptors
+from bofire.data_models.samplers.api import (
+    LatinHypercubeSampler,
+    SobolSampler,
+    UniformSampler,
+)
 from bofire.data_models.surrogates.scaler import ScalerEnum
 
 
@@ -331,30 +337,41 @@ def test_inputs_get_free(features, expected):
 
 
 @pytest.mark.parametrize(
-    "features, num_samples, method",
+    "features, num_samples, sampler",
     [
-        (features, num_samples, method)
+        (features, num_samples, sampler)
         for features in [
             inputs,
             Inputs(features=[if1, if2, if3, if4, if5, if7]),
         ]
         for num_samples in [1, 2, 64]
-        for method in ["UNIFORM", "SOBOL", "LHS"]
+        for sampler in [
+            UniformSampler(),
+            SobolSampler(),
+            SobolSampler(scramble=False, optimization="random-cd"),
+            LatinHypercubeSampler(),
+        ]
     ],
 )
-def test_inputs_sample(features: Inputs, num_samples, method):
-    samples0 = features.sample(num_samples, method=method, seed=None)
+def test_inputs_sample(features: Inputs, num_samples, sampler):
+    samples0 = features.sample(num_samples, sampler=sampler, seed=None)
     assert samples0.shape == (num_samples, len(features))
     assert list(samples0.columns) == features.get_keys()
-    samples1 = features.sample(num_samples, method=method, seed=42)
+    samples1 = features.sample(num_samples, sampler=sampler, seed=42)
     assert samples1.shape == (num_samples, len(features))
     assert list(samples1.columns) == features.get_keys()
-    samples2 = features.sample(num_samples, method=method, seed=42)
+    samples2 = features.sample(num_samples, sampler=sampler, seed=42)
     assert samples2.shape == (num_samples, len(features))
     assert list(samples2.columns) == features.get_keys()
     assert_frame_equal(samples2, samples1)
-    with pytest.raises(AssertionError):
-        assert_frame_equal(samples2, samples0)
+    if not (isinstance(sampler, SobolSampler) and not sampler.scramble):
+        with pytest.raises(AssertionError):
+            assert_frame_equal(samples2, samples0)
+
+
+def test_inputs_sample_needs_positive_n():
+    with pytest.raises(ValidationError):
+        inputs.sample(0)
 
 
 def test_inputs_sample_empty():

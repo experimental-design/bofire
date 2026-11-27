@@ -83,7 +83,7 @@ from bofire.data_models.strategies.api import LLMStrategy as LLMStrategyDataMode
 
 strategy_dm = LLMStrategyDataModel(
     domain=domain,
-    llm=AnthropicLLMProvider(model="claude-sonnet-4-5"),
+    llm=AnthropicLLMProvider(model="claude-sonnet-5-5"),
     model_settings={"thinking": "medium"},
     n_recent_experiments=10,
     n_top_experiments=10,

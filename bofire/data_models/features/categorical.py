@@ -346,6 +346,22 @@ class CategoricalInput(Input):
         """Back-transform encoded columns to categories with the given encoding."""
         return encoding.decode(self, values)
 
+    def from_unit_range(self, values: np.ndarray) -> np.ndarray:
+        """Maps values of the unit interval onto the allowed categories, by splitting the
+        interval into equally wide bins, one per allowed category.
+
+        Args:
+            values: Values in [0, 1].
+
+        Returns:
+            The corresponding allowed categories.
+        """
+        levels = self.get_allowed_categories()
+        idx = np.minimum(
+            (np.asarray(values) * len(levels)).astype(int), len(levels) - 1
+        )
+        return np.array(levels)[idx]
+
     def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.
 

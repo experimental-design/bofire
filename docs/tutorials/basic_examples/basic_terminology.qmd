@@ -159,10 +159,10 @@ Or directly from input feature containers, uniform, sobol and LHS sampling is po
 ```{python}
 #| papermill: {duration: 0.016638, end_time: '2024-10-10T20:36:30.094262', exception: false, start_time: '2024-10-10T20:36:30.077624', status: completed}
 #| tags: []
-from bofire.data_models.enum import SamplingMethodEnum
+from bofire.data_models.samplers.api import LatinHypercubeSampler
 
 
-X = input_features.sample(n=10, method=SamplingMethodEnum.LHS)
+X = input_features.sample(n=10, sampler=LatinHypercubeSampler())
 
 X
 ```

@@ -17,7 +17,6 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Inputs
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import ContinuousInput
 
 
@@ -79,7 +78,7 @@ def test_constraints_plus():
     ],
 )
 def test_constraints_call(constraints, num_candidates):
-    candidates = inputs.sample(num_candidates, SamplingMethodEnum.UNIFORM)
+    candidates = inputs.sample(num_candidates)
     returned = constraints(candidates)
 
     num_rows = 0
@@ -106,7 +105,7 @@ def test_constraints_call(constraints, num_candidates):
     ],
 )
 def test_constraints_is_fulfilled(constraints, num_candidates, fulfilled):
-    candidates = inputs.sample(num_candidates, SamplingMethodEnum.UNIFORM)
+    candidates = inputs.sample(num_candidates)
     returned = constraints.is_fulfilled(candidates)
     assert returned.shape == (num_candidates,)
     assert returned.dtype == bool
@@ -121,7 +120,7 @@ def test_constraints_is_fulfilled(constraints, num_candidates, fulfilled):
     ],
 )
 def test_constraints_jacobian(constraints, num_candidates):
-    candidates = inputs.sample(num_candidates, SamplingMethodEnum.UNIFORM)
+    candidates = inputs.sample(num_candidates)
     returned = constraints.jacobian(candidates)
     assert np.all(
         [

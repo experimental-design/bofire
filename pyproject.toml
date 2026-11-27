@@ -126,6 +126,7 @@ max-complexity = 19
 "bofire/surrogates/api.py" = ["F401"]
 "bofire/data_models/descriptor_generators/api.py" = ["F401"]
 "bofire/data_models/encodings/api.py" = ["F401"]
+"bofire/data_models/samplers/api.py" = ["F401"]
 "bofire/llm/api.py" = ["F401"]
 "bofire/data_models/priors/api.py" = ["F401"]
 "bofire/priors/api.py" = ["F401"]

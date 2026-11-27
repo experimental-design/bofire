@@ -118,7 +118,6 @@ def test_FractionalFactorialStrategy_ask():
         ),
         n_repetitions=1,
         n_center=0,
-        n_generators=1,
         generator="a b c ab",
     )
     strategy = strategies.map(strategy_data)

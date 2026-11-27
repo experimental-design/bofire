@@ -16,7 +16,6 @@ from bofire.data_models.constraints.api import (
     EqualityConstraint,
 )
 from bofire.data_models.domain.api import Domain, Inputs
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.doe import (
     DEFAULT_DOE_OPTIMIZER,
     AOptimalityCriterion,
@@ -176,13 +175,7 @@ class IOptimality(ModelBasedObjective):
             if n_space_filling_points is None:
                 n_space_filling_points = n_experiments * 10
 
-            x0 = (
-                domain.inputs.sample(
-                    n=n_space_filling_points, method=SamplingMethodEnum.UNIFORM
-                )
-                .to_numpy()
-                .flatten()
-            )
+            x0 = domain.inputs.sample(n=n_space_filling_points).to_numpy().flatten()
             objective_function = SpaceFilling(
                 domain=domain,
                 n_experiments=n_space_filling_points,

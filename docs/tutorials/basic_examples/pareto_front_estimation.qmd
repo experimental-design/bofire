@@ -36,7 +36,7 @@ import pandas as pd
 
 import bofire.strategies.api as strategies
 from bofire.benchmarks.api import BNH, Benchmark
-from bofire.data_models.enum import SamplingMethodEnum
+from bofire.data_models.samplers.api import Sampler, SobolSampler, UniformSampler
 from bofire.data_models.strategies.api import (
     GeneticAlgorithmOptimizer,
     MoboStrategy,
@@ -69,12 +69,12 @@ There are no Bayesian-optimization iterations in this tutorial.
 def sample_inputs(
     benchmark: Benchmark,
     n_samples: int,
-    method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM,
+    sampler: Sampler = UniformSampler(),
 ) -> pd.DataFrame:
     data_model = RandomStrategy(
         domain=benchmark.domain,
         seed=SEED,
-        fallback_sampling_method=method,
+        fallback_sampler=sampler,
     )
     sampler = strategies.map(data_model=data_model)
     return sampler.ask(n_samples)
@@ -133,7 +133,7 @@ def gp_mean_experiments(candidates: pd.DataFrame) -> pd.DataFrame:
 sobol_inputs = sample_inputs(
     bnh,
     n_samples=NUM_FRONT_SAMPLES,
-    method=SamplingMethodEnum.SOBOL,
+    sampler=SobolSampler(),
 )
 sobol_benchmark_front = get_pareto_front(
     domain=bnh.domain,

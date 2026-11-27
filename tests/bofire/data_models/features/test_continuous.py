@@ -295,7 +295,7 @@ def test_continuous_input_feature_from_unit_range(feature, xt, expected):
 
 
 @pytest.mark.parametrize(
-    "feature, x, expected, real",
+    "feature, x, expected, use_observed_bounds",
     [
         (
             ContinuousInput(key="a", bounds=(0, 10)),
@@ -335,9 +335,11 @@ def test_continuous_input_feature_from_unit_range(feature, xt, expected):
         ),
     ],
 )
-def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
-    xt = feature.to_unit_range(x)
-    assert np.allclose(xt.values, expected, real)
+def test_continuous_input_feature_to_unit_range(
+    feature, x, expected, use_observed_bounds
+):
+    xt = feature.to_unit_range(x, use_observed_bounds=use_observed_bounds)
+    assert np.allclose(xt.values, expected)
 
 
 # TODO: tidy up the continuous descriptor input stuff

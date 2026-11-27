@@ -1,7 +1,7 @@
 from abc import abstractmethod
-from typing import Annotated, Any, Optional, Type
+from typing import Any, Optional, Type
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, NonNegativeInt, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
@@ -10,9 +10,22 @@ from bofire.data_models.features.api import Feature
 
 
 class Strategy(BaseModel):
+    """Method that proposes candidates, the next experiments to run, for a domain.
+
+    Every strategy validates that it supports the inputs, outputs, objectives and
+    constraints of its domain.
+    """
+
     type: Any
-    domain: Domain
-    seed: Optional[Annotated[int, Field(ge=0)]] = None
+    domain: Domain = Field(
+        description="The optimization problem: inputs, outputs with their objectives, "
+        "and constraints.",
+    )
+    seed: Optional[NonNegativeInt] = Field(
+        default=None,
+        description="Seed of the random number generator, for reproducible candidates. "
+        "If not provided, a random seed is drawn.",
+    )
 
     @model_validator(mode="after")
     def validate_constraints(self):

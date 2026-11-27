@@ -15,7 +15,6 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain, Inputs
-from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
@@ -521,11 +520,7 @@ def _mixture_doe_setup(n_experiments=4):
     objective_function = get_objective_function(
         criterion, domain=domain, n_experiments=n_experiments
     )
-    x0 = (
-        domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM, seed=1)
-        .to_numpy()
-        .flatten()
-    )
+    x0 = domain.inputs.sample(n=n_experiments, seed=1).to_numpy().flatten()
     constraints = constraints_as_scipy_constraints(
         domain, n_experiments, ignore_nchoosek=True
     )
@@ -582,11 +577,7 @@ def test_minimize_box_only(optimizer):
         domain=domain,
         n_experiments=n_experiments,
     )
-    x0 = (
-        domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM, seed=1)
-        .to_numpy()
-        .flatten()
-    )
+    x0 = domain.inputs.sample(n=n_experiments, seed=1).to_numpy().flatten()
     constraints = constraints_as_scipy_constraints(
         domain, n_experiments, ignore_nchoosek=True
     )
@@ -637,11 +628,7 @@ def test_solve_linear_and_nonlinear_inequalities(optimizer):
         domain=domain,
         n_experiments=n_experiments,
     )
-    x0 = (
-        domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM, seed=1)
-        .to_numpy()
-        .flatten()
-    )
+    x0 = domain.inputs.sample(n=n_experiments, seed=1).to_numpy().flatten()
     res = _solve(
         obj,
         x0,
