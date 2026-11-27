@@ -362,7 +362,7 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
                 totally_removed = True
             else:
                 feat = cast(ContinuousInput, domain.inputs.get_by_key(_features[0]))
-                adjust_boundary(feat, _coefficients[0], _rhs)
+                adjust_boundary(feat, -1.0 * _coefficients[0], -1.0 * _rhs)
                 totally_removed = True
 
             # check if constraint is always fulfilled/not fulfilled

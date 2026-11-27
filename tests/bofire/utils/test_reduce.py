@@ -528,6 +528,50 @@ def test_reduce_large_problem():
     )
 
 
+@pytest.mark.parametrize(
+    ("coefficients", "rhs", "expected_bounds"),
+    [
+        # x1 + x2 = 1, 2*x1 + x2 <= 1.4  =>  2 - x2 <= 1.4  =>  x2 >= 0.6
+        ([2.0, 1.0], 1.4, [0.6, 1.0]),
+        # x1 + x2 = 1, x1 + 2*x2 <= 1.4  =>  1 + x2 <= 1.4  =>  x2 <= 0.4
+        ([1.0, 2.0], 1.4, [0.0, 0.4]),
+    ],
+)
+def test_reduce_inequality_reduced_to_single_feature_bound(
+    coefficients,
+    rhs,
+    expected_bounds,
+):
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y1")],
+        constraints=[
+            LinearEqualityConstraint(
+                features=["x1", "x2"],
+                coefficients=[1.0, 1.0],
+                rhs=1.0,
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2"],
+                coefficients=coefficients,
+                rhs=rhs,
+            ),
+        ],
+    )
+    reduced_domain, transform = reduce_domain(domain)
+
+    assert len(reduced_domain.constraints) == 0
+    x2 = reduced_domain.inputs.get_by_key("x2")
+    assert np.allclose([x2.lower_bound, x2.upper_bound], expected_bounds)
+
+    samples = reduced_domain.inputs.sample(10, seed=42)
+    restored = transform.augment_data(samples)
+    assert domain.constraints.is_fulfilled(restored).all()
+
+
 def test_rref():
     A = np.vstack(([[np.pi, 1e10, np.log(10), 7]], [[np.pi, 1e10, np.log(10), 7]]))
     A_rref, pivots = rref(A)
