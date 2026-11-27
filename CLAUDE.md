@@ -321,7 +321,9 @@ The spec is automatically picked up by `tests/bofire/conftest.py` which imports 
 ## Code Style
 
 - **Linter/Formatter**: Ruff (line length 88)
-- **Docstrings**: Google-style
+- **Docstrings**: Google-style, without types in the `Args:` / `Returns:` entries
+  (`values: Values in [0, 1].`, not `values (np.ndarray): ...`) — the annotations
+  carry the types.
 - **Type Checking**: Pydantic for runtime, ty for static analysis
 - **Python**: 3.10+
 - **Pydantic validators**: public methods named `validate_*`, no leading underscore
@@ -357,6 +359,11 @@ The spec is automatically picked up by `tests/bofire/conftest.py` which imports 
   stray artifact. The `type` discriminator needs no description.
   `tests/bofire/data_models/test_documentation.py` enforces this — see
   [Documentation Ratchet](#documentation-ratchet).
+- **A data model docstring states what is supported, not how it is computed.** Which
+  features, constraints and objectives a strategy accepts, and what a caller can expect
+  from it, belong on the data model; how the functional class achieves it (sampling
+  scheme, solver, fallback order) belongs in the functional class's docstring, whose
+  first line repeats the data model's, marked as functional.
 - **Prefer a literal default over `default_factory` for empty containers.** Pydantic deep
   copies defaults, so `Field(default=[])` is safe, and unlike `default_factory` it puts
   the default into `model_json_schema()` where a caller can see it.

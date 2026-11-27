@@ -39,17 +39,25 @@ from bofire.utils.torch_tools import (
 
 
 class RandomStrategy(Strategy):
-    """Strategy for randomly selecting new candidates.
+    """Functional random strategy: draws random candidates that satisfy the
+    constraints of the domain.
 
-    This strategy generates candidate samples using the random strategy. It first checks if the domain
-    is compatible with polytope sampling. If so, it uses polytope sampling to generate candidate
-    samples. If not, it performs rejection sampling by repeatedly generating candidates with polytope sampling
-    until the desired number of valid samples is obtained.
+    How the candidates are drawn depends on the constraints:
+
+    1. Without constraints, every input is sampled by `fallback_sampler`.
+    2. With linear or interpoint constraints, the continuous inputs are drawn by a
+       random walk inside the feasible region (hit-and-run); categorical and
+       discrete inputs are still sampled by `fallback_sampler`.
+    3. With NChooseK constraints or semi-continuous inputs (`allow_zero`), the
+       strategy first draws up to `max_combinations` sets of active inputs, sets the
+       other ones to zero and samples each set as in 2.
+    4. Nonlinear and product constraints can't be built into the sampling;
+       candidates drawn as above are kept only if they satisfy them (rejection
+       sampling).
 
     Args:
-        data_model (data_models.RandomStrategy): The data model for the random strategy.
+        data_model: The data model for the random strategy.
         **kwargs: Additional keyword arguments.
-
     """
 
     def __init__(
@@ -312,7 +320,7 @@ class RandomStrategy(Strategy):
     def _sample_from_polytope(
         domain: Domain,
         n: int,
-        fallback_sampler: Optional[AnySampler] = None,
+        fallback_sampler: AnySampler = UniformSampler(),  # noqa: B008 (frozen)
         n_burnin: int = 1000,
         n_thinning: int = 32,
         seed: Optional[int] = None,
@@ -322,8 +330,7 @@ class RandomStrategy(Strategy):
         Args:
             n (int): The number of points to sample.
             domain (Domain): The domain defining the polytope.
-            fallback_sampler: The sampler for inputs without constraints. Defaults to
-                a UniformSampler.
+            fallback_sampler: The sampler for inputs without constraints.
             n_burnin (int, optional): The number of burn-in samples for the polytope sampler. Defaults to 1000.
             n_thinning (int, optional): The thinning factor for the polytope sampler. Defaults to 32.
             seed (Optional[int], optional): The seed value for random number generation. Defaults to None.
@@ -334,9 +341,6 @@ class RandomStrategy(Strategy):
         """
         if seed is None:
             seed = int(np.random.default_rng().integers(1, 1000000))
-
-        if fallback_sampler is None:
-            fallback_sampler = UniformSampler()
 
         # here we have to adapt for categoricals
         if len(domain.constraints.get(AnyContinuousConstraint)) == 0:

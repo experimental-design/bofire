@@ -154,6 +154,15 @@ def test_llm_strategy_rejects_multi_objective():
         )
 
 
+def test_llm_strategy_get_system_prompt(simple_domain):
+    data_model = LLMStrategyDataModel(
+        domain=simple_domain, llm=AnthropicLLMProvider(api_key_env_var="KEY")
+    )
+    assert "experimental design assistant" in data_model.get_system_prompt()
+    custom = data_model.model_copy(update={"system_prompt": "Be brief."})
+    assert custom.get_system_prompt() == "Be brief."
+
+
 # --- End-to-end smoke test with pydantic-ai TestModel ---
 
 

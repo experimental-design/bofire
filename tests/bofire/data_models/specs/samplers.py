@@ -18,17 +18,17 @@ specs.add_valid(
 
 specs.add_valid(
     samplers.LatinHypercubeSampler,
-    lambda: {"scramble": True, "optimization": None, "strength": 1},
+    lambda: {"scramble": True, "optimization": None},
 )
 
 specs.add_valid(
     samplers.LatinHypercubeSampler,
-    lambda: {"scramble": False, "optimization": "lloyd", "strength": 2},
+    lambda: {"scramble": False, "optimization": "lloyd"},
 )
 
 specs.add_invalid(
     samplers.LatinHypercubeSampler,
-    lambda: {"strength": 3},
+    lambda: {"optimization": "kmeans"},
     error=ValueError,
-    message="Input should be 1 or 2",
+    message="Input should be 'random-cd' or 'lloyd'",
 )

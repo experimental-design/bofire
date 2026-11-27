@@ -12,8 +12,8 @@ from bofire.data_models.features.api import Feature
 class Strategy(BaseModel):
     """Method that proposes candidates, the next experiments to run, for a domain.
 
-    Every strategy checks that it supports the inputs, outputs, objectives and
-    constraints of its domain, and rejects the domain otherwise.
+    Every strategy validates that it supports the inputs, outputs, objectives and
+    constraints of its domain.
     """
 
     type: Any

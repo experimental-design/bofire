@@ -23,9 +23,10 @@ class Sampler(BaseModel):
     type: Any
 
     @abstractmethod
-    def unit_samples(self, n_dims: int, n: int, seed: Optional[int]) -> np.ndarray:
-        """Draws `n` points from the unit cube of dimension `n_dims`; every input
-        maps its coordinate onto its values.
+    def unit_samples(
+        self, n_dims: int, n: int, seed: Optional[int] = None
+    ) -> np.ndarray:
+        """Draws `n` points from the unit cube of dimension `n_dims`.
 
         Args:
             n_dims: Number of dimensions.
@@ -40,7 +41,8 @@ class Sampler(BaseModel):
 class UniformSampler(Sampler):
     """Draws every input independently and uniformly at random.
 
-    The simplest choice; with few points, the samples can cluster and leave gaps.
+    Uniform sampling can lead to clustering of points. Consider a low-discrepancy
+    sampler such as `SobolSampler` to cover the space more evenly.
 
     Examples:
         >>> UniformSampler()
@@ -48,7 +50,9 @@ class UniformSampler(Sampler):
 
     type: Literal["UniformSampler"] = "UniformSampler"
 
-    def unit_samples(self, n_dims: int, n: int, seed: Optional[int]) -> np.ndarray:
+    def unit_samples(
+        self, n_dims: int, n: int, seed: Optional[int] = None
+    ) -> np.ndarray:
         return np.random.default_rng(seed).uniform(size=(n, n_dims))
 
 
@@ -60,7 +64,7 @@ class _QuasiRandomSampler(Sampler):
     scramble: bool = Field(
         default=True,
         description="Whether the design is randomized; without scrambling, the same "
-        "points are drawn every time.",
+        "points are drawn every time, even for different seeds.",
     )
     optimization: Optional[Literal["random-cd", "lloyd"]] = Field(
         default=None,
@@ -82,7 +86,9 @@ class SobolSampler(_QuasiRandomSampler):
 
     type: Literal["SobolSampler"] = "SobolSampler"
 
-    def unit_samples(self, n_dims: int, n: int, seed: Optional[int]) -> np.ndarray:
+    def unit_samples(
+        self, n_dims: int, n: int, seed: Optional[int] = None
+    ) -> np.ndarray:
         with warnings.catch_warnings():
             # scipy warns if n is not a power of two
             warnings.simplefilter("ignore")
@@ -90,7 +96,7 @@ class SobolSampler(_QuasiRandomSampler):
                 n_dims,
                 scramble=self.scramble,
                 optimization=self.optimization,
-                seed=seed,
+                seed=np.random.default_rng(seed),
             ).random(n)
 
 
@@ -99,22 +105,17 @@ class LatinHypercubeSampler(_QuasiRandomSampler):
     many intervals as there are points, and every interval holds exactly one point.
 
     Examples:
-        >>> LatinHypercubeSampler(strength=2)
+        >>> LatinHypercubeSampler(optimization="random-cd")
     """
 
     type: Literal["LatinHypercubeSampler"] = "LatinHypercubeSampler"
-    strength: Literal[1, 2] = Field(
-        default=1,
-        description="1 for a plain Latin hypercube; 2 also spreads the points evenly "
-        "over every pair of inputs, but needs the number of points to be the square "
-        "of a prime and at most that prime plus one inputs.",
-    )
 
-    def unit_samples(self, n_dims: int, n: int, seed: Optional[int]) -> np.ndarray:
+    def unit_samples(
+        self, n_dims: int, n: int, seed: Optional[int] = None
+    ) -> np.ndarray:
         return LatinHypercube(
             n_dims,
             scramble=self.scramble,
-            strength=self.strength,
             optimization=self.optimization,
-            seed=seed,
+            seed=np.random.default_rng(seed),
         ).random(n)

@@ -14,6 +14,26 @@ from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjecti
 from bofire.data_models.strategies.strategy import Strategy
 
 
+_DEFAULT_SYSTEM_PROMPT = """\
+You are an expert experimental design assistant for Bayesian optimization.
+
+You will receive a description of an optimization problem including:
+- Objectives (what to maximize/minimize)
+- Constraints (mathematical relationships candidates MUST satisfy)
+- Problem context and domain knowledge
+
+The output schema already encodes the input features with their types,
+bounds, and allowed values. Use the field descriptions to understand each feature.
+
+Consider:
+- Domain knowledge from the context descriptions
+- Feature bounds and constraints (candidates MUST be feasible)
+- Diversity of proposed candidates (explore the space)
+- If previous experiments are provided, use them to inform proposals
+For each candidate, briefly explain your reasoning.
+"""
+
+
 class LLMStrategy(Strategy):
     """Lets a large language model propose the candidates.
 
@@ -50,8 +70,7 @@ class LLMStrategy(Strategy):
         description="Settings passed on to the model, as understood by pydantic-ai "
         "and the provider, e.g. 'temperature', 'max_tokens', 'seed', 'timeout', or "
         "'thinking' ('low', 'medium' or 'high') for extended reasoning on hard "
-        "problems, at a considerably higher cost and latency. BoFire does not check "
-        "the keys.",
+        "problems, at a considerably higher cost and latency.",
     )
     output_retries: PositiveInt = Field(
         default=3,
@@ -71,9 +90,18 @@ class LLMStrategy(Strategy):
     )
     system_prompt: Optional[str] = Field(
         default=None,
-        description="Instructions replacing BoFire's default system prompt. The "
-        "problem description and the experiments are added to it in any case.",
+        description="Instructions replacing BoFire's default system prompt, which "
+        "`get_system_prompt` returns. The problem description and the experiments "
+        "are added to it in any case.",
     )
+
+    def get_system_prompt(self) -> str:
+        """Returns the system prompt the model receives.
+
+        Returns:
+            `system_prompt` if provided, otherwise BoFire's default system prompt.
+        """
+        return self.system_prompt or _DEFAULT_SYSTEM_PROMPT
 
     @model_validator(mode="after")
     def validate_single_objective(self):

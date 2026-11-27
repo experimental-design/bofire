@@ -1,4 +1,4 @@
-from bofire.data_models.samplers.sampler import (  # noqa: F401
+from bofire.data_models.samplers.sampler import (
     LatinHypercubeSampler,
     Sampler,
     SobolSampler,

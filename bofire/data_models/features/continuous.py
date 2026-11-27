@@ -245,34 +245,30 @@ class ContinuousInput(NumericalInput):
     def to_unit_range(
         self,
         values: Union[pd.Series, np.ndarray],
-        use_real_bounds: bool = False,
+        use_observed_bounds: bool = False,
     ) -> Union[pd.Series, np.ndarray]:
-        """Convert to the unit range between 0 and 1.
+        """Maps values linearly from the bounds onto the unit interval, the inverse
+        of `from_unit_range`.
 
         Args:
-            values (pd.Series): values to be transformed
-            use_real_bounds (bool, optional): if True, use the bounds from the
-                actual values else the bounds from the feature. Defaults to False.
+            values: Values to be transformed.
+            use_observed_bounds: If True, use the bounds spanned by the feature
+                bounds and the passed values instead of the feature bounds alone.
 
         Raises:
-            ValueError: If lower_bound == upper bound an error is raised
+            ValueError: if the bounds used are equal.
 
         Returns:
-            pd.Series: transformed values.
-
+            The transformed values.
         """
-        if use_real_bounds:
-            lower, upper = self.get_bounds(
-                transform_type=None,
-                values=values,
-            )
-            lower = lower[0]
-            upper = upper[0]
+        if use_observed_bounds:
+            (lower,), (upper,) = self.get_bounds(transform_type=None, values=values)
+            if lower == upper:
+                raise ValueError("Fixed feature cannot be transformed to unit range.")
         else:
+            if self.is_fixed():
+                raise ValueError("Fixed feature cannot be transformed to unit range.")
             lower, upper = self.lower_bound, self.upper_bound
-
-        if lower == upper:
-            raise ValueError("Fixed feature cannot be transformed to unit range.")
 
         allowed_range = upper - lower
         return (values - lower) / allowed_range

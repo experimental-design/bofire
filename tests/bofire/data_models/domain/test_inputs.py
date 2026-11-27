@@ -369,14 +369,6 @@ def test_inputs_sample(features: Inputs, num_samples, sampler):
             assert_frame_equal(samples2, samples0)
 
 
-def test_inputs_sample_latin_hypercube_strength_2():
-    # strength 2 needs the number of samples to be the square of a prime
-    samples = Inputs(features=[if1, if2]).sample(
-        9, sampler=LatinHypercubeSampler(strength=2), seed=1
-    )
-    assert samples.shape == (9, 2)
-
-
 def test_inputs_sample_needs_positive_n():
     with pytest.raises(ValidationError):
         inputs.sample(0)

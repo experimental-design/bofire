@@ -315,9 +315,8 @@ def test_sample_from_polytope():
         (SobolSampler(scramble=True), 10),
         (SobolSampler(scramble=False), 10),
         (SobolSampler(optimization="random-cd"), 10),
-        (LatinHypercubeSampler(scramble=True, strength=1), 10),
-        # strength=2 requires n to be square of prime
-        (LatinHypercubeSampler(strength=2), 9),
+        (LatinHypercubeSampler(scramble=True), 10),
+        (LatinHypercubeSampler(optimization="random-cd"), 9),
         (UniformSampler(), 10),
     ],
 )

@@ -21,18 +21,10 @@ from bofire.data_models.strategies.strategy import Strategy
 class RandomStrategy(Strategy):
     """Draws random candidates that satisfy the constraints of the domain.
 
-    Use it for initial designs before a model-based strategy takes over. How the
-    candidates are drawn depends on the constraints:
-
-    1. Without constraints, every input is sampled by `fallback_sampler`.
-    2. With linear or interpoint constraints, the continuous inputs are
-       drawn by a random walk inside the feasible region (hit-and-run); categorical
-       and discrete inputs are still sampled by `fallback_sampler`.
-    3. With NChooseK constraints or inputs that may be zero (`allow_zero`), the
-       strategy first draws up to `max_combinations` sets of active inputs, sets the
-       other ones to zero and samples each set as in 2.
-    4. Nonlinear and product constraints can't be built into the sampling; candidates
-       drawn as above are kept only if they satisfy them (rejection sampling).
+    Use it for initial designs before a model-based strategy takes over. It supports
+    linear, interpoint, NChooseK, nonlinear, product and categorical exclude
+    constraints, and semi-continuous inputs. With nonlinear and product
+    constraints, candidates are drawn with rejection sampling.
 
     Examples:
         >>> RandomStrategy(domain=domain, fallback_sampler=SobolSampler(), seed=42)

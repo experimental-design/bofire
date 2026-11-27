@@ -129,8 +129,7 @@ class Input(Feature):
 
     @abstractmethod
     def from_unit_range(self, values: np.ndarray) -> Union[pd.Series, np.ndarray]:
-        """Maps values of the unit interval onto values of the input, so that
-        uniformly spread values give uniformly spread inputs.
+        """Maps values of the unit interval onto values of the input.
 
         Args:
             values: Values in [0, 1].

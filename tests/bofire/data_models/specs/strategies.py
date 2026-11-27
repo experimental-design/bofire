@@ -379,9 +379,7 @@ specs.add_valid(
     lambda: {
         "domain": domain.valid().obj().model_dump(),
         "seed": 42,
-        "fallback_sampler": LatinHypercubeSampler(
-            scramble=False, strength=2
-        ).model_dump(),
+        "fallback_sampler": LatinHypercubeSampler(scramble=False).model_dump(),
     },
 )
 
