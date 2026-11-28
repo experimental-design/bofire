@@ -1,11 +1,13 @@
 from abc import abstractmethod
-from typing import Annotated, Any, List, Literal, Optional, Protocol
+from typing import Annotated, Any, Literal, Protocol
 
+import numpy as np
 import pandas as pd
-from pydantic import Field, PositiveInt, field_validator
+from pydantic import Field, PositiveFloat, PositiveInt, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import CategoricalInput, CategoricalOutput
 from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.unions import tagged_union
 
@@ -38,7 +40,7 @@ class EvaluateableCondition:
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         """Whether the step using ``strategy`` should remain the active step.
 
@@ -84,7 +86,7 @@ class FeasibleExperimentCondition(SingleCondition, EvaluateableCondition):
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         constrained_outputs = domain.outputs.get_by_objective(ConstrainedObjective)
         if len(constrained_outputs) == 0:
@@ -124,7 +126,7 @@ class NumberOfExperimentsCondition(SingleCondition, EvaluateableCondition):
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         if experiments is None:
             n_experiments = 0
@@ -142,7 +144,7 @@ class AlwaysTrueCondition(SingleCondition, EvaluateableCondition):
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         return True
 
@@ -165,15 +167,131 @@ class StrategyHasConvergedCondition(SingleCondition, EvaluateableCondition):
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         return not strategy.has_converged()
+
+
+def _n_distinguishable(values: np.ndarray, threshold: float) -> int:
+    """Size of the largest subset of `values` whose elements are pairwise at
+    least `threshold` apart; NaNs are ignored.
+
+    In 1D, greedily keeping the smallest value that is at least `threshold`
+    above the last kept one is exact.
+    """
+    values = np.sort(values[~np.isnan(values)])
+    count, last = 0, -np.inf
+    for v in values:
+        if v - last >= threshold:
+            count, last = count + 1, v
+    return count
+
+
+class DistinguishableParameters(BaseModel):
+    """How many distinguishable values one feature needs to show.
+
+    Examples:
+        >>> DistinguishableParameters(
+        ...     key="temperature", threshold=5.0, n_different_elements=4
+        ... )
+    """
+
+    key: str = Field(description="Key of the feature whose values are checked.")
+    threshold: PositiveFloat = Field(
+        description=(
+            "Minimal absolute difference for two values to count as different. "
+            "Ignored for categorical features, whose values are different if "
+            "they are different categories."
+        ),
+    )
+    n_different_elements: PositiveInt = Field(
+        description="Required number of pairwise different values.",
+    )
+
+
+class SufficientDistinguishableValues(SingleCondition, EvaluateableCondition):
+    """Keeps the step active until features show enough distinguishable values.
+
+    For every listed feature, the largest number of its observed values that are
+    pairwise at least the feature's threshold apart is determined. The step stays
+    active as long as this number is below the required count for at least one
+    feature, e.g., to keep exploring until the inputs are spread out or a model
+    has something other than noise around a single level to learn from.
+
+    Numerical and categorical inputs as well as continuous and categorical
+    outputs can be listed. For outputs, only valid values are used; repeated
+    measurements of a continuous output at the same input point are replaced by
+    their median first, so that replicates count only once and a single outlier
+    among them does not shift the value.
+
+    Examples:
+        >>> SufficientDistinguishableValues(
+        ...     inputs=[
+        ...         DistinguishableParameters(
+        ...             key="temperature", threshold=5.0, n_different_elements=4
+        ...         )
+        ...     ],
+        ...     outputs=[
+        ...         DistinguishableParameters(
+        ...             key="yield", threshold=0.5, n_different_elements=3
+        ...         )
+        ...     ],
+        ... )
+    """
+
+    type: Literal["SufficientDistinguishableValues"] = "SufficientDistinguishableValues"
+    inputs: list[DistinguishableParameters] = Field(
+        default=[], description="Inputs whose values are checked."
+    )
+    outputs: list[DistinguishableParameters] = Field(
+        default=[], description="Outputs whose values are checked."
+    )
+
+    @model_validator(mode="after")
+    def validate_not_empty(self):
+        if not self.inputs and not self.outputs:
+            raise ValueError("At least one input or output must be listed.")
+        return self
+
+    def evaluate(
+        self,
+        strategy: StepStrategy,
+        domain: Domain,
+        experiments: pd.DataFrame | None,
+    ) -> bool:
+        if experiments is None:
+            return True
+        for params in self.inputs:
+            values = experiments[params.key]
+            if isinstance(domain.inputs.get_by_key(params.key), CategoricalInput):
+                n_distinguishable = values.nunique()
+            else:
+                n_distinguishable = _n_distinguishable(
+                    values.to_numpy(dtype=float), params.threshold
+                )
+            if n_distinguishable < params.n_different_elements:
+                return True
+        input_keys = domain.inputs.get_keys()
+        for params in self.outputs:
+            valid = domain.outputs.preprocess_experiments_one_valid_output(
+                params.key, experiments
+            )
+            if isinstance(domain.outputs.get_by_key(params.key), CategoricalOutput):
+                n_distinguishable = valid[params.key].nunique()
+            else:
+                values = valid.groupby(input_keys, sort=False)[params.key].median()
+                n_distinguishable = _n_distinguishable(
+                    values.to_numpy(dtype=float), params.threshold
+                )
+            if n_distinguishable < params.n_different_elements:
+                return True
+        return False
 
 
 class CombiCondition(Condition, EvaluateableCondition):
     type: Literal["CombiCondition"] = "CombiCondition"
     conditions: Annotated[
-        List[
+        list[
             tagged_union(
                 NumberOfExperimentsCondition,
                 "CombiCondition",
@@ -197,7 +315,7 @@ class CombiCondition(Condition, EvaluateableCondition):
         self,
         strategy: StepStrategy,
         domain: Domain,
-        experiments: Optional[pd.DataFrame],
+        experiments: pd.DataFrame | None,
     ) -> bool:
         n_matched_conditions = 0
         for c in self.conditions:
@@ -214,4 +332,5 @@ AnyCondition = tagged_union(
     AlwaysTrueCondition,
     FeasibleExperimentCondition,
     StrategyHasConvergedCondition,
+    SufficientDistinguishableValues,
 )
